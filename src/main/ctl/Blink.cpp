@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/dsp-units/ctl/Blink.h>
+#include <lsp-plug.in/dsp-units/func.h>
 
 namespace lsp
 {
@@ -43,6 +44,66 @@ namespace lsp
             fOnValue        = 1.0f;
             fOffValue       = 0.0f;
             fTime           = 0.1f;
+        }
+
+        void Blink::init(size_t sample_rate, float time)
+        {
+            nCounter        = 0;
+            nTime           = seconds_to_samples(sample_rate, time);
+            fTime           = time;
+        }
+
+        void Blink::set_sample_rate(size_t sample_rate)
+        {
+            nTime           = seconds_to_samples(sample_rate, fTime);
+        }
+
+        void Blink::blink()
+        {
+            nCounter        = nTime;
+            fOnValue        = 1.0f;
+        }
+
+        void Blink::blink(float value)
+        {
+            nCounter        = nTime;
+            fOnValue        = value;
+        }
+
+        void Blink::blink_max(float value)
+        {
+            if ((nCounter <= 0) || (fOnValue < value))
+            {
+                fOnValue        = value;
+                nCounter        = nTime;
+            }
+        }
+
+        void Blink::blink_min(float value)
+        {
+            if ((nCounter <= 0) || (fOnValue > value))
+            {
+                fOnValue        = value;
+                nCounter        = nTime;
+            }
+        }
+
+        void Blink::set_default(float on, float off)
+        {
+            fOffValue       = off;
+            fOnValue        = on;
+        }
+
+        void Blink::set_default_off(float off)
+        {
+            fOffValue       = off;
+        }
+
+        float Blink::process(size_t samples)
+        {
+            float result    = (nCounter > 0) ? fOnValue : fOffValue;
+            nCounter       -= samples;
+            return result;
         }
 
         void Blink::dump(IStateDumper *v) const

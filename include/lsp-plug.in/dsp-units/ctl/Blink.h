@@ -24,7 +24,6 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
-#include <lsp-plug.in/dsp-units/func.h>
 
 namespace lsp
 {
@@ -60,96 +59,54 @@ namespace lsp
                  * @param sample_rate sample rate
                  * @param time activity time
                  */
-                inline void     init(size_t sample_rate, float time = 0.1f)
-                {
-                    nCounter        = 0;
-                    nTime           = seconds_to_samples(sample_rate, time);
-                    fTime           = time;
-                }
+                void            init(size_t sample_rate, float time = 0.1f);
 
                 /** Update current sample rate
                  *
                  * @param sample_rate current sample rate
                  */
-                inline void     set_sample_rate(size_t sample_rate)
-                {
-                    nTime           = seconds_to_samples(sample_rate, fTime);
-                }
+                void            set_sample_rate(size_t sample_rate);
 
                 /** Make blinking
                  *
                  */
-                inline void     blink()
-                {
-                    nCounter        = nTime;
-                    fOnValue        = 1.0f;
-                }
+                void            blink();
 
                 /** Make blinking
                  * @param value value to display
                  */
-                inline void     blink(float value)
-                {
-                    nCounter        = nTime;
-                    fOnValue        = value;
-                }
+                void            blink(float value);
 
                 /** Make blinking
                  *
                  * @param value value that will be displayed if less than max value
                  */
-                inline void     blink_max(float value)
-                {
-                    if ((nCounter <= 0) || (fOnValue < value))
-                    {
-                        fOnValue        = value;
-                        nCounter        = nTime;
-                    }
-                }
+                void            blink_max(float value);
 
                 /** Make blinking
                  *
                  * @param value value that will be displayed if less than max value
                  */
-                inline void     blink_min(float value)
-                {
-                    if ((nCounter <= 0) || (fOnValue > value))
-                    {
-                        fOnValue        = value;
-                        nCounter        = nTime;
-                    }
-                }
+                void            blink_min(float value);
 
                 /** Set default values
                  *
                  * @param on default value for on state
                  * @param off default value for off state
                  */
-                inline void     set_default(float on, float off)
-                {
-                    fOffValue       = off;
-                    fOnValue        = on;
-                }
+                void            set_default(float on, float off);
 
                 /** Set default value for off state
                  *
                  * @param off default value for off state
                  */
-                inline void     set_default_off(float off)
-                {
-                    fOffValue       = off;
-                }
+                void            set_default_off(float off);
 
                 /** Process blinking
                  *
                  * @return activity value
                  */
-                inline float    process(size_t samples)
-                {
-                    float result    = (nCounter > 0) ? fOnValue : fOffValue;
-                    nCounter       -= samples;
-                    return result;
-                }
+                float           process(size_t samples);
 
                 /** Get current activity value of the blink
                  *
