@@ -19,130 +19,136 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTIL_COUNTER_H_
-#define CORE_UTIL_COUNTER_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_CTL_COUNTER_H_
+#define LSP_PLUG_IN_DSP_UNITS_CTL_COUNTER_H_
 
-#include <core/types.h>
-#include <core/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
 {
-    class Counter
+    namespace dspu
     {
-        protected:
-            enum flags_t
-            {
-                F_INITIAL   = 1 << 0,
-                F_FIRED     = 1 << 1
-            };
+        class Counter
+        {
+            protected:
+                enum flags_t
+                {
+                    F_INITIAL   = 1 << 0,
+                    F_FIRED     = 1 << 1
+                };
 
-        protected:
-            size_t      nCurrent;
-            size_t      nInitial;
-            size_t      nSampleRate;
-            float       fFrequency;
-            size_t      nFlags;
+            protected:
+                size_t      nCurrent;
+                size_t      nInitial;
+                size_t      nSampleRate;
+                float       fFrequency;
+                size_t      nFlags;
 
-        public:
-            explicit Counter();
-            ~Counter();
+            public:
+                explicit Counter();
+                ~Counter();
 
-            void        construct();
+                /**
+                 * Construct object
+                 */
+                void        construct();
 
-        public:
-            /**
-             * Get sample rate
-             * @return sample rate
-             */
-            inline size_t get_sample_rate() const { return nSampleRate; }
+            public:
+                /**
+                 * Get sample rate
+                 * @return sample rate
+                 */
+                inline size_t get_sample_rate() const { return nSampleRate; }
 
-            /**
-             * Set sample rate
-             * @param sr sample rate
-             * @param reset flag to reset counter to initial value
-             */
-            void set_sample_rate(size_t sr, bool reset = true);
+                /**
+                 * Set sample rate
+                 * @param sr sample rate
+                 * @param reset flag to reset counter to initial value
+                 */
+                void set_sample_rate(size_t sr, bool reset = true);
 
-            /**
-             * Get frequency
-             * @return frequency
-             */
-            inline float get_frequency() const { return fFrequency; }
+                /**
+                 * Get frequency
+                 * @return frequency
+                 */
+                inline float get_frequency() const { return fFrequency; }
 
-            /**
-             * Set frequency
-             * @param freq frequency
-             * @param reset flag to reset counter to initial value
-             */
-            void set_frequency(float freq, bool reset = true);
+                /**
+                 * Set frequency
+                 * @param freq frequency
+                 * @param reset flag to reset counter to initial value
+                 */
+                void set_frequency(float freq, bool reset = true);
 
-            /**
-             * Get initial countdown value
-             * @return initial countdown value
-             */
-            inline size_t get_initial_value() const { return nInitial; }
+                /**
+                 * Get initial countdown value
+                 * @return initial countdown value
+                 */
+                inline size_t get_initial_value() const { return nInitial; }
 
-            /**
-             * Set initial countdown value
-             * @param value initial countdown value
-             * @param reset flag to reset counter to initial value
-             */
-            void set_initial_value(size_t value, bool reset = true);
+                /**
+                 * Set initial countdown value
+                 * @param value initial countdown value
+                 * @param reset flag to reset counter to initial value
+                 */
+                void set_initial_value(size_t value, bool reset = true);
 
-        public:
-            /**
-             * Check fired flag
-             * @return fired flag
-             */
-            inline bool fired() const { return nFlags & F_FIRED; }
+            public:
+                /**
+                 * Check fired flag
+                 * @return fired flag
+                 */
+                inline bool fired() const { return nFlags & F_FIRED; }
 
-            /**
-             * Get number of samples pending for processing
-             * @return number of samples pending for processing
-             */
-            size_t pending() const { return nCurrent; }
+                /**
+                 * Get number of samples pending for processing
+                 * @return number of samples pending for processing
+                 */
+                size_t pending() const { return nCurrent; }
 
-            /**
-             * Reset fired flag
-             * @return fired flag before reset
-             */
-            bool commit();
+                /**
+                 * Reset fired flag
+                 * @return fired flag before reset
+                 */
+                bool commit();
 
-            /**
-             * Reset counter to initial value
-             * @return fired flag
-             */
-            bool reset();
+                /**
+                 * Reset counter to initial value
+                 * @return fired flag
+                 */
+                bool reset();
 
-            /**
-             * Submit number of samples been processed
-             * @param samples number of samples to submit
-             * @return fired flag
-             */
-            bool submit(size_t samples);
+                /**
+                 * Submit number of samples been processed
+                 * @param samples number of samples to submit
+                 * @return fired flag
+                 */
+                bool submit(size_t samples);
 
-            /**
-             * Prefer frequency over initial value when
-             * changing sample rate
-             */
-            inline void preserve_frequency() {
-                nFlags &= ~F_INITIAL;
-            }
+                /**
+                 * Prefer frequency over initial value when
+                 * changing sample rate
+                 */
+                inline void preserve_frequency() {
+                    nFlags &= ~F_INITIAL;
+                }
 
-            /**
-             * Prefer initial value over frequency when
-             * changing sample rate
-             */
-            inline void preserve_initial_value() {
-                nFlags |= F_INITIAL;
-            }
+                /**
+                 * Prefer initial value over frequency when
+                 * changing sample rate
+                 */
+                inline void preserve_initial_value() {
+                    nFlags |= F_INITIAL;
+                }
 
-            /**
-             * Dump the state
-             * @param dumper dumper
-             */
-            void dump(IStateDumper *v) const;
-    };
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
+        };
+    } /* namespace dspu */
 } /* namespace lsp */
 
-#endif /* CORE_UTIL_COUNTER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_CTL_COUNTER_H_ */

@@ -19,148 +19,154 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTIL_BLINK_H_
-#define CORE_UTIL_BLINK_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_CTL_BLINK_H_
+#define LSP_PLUG_IN_DSP_UNITS_CTL_BLINK_H_
 
-#include <core/types.h>
-#include <core/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/func.h>
 
 namespace lsp
 {
-    /** Simple blink counter
-     *
-     */
-    class Blink
+    namespace dspu
     {
-        private:
-            Blink & operator = (const Blink &);
+        /** Simple blink counter
+         *
+         */
+        class Blink
+        {
+            private:
+                Blink & operator = (const Blink &);
 
-        protected:
-            ssize_t     nCounter;
-            ssize_t     nTime;
-            float       fOnValue;
-            float       fOffValue;
-            float       fTime;
+            protected:
+                ssize_t     nCounter;
+                ssize_t     nTime;
+                float       fOnValue;
+                float       fOffValue;
+                float       fTime;
 
-        public:
-            explicit Blink();
-            ~Blink();
+            public:
+                explicit Blink();
+                ~Blink();
 
-            void construct();
+                /**
+                 * Construct object
+                 */
+                void            construct();
 
-        public:
-            /** Initialize blink
-             *
-             * @param sample_rate sample rate
-             * @param time activity time
-             */
-            inline void init(size_t sample_rate, float time = 0.1f)
-            {
-                nCounter        = 0;
-                nTime           = seconds_to_samples(sample_rate, time);
-                fTime           = time;
-            }
-
-            /** Update current sample rate
-             *
-             * @param sample_rate current sample rate
-             */
-            inline void set_sample_rate(size_t sample_rate)
-            {
-                nTime           = seconds_to_samples(sample_rate, fTime);
-            }
-
-            /** Make blinking
-             *
-             */
-            inline void blink()
-            {
-                nCounter        = nTime;
-                fOnValue        = 1.0f;
-            }
-
-            /** Make blinking
-             * @param value value to display
-             */
-            inline void blink(float value)
-            {
-                nCounter        = nTime;
-                fOnValue        = value;
-            }
-
-            /** Make blinking
-             *
-             * @param value value that will be displayed if less than max value
-             */
-            inline void blink_max(float value)
-            {
-                if ((nCounter <= 0) || (fOnValue < value))
+            public:
+                /** Initialize blink
+                 *
+                 * @param sample_rate sample rate
+                 * @param time activity time
+                 */
+                inline void     init(size_t sample_rate, float time = 0.1f)
                 {
-                    fOnValue        = value;
-                    nCounter        = nTime;
+                    nCounter        = 0;
+                    nTime           = seconds_to_samples(sample_rate, time);
+                    fTime           = time;
                 }
-            }
 
-            /** Make blinking
-             *
-             * @param value value that will be displayed if less than max value
-             */
-            inline void blink_min(float value)
-            {
-                if ((nCounter <= 0) || (fOnValue > value))
+                /** Update current sample rate
+                 *
+                 * @param sample_rate current sample rate
+                 */
+                inline void     set_sample_rate(size_t sample_rate)
                 {
-                    fOnValue        = value;
-                    nCounter        = nTime;
+                    nTime           = seconds_to_samples(sample_rate, fTime);
                 }
-            }
 
-            /** Set default values
-             *
-             * @param on default value for on state
-             * @param off default value for off state
-             */
-            inline void set_default(float on, float off)
-            {
-                fOffValue       = off;
-                fOnValue        = on;
-            }
+                /** Make blinking
+                 *
+                 */
+                inline void     blink()
+                {
+                    nCounter        = nTime;
+                    fOnValue        = 1.0f;
+                }
 
-            /** Set default value for off state
-             *
-             * @param off default value for off state
-             */
-            inline void set_default_off(float off)
-            {
-                fOffValue       = off;
-            }
+                /** Make blinking
+                 * @param value value to display
+                 */
+                inline void     blink(float value)
+                {
+                    nCounter        = nTime;
+                    fOnValue        = value;
+                }
 
-            /** Process blinking
-             *
-             * @return activity value
-             */
-            inline float process(size_t samples)
-            {
-                float result    = (nCounter > 0) ? fOnValue : fOffValue;
-                nCounter       -= samples;
-                return result;
-            }
+                /** Make blinking
+                 *
+                 * @param value value that will be displayed if less than max value
+                 */
+                inline void     blink_max(float value)
+                {
+                    if ((nCounter <= 0) || (fOnValue < value))
+                    {
+                        fOnValue        = value;
+                        nCounter        = nTime;
+                    }
+                }
 
-            /** Get current activity value of the blink
-             *
-             * @return current activity value of the blink
-             */
-            inline float value() const
-            {
-                return (nCounter > 0) ? fOnValue : fOffValue;
-            }
+                /** Make blinking
+                 *
+                 * @param value value that will be displayed if less than max value
+                 */
+                inline void     blink_min(float value)
+                {
+                    if ((nCounter <= 0) || (fOnValue > value))
+                    {
+                        fOnValue        = value;
+                        nCounter        = nTime;
+                    }
+                }
 
-            /**
-             * Dump the state
-             * @param dumper dumper
-             */
-            void dump(IStateDumper *v) const;
-    };
+                /** Set default values
+                 *
+                 * @param on default value for on state
+                 * @param off default value for off state
+                 */
+                inline void     set_default(float on, float off)
+                {
+                    fOffValue       = off;
+                    fOnValue        = on;
+                }
 
+                /** Set default value for off state
+                 *
+                 * @param off default value for off state
+                 */
+                inline void     set_default_off(float off)
+                {
+                    fOffValue       = off;
+                }
+
+                /** Process blinking
+                 *
+                 * @return activity value
+                 */
+                inline float    process(size_t samples)
+                {
+                    float result    = (nCounter > 0) ? fOnValue : fOffValue;
+                    nCounter       -= samples;
+                    return result;
+                }
+
+                /** Get current activity value of the blink
+                 *
+                 * @return current activity value of the blink
+                 */
+                inline float    value() const
+                {
+                    return (nCounter > 0) ? fOnValue : fOffValue;
+                }
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void            dump(IStateDumper *v) const;
+        };
+    } /* namespace dspu */
 } /* namespace lsp */
 
-#endif /* CORE_UTIL_BLINK_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_CTL_BLINK_H_ */
