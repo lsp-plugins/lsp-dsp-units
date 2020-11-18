@@ -19,15 +19,17 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_STATEDUMPER_H_
-#define CORE_STATEDUMPER_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_IFACE_ISTATEDUMPER_H_
+#define LSP_PLUG_IN_DSP_UNITS_IFACE_ISTATEDUMPER_H_
 
-#include <core/types.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/common/types.h>
 
 namespace lsp
 {
     /**
-     * Plugin state dumper
+     * The interface for dumping DSP module state
+     * Allows to dump module state to any format by overriding virtual methods
      */
     class IStateDumper
     {
@@ -143,4 +145,4 @@ namespace lsp
 
 } /* namespace lsp */
 
-#endif /* CORE_STATEDUMPER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_IFACE_ISTATEDUMPER_H_ */

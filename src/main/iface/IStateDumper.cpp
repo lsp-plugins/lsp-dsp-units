@@ -19,7 +19,7 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
 {
