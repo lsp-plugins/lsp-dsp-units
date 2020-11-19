@@ -19,109 +19,112 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTIL_METER_GRAPH_H_
-#define CORE_UTIL_METER_GRAPH_H_
+#ifndef LSP_PLUG_IN_DSP_UINTS_UTIL_METER_GRAPH_H_
+#define LSP_PLUG_IN_DSP_UINTS_UTIL_METER_GRAPH_H_
 
-#include <core/types.h>
-#include <core/IStateDumper.h>
-#include <core/util/ShiftBuffer.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/util/ShiftBuffer.h>
 
 namespace lsp
 {
-    enum meter_method_t
+    namespace dspu
     {
-        MM_MAXIMUM,
-        MM_MINIMUM
-    };
+        enum meter_method_t
+        {
+            MM_MAXIMUM,
+            MM_MINIMUM
+        };
 
-    class MeterGraph
-    {
-        private:
-            MeterGraph & operator = (const MeterGraph &);
+        class MeterGraph
+        {
+            private:
+                MeterGraph & operator = (const MeterGraph &);
 
-        protected:
-            ShiftBuffer         sBuffer;
-            float               fCurrent;
-            size_t              nCount;
-            size_t              nPeriod;
-            bool                bMinimize;
+            protected:
+                ShiftBuffer         sBuffer;
+                float               fCurrent;
+                size_t              nCount;
+                size_t              nPeriod;
+                bool                bMinimize;
 
-        public:
-            explicit MeterGraph();
-            ~MeterGraph();
+            public:
+                explicit MeterGraph();
+                ~MeterGraph();
 
-        public:
-            /** Initialize meter graph
-             *
-             * @param frames number of frames used for graph and needed to be stored in internal buffer
-             * @param period strobe period
-             * @return true on success
-             */
-            bool init(size_t frames, size_t period);
+            public:
+                /** Initialize meter graph
+                 *
+                 * @param frames number of frames used for graph and needed to be stored in internal buffer
+                 * @param period strobe period
+                 * @return true on success
+                 */
+                bool init(size_t frames, size_t period);
 
-            /**
-             * Get number of frames
-             * @return number of frames
-             */
-            inline size_t get_frames() const        { return sBuffer.size(); }
+                /**
+                 * Get number of frames
+                 * @return number of frames
+                 */
+                inline size_t get_frames() const        { return sBuffer.size(); }
 
-            /** Destroy meter graph
-             *
-             */
-            void destroy();
+                /** Destroy meter graph
+                 *
+                 */
+                void destroy();
 
-            /** Set metering method
-             *
-             * @param m metering method
-             */
-            inline void set_method(meter_method_t m) { bMinimize = (m == MM_MINIMUM); }
+                /** Set metering method
+                 *
+                 * @param m metering method
+                 */
+                inline void set_method(meter_method_t m) { bMinimize = (m == MM_MINIMUM); }
 
-            /** Get data stored in buffer
-             *
-             * @return pointer to the first element of the buffer
-             */
-            inline float *data()    { return sBuffer.head();   }
+                /** Get data stored in buffer
+                 *
+                 * @return pointer to the first element of the buffer
+                 */
+                inline float *data()    { return sBuffer.head();   }
 
-            /** Set strobe period
-             *
-             * @param period strobe period
-             */
-            inline void set_period(size_t period)
-            {
-                nPeriod         = period;
-            }
+                /** Set strobe period
+                 *
+                 * @param period strobe period
+                 */
+                inline void set_period(size_t period)
+                {
+                    nPeriod         = period;
+                }
 
-            /** Process single sample
-             *
-             * @param sample sample to process
-             */
-            void process(float sample);
+                /** Process single sample
+                 *
+                 * @param sample sample to process
+                 */
+                void process(float sample);
 
-            /** Process multiple samples
-             *
-             * @param s array of samples
-             * @param n number of samples to process
-             */
-            void process(const float *s, size_t n);
+                /** Process multiple samples
+                 *
+                 * @param s array of samples
+                 * @param n number of samples to process
+                 */
+                void process(const float *s, size_t n);
 
-            /** Get current level
-             *
-             * @return current level
-             */
-            inline float level() const      { return sBuffer.last(); }
+                /** Get current level
+                 *
+                 * @return current level
+                 */
+                inline float level() const      { return sBuffer.last(); }
 
-            /** Fill graph with specific level
-             *
-             * @param level level
-             */
-            inline void fill(float level)   { sBuffer.fill(level); }
+                /** Fill graph with specific level
+                 *
+                 * @param level level
+                 */
+                inline void fill(float level)   { sBuffer.fill(level); }
 
-            /**
-             * Dump internal state
-             * @param v state dumper
-             */
-            void dump(IStateDumper *v) const;
-    };
+                /**
+                 * Dump internal state
+                 * @param v state dumper
+                 */
+                void dump(IStateDumper *v) const;
+        };
+    }
 }
 
-#endif /* CORE_UTIL_METER_GRAPH_H_ */
+#endif /* LSP_PLUG_IN_DSP_UINTS_UTIL_METER_GRAPH_H_ */

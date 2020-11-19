@@ -19,73 +19,75 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTIL_RANDOMIZER_H_
-#define CORE_UTIL_RANDOMIZER_H_
+#ifndef LSP_PLUG_IN_DSP_UINTS_UTIL_RANDOMIZER_H_
+#define LSP_PLUG_IN_DSP_UINTS_UTIL_RANDOMIZER_H_
 
-#include <core/types.h>
-#include <core/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
 {
-    enum random_function_t
+    namespace dspu
     {
-        RND_LINEAR,
-        RND_EXP,
-        RND_TRIANGLE
-    };
+        enum random_function_t
+        {
+            RND_LINEAR,
+            RND_EXP,
+            RND_TRIANGLE
+        };
 
-    class Randomizer
-    {
-        private:
-            Randomizer &operator = (const Randomizer &);
+        class Randomizer
+        {
+            private:
+                Randomizer &operator = (const Randomizer &);
 
-        private:
-            static const uint32_t vMul1[];
-            static const uint32_t vMul2[];
-            static const uint32_t vAdders[];
+            private:
+                static const uint32_t vMul1[];
+                static const uint32_t vMul2[];
+                static const uint32_t vAdders[];
 
-            typedef struct randgen_t
-            {
-                uint32_t    vLast;
-                uint32_t    vMul1;
-                uint32_t    vMul2;
-                uint32_t    vAdd;
-            } randgen_t;
+                typedef struct randgen_t
+                {
+                    uint32_t    vLast;
+                    uint32_t    vMul1;
+                    uint32_t    vMul2;
+                    uint32_t    vAdd;
+                } randgen_t;
 
-            randgen_t   vRandom[4];
-            size_t      nBufID;
+                randgen_t   vRandom[4];
+                size_t      nBufID;
 
-        public:
-            explicit Randomizer();
+            public:
+                explicit Randomizer();
 
-            void construct();
+                void construct();
 
-        public:
-            /** Initialize random generator
-             *
-             * @param seed seed
-             */
-            void init(uint32_t seed);
+            public:
+                /** Initialize random generator
+                 *
+                 * @param seed seed
+                 */
+                void init(uint32_t seed);
 
-            /** Initialize random generator, take current time as seed
-             */
-            void init();
+                /** Initialize random generator, take current time as seed
+                 */
+                void init();
 
-            /** Generate float random number in range of [0..1) - excluding 1.0f
-             * The guaranteed tolerance is 1e-6 or 0.000001
-             *
-             * @param func function
-             * @return random number
-             */
-            float random(random_function_t func = RND_LINEAR);
+                /** Generate float random number in range of [0..1) - excluding 1.0f
+                 * The guaranteed tolerance is 1e-6 or 0.000001
+                 *
+                 * @param func function
+                 * @return random number
+                 */
+                float random(random_function_t func = RND_LINEAR);
 
-            /**
-             * Dump the state
-             * @param dumper dumper
-             */
-            void dump(IStateDumper *v) const;
-    };
-
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
+        };
+    }
 } /* namespace lsp */
 
-#endif /* CORE_UTIL_RANDOMIZER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UINTS_UTIL_RANDOMIZER_H_ */

@@ -19,12 +19,13 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTIL_CROSSOVER_H_
-#define CORE_UTIL_CROSSOVER_H_
+#ifndef LSP_PLUG_IN_DSP_UINTS_UTIL_CROSSOVER_H_
+#define LSP_PLUG_IN_DSP_UINTS_UTIL_CROSSOVER_H_
 
-#include <core/IStateDumper.h>
-#include <core/filters/Filter.h>
-#include <core/filters/Equalizer.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/filters/Filter.h>
+#include <lsp-plug.in/dsp-units/filters/Equalizer.h>
 
 namespace lsp
 {
@@ -58,298 +59,300 @@ namespace lsp
                                            └─────┘     └─────┘
      */
 
-    /**
-     * Crossover callback function for processing band signal
-     *
-     * @param object the object that handles callback
-     * @param subject the subject that is used to handle callback
-     * @param band number of the band
-     * @param data the output band signal produced by crossover,
-     *        is valid only until the function returns
-     * @param first index of the first sample in input buffer
-     * @param count number of processed samples in the data buffer
-     */
-    typedef void (* crossover_func_t)(void *object, void *subject, size_t band, const float *data, size_t first, size_t count);
-
-    /**
-     * Crossover filter type
-     */
-    enum crossover_mode_t
+    namespace dspu
     {
-        CROSS_MODE_BT,     //!< CROSS_MODE_BT bilinear transform
-        CROSS_MODE_MT      //!< CROSS_MODE_MT matched transform
-    };
+        /**
+         * Crossover callback function for processing band signal
+         *
+         * @param object the object that handles callback
+         * @param subject the subject that is used to handle callback
+         * @param band number of the band
+         * @param data the output band signal produced by crossover,
+         *        is valid only until the function returns
+         * @param first index of the first sample in input buffer
+         * @param count number of processed samples in the data buffer
+         */
+        typedef void (* crossover_func_t)(void *object, void *subject, size_t band, const float *data, size_t first, size_t count);
 
-    /** Crossover, splits signal into bands, calls processing handler (if present)
-     * and mixes processed bands back after adjusting the post-processing amplification gain
-     *
-     */
-    class Crossover
-    {
-        private:
-            Crossover & operator = (const Crossover &);
+        /**
+         * Crossover filter type
+         */
+        enum crossover_mode_t
+        {
+            CROSS_MODE_BT,     //!< CROSS_MODE_BT bilinear transform
+            CROSS_MODE_MT      //!< CROSS_MODE_MT matched transform
+        };
 
-        protected:
-            enum xover_type_t
-            {
-                FILTER_LPF,                         // Low-pass filter
-                FILTER_HPF,                         // High-pass filter
-                FILTER_APF                          // All-pass filter
-            };
+        /** Crossover, splits signal into bands, calls processing handler (if present)
+         * and mixes processed bands back after adjusting the post-processing amplification gain
+         *
+         */
+        class Crossover
+        {
+            private:
+                Crossover & operator = (const Crossover &);
 
-            typedef struct split_t
-            {
-                Equalizer           sLPF;           // Lo-pass filter
-                Filter              sHPF;           // Hi-pass filter with all-pass filters
+            protected:
+                enum xover_type_t
+                {
+                    FILTER_LPF,                         // Low-pass filter
+                    FILTER_HPF,                         // High-pass filter
+                    FILTER_APF                          // All-pass filter
+                };
 
-                size_t              nBandId;        // Number of split point
-                size_t              nSlope;         // Filter slope (0 = off)
-                float               fFreq;          // Frequency
-                crossover_mode_t    nMode;          // Filter type
-            } split_t;
+                typedef struct split_t
+                {
+                    Equalizer           sLPF;           // Lo-pass filter
+                    Filter              sHPF;           // Hi-pass filter with all-pass filters
 
-            typedef struct band_t
-            {
-                float               fGain;          // Output gain of the band
-                float               fStart;         // Start frequency of the band
-                float               fEnd;           // End frequency of the band
-                bool                bEnabled;       // Enabled flag
-                split_t            *pStart;         // Pointer to starting split point
-                split_t            *pEnd;           // Pointer to ending split point
+                    size_t              nBandId;        // Number of split point
+                    size_t              nSlope;         // Filter slope (0 = off)
+                    float               fFreq;          // Frequency
+                    crossover_mode_t    nMode;          // Filter type
+                } split_t;
 
-                crossover_func_t    pFunc;          // Function
-                void               *pObject;        // Bound object
-                void               *pSubject;       // Bound subject
-                size_t              nId;            // Number of the band
-            } band_t;
+                typedef struct band_t
+                {
+                    float               fGain;          // Output gain of the band
+                    float               fStart;         // Start frequency of the band
+                    float               fEnd;           // End frequency of the band
+                    bool                bEnabled;       // Enabled flag
+                    split_t            *pStart;         // Pointer to starting split point
+                    split_t            *pEnd;           // Pointer to ending split point
 
-            enum reconfigure_t
-            {
-                R_GAIN          = 1 << 0,           // We can reconfigure band gain in softer mode
-                R_SPLIT         = 1 << 1,           // Need to reconfigure filter order
+                    crossover_func_t    pFunc;          // Function
+                    void               *pObject;        // Bound object
+                    void               *pSubject;       // Bound subject
+                    size_t              nId;            // Number of the band
+                } band_t;
 
-                R_ALL           = R_GAIN | R_SPLIT
-            } reconfigure_t;
+                enum reconfigure_t
+                {
+                    R_GAIN          = 1 << 0,           // We can reconfigure band gain in softer mode
+                    R_SPLIT         = 1 << 1,           // Need to reconfigure filter order
 
-        protected:
-            size_t          nReconfigure;   // Change flag
-            size_t          nSplits;        // Number of splits
-            size_t          nBufSize;       // Buffer size
-            size_t          nSampleRate;    // Sample rate
+                    R_ALL           = R_GAIN | R_SPLIT
+                } reconfigure_t;
 
-            band_t         *vBands;         // List of bands
-            split_t        *vSplit;         // List of split points
-            split_t       **vPlan;          // Split plan
-            size_t          nPlanSize;      // Size of plan
+            protected:
+                size_t          nReconfigure;   // Change flag
+                size_t          nSplits;        // Number of splits
+                size_t          nBufSize;       // Buffer size
+                size_t          nSampleRate;    // Sample rate
 
-            float          *vLpfBuf;        // Buffer for LPF
-            float          *vHpfBuf;        // Buffer for HPF
-            uint8_t        *pData;          // Unaligned data
+                band_t         *vBands;         // List of bands
+                split_t        *vSplit;         // List of split points
+                split_t       **vPlan;          // Split plan
+                size_t          nPlanSize;      // Size of plan
 
-        protected:
-            inline filter_type_t    select_filter(xover_type_t type, crossover_mode_t mode);
+                float          *vLpfBuf;        // Buffer for LPF
+                float          *vHpfBuf;        // Buffer for HPF
+                uint8_t        *pData;          // Unaligned data
 
-        public:
-            explicit Crossover();
-            ~Crossover();
+            protected:
+                inline filter_type_t    select_filter(xover_type_t type, crossover_mode_t mode);
 
-            /** Construct crossover
-             *
-             */
-            void            construct();
+            public:
+                explicit Crossover();
+                ~Crossover();
 
-            /** Destroy crossover
-             *
-             */
-            void            destroy();
+                /** Construct crossover
+                 *
+                 */
+                void            construct();
 
-            /** Initialize crossover
-             *
-             * @param bands number of bands
-             * @param buf_size maximum signal processing buffer size
-             * @return status of operation
-             */
-            bool            init(size_t bands, size_t buf_size);
+                /** Destroy crossover
+                 *
+                 */
+                void            destroy();
 
-        public:
-            /**
-             * Get number of bands
-             * @return number of bands
-             */
-            inline size_t   num_bands() const                       { return nSplits+1;     }
+                /** Initialize crossover
+                 *
+                 * @param bands number of bands
+                 * @param buf_size maximum signal processing buffer size
+                 * @return status of operation
+                 */
+                bool            init(size_t bands, size_t buf_size);
 
-            /**
-             * Get number of split points
-             * @return number of split points
-             */
-            inline size_t   num_splits() const                      { return nSplits;       }
+            public:
+                /**
+                 * Get number of bands
+                 * @return number of bands
+                 */
+                inline size_t   num_bands() const                       { return nSplits+1;     }
 
-            /**
-             * Get maximum buffer size for one iteration, if the provided
-             * buffer is greater than max_buffer_size, the signal will be processed
-             * in more than one iteration.
-             *
-             * @return maximum buffer size
-             */
-            inline size_t   max_buffer_size() const                 { return nBufSize;      }
+                /**
+                 * Get number of split points
+                 * @return number of split points
+                 */
+                inline size_t   num_splits() const                      { return nSplits;       }
 
-            /** Set slope of crossover
-             *
-             * @param sp split point number
-             * @param slope slope of crossover filters
-             */
-            void            set_slope(size_t sp, size_t slope);
+                /**
+                 * Get maximum buffer size for one iteration, if the provided
+                 * buffer is greater than max_buffer_size, the signal will be processed
+                 * in more than one iteration.
+                 *
+                 * @return maximum buffer size
+                 */
+                inline size_t   max_buffer_size() const                 { return nBufSize;      }
 
-            /**
-             * Get slope of the split point
-             * @param sp split point number
-             * @return slope of the split point, 0 means split point is off,
-             *         negative value means invalid index
-             */
-            ssize_t         get_slope(size_t sp) const;
+                /** Set slope of crossover
+                 *
+                 * @param sp split point number
+                 * @param slope slope of crossover filters
+                 */
+                void            set_slope(size_t sp, size_t slope);
 
-            /** Set frequency of split point
-             *
-             * @param sp split point number
-             * @param freq split frequency of the split point
-             */
-            void            set_frequency(size_t sp, float freq);
+                /**
+                 * Get slope of the split point
+                 * @param sp split point number
+                 * @return slope of the split point, 0 means split point is off,
+                 *         negative value means invalid index
+                 */
+                ssize_t         get_slope(size_t sp) const;
 
-            /**
-             * Get split frequency of the split point
-             * @param sp split point number
-             * @return split frequency of the split point, negative value
-             *         means invalid index
-             */
-            float           get_frequency(size_t sp) const;
+                /** Set frequency of split point
+                 *
+                 * @param sp split point number
+                 * @param freq split frequency of the split point
+                 */
+                void            set_frequency(size_t sp, float freq);
 
-            /**
-             * Set filter mode for the split point
-             * @param sp split point
-             * @param mode mode for the split point
-             */
-            void            set_mode(size_t sp, crossover_mode_t mode);
+                /**
+                 * Get split frequency of the split point
+                 * @param sp split point number
+                 * @return split frequency of the split point, negative value
+                 *         means invalid index
+                 */
+                float           get_frequency(size_t sp) const;
 
-            /**
-             * Get filter mode of the split point
-             * @param sp split point
-             * @param mode mode for the split point or negative value on invalid index
-             */
-            ssize_t         get_mode(size_t sp) const;
+                /**
+                 * Set filter mode for the split point
+                 * @param sp split point
+                 * @param mode mode for the split point
+                 */
+                void            set_mode(size_t sp, crossover_mode_t mode);
 
-            /**
-             * Set gain of the specific output band
-             * @param band band number
-             * @param gain gain of the band
-             */
-            void            set_gain(size_t band, float gain);
+                /**
+                 * Get filter mode of the split point
+                 * @param sp split point
+                 * @param mode mode for the split point or negative value on invalid index
+                 */
+                ssize_t         get_mode(size_t sp) const;
 
-            /**
-             * Get gain of the specific output band
-             * @param band band number
-             * @return gain of the band, negative value on invalid index
-             */
-            float           get_gain(size_t band) const;
+                /**
+                 * Set gain of the specific output band
+                 * @param band band number
+                 * @param gain gain of the band
+                 */
+                void            set_gain(size_t band, float gain);
 
-            /**
-             * Get start frequency of the band, may call reconfigure()
-             * @param band band number
-             * @return start frequency of the band or negative value on invalid index
-             */
-            float           get_band_start(size_t band);
+                /**
+                 * Get gain of the specific output band
+                 * @param band band number
+                 * @return gain of the band, negative value on invalid index
+                 */
+                float           get_gain(size_t band) const;
 
-            /**
-             * Get end frequency of the band, may call reconfigure()
-             * @param band band number
-             * @return end frequency of the band or negative value on invalid index
-             */
-            float           get_band_end(size_t band);
+                /**
+                 * Get start frequency of the band, may call reconfigure()
+                 * @param band band number
+                 * @return start frequency of the band or negative value on invalid index
+                 */
+                float           get_band_start(size_t band);
 
-            /**
-             * Check that the band is active (always true for band 0), may call reconfigure()
-             * @param band band number
-             * @return true if band is active
-             */
-            bool            band_active(size_t band);
+                /**
+                 * Get end frequency of the band, may call reconfigure()
+                 * @param band band number
+                 * @return end frequency of the band or negative value on invalid index
+                 */
+                float           get_band_end(size_t band);
 
-            /**
-             * Set band signal handler
-             * @param band band number
-             * @param func handler function
-             * @param object object to pass to function
-             * @param subject subject to pass to function
-             * @return false if invalid band number has been specified
-             */
-            bool            set_handler(size_t band, crossover_func_t func, void *object, void *subject);
+                /**
+                 * Check that the band is active (always true for band 0), may call reconfigure()
+                 * @param band band number
+                 * @return true if band is active
+                 */
+                bool            band_active(size_t band);
 
-            /**
-             * Unset band signal handler
-             * @param band band number
-             * @return false if invalid band number has been specified
-             */
-            bool            unset_handler(size_t band);
+                /**
+                 * Set band signal handler
+                 * @param band band number
+                 * @param func handler function
+                 * @param object object to pass to function
+                 * @param subject subject to pass to function
+                 * @return false if invalid band number has been specified
+                 */
+                bool            set_handler(size_t band, crossover_func_t func, void *object, void *subject);
 
-            /** Set sample rate, needs reconfiguration
-             *
-             * @param sr sample rate to set
-             */
-            void            set_sample_rate(size_t sr);
+                /**
+                 * Unset band signal handler
+                 * @param band band number
+                 * @return false if invalid band number has been specified
+                 */
+                bool            unset_handler(size_t band);
 
-            /**
-             * Get sample rate of the crossover
-             * @return sample rate
-             */
-            inline size_t   get_sample_rate()                   { return nSampleRate;           }
+                /** Set sample rate, needs reconfiguration
+                 *
+                 * @param sr sample rate to set
+                 */
+                void            set_sample_rate(size_t sr);
 
-            /** Get frequency chart of the crossover band. This method returns frequency chart
-             * without applied all-pass filters
-             *
-             * @param band number of the band
-             * @param re real part of the frequency chart
-             * @param im imaginary part of the frequency chart
-             * @param f frequencies to calculate value
-             * @param count number of points for the chart
-             * @return false if invalid band index is specified
-             */
-            bool            freq_chart(size_t band,  float *re, float *im, const float *f, size_t count);
+                /**
+                 * Get sample rate of the crossover
+                 * @return sample rate
+                 */
+                inline size_t   get_sample_rate()                   { return nSampleRate;           }
 
-            /** Get frequency chart of the crossover. This method returns frequency chart
-             * without applied all-pass filters
-             *
-             * @param band number of the band
-             * @param c transfer function (packed complex numbers)
-             * @param f frequencies to calculate value
-             * @param count number of points for the chart
-             * @return false if invalid band index is specified
-             */
-            bool            freq_chart(size_t band, float *c, const float *f, size_t count);
+                /** Get frequency chart of the crossover band. This method returns frequency chart
+                 * without applied all-pass filters
+                 *
+                 * @param band number of the band
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of points for the chart
+                 * @return false if invalid band index is specified
+                 */
+                bool            freq_chart(size_t band,  float *re, float *im, const float *f, size_t count);
 
-            /**
-             * Check that we need to call reconfigure()
-             * @return true if we need to call reconfigure()
-             */
-            inline bool     needs_reconfiguration() const       { return nReconfigure != 0;     }
+                /** Get frequency chart of the crossover. This method returns frequency chart
+                 * without applied all-pass filters
+                 *
+                 * @param band number of the band
+                 * @param c transfer function (packed complex numbers)
+                 * @param f frequencies to calculate value
+                 * @param count number of points for the chart
+                 * @return false if invalid band index is specified
+                 */
+                bool            freq_chart(size_t band, float *c, const float *f, size_t count);
 
-            /** Reconfigure crossover after parameter update
-             *
-             */
-            void            reconfigure();
+                /**
+                 * Check that we need to call reconfigure()
+                 * @return true if we need to call reconfigure()
+                 */
+                inline bool     needs_reconfiguration() const       { return nReconfigure != 0;     }
 
-            /** Process data and issue callbacks, automatically calls reconfigure()
-             * if the reconfiguration is required
-             *
-             * @param in input buffer to process data
-             * @param samples number of samples to process
-             */
-            void            process(const float *in, size_t samples);
+                /** Reconfigure crossover after parameter update
+                 *
+                 */
+                void            reconfigure();
 
-            /**
-             * Dump the state
-             * @param dumper dumper
-             */
-            void            dump(IStateDumper *v) const;
-    };
+                /** Process data and issue callbacks, automatically calls reconfigure()
+                 * if the reconfiguration is required
+                 *
+                 * @param in input buffer to process data
+                 * @param samples number of samples to process
+                 */
+                void            process(const float *in, size_t samples);
 
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void            dump(IStateDumper *v) const;
+        };
+    }
 } /* namespace lsp */
 
-#endif /* CORE_UTIL_CROSSOVER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UINTS_UTIL_CROSSOVER_H_ */

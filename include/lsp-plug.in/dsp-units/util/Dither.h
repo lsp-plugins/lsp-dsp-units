@@ -19,57 +19,59 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTIL_DITHER_H_
-#define CORE_UTIL_DITHER_H_
+#ifndef LSP_PLUG_IN_DSP_UINTS_UTIL_DITHER_H_
+#define LSP_PLUG_IN_DSP_UINTS_UTIL_DITHER_H_
 
-#include <core/types.h>
-#include <core/IStateDumper.h>
-#include <core/util/Randomizer.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/util/Randomizer.h>
 
 namespace lsp
 {
-    class Dither
+    namespace dspu
     {
-        private:
-            Dither &operator = (const Dither &);
+        class Dither
+        {
+            private:
+                Dither &operator = (const Dither &);
 
-        protected:
-            size_t      nBits;
-            float       fGain;
-            float       fDelta;
-            Randomizer  sRandom;
+            protected:
+                size_t      nBits;
+                float       fGain;
+                float       fDelta;
+                Randomizer  sRandom;
 
-        public:
-            explicit Dither();
-            ~Dither();
+            public:
+                explicit Dither();
+                ~Dither();
 
-        public:
-            /** Initialize dither
-             *
-             */
-            inline void init() { sRandom.init(); };
+            public:
+                /** Initialize dither
+                 *
+                 */
+                inline void init() { sRandom.init(); };
 
-            /** Set number of bits per sample
-             *
-             * @param bits number of bits per sample
-             */
-            void set_bits(size_t bits);
+                /** Set number of bits per sample
+                 *
+                 * @param bits number of bits per sample
+                 */
+                void set_bits(size_t bits);
 
-            /** Process signal
-             *
-             * @param out output signal
-             * @param in input signal
-             * @param count number of samples to process
-             */
-            void process(float *out, const float *in, size_t count);
+                /** Process signal
+                 *
+                 * @param out output signal
+                 * @param in input signal
+                 * @param count number of samples to process
+                 */
+                void process(float *out, const float *in, size_t count);
 
-            /**
-             * Dump the state
-             * @param dumper dumper
-             */
-            void dump(IStateDumper *v) const;
-    };
-
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
+        };
+    }
 } /* namespace lsp */
 
-#endif /* CORE_UTIL_DITHER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UINTS_UTIL_DITHER_H_ */
