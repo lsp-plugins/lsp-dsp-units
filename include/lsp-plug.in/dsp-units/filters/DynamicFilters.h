@@ -19,163 +19,168 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_FILTERS_DYNAMICFILTERS_H_
-#define CORE_FILTERS_DYNAMICFILTERS_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_FILTERS_DYNAMICFILTERS_H_
+#define LSP_PLUG_IN_DSP_UNITS_FILTERS_DYNAMICFILTERS_H_
 
-#include <dsp/dsp.h>
-#include <core/filters/common.h>
-#include <core/status.h>
+#include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/filters/common.h>
+#include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/common/status.h>
 
 namespace lsp
 {
-    /** This class implements set of sequential dynamic filters grouped
-     * into one object for resource economy purpose.
-     *
-     */
-    class DynamicFilters
+    namespace dspu
     {
-        private:
-            DynamicFilters & operator = (const DynamicFilters &);
+        /** This class implements set of sequential dynamic filters grouped
+         * into one object for resource economy purpose.
+         *
+         */
+        class DynamicFilters
+        {
+            private:
+                DynamicFilters & operator = (const DynamicFilters &);
 
-        protected:
-            typedef struct filter_t
-            {
-                filter_params_t     sParams;                // Filter parameters
-                bool                bActive;                // Filter activity
-            } filter_t;
+            protected:
+                typedef struct filter_t
+                {
+                    filter_params_t     sParams;                // Filter parameters
+                    bool                bActive;                // Filter activity
+                } filter_t;
 
-            union biquad_bank_t
-            {
-                void               *ptr;
-                biquad_x1_t        *x1;
-                biquad_x2_t        *x2;
-                biquad_x4_t        *x4;
-                biquad_x8_t        *x8;
-            };
+                union biquad_bank_t
+                {
+                    void               *ptr;
+                    dsp::biquad_x1_t   *x1;
+                    dsp::biquad_x2_t   *x2;
+                    dsp::biquad_x4_t   *x4;
+                    dsp::biquad_x8_t   *x8;
+                };
 
-            static const f_cascade_t    sNormal;
+                static const dsp::f_cascade_t    sNormal;
 
-        protected:
-            filter_t           *vFilters;           // Array of filters
-            f_cascade_t        *vCascades;          // Analog filter cascade bank
-            float              *vMemory;            // Filter memory
-            biquad_bank_t       vBiquads;           // Biquad bank
-            size_t              nFilters;           // Number of filters
-            size_t              nSampleRate;        // Sample rate
-            void               *pData;              // Aligned pointer data
-            bool                bClearMem;          // Clear memory
+            protected:
+                filter_t           *vFilters;           // Array of filters
+                dsp::f_cascade_t   *vCascades;          // Analog filter cascade bank
+                float              *vMemory;            // Filter memory
+                biquad_bank_t       vBiquads;           // Biquad bank
+                size_t              nFilters;           // Number of filters
+                size_t              nSampleRate;        // Sample rate
+                void               *pData;              // Aligned pointer data
+                bool                bClearMem;          // Clear memory
 
-        protected:
-            size_t              quantify(size_t c, size_t nc);
-            size_t              build_filter_bank(f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples);
-            size_t              build_lrx_ladder_filter_bank(f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples, size_t ftype);
-            size_t              build_lrx_shelf_filter_bank(f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples, size_t ftype);
+            protected:
+                size_t              quantify(size_t c, size_t nc);
+                size_t              build_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples);
+                size_t              build_lrx_ladder_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples, size_t ftype);
+                size_t              build_lrx_shelf_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples, size_t ftype);
 
-            size_t              precalc_lrx_ladder_filter_bank(f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples);
-            void                calc_lrx_ladder_filter_bank(f_cascade_t *dst, const filter_params_t *fp, size_t cj, size_t samples, size_t ftype, size_t nc);
+                size_t              precalc_lrx_ladder_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples);
+                void                calc_lrx_ladder_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, size_t samples, size_t ftype, size_t nc);
 
-            void                vcomplex_transfer_calc(float *re, float *im, const f_cascade_t *fc, const float *freq, size_t cj, size_t nc, size_t nf);
-            void                vcomplex_transfer_calc(float *dst, const f_cascade_t *fc, const float *freq, size_t cj, size_t nc, size_t nf);
+                void                vcomplex_transfer_calc(float *re, float *im, const dsp::f_cascade_t *fc, const float *freq, size_t cj, size_t nc, size_t nf);
+                void                vcomplex_transfer_calc(float *dst, const dsp::f_cascade_t *fc, const float *freq, size_t cj, size_t nc, size_t nf);
 
-        public:
-            explicit DynamicFilters();
-            ~DynamicFilters();
+            public:
+                explicit DynamicFilters();
+                ~DynamicFilters();
 
-            /**
-             * Construct the object as a part of memory chunkk
-             */
-            void                construct();
+                /**
+                 * Construct the object as a part of memory chunkk
+                 */
+                void                construct();
 
-            /** Initialize the dynamic filters set
-             *
-             * @param filters
-             * @return
-             */
-            status_t            init(size_t filters);
+                /** Initialize the dynamic filters set
+                 *
+                 * @param filters
+                 * @return
+                 */
+                status_t            init(size_t filters);
 
-            /** Destroy the dynamic filters set
-             *
-             */
-            void                destroy();
+                /** Destroy the dynamic filters set
+                 *
+                 */
+                void                destroy();
 
-        public:
-            /** Set sample rate
-             *
-             * @param sr sample rate
-             */
-            void                set_sample_rate(size_t sr);
+            public:
+                /** Set sample rate
+                 *
+                 * @param sr sample rate
+                 */
+                void                set_sample_rate(size_t sr);
 
-            /** Check that filter is active
-             *
-             * @param id ID of filter
-             * @return true if filter is active
-             */
-            inline bool         filter_active(size_t id) const { return (id < nFilters) ? vFilters[id].bActive : false; };
+                /** Check that filter is active
+                 *
+                 * @param id ID of filter
+                 * @return true if filter is active
+                 */
+                inline bool         filter_active(size_t id) const { return (id < nFilters) ? vFilters[id].bActive : false; };
 
-            /** Check that filter is inactive
-             *
-             * @param id ID of filter
-             * @return true if filter is inactive
-             */
-            inline bool         filter_inactive(size_t id) const { return (id < nFilters) ? !vFilters[id].bActive : true; };
+                /** Check that filter is inactive
+                 *
+                 * @param id ID of filter
+                 * @return true if filter is inactive
+                 */
+                inline bool         filter_inactive(size_t id) const { return (id < nFilters) ? !vFilters[id].bActive : true; };
 
-            /** Set activity of the specific filter
-             *
-             * @param id filter identifier
-             * @param active activity of the specific filter
-             * @return true on success
-             */
-            inline bool         set_filter_active(size_t id, bool active)
-            {
-                if (id >= nFilters)
-                    return false;
-                vFilters[id].bActive        = true;
-                return true;
-            }
+                /** Set activity of the specific filter
+                 *
+                 * @param id filter identifier
+                 * @param active activity of the specific filter
+                 * @return true on success
+                 */
+                inline bool         set_filter_active(size_t id, bool active)
+                {
+                    if (id >= nFilters)
+                        return false;
+                    vFilters[id].bActive        = true;
+                    return true;
+                }
 
-            /** Update filter parameters
-             * @param id ID of the filter
-             * @param params  filter parameters
-             * @return true on success
-             */
-            bool                set_params(size_t id, const filter_params_t *params);
+                /** Update filter parameters
+                 * @param id ID of the filter
+                 * @param params  filter parameters
+                 * @return true on success
+                 */
+                bool                set_params(size_t id, const filter_params_t *params);
 
-            /** Get filter parameters
-             * @param id ID of the filter
-             * @param params  filter parameters
-             * @return true on success
-             */
-            bool                get_params(size_t id, filter_params_t *params);
+                /** Get filter parameters
+                 * @param id ID of the filter
+                 * @param params  filter parameters
+                 * @return true on success
+                 */
+                bool                get_params(size_t id, filter_params_t *params);
 
-            /** Process signal with filter varying by it's gain parameter
-             *
-             * @param id filer identifier
-             * @param out output signal
-             * @param in input signal
-             * @param gain the gain level of the filter
-             * @param samples number of samples to process
-             */
-            void                process(size_t id, float *out, const float *in, const float *gain, size_t samples);
+                /** Process signal with filter varying by it's gain parameter
+                 *
+                 * @param id filer identifier
+                 * @param out output signal
+                 * @param in input signal
+                 * @param gain the gain level of the filter
+                 * @param samples number of samples to process
+                 */
+                void                process(size_t id, float *out, const float *in, const float *gain, size_t samples);
 
-            /** Get frequency chart of the specific filter
-             *
-             * @param id ID of the filter
-             * @param re real part of the frequency chart
-             * @param im imaginary part of the frequency chart
-             * @param f frequencies to calculate value
-             * @param count number of dots for the chart
-             */
-            bool                freq_chart(size_t id, float *re, float *im, const float *f, float gain, size_t count);
+                /** Get frequency chart of the specific filter
+                 *
+                 * @param id ID of the filter
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 */
+                bool                freq_chart(size_t id, float *re, float *im, const float *f, float gain, size_t count);
 
-            /** Get frequency chart of the specific filter
-             *
-             * @param id ID of the filter
-             * @param dst array of complex numbers to store data
-             * @param f frequencies to calculate value
-             * @param count number of dots for the chart
-             */
-            bool                freq_chart(size_t id, float *dst, const float *f, float gain, size_t count);
-    };
+                /** Get frequency chart of the specific filter
+                 *
+                 * @param id ID of the filter
+                 * @param dst array of complex numbers to store data
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 */
+                bool                freq_chart(size_t id, float *dst, const float *f, float gain, size_t count);
+        };
+    }
 } /* namespace lsp */
 
-#endif /* CORE_FILTERS_DYNAMICFILTERS_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_DYNAMICFILTERS_H_ */
