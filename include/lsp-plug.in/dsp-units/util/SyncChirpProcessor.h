@@ -62,6 +62,9 @@ namespace lsp
 
         class SyncChirpProcessor
         {
+            private:
+                SyncChirpProcessor & operator = (const SyncChirpProcessor &);
+
             protected:
 
                 // Chirp parameters:
@@ -186,7 +189,7 @@ namespace lsp
 
                 Sample             *pChirp;
                 Sample             *pInverseFilter;
-                AudioFile          *pConvResult;
+                Sample             *pConvResult;
 
                 Oversampler         sOver1;             // Oversampler for Band Limited chirp synthesis.
                 Oversampler         sOver2;             // Oversampler for Band Limited inverse filter synthesis.
@@ -799,7 +802,7 @@ namespace lsp
                  *
                  * @return pointer to convolution result Sample object
                  */
-                inline AudioFile * get_convolution_result() const
+                inline Sample * get_convolution_result() const
                 {
                     return pConvResult;
                 }
@@ -808,13 +811,7 @@ namespace lsp
                  *
                  * @return length convolution result positive time length in seconds
                  */
-                inline float get_convolution_result_positive_time_length() const
-                {
-                    size_t dataLength   = pConvResult->samples();
-                    size_t head         = (dataLength / 2) - 1;
-
-                    return samples_to_seconds(nSampleRate, dataLength - head);
-                }
+                float get_convolution_result_positive_time_length() const
 
                 /** Get convolution result samples for plots, arbitrary initial head
                  *

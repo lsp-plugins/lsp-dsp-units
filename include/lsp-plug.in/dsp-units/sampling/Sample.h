@@ -48,6 +48,7 @@ namespace lsp
 
             private:
                 float      *vBuffer;
+                size_t      nSampleRate;
                 size_t      nLength;
                 size_t      nMaxLength;
                 size_t      nChannels;
@@ -67,24 +68,30 @@ namespace lsp
                 void        destroy();
 
             public:
-                inline bool valid() const { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
-                inline size_t length() const { return nLength; }
-                inline size_t max_length() const { return nMaxLength; }
+                inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
+                inline size_t       length() const                  { return nLength; }
+                inline size_t       max_length() const              { return nMaxLength; }
 
-                inline float *getBuffer(size_t channel) { return &vBuffer[nMaxLength * channel]; }
+                inline float       *getBuffer(size_t channel)       { return &vBuffer[nMaxLength * channel]; }
                 inline const float *getBuffer(size_t channel) const { return &vBuffer[nMaxLength * channel]; }
 
-                inline float *getBuffer(size_t channel, size_t offset) { return &vBuffer[nMaxLength * channel + offset]; }
+                inline float       *channel(size_t channel)         { return &vBuffer[nMaxLength * channel]; }
+                inline const float *channel(size_t channel) const   { return &vBuffer[nMaxLength * channel]; }
+
+                inline float       *getBuffer(size_t channel, size_t offset) { return &vBuffer[nMaxLength * channel + offset]; }
                 inline const float *getBuffer(size_t channel, size_t offset) const { return &vBuffer[nMaxLength * channel + offset]; }
 
-                inline size_t channels() const { return nChannels; };
+                inline size_t       channels() const                { return nChannels;     }
+
+                inline size_t       sample_rate() const             { return nSampleRate;   }
+                inline void         set_sample_rate(size_t srate)   { nSampleRate = srate;  }
 
                 /** Set length of sample
                  *
                  * @param length length to set
                  * @return actual length of the sample
                  */
-                inline size_t setLength(size_t length)
+                inline size_t set_length(size_t length)
                 {
                     if (length > nMaxLength)
                         length = nMaxLength;

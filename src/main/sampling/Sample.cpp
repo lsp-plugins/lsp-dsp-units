@@ -40,6 +40,7 @@ namespace lsp
         void Sample::construct()
         {
             vBuffer     = NULL;
+            nSampleRate = 0;
             nLength     = 0;
             nMaxLength  = 0;
             nChannels   = 0;
@@ -47,10 +48,8 @@ namespace lsp
 
         void Sample::destroy()
         {
-    //        lsp_trace("Sample::destroy this=%p", this);
             if (vBuffer != NULL)
             {
-    //            lsp_trace("free vBuffer=%p", vBuffer);
                 free(vBuffer);
                 vBuffer     = NULL;
             }
@@ -139,6 +138,7 @@ namespace lsp
         void Sample::dump(IStateDumper *v) const
         {
             v->write("vBuffer", vBuffer);
+            v->write("nSampleRate", nSampleRate);
             v->write("nLength", nLength);
             v->write("nMaxLength", nMaxLength);
             v->write("nChannels", nChannels);
