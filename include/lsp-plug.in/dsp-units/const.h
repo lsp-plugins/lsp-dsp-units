@@ -80,4 +80,15 @@
 #define GAIN_AMP_N_60_DB                    GAIN_AMP_M_60_DB
 #define GAIN_AMP_N_72_DB                    GAIN_AMP_M_72_DB
 
+// Float saturation limits
+#define FLOAT_SAT_P_NAN                     0.0f
+#define FLOAT_SAT_N_NAN                     0.0f
+#define FLOAT_SAT_P_INF                     1e+10f
+#define FLOAT_SAT_N_INF                     -1e+10f
+#define FLOAT_SAT_P_NAN_I                   0
+#define FLOAT_SAT_N_NAN_I                   0
+#define FLOAT_SAT_P_INF_I                   0x501502f9
+#define FLOAT_SAT_N_INF_I                   0xd01502f9
+
+
 #endif /* LSP_PLUG_IN_DSP_UNITS_CONST_H_ */

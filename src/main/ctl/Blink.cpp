@@ -20,7 +20,7 @@
  */
 
 #include <lsp-plug.in/dsp-units/ctl/Blink.h>
-#include <lsp-plug.in/dsp-units/func.h>
+#include <lsp-plug.in/dsp-units/units.h>
 
 namespace lsp
 {
