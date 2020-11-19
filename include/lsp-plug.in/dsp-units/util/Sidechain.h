@@ -86,7 +86,11 @@ namespace lsp
                 explicit Sidechain();
                 ~Sidechain();
 
-            public:
+                /**
+                 * Construct the object
+                 */
+                void            construct();
+
                 /** Initialize sidechain
                  *
                  * @param channels number of input channels, possible 1 or 2
@@ -99,6 +103,7 @@ namespace lsp
                  */
                 void destroy();
 
+            public:
                 /** Set pre-processing equalizer
                  *
                  * @param eq equalizer

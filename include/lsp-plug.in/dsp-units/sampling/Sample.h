@@ -23,7 +23,7 @@
 #define LSP_PLUG_IN_DSP_UNITS_SAMPLING_SAMPLE_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
-#include <lsp-plug.in/common/types.h>
+#include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 #define AUDIO_SAMPLE_CONTENT_TYPE       "application/x-lsp-audio-sample"
 
@@ -52,12 +52,19 @@ namespace lsp
                 size_t      nMaxLength;
                 size_t      nChannels;
 
-            private:
-                Sample & operator = (const Sample &);
-
             public:
                 explicit Sample();
                 ~Sample();
+
+                /**
+                 * Create uninitialied sample
+                 */
+                void        construct();
+
+                /** Drop sample contents
+                 *
+                 */
+                void        destroy();
 
             public:
                 inline bool valid() const { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
@@ -124,16 +131,17 @@ namespace lsp
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
 
-                /** Drop sample contents
-                 *
-                 */
-                void destroy();
-
                 /**
                  * Swap contents with another sample
                  * @param dst sample to perform swap
                  */
                 void swap(Sample *dst);
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
         };
     }
 } /* namespace lsp */

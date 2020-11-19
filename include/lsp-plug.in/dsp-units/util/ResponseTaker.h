@@ -117,8 +117,10 @@ namespace lsp
                 explicit ResponseTaker();
                 ~ResponseTaker();
 
-            public:
-                status_t reconfigure(Sample *testsig);
+                /** Construct the ResponseTaker
+                 *
+                 */
+                void construct();
 
                 /** Initialise ResponseTaker
                  *
@@ -129,6 +131,9 @@ namespace lsp
                  *
                  */
                 void destroy();
+
+            public:
+                status_t reconfigure(Sample *testsig);
 
                 /** Check that ResponseTaker needs settings update
                  *
@@ -212,42 +217,12 @@ namespace lsp
                 /** Start latency detection process
                  *
                  */
-                inline void start_capture()
-                {
-                    sInputProcessor.nState          = IP_WAIT;
-                    sInputProcessor.ig_time         = 0;
-                    sInputProcessor.ig_start        = 0;
-                    sInputProcessor.ig_stop         = -1;
-                    sInputProcessor.nAcquireTime    = 0;
-
-                    sOutputProcessor.nState         = OP_FADEOUT;
-                    sOutputProcessor.og_time        = 0;
-                    sOutputProcessor.og_start       = 0;
-                    sOutputProcessor.nPauseTime     = 0;
-                    sOutputProcessor.nTestSigTime   = 0;
-
-                    bCycleComplete                  = false;
-                }
+                void start_capture();
 
                 /** Force the chirp system to reset it's state
                  *
                  */
-                inline void reset_capture()
-                {
-                    sInputProcessor.nState          = IP_BYPASS;
-                    sInputProcessor.ig_time         = 0;
-                    sInputProcessor.ig_start        = 0;
-                    sInputProcessor.ig_stop         = -1;
-                    sInputProcessor.nAcquireTime    = 0;
-
-                    sOutputProcessor.nState         = OP_BYPASS;
-                    sOutputProcessor.og_time        = 0;
-                    sOutputProcessor.og_start       = 0;
-                    sOutputProcessor.nPauseTime     = 0;
-                    sOutputProcessor.nTestSigTime   = 0;
-
-                    bCycleComplete                  = false;
-                }
+                void reset_capture();
 
                 /** Return true if the measurement cycle was completed
                  *
@@ -301,6 +276,12 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void process(float *dst, const float *src, size_t count);
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
         };
     }
 }
