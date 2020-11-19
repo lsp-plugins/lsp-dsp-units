@@ -45,6 +45,11 @@ namespace lsp
                 explicit Dither();
                 ~Dither();
 
+                /**
+                 * Create object
+                 */
+                void        construct();
+
             public:
                 /** Initialize dither
                  *

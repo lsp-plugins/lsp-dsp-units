@@ -19,59 +19,66 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dsp/dsp.h>
-#include <core/util/Dither.h>
+#include <lsp-plug.in/dsp-units/util/Dither.h>
+#include <lsp-plug.in/dsp/dsp.h>
 
 #define DITHER_8BIT         0.00390625  /* 1 / 256 */
 
 namespace lsp
 {
-    Dither::Dither()
+    namespace dspu
     {
-        nBits   = 0;
-        fGain   = 1.0f;
-        fDelta  = 0.0f;
-    }
-
-    Dither::~Dither()
-    {
-    }
-
-    void Dither::set_bits(size_t bits)
-    {
-        nBits   = bits;
-        if (bits <= 0)
-            return;
-
-        fDelta  = 4.0f; // 4 = 2 to compensate random in range -0.5 .. 0.5  *  2 to compensate (-1.0 .. 1.0 = 2.0) polarity
-        while (bits >= 8)
+        Dither::Dither()
         {
-            fDelta     *= DITHER_8BIT;
-            bits       -= 8;
-        }
-        if (bits > 0)
-            fDelta     /= float(1 << bits);
-        fGain   = 1.0f - 0.5f * fDelta;
-    }
-
-    void Dither::process(float *out, const float *in, size_t count)
-    {
-        if (!nBits)
-        {
-            dsp::copy(out, in, count);
-            return;
+            construct();
         }
 
-        while (count--)
-            *(out++) = *(in++) * fGain + (sRandom.random(RND_TRIANGLE) - 0.5f) * fDelta;
-    }
+        Dither::~Dither()
+        {
+        }
 
-    void Dither::dump(IStateDumper *v) const
-    {
-        v->write("nBits", nBits);
-        v->write("fGain", fGain);
-        v->write("fDelta", fDelta);
-        v->write_object("sRandom", &sRandom);
-    }
+        void Dither::construct()
+        {
+            nBits   = 0;
+            fGain   = 1.0f;
+            fDelta  = 0.0f;
+        }
 
+        void Dither::set_bits(size_t bits)
+        {
+            nBits   = bits;
+            if (bits <= 0)
+                return;
+
+            fDelta  = 4.0f; // 4 = 2 to compensate random in range -0.5 .. 0.5  *  2 to compensate (-1.0 .. 1.0 = 2.0) polarity
+            while (bits >= 8)
+            {
+                fDelta     *= DITHER_8BIT;
+                bits       -= 8;
+            }
+            if (bits > 0)
+                fDelta     /= float(1 << bits);
+            fGain   = 1.0f - 0.5f * fDelta;
+        }
+
+        void Dither::process(float *out, const float *in, size_t count)
+        {
+            if (!nBits)
+            {
+                dsp::copy(out, in, count);
+                return;
+            }
+
+            while (count--)
+                *(out++) = *(in++) * fGain + (sRandom.random(RND_TRIANGLE) - 0.5f) * fDelta;
+        }
+
+        void Dither::dump(IStateDumper *v) const
+        {
+            v->write("nBits", nBits);
+            v->write("fGain", fGain);
+            v->write("fDelta", fDelta);
+            v->write_object("sRandom", &sRandom);
+        }
+    }
 } /* namespace lsp */
