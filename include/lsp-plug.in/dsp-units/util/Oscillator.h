@@ -58,6 +58,9 @@ namespace lsp
 
         class Oscillator
         {
+            private:
+                Oscillator & operator = (const Oscillator &);
+
             protected:
                 typedef uint32_t phacc_t;
 
@@ -152,11 +155,23 @@ namespace lsp
 
                 bool                bSync;                  // Flag that indicates that generator needs update
 
-            public:
-                Oscillator();
-                ~Oscillator();
+            protected:
+                /** Synthesize the required wave and write its sample to internal
+                 * buffer.
+                 *
+                 * @param os oversampler to use for the processing
+                 * @param count number of samples to process
+                 */
+                void do_process(Oversampler *os, float * dst, size_t count);
 
             public:
+                explicit Oscillator();
+                ~Oscillator();
+
+                /**
+                 * Construct the oscillator
+                 */
+                void construct();
 
                 /** Initialise Oscillator
                  *
@@ -167,6 +182,8 @@ namespace lsp
                  *
                  */
                 void destroy();
+
+            public:
 
                 /** Check that generator needs settings update
                  *
@@ -254,197 +271,76 @@ namespace lsp
                  *
                  *  @ param phase phase factor of the oscillator [rad].
                  */
-                inline void set_phase(float phase)
-                {
-
-                    if (fInitPhase == phase)
-                        return;
-
-                    fInitPhase = phase;
-                    bSync = true;
-                }
+                void set_phase(float phase);
 
                 /** Get the exact current phase factor:
                  *
                  */
-                inline float get_exact_phase() const
-                {
-                    double x = (nPhaseAccMask + 1.0);
-                    return round(x * fInitPhase * 0.5f * M_1_PI) * (2.0 * M_PI / x);
-                }
+                float get_exact_phase() const;
 
                 /** Set the DC offset
                  *
                  * @param dcOffset DC offset of the wave
                  */
-                inline void set_dc_offset(float dcOffset)
-                {
-                    if (fDCOffset == dcOffset)
-                        return;
-
-                    fDCOffset = dcOffset;
-                }
+                void set_dc_offset(float dcOffset);
 
                 /** Set the DC Reference
                  *
                  * @param dcReference
                  */
-                inline void set_dc_reference(dc_reference_t dcReference)
-                {
-                    if ((dcReference < DC_WAVEDC) || (dcReference >= DC_MAX))
-                        return;
-
-                    enDCReference   = dcReference;
-                    bSync           = true;
-                }
+                void set_dc_reference(dc_reference_t dcReference);
 
                 /** Set inversion value for squared sinusoids
                  *
                  * @param invert boolean expressing if inverted
                  */
-                inline void set_squared_sinusoid_inversion(bool invert)
-                {
-                    if (sSquaredSinusoid.bInvert == invert)
-                        return;
+                void set_squared_sinusoid_inversion(bool invert);
 
-                    sSquaredSinusoid.bInvert = invert;
-                    bSync = true;
-                }
-
-                inline void set_parabolic_inversion(bool invert)
-                {
-                    if (sParabolic.bInvert == invert)
-                        return;
-
-                    sParabolic.bInvert = invert;
-                    bSync = true;
-                }
+                void set_parabolic_inversion(bool invert);
 
                 /** Set the duty ratio for rectangular waves
                  *
                  * @param dutyRatio duty ratio of the rectangular wave.
                  */
-                inline void set_duty_ratio(float dutyRatio)
-                {
-                    if ((sRectangular.fDutyRatio == dutyRatio) || (dutyRatio < 0.0f) || (dutyRatio > 1.0f))
-                        return;
-
-                    sRectangular.fDutyRatio = dutyRatio;
-                    bSync = true;
-                }
+                void set_duty_ratio(float dutyRatio);
 
                 /** Set the width for sawtooth waves
                  *
                  * @ param width width of sawtooth wave
                  */
-                inline void set_width(float width)
-                {
-                    if (width < 0.0f)
-                        width = 0.0f;
-                    else if (width > 1.0f)
-                        width = 1.0f;
-                    if (sSawtooth.fWidth == width)
-                        return;
-
-                    sSawtooth.fWidth = width;
-                    bSync = true;
-                }
+                void set_width(float width);
 
                 /** Set raise and fall ratios for the trapezoid wave
                  *
                  * @ param raise raise ratio of the trapezoid
                  * @ param fall fall ratio of the trepezoid
                  */
-                inline void set_trapezoid_ratios(float raise, float fall)
-                {
-                    if (raise < 0.0f)
-                        raise = 0.0f;
-                    else if (raise > 1.0f)
-                        raise = 1.0f;
-
-                    if (fall < 0.0f)
-                        fall = 0.0f;
-                    else if (fall > 1 - raise)
-                        fall = 1 - raise;
-
-                    if ((raise == sTrapezoid.fRaiseRatio) && (fall == sTrapezoid.fFallRatio))
-                        return;
-
-                    sTrapezoid.fRaiseRatio      = raise;
-                    sTrapezoid.fFallRatio       = fall;
-                    bSync                       = true;
-
-                }
+                void set_trapezoid_ratios(float raise, float fall);
 
                 /** Set width ratios for pulse train
                  *
                  * @param posWidthRatio ratio of the positive amplitude pulse
                  * @param negWidthRatio ratio of the negative amplitude pulse
                  */
-                inline void set_pulsetrain_ratios(float posWidthRatio, float negWidthRatio)
-                {
-                    if (posWidthRatio < 0.0f)
-                        posWidthRatio = 0.0f;
-                    else if (posWidthRatio > 1.0f)
-                        posWidthRatio = 1.0f;
-
-                    if (negWidthRatio < 0.0f)
-                        negWidthRatio = 0.0f;
-                    else if (negWidthRatio > 1.0f)
-                        negWidthRatio = 1.0f;
-
-                    if ((posWidthRatio == sPulse.fPosWidthRatio) && (negWidthRatio == sPulse.fNegWidthRatio))
-                        return;
-
-                    sPulse.fPosWidthRatio   = posWidthRatio;
-                    sPulse.fNegWidthRatio   = negWidthRatio;
-                    bSync                   = true;
-
-                }
+                void set_pulsetrain_ratios(float posWidthRatio, float negWidthRatio);
 
                 /** Set parabolic wave width
                  *
                  * @param width width of parabolic wave
                  */
-                inline void set_parabolic_width(float width)
-                {
-                    if (width < 0.0f)
-                        width = 0.0f;
-                    else if (width > 1.0f)
-                        width = 1.0f;
-
-                    if (sParabolic.fWidth == width)
-                        return;
-
-                    sParabolic.fWidth   = width;
-                    bSync               = true;
-                }
+                void set_parabolic_width(float width);
 
                 /** Set Oversampler mode
                  *
                  * @param mode oversampler mode
                  */
-                inline void set_oversampler_mode(over_mode_t mode)
-                {
-                    if (mode == enOverMode)
-                        return;
-
-                    enOverMode = mode;
-                    bSync = true;
-                }
+                void set_oversampler_mode(over_mode_t mode);
 
                 /** Set the amplitude of the oscillator:
                  *
-                 * @param amplitude amplitude of the oscillator. [ ]
+                 * @param amplitude amplitude of the oscillator.
                  */
-                inline void set_amplitude(float amplitude)
-                {
-                    if (fAmplitude == amplitude)
-                        return;
-
-                    fAmplitude = amplitude;
-                    bSync = true;
-                }
+                void set_amplitude(float amplitude);
 
                 /** Return a given number of periods of the output waves.
                  *
@@ -486,17 +382,6 @@ namespace lsp
                  * @param dumper dumper
                  */
                 void dump(IStateDumper *v) const;
-
-            protected:
-
-                /** Synthesize the required wave and write its sample to internal
-                 * buffer.
-                 *
-                 * @param os oversampler to use for the processing
-                 * @param count number of samples to process
-                 */
-                void do_process(Oversampler *os, float * dst, size_t count);
-
         };
     }
 }

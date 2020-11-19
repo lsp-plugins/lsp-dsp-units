@@ -60,9 +60,11 @@ namespace lsp
             public:
                 explicit Randomizer();
 
+                /**
+                 * Cunstruct the randomizer
+                 */
                 void construct();
 
-            public:
                 /** Initialize random generator
                  *
                  * @param seed seed
@@ -73,6 +75,7 @@ namespace lsp
                  */
                 void init();
 
+            public:
                 /** Generate float random number in range of [0..1) - excluding 1.0f
                  * The guaranteed tolerance is 1e-6 or 0.000001
                  *

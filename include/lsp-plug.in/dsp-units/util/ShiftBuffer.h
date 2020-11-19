@@ -50,20 +50,25 @@ namespace lsp
                 explicit ShiftBuffer();
                 ~ShiftBuffer();
 
-            public:
+                /**
+                 * Construct the buffer
+                 */
+                void        construct();
+
                 /** Init buffer, all previously stored data will be lost
                  *
                  * @param size the requested size of buffer, in terms of optimization may be allocated a bit more data
                  * @param gap number of zero samples initially stored in buffer, can not be greater than size
                  * @return status of operation
                  */
-                bool init(size_t size, size_t gap = 0);
+                bool        init(size_t size, size_t gap = 0);
 
                 /** Destroy buffer
                  *
                  */
-                void destroy();
+                void        destroy();
 
+            public:
                 /** Resize buffer, if not initialized is similar to init()
                  *
                  * @param size the requested size of buffer, in terms of optimization may be allocated a bit more data
@@ -129,74 +134,44 @@ namespace lsp
                  *
                  * @return data pointer at the head of buffer
                  */
-                inline float *head()
-                {
-                    return (pData != NULL) ? &pData[nHead] : NULL;
-                }
+                float *head();
 
                 /** Get the data pointer at the tail of buffer
                  *
                  * @return data pointer at the tail of buffer
                  */
-                inline float *tail()
-                {
-                    return (pData != NULL) ? &pData[nTail] : NULL;
-                }
+                float *tail();
 
                 /** Get the data pointer at the head of buffer
                  * @param offset offset from the head
                  * @return data pointer at the head of buffer
                  */
-                inline float *head(size_t offset)
-                {
-                    if (pData == NULL)
-                        return NULL;
-                    offset += nHead;
-                    return (offset >= nTail) ? NULL : &pData[offset];
-                }
+                float *head(size_t offset);
 
                 /** Get the data pointer at the tail of buffer
                  * @param offset offset from the tail
                  * @return data pointer at the tail of buffer
                  */
-                inline float *tail(size_t offset)
-                {
-                    if (pData == NULL)
-                        return NULL;
-                    ssize_t off = nTail - offset;
-                    return (off < ssize_t(nHead)) ? NULL : &pData[off];
-                }
+                float *tail(size_t offset);
 
                 /** Get sample from tail
                  *
                  * @param offset offset
                  * @return sample
                  */
-                inline float last(size_t offset)
-                {
-                    if (pData == NULL)
-                        return 0.0f;
-                    ssize_t off = nTail - offset;
-                    return (off < ssize_t(nHead)) ? 0.0f : pData[off];
-                }
+                float last(size_t offset);
 
                 /** Get the first sample in the buffer
                  *
                  * @return the first sample in the buffer or 0 if empty
                  */
-                inline float first() const
-                {
-                    return ((pData != NULL) && (nTail > nHead)) ? pData[nHead] : 0.0f;
-                }
+                float first() const;
 
                 /** Get the last sample in the buffer
                  *
                  * @return the last sample in the buffer or 0 if empty
                  */
-                inline float last() const
-                {
-                    return ((pData != NULL) && (nTail > nHead)) ? pData[nTail-1] : 0.0f;
-                }
+                float last() const;
 
                 /** Get the first sample in the buffer
                  *
@@ -204,36 +179,20 @@ namespace lsp
                  *
                  * @return the first sample in the buffer or 0 if empty
                  */
-                inline float first(size_t offset) const
-                {
-                    if (pData == NULL)
-                        return 0.0f;
-                    offset += nHead;
-                    return (offset >= nTail) ? 0.0f : pData[offset];
-                }
+                float first(size_t offset) const;
 
                 /** Get the last sample in the buffer
                  * @param offset offset from the tail
                  *
                  * @return the last sample in the buffer or 0 if empty
                  */
-                inline float last(size_t offset) const
-                {
-                    if (pData == NULL)
-                        return 0.0f;
-                    ssize_t off     = nTail - offset;
-                    return (off >= ssize_t(nHead)) ? pData[off] : 0.0f;
-                }
+                float last(size_t offset) const;
 
                 /** Fill buffer with specific value
                  *
                  * @param value value used to fill
                  */
-                inline void fill(float value)
-                {
-                    if (nHead < nTail)
-                        dsp::fill(&pData[nHead], value, nTail - nHead);
-                }
+                void fill(float value);
 
                 /** Copy data from the specified ShiftBuffer
                  *

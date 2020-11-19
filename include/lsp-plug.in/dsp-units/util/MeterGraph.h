@@ -52,25 +52,30 @@ namespace lsp
                 explicit MeterGraph();
                 ~MeterGraph();
 
-            public:
+                /**
+                 * Construct object
+                 */
+                void        construct();
+
                 /** Initialize meter graph
                  *
                  * @param frames number of frames used for graph and needed to be stored in internal buffer
                  * @param period strobe period
                  * @return true on success
                  */
-                bool init(size_t frames, size_t period);
+                bool        init(size_t frames, size_t period);
 
+                /** Destroy meter graph
+                 *
+                 */
+                void        destroy();
+
+            public:
                 /**
                  * Get number of frames
                  * @return number of frames
                  */
                 inline size_t get_frames() const        { return sBuffer.size(); }
-
-                /** Destroy meter graph
-                 *
-                 */
-                void destroy();
 
                 /** Set metering method
                  *

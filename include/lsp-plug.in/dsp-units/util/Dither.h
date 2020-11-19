@@ -30,6 +30,9 @@ namespace lsp
 {
     namespace dspu
     {
+        /**
+         * Dither class: generates dither noise with specified characteristics
+         */
         class Dither
         {
             private:

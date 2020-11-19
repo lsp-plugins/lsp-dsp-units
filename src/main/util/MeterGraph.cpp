@@ -19,163 +19,172 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dsp/dsp.h>
-#include <core/util/MeterGraph.h>
+#include <lsp-plug.in/dsp-units/util/MeterGraph.h>
+#include <lsp-plug.in/dsp/dsp.h>
 
 namespace lsp
 {
-    MeterGraph::MeterGraph()
+    namespace dspu
     {
-        fCurrent    = 0.0f;
-        nCount      = 0;
-        nPeriod     = 1;
-        bMinimize   = false;
-    }
-
-    MeterGraph::~MeterGraph()
-    {
-        destroy();
-    }
-
-    bool MeterGraph::init(size_t frames, size_t period)
-    {
-        if (period <= 0)
-            return false;
-
-        if (!sBuffer.init(frames * 4, frames))
-            return false;
-
-        fCurrent    = 0.0f;
-        nCount      = 0;
-        nPeriod     = period;
-        return true;
-    }
-
-    void MeterGraph::destroy()
-    {
-        sBuffer.destroy();
-    }
-
-    void MeterGraph::process(float sample)
-    {
-        // Make sample positive
-        if (sample < 0)
-            sample      = - sample;
-
-        if (bMinimize)
+        MeterGraph::MeterGraph()
         {
-            // Update current sample
-            if (nCount == 0)
-                fCurrent    = sample;
-            else if (fCurrent < sample)
-                fCurrent    = sample;
-        }
-        else
-        {
-            // Update current sample
-            if (nCount == 0)
-                fCurrent    = sample;
-            else if (fCurrent > sample)
-                fCurrent    = sample;
+            construct();
         }
 
-        // Increment number of samples processed
-        if ((++nCount) >= nPeriod)
+        MeterGraph::~MeterGraph()
         {
-            // Append current sample to buffer
-            sBuffer.shift();
-            sBuffer.append(fCurrent);
+            destroy();
+        }
 
-            // Update counter
+        void MeterGraph::construct()
+        {
+            sBuffer.construct();
+            fCurrent    = 0.0f;
             nCount      = 0;
+            nPeriod     = 1;
+            bMinimize   = false;
         }
-    }
 
-    void MeterGraph::process(const float *s, size_t n)
-    {
-        if (bMinimize)
+        void MeterGraph::destroy()
         {
-            while (n > 0)
+            sBuffer.destroy();
+        }
+
+        bool MeterGraph::init(size_t frames, size_t period)
+        {
+            if (period <= 0)
+                return false;
+
+            if (!sBuffer.init(frames * 4, frames))
+                return false;
+
+            fCurrent    = 0.0f;
+            nCount      = 0;
+            nPeriod     = period;
+            return true;
+        }
+
+        void MeterGraph::process(float sample)
+        {
+            // Make sample positive
+            if (sample < 0)
+                sample      = - sample;
+
+            if (bMinimize)
             {
-                // Determine amount of samples to process
-                ssize_t can_do      = nPeriod - nCount;
-                if (can_do > ssize_t(n))
-                    can_do          = n;
+                // Update current sample
+                if (nCount == 0)
+                    fCurrent    = sample;
+                else if (fCurrent < sample)
+                    fCurrent    = sample;
+            }
+            else
+            {
+                // Update current sample
+                if (nCount == 0)
+                    fCurrent    = sample;
+                else if (fCurrent > sample)
+                    fCurrent    = sample;
+            }
 
-                // Process the samples
-                if (can_do > 0)
+            // Increment number of samples processed
+            if ((++nCount) >= nPeriod)
+            {
+                // Append current sample to buffer
+                sBuffer.shift();
+                sBuffer.append(fCurrent);
+
+                // Update counter
+                nCount      = 0;
+            }
+        }
+
+        void MeterGraph::process(const float *s, size_t n)
+        {
+            if (bMinimize)
+            {
+                while (n > 0)
                 {
-                    // Get maximum sample
-                    float sample        = dsp::abs_min(s, can_do);
-                    if (nCount == 0)
-                        fCurrent        = sample;
-                    else if (fCurrent > sample)
-                        fCurrent        = sample;
+                    // Determine amount of samples to process
+                    ssize_t can_do      = nPeriod - nCount;
+                    if (can_do > ssize_t(n))
+                        can_do          = n;
 
-                    // Update counters and pointers
-                    nCount             += can_do;
-                    n                  -= can_do;
-                    s                  += can_do;
+                    // Process the samples
+                    if (can_do > 0)
+                    {
+                        // Get maximum sample
+                        float sample        = dsp::abs_min(s, can_do);
+                        if (nCount == 0)
+                            fCurrent        = sample;
+                        else if (fCurrent > sample)
+                            fCurrent        = sample;
+
+                        // Update counters and pointers
+                        nCount             += can_do;
+                        n                  -= can_do;
+                        s                  += can_do;
+                    }
+
+                    // Check that need to switch to next sample
+                    if (nCount >= nPeriod)
+                    {
+                        // Append current sample to buffer
+                        sBuffer.shift();
+                        sBuffer.append(fCurrent);
+
+                        // Update counter
+                        nCount      = 0;
+                    }
                 }
-
-                // Check that need to switch to next sample
-                if (nCount >= nPeriod)
+            }
+            else
+            {
+                while (n > 0)
                 {
-                    // Append current sample to buffer
-                    sBuffer.shift();
-                    sBuffer.append(fCurrent);
+                    // Determine amount of samples to process
+                    ssize_t can_do      = nPeriod - nCount;
+                    if (can_do > ssize_t(n))
+                        can_do          = n;
 
-                    // Update counter
-                    nCount      = 0;
+                    // Process the samples
+                    if (can_do > 0)
+                    {
+                        // Get maximum sample
+                        float sample        = dsp::abs_max(s, can_do);
+                        if (nCount == 0)
+                            fCurrent        = sample;
+                        else if (fCurrent < sample)
+                            fCurrent        = sample;
+
+                        // Update counters and pointers
+                        nCount             += can_do;
+                        n                  -= can_do;
+                        s                  += can_do;
+                    }
+
+                    // Check that need to switch to next sample
+                    if (nCount >= nPeriod)
+                    {
+                        // Append current sample to buffer
+                        sBuffer.shift();
+                        sBuffer.append(fCurrent);
+
+                        // Update counter
+                        nCount      = 0;
+                    }
                 }
             }
         }
-        else
+
+        void MeterGraph::dump(IStateDumper *v) const
         {
-            while (n > 0)
-            {
-                // Determine amount of samples to process
-                ssize_t can_do      = nPeriod - nCount;
-                if (can_do > ssize_t(n))
-                    can_do          = n;
-
-                // Process the samples
-                if (can_do > 0)
-                {
-                    // Get maximum sample
-                    float sample        = dsp::abs_max(s, can_do);
-                    if (nCount == 0)
-                        fCurrent        = sample;
-                    else if (fCurrent < sample)
-                        fCurrent        = sample;
-
-                    // Update counters and pointers
-                    nCount             += can_do;
-                    n                  -= can_do;
-                    s                  += can_do;
-                }
-
-                // Check that need to switch to next sample
-                if (nCount >= nPeriod)
-                {
-                    // Append current sample to buffer
-                    sBuffer.shift();
-                    sBuffer.append(fCurrent);
-
-                    // Update counter
-                    nCount      = 0;
-                }
-            }
+            v->write_object("sBuffer", &sBuffer);
+            v->write("fCurrent", fCurrent);
+            v->write("nCount", nCount);
+            v->write("nPeriod", nPeriod);
+            v->write("bMinimize", bMinimize);
         }
-    }
-
-    void MeterGraph::dump(IStateDumper *v) const
-    {
-        v->write_object("sBuffer", &sBuffer);
-        v->write("fCurrent", fCurrent);
-        v->write("nCount", nCount);
-        v->write("nPeriod", nPeriod);
-        v->write("bMinimize", bMinimize);
     }
 }
 

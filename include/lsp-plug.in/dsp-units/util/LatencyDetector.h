@@ -34,6 +34,9 @@ namespace lsp
     {
         class LatencyDetector
         {
+            private:
+                LatencyDetector & operator = (const LatencyDetector &);
+
             protected:
 
                 // Input processor state enumerator
@@ -145,10 +148,14 @@ namespace lsp
                 void detect_peak(float *buf, size_t count);
 
             public:
-                LatencyDetector();
+                explicit LatencyDetector();
                 ~LatencyDetector();
 
-            public:
+                /**
+                 * Construct object
+                 */
+                void construct();
+
                 /** Initialise LatencyDetector
                  *
                  */
@@ -159,6 +166,7 @@ namespace lsp
                  */
                 void destroy();
 
+            public:
                 /** Check that LatencyDetector needs settings update
                  *
                  * @return true if LatencyDetector needs setting update
@@ -204,16 +212,7 @@ namespace lsp
                  *
                  * @param ratio 0 Hz Group Delay as fraction of duration
                  */
-                inline void set_delay_ratio(float ratio)
-                {
-                    if ((sChirpSystem.fDelayRatio == ratio) || (ratio <= 0))
-                        return;
-
-                    // This condition is needed for causality of direct chirp system
-                    sChirpSystem.fDelayRatio = (ratio < 4.0f) ? ratio : 4.0f;
-                    sChirpSystem.bModified = true;
-                    bSync       = true;
-                }
+                void set_delay_ratio(float ratio);
 
                 /** Set chirp pause in seconds
                  *
@@ -258,79 +257,23 @@ namespace lsp
                  *
                  * @param threshold absolute threshold
                  */
-                inline void set_abs_threshold(float threshold)
-                {
-                    if (sPeakDetector.fAbsThreshold == threshold)
-                        return;
-
-                    sPeakDetector.fAbsThreshold = ((threshold > 0.0f) && (threshold <= 1.0f)) ? threshold : DEFAULT_ABS_THRESHOLD;
-                }
+                void set_abs_threshold(float threshold);
 
                 /** Set peak detector relative threshold
                  *
                  * @param threshold relative threshold
                  */
-                inline void set_peak_threshold(float threshold)
-                {
-                    if (sPeakDetector.fPeakThreshold == threshold)
-                        return;
-
-                    sPeakDetector.fPeakThreshold = ((threshold > 0.0f) && (threshold <= 1.0f)) ? threshold : DEFAULT_PEAK_THRESHOLD;
-                }
+                void set_peak_threshold(float threshold);
 
                 /** Start latency detection process
                  *
                  */
-                inline void start_capture()
-                {
-                    sInputProcessor.nState              = IP_WAIT;
-                    sInputProcessor.ig_time             = 0;
-                    sInputProcessor.ig_start            = 0;
-                    sInputProcessor.ig_stop             = -1;
-                    sInputProcessor.nDetectCounter      = 0;
-
-                    sOutputProcessor.nState             = OP_FADEOUT;
-                    sOutputProcessor.og_time            = 0;
-                    sOutputProcessor.og_start           = 0;
-                    sOutputProcessor.nPauseCounter      = 0;
-                    sOutputProcessor.nEmitCounter       = 0;
-
-                    sPeakDetector.fValue                = 0.0f;
-                    sPeakDetector.nPosition             = 0;
-                    sPeakDetector.nTimeOrigin           = 0;
-                    sPeakDetector.bDetected             = false;
-
-                    bCycleComplete                      = false;
-                    bLatencyDetected                    = false;
-                    nLatency                            = 0;
-                }
+                void start_capture();
 
                 /** Force the chirp system to reset it's state
                  *
                  */
-                inline void reset_capture()
-                {
-                    sInputProcessor.nState              = IP_BYPASS;
-                    sInputProcessor.ig_time             = 0;
-                    sInputProcessor.ig_start            = 0;
-                    sInputProcessor.ig_stop             = -1;
-                    sInputProcessor.nDetectCounter      = 0;
-
-                    sOutputProcessor.nState             = OP_BYPASS;
-                    sOutputProcessor.og_time            = 0;
-                    sOutputProcessor.og_start           = 0;
-                    sOutputProcessor.nPauseCounter      = 0;
-                    sOutputProcessor.nEmitCounter       = 0;
-
-                    sPeakDetector.fValue                = 0.0f;
-                    sPeakDetector.nPosition             = 0;
-                    sPeakDetector.nTimeOrigin           = 0;
-                    sPeakDetector.bDetected             = false;
-
-                    bCycleComplete                      = false;
-                    bLatencyDetected                    = false;
-                    nLatency                            = 0;
-                }
+                void reset_capture();
 
                 /** Get chirp duration in samples
                  *
@@ -345,10 +288,7 @@ namespace lsp
                  *
                  * @return chirp duration in seconds
                  */
-                inline float get_duration_seconds() const
-                {
-                    return samples_to_seconds(nSampleRate, sChirpSystem.nDuration);
-                }
+                float get_duration_seconds() const;
 
                 /** Return true if the measurement cycle was completed
                  *
@@ -374,23 +314,14 @@ namespace lsp
                  */
                 inline ssize_t get_latency_samples() const
                 {
-                    if (!bCycleComplete)
-                        return -1;
-
-                    return nLatency;
+                    return (bCycleComplete) ? nLatency : -1;
                 }
 
                 /** Get latency in seconds
                  *
                  * @return latency in seconds
                  */
-                inline float get_latency_seconds() const
-                {
-                    if (!bLatencyDetected)
-                        return 0.0f;
-
-                    return samples_to_seconds(nSampleRate, nLatency);
-                }
+                float get_latency_seconds() const;
 
             public:
                 /** Stream direct chirp while recording response
@@ -416,6 +347,12 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void process_out(float *dst, const float *src, size_t count);
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
         };
     }
 }
