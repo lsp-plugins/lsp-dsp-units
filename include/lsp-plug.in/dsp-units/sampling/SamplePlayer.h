@@ -71,16 +71,16 @@ namespace lsp
                 static inline void list_insert_from_tail(list_t *list, playback_t *pb);
                 void do_process(float *dst, size_t samples);
 
+                static void dump_list(IStateDumper *v, const char *name, const list_t *list);
+
             public:
                 explicit SamplePlayer();
                 ~SamplePlayer();
 
-            public:
-                /** Set output gain
-                 *
-                 * @param gain output gain
+                /**
+                 * Construct sample player
                  */
-                inline void set_gain(float gain) { fGain = gain; }
+                void construct();
 
                 /** Initialize player
                  *
@@ -94,6 +94,13 @@ namespace lsp
                  * @param cascade destroy the bound samples
                  */
                 void destroy(bool cascade = true);
+
+            public:
+                /** Set output gain
+                 *
+                 * @param gain output gain
+                 */
+                inline void set_gain(float gain) { fGain = gain; }
 
                 /** Bind sample to specified ID, cancel all active playbacks previously associated
                  * with this sample
@@ -169,6 +176,12 @@ namespace lsp
                  *
                  */
                 void stop();
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void dump(IStateDumper *v) const;
         };
     }
 } /* namespace lsp */
