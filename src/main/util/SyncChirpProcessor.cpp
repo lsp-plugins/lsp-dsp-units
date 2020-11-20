@@ -22,7 +22,12 @@
 #include <lsp-plug.in/dsp-units/util/SyncChirpProcessor.h>
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/stdlib/string.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
+#include <lsp-plug.in/fmt/lspc/AudioReader.h>
+#include <lsp-plug.in/fmt/lspc/AudioWriter.h>
 #include <alloca.h>
 
 #define MIN_AMPLITUDE               1.0e-6f         // Chirp Minimal Amplitude
@@ -48,6 +53,16 @@ namespace lsp
     namespace dspu
     {
         SyncChirpProcessor::SyncChirpProcessor()
+        {
+            construct();
+        }
+
+        SyncChirpProcessor::~SyncChirpProcessor()
+        {
+            destroy();
+        }
+
+        void SyncChirpProcessor::construct()
         {
             nSampleRate                     = -1;
 
@@ -80,24 +95,24 @@ namespace lsp
             sFader.nFadeIn_Over             = 0;
             sFader.nFadeOut_Over            = 0;
 
-            sConvParams.nChannels			= 0;
-            sConvParams.nPartitionSize		= 0;
-            sConvParams.nConvRank			= 0;
-            sConvParams.nImage				= 0;
-            sConvParams.nAllocationSize		= 0;
-            sConvParams.vPartitions 		= NULL;
-            sConvParams.vPaddedLengths		= NULL;
+            sConvParams.nChannels           = 0;
+            sConvParams.nPartitionSize      = 0;
+            sConvParams.nConvRank           = 0;
+            sConvParams.nImage              = 0;
+            sConvParams.nAllocationSize     = 0;
+            sConvParams.vPartitions         = NULL;
+            sConvParams.vPaddedLengths      = NULL;
             sConvParams.vInversePrepends    = NULL;
             sConvParams.vConvLengths        = NULL;
             sConvParams.vAlignOffsets       = NULL;
-            sConvParams.pData				= NULL;
-            sConvParams.vInPart 			= NULL;
-            sConvParams.vInvPart 			= NULL;
-            sConvParams.vInImage 			= NULL;
-            sConvParams.vInvImage 			= NULL;
-            sConvParams.vTemp 				= NULL;
-            sConvParams.pTempData 			= NULL;
-            sConvParams.bReallocateTemp 	= true;
+            sConvParams.pData               = NULL;
+            sConvParams.vInPart             = NULL;
+            sConvParams.vInvPart            = NULL;
+            sConvParams.vInImage            = NULL;
+            sConvParams.vInvImage           = NULL;
+            sConvParams.vTemp               = NULL;
+            sConvParams.pTempData           = NULL;
+            sConvParams.bReallocateTemp     = true;
 
             sCRPostProc.noiseLevel          = 0.0;
             sCRPostProc.noiseValue          = 0.0;
@@ -141,10 +156,6 @@ namespace lsp
             bSync                           = true;
         }
 
-        SyncChirpProcessor::~SyncChirpProcessor()
-        {
-        }
-
         bool SyncChirpProcessor::init()
         {
             pChirp          = new Sample();
@@ -171,9 +182,7 @@ namespace lsp
         void SyncChirpProcessor::destroy()
         {
             destroyConvolutionParameters();
-
             destroyConvolutionTempArrays();
-
             destroyIdentificationMatrices();
 
             if (pChirp != NULL)
@@ -1605,6 +1614,20 @@ namespace lsp
 
         status_t SyncChirpProcessor::save_linear_convolution(const char *path, size_t head, size_t count)
         {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_linear_convolution(&p, head, count) : res;
+        }
+
+        status_t SyncChirpProcessor::save_linear_convolution(const LSPString *path, size_t head, size_t count)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_linear_convolution(&p, head, count) : res;
+        }
+
+        status_t SyncChirpProcessor::save_linear_convolution(const io::Path *path, size_t head, size_t count)
+        {
             if (pConvResult == NULL)
                 return STATUS_NO_DATA;
 
@@ -1619,7 +1642,7 @@ namespace lsp
             size_t maxCount         = dataLength - head;
             count                   = (count > maxCount) ? maxCount : count;
 
-            status_t status         = pConvResult->store_samples(path, head, count);
+            status_t status         = pConvResult->save_range(path, head, count);
 
             if (status != STATUS_OK)
                 return status;
@@ -1628,6 +1651,20 @@ namespace lsp
         }
 
         status_t SyncChirpProcessor::save_linear_convolution(const char *path, ssize_t offset, size_t count)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_linear_convolution(&p, offset, count) : res;
+        }
+
+        status_t SyncChirpProcessor::save_linear_convolution(const LSPString *path, ssize_t offset, size_t count)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_linear_convolution(&p, offset, count) : res;
+        }
+
+        status_t SyncChirpProcessor::save_linear_convolution(const io::Path *path, ssize_t offset, size_t count)
         {
             if (pConvResult == NULL)
                 return STATUS_NO_DATA;
@@ -1660,6 +1697,20 @@ namespace lsp
 
         status_t SyncChirpProcessor::save_linear_convolution(const char *path, size_t count)
         {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_linear_convolution(&p, count) : res;
+        }
+
+        status_t SyncChirpProcessor::save_linear_convolution(const LSPString *path, size_t count)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_linear_convolution(&p, count) : res;
+        }
+
+        status_t SyncChirpProcessor::save_linear_convolution(const io::Path *path, size_t count)
+        {
             if (pConvResult == NULL)
                 return STATUS_NO_DATA;
 
@@ -1676,17 +1727,31 @@ namespace lsp
 
         status_t SyncChirpProcessor::save_to_lspc(const char *path, ssize_t offset)
         {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_to_lspc(&p, offset) : res;
+        }
+
+        status_t SyncChirpProcessor::save_to_lspc(const LSPString *path, ssize_t offset)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_to_lspc(&p, offset) : res;
+        }
+
+        status_t SyncChirpProcessor::save_to_lspc(const io::Path *path, ssize_t offset)
+        {
             if (pConvResult == NULL)
                 return STATUS_NO_DATA;
 
-            size_t dataLength = pConvResult->samples();
+            size_t dataLength = pConvResult->length();
             if (dataLength == 0)
                 return STATUS_NO_DATA;
 
             // Create chunk file
-            LSPCFile fd;
-            LSPCAudioWriter aw;
-            lspc_audio_parameters_t p;
+            lspc::File fd;
+            lspc::AudioWriter aw;
+            lspc::audio_parameters_t p;
 
             status_t res = fd.create(path);
             if (res != STATUS_OK)
@@ -1750,13 +1815,13 @@ namespace lsp
                 skip            = skipNoOffset - nOffset;
             }
 
-            LSPCChunkWriter *wr = fd.write_chunk(LSPC_CHUNK_PROFILE);
+            lspc::ChunkWriter *wr = fd.write_chunk(LSPC_CHUNK_PROFILE);
 
-            lspc_chunk_audio_profile_t prof;
-            bzero(&prof, sizeof(lspc_chunk_audio_profile_t));
+            lspc::chunk_audio_profile_t prof;
+            bzero(&prof, sizeof(lspc::chunk_audio_profile_t));
 
             prof.common.version     = 2;
-            prof.common.size        = sizeof(lspc_chunk_audio_profile_t);
+            prof.common.size        = sizeof(lspc::chunk_audio_profile_t);
             prof.chunk_id           = audio_chunk_id;
             prof.chirp_order        = sChirpParams.nOrder;
             prof.alpha              = sChirpParams.fAlpha;
@@ -1799,7 +1864,21 @@ namespace lsp
 
         status_t SyncChirpProcessor::load_from_lspc(const char *path)
         {
-            LSPCFile fd;
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? load_from_lspc(&p) : res;
+        }
+
+        status_t SyncChirpProcessor::load_from_lspc(const LSPString *path)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? load_from_lspc(&p) : res;
+        }
+
+        status_t SyncChirpProcessor::load_from_lspc(const io::Path *path)
+        {
+            lspc::File fd;
             status_t res = fd.open(path);
             if (res != STATUS_OK)
             {
@@ -1809,15 +1888,15 @@ namespace lsp
 
             // Find profile chunk
             uint32_t chunk_id = 0;
-            LSPCChunkReader *rd = fd.find_chunk(LSPC_CHUNK_PROFILE, &chunk_id);
+            lspc::ChunkReader *rd = fd.find_chunk(LSPC_CHUNK_PROFILE, &chunk_id);
             if (rd == NULL)
             {
                 fd.close();
                 return STATUS_CORRUPTED_FILE;
             }
 
-            lspc_chunk_audio_profile_t prof;
-            rd->read_header(&prof, sizeof(lspc_chunk_audio_profile_t));
+            lspc::chunk_audio_profile_t prof;
+            rd->read_header(&prof, sizeof(lspc::chunk_audio_profile_t));
             res = status_t(rd->last_error());
             if ((res != STATUS_OK) && (res != STATUS_EOF))
             {
@@ -1865,8 +1944,8 @@ namespace lsp
             delete rd;
 
             // Read audio chunk
-            LSPCAudioReader ar;
-            lspc_audio_parameters_t p;
+            lspc::AudioReader ar;
+            lspc::audio_parameters_t p;
 
             res = ar.open(&fd);
             if (res != STATUS_OK)
@@ -2135,6 +2214,121 @@ namespace lsp
             size_t head         = (dataLength / 2) - 1;
 
             return samples_to_seconds(nSampleRate, dataLength - head);
+        }
+
+        void SyncChirpProcessor::dump(IStateDumper *v) const
+        {
+            v->write("nSampleRate", nSampleRate);
+
+            v->begin_object("sChirpParams", &sChirpParams, sizeof(chirp_t));
+            {
+                const chirp_t *c = &sChirpParams;
+
+                v->write("enMethod", c->enMethod);
+                v->write("initialFrequency", c->initialFrequency);
+                v->write("finalFrequency", c->finalFrequency);
+                v->write("fDuration", c->fDuration);
+                v->write("fAlpha", c->fAlpha);
+                v->write("fDurationCoarse", c->fDurationCoarse);
+                v->write("nDuration", c->nDuration);
+                v->write("nTimeLags", c->nTimeLags);
+                v->write("nOrder", c->nOrder);
+                v->write("beta", c->beta);
+                v->write("gamma", c->gamma);
+                v->write("delta", c->delta);
+                v->write("fConvScale", c->fConvScale);
+                v->write("bAsymptotic", c->bAsymptotic);
+                v->write("bRecalculate", c->bRecalculate);
+                v->write("bReconfigure", c->bReconfigure);
+            }
+            v->end_object();
+
+            v->begin_object("sFader", &sFader, sizeof(fader_t));
+            {
+                const fader_t *f = &sFader;
+
+                v->write("enMethod", f->enMethod);
+                v->write("fFadeIn", f->fFadeIn);
+                v->write("fFadeOut", f->fFadeOut);
+                v->write("nFadeIn", f->nFadeIn);
+                v->write("nFadeIn_Over", f->nFadeIn_Over);
+                v->write("nFadeOut", f->nFadeOut);
+                v->write("nFadeOut_Over", f->nFadeOut_Over);
+            }
+            v->end_object();
+
+            v->begin_object("sConvParams", &sConvParams, sizeof(conv_t));
+            {
+                const conv_t *c = &sConvParams;
+
+                v->write("nChannels", c->nChannels);
+                v->write("nPartitionSize", c->nPartitionSize);
+                v->write("nConvRank", c->nConvRank);
+                v->write("nImage", c->nImage);
+                v->write("nAllocationSize", c->nAllocationSize);
+                v->write("vPartitions", c->vPartitions);
+                v->write("vPaddedLengths", c->vPaddedLengths);
+                v->write("vInversePrepends", c->vInversePrepends);
+                v->write("vConvLengths", c->vConvLengths);
+                v->write("vAlignOffsets", c->vAlignOffsets);
+                v->write("pData", c->pData);
+                v->write("vInPart", c->vInPart);
+                v->write("vInvPart", c->vInvPart);
+                v->write("vInImage", c->vInImage);
+                v->write("vInvImage", c->vInvImage);
+                v->write("vTemp", c->vTemp);
+                v->write("pTempData", c->pTempData);
+                v->write("bReallocateTemp", c->bReallocateTemp);
+            }
+            v->end_object();
+
+            v->begin_object("sCRPostProc", &sCRPostProc, sizeof(crpostproc_t));
+            {
+                const crpostproc_t *c = &sCRPostProc;
+
+                v->write("noiseLevel", c->noiseLevel);
+                v->write("noiseValue", c->noiseValue);
+                v->write("fIrLimit", c->fIrLimit);
+                v->write("nIrLimit", c->nIrLimit);
+                v->write("noiseLevelNorm", c->noiseLevelNorm);
+                v->write("noiseValueNorm", c->noiseValueNorm);
+                v->write("bLowNoise", c->bLowNoise);
+                v->write("nRT", c->nRT);
+                v->write("fRT", c->fRT);
+                v->write("fCorrelation", c->fCorrelation);
+                v->write("nHamOrder", c->nHamOrder);
+                v->write("nHwinSize", c->nHwinSize);
+                v->write("nWinRank", c->nWinRank);
+                v->write("mCoeffsReDet", c->mCoeffsReDet);
+                v->write("mCoeffsImDet", c->mCoeffsImDet);
+                v->write("mCoeffsRe", c->mCoeffsRe);
+                v->write("mCoeffsIm", c->mCoeffsIm);
+                v->write("mHigherRe", c->mHigherRe);
+                v->write("mHigherIm", c->mHigherIm);
+                v->write("mKernelsRe", c->mKernelsRe);
+                v->write("mKernelsIm", c->mKernelsIm);
+                v->write("vTemprow1Re", c->vTemprow1Re);
+                v->write("vTemprow1Im", c->vTemprow1Im);
+                v->write("vTemprow2Re", c->vTemprow2Re);
+                v->write("vTemprow2Im", c->vTemprow2Im);
+                v->write("pData", c->pData);
+            }
+            v->end_object();
+
+            v->write_object("pChirp", pChirp);
+            v->write_object("pInverseFilter", pInverseFilter);
+            v->write_object("pConvResult", pConvResult);
+
+            v->write_object("sOver1", &sOver1);
+            v->write_object("sOver2", &sOver2);
+
+            v->write("enOverMode", enOverMode);
+            v->write("nOversampling", nOversampling);
+            v->write("vOverBuffer1", vOverBuffer1);
+            v->write("vOverBuffer2", vOverBuffer2);
+            v->write("vEnvelopeBuffer", vEnvelopeBuffer);
+            v->write("pData", pData);
+            v->write("bSync", bSync);
         }
     }
 }

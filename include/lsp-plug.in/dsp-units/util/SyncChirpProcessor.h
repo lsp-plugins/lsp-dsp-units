@@ -28,6 +28,8 @@
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
 #include <lsp-plug.in/dsp-units/misc/windows.h>
 #include <lsp-plug.in/common/status.h>
+#include <lsp-plug.in/runtime/LSPString.h>
+#include <lsp-plug.in/io/Path.h>
 
 namespace lsp
 {
@@ -180,11 +182,8 @@ namespace lsp
                 size_t              nSampleRate;
 
                 chirp_t             sChirpParams;
-
                 fader_t             sFader;
-
                 conv_t 				sConvParams;
-
                 crpostproc_t        sCRPostProc;
 
                 Sample             *pChirp;
@@ -207,6 +206,19 @@ namespace lsp
 
                 explicit SyncChirpProcessor();
                 ~SyncChirpProcessor();
+
+                void                construct();
+
+
+                /** Initialise SynchronizedChirp
+                 *
+                 */
+                bool                init();
+
+                /** Destroy SynchronizedChirp
+                 *
+                 */
+                void                destroy();
 
             protected:
 
@@ -436,6 +448,8 @@ namespace lsp
                  * @return status
                  */
                 status_t save_linear_convolution(const char *path, size_t head, size_t count);
+                status_t save_linear_convolution(const LSPString *path, size_t head, size_t count);
+                status_t save_linear_convolution(const io::Path *path, size_t head, size_t count);
 
                 /** Save linear convolution result to file, any wanted interval, starting point specified
                  * as offset from middle of convolution result.
@@ -446,6 +460,8 @@ namespace lsp
                  * @return status
                  */
                 status_t save_linear_convolution(const char *path, ssize_t offset, size_t count);
+                status_t save_linear_convolution(const LSPString *path, ssize_t offset, size_t count);
+                status_t save_linear_convolution(const io::Path *path, ssize_t offset, size_t count);
 
                 /** Save linear convolution result to file, positive time only
                  *
@@ -454,6 +470,8 @@ namespace lsp
                  * @return status
                  */
                 status_t save_linear_convolution(const char *path, size_t count);
+                status_t save_linear_convolution(const LSPString *path, size_t count);
+                status_t save_linear_convolution(const io::Path *path, size_t count);
 
                 /** Save nonlinear convolution result to file
                  *
@@ -462,6 +480,8 @@ namespace lsp
                  * @return status
                  */
                 status_t save_to_lspc(const char *path, ssize_t offset = 0);
+                status_t save_to_lspc(const LSPString *path, ssize_t offset = 0);
+                status_t save_to_lspc(const io::Path *path, ssize_t offset = 0);
 
                 /** Load convolution result and chirp parameters from lspc file
                  *
@@ -469,18 +489,10 @@ namespace lsp
                  * @return status
                  */
                 status_t load_from_lspc(const char *path);
+                status_t load_from_lspc(const LSPString *path);
+                status_t load_from_lspc(const io::Path *path);
 
             public:
-
-                /** Initialise SynchronizedChirp
-                 *
-                 */
-                bool init();
-
-                /** Destroy SynchronizedChirp
-                 *
-                 */
-                void destroy();
 
                 /** Check that SynchronizedChirp needs settings update
                  *
@@ -811,7 +823,7 @@ namespace lsp
                  *
                  * @return length convolution result positive time length in seconds
                  */
-                float get_convolution_result_positive_time_length() const
+                float get_convolution_result_positive_time_length() const;
 
                 /** Get convolution result samples for plots, arbitrary initial head
                  *
@@ -856,6 +868,12 @@ namespace lsp
                     sChirpParams.bReconfigure       = true;
                     bSync                           = true;
                 }
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void            dump(IStateDumper *v) const;
         };
     }
 }

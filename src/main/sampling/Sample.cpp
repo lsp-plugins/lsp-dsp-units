@@ -22,6 +22,10 @@
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/mm/InAudioFileStream.h>
+#include <lsp-plug.in/mm/OutAudioFileStream.h>
+
+#define BUFFER_FRAMES       4096
 
 namespace lsp
 {
@@ -142,6 +146,105 @@ namespace lsp
             v->write("nLength", nLength);
             v->write("nMaxLength", nMaxLength);
             v->write("nChannels", nChannels);
+        }
+
+        ssize_t Sample::save_range(const char *path, size_t offset, ssize_t count)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_range(&p, offset, count) : res;
+        }
+
+        ssize_t Sample::save_range(const LSPString *path, size_t offset, ssize_t count)
+        {
+            io::Path p;
+            status_t res = p.set(path);
+            return (res == STATUS_OK) ? save_range(&p, offset, count) : res;
+        }
+
+        ssize_t Sample::save_range(const io::Path *path, size_t offset, ssize_t count)
+        {
+            if ((nSampleRate <= 0) || (nChannels < 0))
+                return -STATUS_BAD_STATE;
+
+            ssize_t avail   = lsp_max(ssize_t(nLength - offset), 0);
+            count           = (count < 0) ? avail : lsp_min(count, avail);
+
+            mm::OutAudioFileStream os;
+            mm::audio_stream_t fmt;
+
+            fmt.srate       = nSampleRate;
+            fmt.channels    = nChannels;
+            fmt.frames      = count;
+            fmt.format      = mm::SFMT_F32;
+
+            status_t res    = os.open(path, &fmt, mm::AFMT_WAV | mm::CFMT_PCM);
+            if (res != STATUS_OK)
+            {
+                os.close();
+                return res;
+            }
+
+            ssize_t written = save_range(&os, offset, count);
+            if (written < 0)
+            {
+                os.close();
+                return -written;
+            }
+
+            res             = os.close();
+            return (res == STATUS_OK) ? written : -res;
+        }
+
+        ssize_t Sample::save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count)
+        {
+            if ((nSampleRate <= 0) || (nChannels < 0))
+                return -STATUS_BAD_STATE;
+
+            ssize_t avail   = lsp_max(ssize_t(nLength - offset), 0);
+            count           = (count < 0) ? avail : lsp_min(count, avail);
+            size_t written  = 0;
+            if (count <= 0)
+                return written;
+
+            // Allocate temporary buffer for reads
+            size_t bufsize  = lsp_min(count, BUFFER_FRAMES);
+            uint8_t *data   = NULL;
+            float *buf      = alloc_aligned<float>(data, nChannels * bufsize);
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+
+            // Perform writes to underlying stream
+            while (count > 0)
+            {
+                // Generate frame data
+                size_t to_do    = lsp_min(count, BUFFER_FRAMES);
+                for (size_t i=0; i<nChannels; ++i)
+                {
+                    const float *src    = &vBuffer[i * nMaxLength + offset];
+                    float *dst          = &buf[i];
+                    for (size_t j=0; j<to_do; ++j, ++src, dst += nChannels)
+                        *dst    = *src;
+                }
+
+                // Write data to output stream
+                ssize_t nframes = out->write(buf, to_do);
+                if (nframes < 0)
+                {
+                    if (written > 0)
+                        break;
+                    free_aligned(data);
+                    return nframes;
+                }
+
+                // Update position
+                written        += nframes;
+                offset         += nframes;
+                count          -= nframes;
+            }
+
+            free_aligned(data);
+            return written;
         }
     }
 } /* namespace lsp */
