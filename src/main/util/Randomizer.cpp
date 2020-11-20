@@ -21,11 +21,7 @@
 
 #include <lsp-plug.in/dsp-units/util/Randomizer.h>
 #include <lsp-plug.in/stdlib/math.h>
-#if defined(PLATFORM_WINDOWS)
-    #include <sysinfoapi.h>
-#else
-    #include <time.h>
-#endif /* PLATFORM_WINDOWS */
+#include <lsp-plug.in/runtime/system.h>
 
 #define RAND_RANGE          2.32830643654e-10 /* 1 / (1 << 32) */
 #define RAND_LAMBDA         M_E * M_SQRT2
@@ -95,18 +91,9 @@ namespace lsp
 
         void Randomizer::init()
         {
-    #if defined(PLATFORM_WINDOWS)
-            FILETIME clock;
-            GetSystemTimeAsFileTime(&clock);
-            init(clock.dwHighDateTime ^ clock.dwLowDateTime);
-    #else
-            struct timespec ts;
-
-            if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
-                init(ts.tv_sec ^ ts.tv_nsec);
-            else
-                init(time(NULL));
-    #endif /* PLATFORM_WINDOWS */
+            system::time_t ts;
+            system::get_time(&ts);
+            init(ts.seconds ^ ts.nanos);
         }
 
         float Randomizer::random(random_function_t func)

@@ -57,6 +57,12 @@ namespace lsp
                 size_t      nMaxLength;
                 size_t      nChannels;
 
+            protected:
+                status_t            fast_downsample(Sample *s, size_t new_sample_rate);
+                status_t            fast_upsample(Sample *s, size_t new_sample_rate);
+                status_t            complex_downsample(Sample *s, size_t new_sample_rate);
+                status_t            complex_upsample(Sample *s, size_t new_sample_rate);
+
             public:
                 explicit Sample();
                 ~Sample();
@@ -86,6 +92,7 @@ namespace lsp
                 inline const float *getBuffer(size_t channel, size_t offset) const { return &vBuffer[nMaxLength * channel + offset]; }
 
                 inline size_t       channels() const                { return nChannels;     }
+                inline size_t       samples() const                 { return nLength;       }
 
                 inline size_t       sample_rate() const             { return nSampleRate;   }
                 inline void         set_sample_rate(size_t srate)   { nSampleRate = srate;  }
@@ -142,6 +149,26 @@ namespace lsp
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
 
+                /** Resample sample
+                 *
+                 * @param new_sample_rate new sample rate
+                 * @return status of operation
+                 */
+                status_t resample(size_t new_sample_rate);
+
+                /** Reverse track
+                 *
+                 * @param channel channel to reverse
+                 * @return true on success
+                 */
+                bool reverse(size_t channel);
+
+                /** Reverse sample
+                 *
+                 * @return true on success
+                 */
+                void reverse();
+
                 /**
                  * Swap contents with another sample
                  * @param dst sample to perform swap
@@ -169,6 +196,28 @@ namespace lsp
                 inline ssize_t save(const LSPString *path)      { return save_range(path, 0, nLength);  }
                 inline ssize_t save(const io::Path *path)       { return save_range(path, 0, nLength);  }
                 ssize_t save(mm::IOutAudioStream *out)          { return save_range(out, 0, nLength);   }
+
+                /**
+                 * Load file
+                 * @param path location of the file
+                 * @param max_duration maximum duration in seconds
+                 * @return status of operation
+                 */
+                status_t load(const char *path, float max_duration = -1);
+                status_t load(const LSPString *path, float max_duration = -1);
+                status_t load(const io::Path *path, float max_duration = -1);
+                status_t load(mm::IInAudioStream *in, float max_duration = -1);
+
+                /**
+                 * Load file
+                 * @param path location of the file
+                 * @param max_samples maximum number of samples
+                 * @return status of operation
+                 */
+                status_t loads(const char *path, ssize_t max_samples = -1);
+                status_t loads(const LSPString *path, ssize_t max_samples = -1);
+                status_t loads(const io::Path *path, ssize_t max_samples = -1);
+                status_t loads(mm::IInAudioStream *in, ssize_t max_samples = -1);
 
                 /**
                  * Dump the state
