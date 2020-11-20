@@ -23,6 +23,7 @@ ARTIFACT_NAME               = lsp-dsp-units
 ARTIFACT_DESC               = High-level classes for performing DSP
 ARTIFACT_VARS               = LSP_DSP_UNITS
 ARTIFACT_HEADERS            = lsp-plug.in
+ARTIFACT_EXPORT_ALL         = 1
 ARTIFACT_VERSION            = 0.5.0-devel
 
 # List of dependencies
@@ -37,7 +38,27 @@ TEST_DEPENDENCIES = \
   TEST_STDLIB \
   LSP_TEST_FW
 
+LINUX_DEPENDENCIES = \
+  LIBSNDFILE
+
+BSD_DEPENDENCIES = \
+  LIBSNDFILE
+
+# For Linux-based systems, use libsndfile
+ifeq ($(PLATFORM),Linux)
+  DEPENDENCIES             += $(LINUX_DEPENDENCIES)
+endif
+
+# For BSD-based systems, use libsndfile
+ifeq ($(PLATFORM),BSD)
+  DEPENDENCIES             += $(BSD_DEPENDENCIES)
+endif
+
 # All possible dependencies
 ALL_DEPENDENCIES = \
   $(DEPENDENCIES) \
-  $(TEST_DEPENDENCIES)
+  $(TEST_DEPENDENCIES) \
+  $(LINUX_DEPENDENCIES) \
+  $(BSD_DEPENDENCIES)
+
+

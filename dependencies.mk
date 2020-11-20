@@ -48,6 +48,10 @@ STDLIB_VERSION             := system
 STDLIB_TYPE                := opt
 STDLIB_LDFLAGS             := -lpthread
 
+LIBSNDFILE_VERSION         := system
+LIBSNDFILE_NAME            := sndfile
+LIBSNDFILE_TYPE            := pkg
+
 ifeq ($(PLATFORM),Windows)
   TEST_STDLIB_VERSION        := system
   TEST_STDLIB_TYPE           := opt

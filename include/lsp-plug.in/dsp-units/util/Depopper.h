@@ -115,7 +115,7 @@ namespace lsp
 
             public:
                 explicit        Depopper();
-                virtual        ~Depopper();
+                ~Depopper();
 
                 /**
                  * Initialize depopper

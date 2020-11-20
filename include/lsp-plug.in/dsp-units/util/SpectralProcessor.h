@@ -66,7 +66,7 @@ namespace lsp
 
             public:
                 explicit SpectralProcessor();
-                virtual ~SpectralProcessor();
+                ~SpectralProcessor();
 
                 /**
                  * Construct object

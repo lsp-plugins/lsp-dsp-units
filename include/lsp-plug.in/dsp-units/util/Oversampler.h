@@ -97,7 +97,7 @@ namespace lsp
 
             public:
                 explicit Oversampler();
-                virtual ~Oversampler();
+                ~Oversampler();
 
                 void construct();
 
