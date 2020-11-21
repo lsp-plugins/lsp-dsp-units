@@ -520,7 +520,7 @@ namespace lsp
 
             // Delete temporary buffer and decrease length of sample
             free(k);
-            s->nLength -= k_size;
+            s->nLength -= k_len;
 
             return STATUS_OK;
         }
@@ -596,7 +596,7 @@ namespace lsp
 
             // Delete temporary buffer and decrease length of sample
             free(k);
-            s->nLength -= k_size;
+            s->nLength -= k_len;
 
             return STATUS_OK;
         }
@@ -672,7 +672,7 @@ namespace lsp
 
             // Delete temporary buffer and decrease length of sample
             free(k);
-            s->nLength -= k_size;
+            s->nLength -= k_len;
 
             return STATUS_OK;
         }
