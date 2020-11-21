@@ -62,12 +62,3 @@ LIBSNDFILE_VERSION         := system
 LIBSNDFILE_NAME            := sndfile
 LIBSNDFILE_TYPE            := pkg
 
-ifeq ($(PLATFORM),Windows)
-  TEST_STDLIB_VERSION        := system
-  TEST_STDLIB_TYPE           := opt
-  TEST_STDLIB_LDFLAGS        := -lshlwapi
-else
-  TEST_STDLIB_VERSION        := system
-  TEST_STDLIB_TYPE           := opt
-  TEST_STDLIB_LDFLAGS        := 
-endif
