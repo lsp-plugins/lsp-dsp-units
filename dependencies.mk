@@ -48,6 +48,10 @@ STDLIB_VERSION             := system
 STDLIB_TYPE                := opt
 STDLIB_LDFLAGS             := -lpthread
 
+LIBICONV_VERSION           := system
+LIBICONV_TYPE              := opt
+LIBICONV_LDFLAGS           := -liconv
+
 LIBSNDFILE_VERSION         := system
 LIBSNDFILE_NAME            := sndfile
 LIBSNDFILE_TYPE            := pkg

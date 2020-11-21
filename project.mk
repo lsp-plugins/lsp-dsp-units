@@ -42,7 +42,8 @@ LINUX_DEPENDENCIES = \
   LIBSNDFILE
 
 BSD_DEPENDENCIES = \
-  LIBSNDFILE
+  LIBSNDFILE \
+  LIBICONV
 
 # For Linux-based systems, use libsndfile
 ifeq ($(PLATFORM),Linux)
