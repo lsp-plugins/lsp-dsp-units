@@ -36,7 +36,7 @@ LSP_RUNTIME_LIB_URL        := https://github.com/sadko4u/$(LSP_RUNTIME_LIB_NAME)
 
 LSP_LLTL_LIB_VERSION       := 0.5.4
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
-LSP_LLTL_LIB_TYPE          := hdr
+LSP_LLTL_LIB_TYPE          := src
 LSP_LLTL_LIB_URL           := https://github.com/sadko4u/$(LSP_LLTL_LIB_NAME).git
 
 LSP_TEST_FW_VERSION        := 1.0.6
