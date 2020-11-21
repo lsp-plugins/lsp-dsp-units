@@ -125,7 +125,9 @@ UTEST_BEGIN("dspu.sampling", sample)
         UTEST_ASSERT(path.fmt("%s/%s-resample-%d.wav", tempdir(), full_name(), int(srate)) > 0);
         printf("Resampling %d->%d to file '%s'\n", int(TEST_SRATE), srate, path.as_utf8());
         UTEST_ASSERT(s.resample(srate) == STATUS_OK);
-        UTEST_ASSERT(s.save(&path) >= ssize_t(srate));
+        ssize_t saved = s.save(&path);
+        printf("Saved frames: %d\n", int(saved));
+        UTEST_ASSERT(saved >= ssize_t(srate));
 
         printf("Loading sample from '%s'\n", path.as_utf8());
         UTEST_ASSERT(l.load(&path) == STATUS_OK);
