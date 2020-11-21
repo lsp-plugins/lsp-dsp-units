@@ -192,11 +192,6 @@ UTEST_BEGIN("dspu.util", convolver)
         FloatBuffer dst3(dst1);
         dsp::fill_zero(src.data(SRC2_SIZE), src.size() - SRC2_SIZE);
 
-//        for (size_t i=0; i<conv.size(); ++i)
-//            conv[i] = i + 1;
-//        src.fill_zero();
-//        src[0] = 1.0f;
-
         dst1.fill_zero();
         dst2.fill_zero();
         dst3.fill_zero();

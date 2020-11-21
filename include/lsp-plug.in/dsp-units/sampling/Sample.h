@@ -97,6 +97,9 @@ namespace lsp
                 inline size_t       sample_rate() const             { return nSampleRate;   }
                 inline void         set_sample_rate(size_t srate)   { nSampleRate = srate;  }
 
+                status_t            copy(const Sample *s);
+                inline status_t     copy(const Sample &s)           { return copy(&s);      }
+
                 /** Set length of sample
                  *
                  * @param length length to set
@@ -174,6 +177,7 @@ namespace lsp
                  * @param dst sample to perform swap
                  */
                 void swap(Sample *dst);
+                inline void swap(Sample &dst)                   { swap(&dst);                           }
 
                 /**
                  * Save sample contents to file

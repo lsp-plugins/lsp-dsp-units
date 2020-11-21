@@ -25,7 +25,7 @@
 static const char *SRC_FILE = "test_data/source.wav";
 static const char *DST_FILE = "test_data/destination.wav";
 
-MTEST_BEGIN("core", resample)
+MTEST_BEGIN("dspu.sampling", resample)
 
     MTEST_MAIN
     {

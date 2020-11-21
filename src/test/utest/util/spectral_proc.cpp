@@ -32,7 +32,7 @@ using namespace lsp;
 #define TEST_FREQ       440.0f
 #define SAMPLES         8192
 
-UTEST_BEGIN("core.util", spectral_proc)
+UTEST_BEGIN("dspu.util", spectral_proc)
 
     void test_simple()
     {

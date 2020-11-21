@@ -68,8 +68,8 @@ UTEST_BEGIN("dspu.dynamics", limiter)
         UTEST_ASSERT(latency == ssize_t(5.0f * SRATE * 0.001f));
 
         // Save output
-        LSPString path;
-        UTEST_ASSERT(path.fmt_utf8("tmp/utest-tpc-%s-tri-peak.csv", this->full_name()));
+        io::Path path;
+        UTEST_ASSERT(path.fmt("%s/utest-tpc-%s-tri-peak.csv", tempdir(), this->full_name()));
         io::OutSequence fd;
         UTEST_ASSERT(fd.open(&path, io::File::FM_WRITE_NEW, "UTF-8") == STATUS_OK);
 
@@ -137,8 +137,8 @@ UTEST_BEGIN("dspu.dynamics", limiter)
         UTEST_ASSERT(latency == ssize_t(5.0f * SRATE * 0.001f));
 
         // Save output
-        LSPString path;
-        UTEST_ASSERT(path.fmt_utf8("tmp/utest-tpc-%s-trapezoid_peak.csv", this->full_name()));
+        io::Path path;
+        UTEST_ASSERT(path.fmt("%s/utest-tpc-%s-trapezoid_peak.csv", tempdir(), this->full_name()));
         io::OutSequence fd;
         UTEST_ASSERT(fd.open(&path, io::File::FM_WRITE_NEW, "UTF-8") == STATUS_OK);
 

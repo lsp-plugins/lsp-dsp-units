@@ -78,24 +78,60 @@ namespace lsp
 
         bool Sample::init(size_t channels, size_t max_length, size_t length)
         {
-            if (channels <= 0)
+            if ((channels <= 0) || (length > max_length))
                 return false;
-
-            // Destroy previous data
-            destroy();
 
             // Allocate new data
-            max_length      = align_size(max_length, DEFAULT_ALIGN);    // Make multiple of 4
-            float *buf      = reinterpret_cast<float *>(::malloc(max_length * channels * sizeof(float)));
+            size_t len      = lsp_max(max_length, size_t(DEFAULT_ALIGN));
+            size_t cap      = align_size(len, DEFAULT_ALIGN);       // Make multiple of 4
+            float *buf      = static_cast<float *>(::malloc(cap * channels * sizeof(float)));
             if (buf == NULL)
                 return false;
-            dsp::fill_zero(buf, max_length * channels);
+            dsp::fill_zero(buf, cap * channels);
+
+            // Destroy previous data
+            if (vBuffer != NULL)
+                free(vBuffer);
 
             vBuffer         = buf;
             nLength         = length;
-            nMaxLength      = max_length;
+            nMaxLength      = cap;
             nChannels       = channels;
             return true;
+        }
+
+        status_t Sample::copy(const Sample *s)
+        {
+            if ((s->nChannels <= 0) ||
+                (s->nLength > s->nMaxLength) ||
+                (s->vBuffer == NULL))
+                return STATUS_BAD_STATE;
+
+            // Allocate new data
+            size_t len      = lsp_max(s->nLength, size_t(DEFAULT_ALIGN));
+            size_t cap      = align_size(len, DEFAULT_ALIGN);       // Make multiple of 4
+            float *buf      = static_cast<float *>(::malloc(cap * s->nChannels * sizeof(float)));
+            if (buf == NULL)
+                return STATUS_NO_MEM;
+
+            // Copy data from the original sample
+            for (size_t i=0; i<s->nChannels; ++i)
+            {
+                dsp::copy(&buf[i*cap], &s->vBuffer[i * s->nMaxLength], s->nLength);
+                dsp::fill_zero(&buf[i*cap + s->nLength], cap - s->nLength);
+            }
+
+            // Destroy previous data
+            if (vBuffer != NULL)
+                free(vBuffer);
+
+            vBuffer         = buf;
+            nSampleRate     = s->nSampleRate;
+            nLength         = s->nLength;
+            nMaxLength      = cap;
+            nChannels       = s->nChannels;
+
+            return STATUS_OK;
         }
 
         bool Sample::resize(size_t channels, size_t max_length, size_t length)
@@ -133,7 +169,8 @@ namespace lsp
                 }
 
                 // Destroy previously allocated data
-                destroy();
+                if (vBuffer != NULL)
+                    free(vBuffer);
             }
             else
                 dsp::fill_zero(buf, max_length * channels);
@@ -347,7 +384,7 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Allocate temporary buffer for reads
-            size_t bufsize  = lsp_min(max_samples, BUFFER_FRAMES);
+            size_t bufsize  = lsp_min(count, BUFFER_FRAMES);
             uint8_t *data   = NULL;
             float *buf      = alloc_aligned<float>(data, fmt.channels * bufsize);
             if (buf == NULL)
@@ -366,8 +403,8 @@ namespace lsp
                 for (size_t i=0; i<fmt.channels; ++i)
                 {
                     const float *src    = &buf[i];
-                    float *dst    = &vBuffer[i * nMaxLength + offset];
-                    for (size_t j=0; j<to_do; ++j, ++src, dst += fmt.channels)
+                    float *dst          = &tmp.vBuffer[i * tmp.nMaxLength + offset];
+                    for (size_t j=0; j<to_do; ++j, src += fmt.channels, ++dst)
                         *dst    = *src;
                 }
 
@@ -419,7 +456,7 @@ namespace lsp
                 const float *src    = &vBuffer[c * nMaxLength];
                 float *dst          = &s->vBuffer[c * new_samples];
 
-                for (size_t i=0; i < nLength; ++i, src += rkf, ++dst)
+                for (size_t i=0; i < new_samples; ++i, src += rkf, ++dst)
                     *dst                = *src;
             }
 
@@ -483,7 +520,7 @@ namespace lsp
 
             // Delete temporary buffer and decrease length of sample
             free(k);
-            s->nLength -= k_center;
+            s->nLength -= k_size;
 
             return STATUS_OK;
         }
@@ -559,7 +596,7 @@ namespace lsp
 
             // Delete temporary buffer and decrease length of sample
             free(k);
-            s->nLength -= k_center;
+            s->nLength -= k_size;
 
             return STATUS_OK;
         }
@@ -635,7 +672,7 @@ namespace lsp
 
             // Delete temporary buffer and decrease length of sample
             free(k);
-            s->nLength -= k_center;
+            s->nLength -= k_size;
 
             return STATUS_OK;
         }
@@ -675,6 +712,7 @@ namespace lsp
                 if (!ff.init(nChannels, nLength, nLength))
                     return STATUS_NO_MEM;
 
+                ff.set_sample_rate(nSampleRate);
                 flt.update(nSampleRate, &fp);
 
                 // Step 2: remove all frequencies above new nyquist frequency
