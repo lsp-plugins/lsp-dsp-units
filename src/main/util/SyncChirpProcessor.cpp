@@ -28,7 +28,7 @@
 #include <lsp-plug.in/fmt/lspc/File.h>
 #include <lsp-plug.in/fmt/lspc/AudioReader.h>
 #include <lsp-plug.in/fmt/lspc/AudioWriter.h>
-#include <alloca.h>
+#include <lsp-plug.in/stdlib/stdlib.h>
 
 #define MIN_AMPLITUDE               1.0e-6f         // Chirp Minimal Amplitude
 #define DFL_TAIL                    1.0f;           // Default tail acquisition time [s]
