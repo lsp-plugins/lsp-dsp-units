@@ -23,11 +23,11 @@
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/endian.h>
-#include <lsp-plug.in/stdlib/math.h>
-#include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/fmt/lspc/File.h>
 #include <lsp-plug.in/fmt/lspc/AudioReader.h>
 #include <lsp-plug.in/fmt/lspc/AudioWriter.h>
+#include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/stdlib/string.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
 
 #define MIN_AMPLITUDE               1.0e-6f         // Chirp Minimal Amplitude
