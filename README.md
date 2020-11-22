@@ -146,7 +146,7 @@ static int process_file(const char *in, const char *out)
         return -1;
     }
 
-    // Apply +6 dB hi-shelf filter over 1 kHx
+    // Apply +6 dB hi-shelf filter at 1 kHz
     fp.nType        = lsp::dspu::FLT_BT_BWC_HISHELF;
     fp.fFreq        = 1000.0f;
     fp.fFreq2       = 1000.0f;
