@@ -51,6 +51,8 @@ $(LSP_DSP_UNITS_BIN)/main/util/SyncChirpProcessor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/Sample.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
@@ -129,7 +131,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/SpectralProcessor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Sidechain.o: main/util/Sidechain.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Sidechain.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -182,6 +186,8 @@ $(LSP_DSP_UNITS_BIN)/main/util/Sidechain.o: main/util/Sidechain.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/Filter.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
@@ -234,7 +240,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/ShiftBuffer.o: main/util/ShiftBuffer.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/ResponseTaker.o: \
  main/util/ResponseTaker.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/ResponseTaker.h \
@@ -298,7 +306,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/ResponseTaker.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Randomizer.o: main/util/Randomizer.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Randomizer.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -366,6 +376,8 @@ $(LSP_DSP_UNITS_BIN)/main/util/Oversampler.o: main/util/Oversampler.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
 $(LSP_DSP_UNITS_BIN)/main/util/Oscillator.o: main/util/Oscillator.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Oscillator.h \
@@ -419,6 +431,8 @@ $(LSP_DSP_UNITS_BIN)/main/util/Oscillator.o: main/util/Oscillator.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
 $(LSP_DSP_UNITS_BIN)/main/util/MeterGraph.o: main/util/MeterGraph.cpp \
@@ -469,7 +483,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/MeterGraph.o: main/util/MeterGraph.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/LatencyDetector.o: \
  main/util/LatencyDetector.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/LatencyDetector.h \
@@ -522,7 +538,61 @@ $(LSP_DSP_UNITS_BIN)/main/util/LatencyDetector.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
+$(LSP_DSP_UNITS_BIN)/main/util/DynamicDelay.o: main/util/DynamicDelay.cpp \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/DynamicDelay.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/types.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/3dmath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/3dmath/types.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/coding.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/complex.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/context.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/convolution.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/copy.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/fastconv.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/fft.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/filters.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/filters/types.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/filters/dynamic.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/filters/static.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/filters/transfer.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/filters/transform.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/float.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/graphics.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/hmath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/hmath/hdotp.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/hmath/hsum.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/misc.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/mix.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/msmatrix.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pcomplex.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/abs_vv.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/exp.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_vv.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/pow.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/resampling.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Dither.o: main/util/Dither.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Dither.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -571,7 +641,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/Dither.o: main/util/Dither.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Depopper.o: main/util/Depopper.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Depopper.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -623,7 +695,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/Depopper.o: main/util/Depopper.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Delay.o: main/util/Delay.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Delay.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -672,7 +746,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/Delay.o: main/util/Delay.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Crossover.o: main/util/Crossover.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Crossover.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -724,6 +800,8 @@ $(LSP_DSP_UNITS_BIN)/main/util/Crossover.o: main/util/Crossover.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/Equalizer.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
@@ -777,7 +855,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/Convolver.o: main/util/Convolver.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Analyzer.o: main/util/Analyzer.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Analyzer.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -831,7 +911,9 @@ $(LSP_DSP_UNITS_BIN)/main/util/Analyzer.o: main/util/Analyzer.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/sampling/SamplePlayer.o: \
  main/sampling/SamplePlayer.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/SamplePlayer.h \
@@ -892,7 +974,9 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/SamplePlayer.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/Sample.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -955,6 +1039,8 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/OutAudioFileStream.h \
@@ -1035,6 +1121,8 @@ $(LSP_DSP_UNITS_BIN)/main/filters/Filter.o: main/filters/Filter.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
@@ -1088,6 +1176,8 @@ $(LSP_DSP_UNITS_BIN)/main/filters/FilterBank.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
 $(LSP_DSP_UNITS_BIN)/main/filters/Equalizer.o: main/filters/Equalizer.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/Equalizer.h \
@@ -1139,6 +1229,8 @@ $(LSP_DSP_UNITS_BIN)/main/filters/Equalizer.o: main/filters/Equalizer.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/Filter.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/misc/windows.h
 $(LSP_DSP_UNITS_BIN)/main/filters/DynamicFilters.o: \
@@ -1191,6 +1283,8 @@ $(LSP_DSP_UNITS_BIN)/main/filters/DynamicFilters.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
@@ -1247,6 +1341,8 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Limiter.o: main/dynamics/Limiter.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
 $(LSP_DSP_UNITS_BIN)/main/dynamics/Gate.o: main/dynamics/Gate.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/dynamics/Gate.h \
@@ -1308,6 +1404,8 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Expander.o: main/dynamics/Expander.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h
 $(LSP_DSP_UNITS_BIN)/main/dynamics/DynamicProcessor.o: \
@@ -1362,6 +1460,8 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/DynamicProcessor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h
 $(LSP_DSP_UNITS_BIN)/main/dynamics/Compressor.o: \
  main/dynamics/Compressor.cpp \
@@ -1415,6 +1515,8 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Compressor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h
 $(LSP_DSP_UNITS_BIN)/main/ctl/Toggle.o: main/ctl/Toggle.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/ctl/Toggle.h \
@@ -1469,7 +1571,9 @@ $(LSP_DSP_UNITS_BIN)/main/ctl/Crossfade.o: main/ctl/Crossfade.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/ctl/Counter.o: main/ctl/Counter.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/ctl/Counter.h \
@@ -1524,7 +1628,9 @@ $(LSP_DSP_UNITS_BIN)/main/ctl/Bypass.o: main/ctl/Bypass.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/ctl/Blink.o: main/ctl/Blink.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/ctl/Blink.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -1593,7 +1699,9 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/spectral_proc.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/utest/util/crossfade.o: \
  test/utest/util/crossfade.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
@@ -1651,7 +1759,9 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/crossfade.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/utest/util/counter.o: \
  test/utest/util/counter.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
@@ -1709,7 +1819,9 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/counter.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/utest/util/convolver.o: \
  test/utest/util/convolver.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
@@ -1768,7 +1880,9 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/convolver.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/utest/sampling/sample.o: \
  test/utest/sampling/sample.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
@@ -1866,7 +1980,9 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/player.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/utest/dynamics/limiter.o: \
  test/utest/dynamics/limiter.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/utest.h \
@@ -1941,7 +2057,9 @@ $(LSP_DSP_UNITS_BIN)/test/utest/dynamics/limiter.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/mtest/util/sync_chirp.o: \
  test/mtest/util/sync_chirp.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/mtest.h \
@@ -2017,6 +2135,8 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/sync_chirp.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
@@ -2093,7 +2213,9 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/latency_detector.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/mtest/util/convolver.o: \
  test/mtest/util/convolver.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/mtest.h \
@@ -2163,7 +2285,9 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/convolver.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/test/mtest/sampling/resample.o: \
  test/mtest/sampling/resample.cpp \
  $(LSP_TEST_FW_INC)/lsp-plug.in/test-fw/mtest.h \
@@ -2276,6 +2400,8 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/demo.o: test/mtest/demo.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
@@ -2348,4 +2474,6 @@ $(LSP_DSP_UNITS_BIN)/test/init/init.o: test/init/init.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/iminmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/search/minmax.h \
- $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
