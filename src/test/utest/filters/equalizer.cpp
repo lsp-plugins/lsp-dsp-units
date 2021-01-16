@@ -23,11 +23,12 @@
 #include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/test-fw/FloatBuffer.h>
 #include <lsp-plug.in/dsp-units/filters/Equalizer.h>
+#include <lsp-plug.in/io/File.h>
 
 using namespace lsp;
 
 #define FFT_RANK        13
-#define BUF_SIZE        (1 << (FFT_RANK + 1))
+#define BUF_SIZE        (1 << (FFT_RANK + 2))
 
 UTEST_BEGIN("dspu.filters", equalizer)
 
@@ -60,6 +61,17 @@ UTEST_BEGIN("dspu.filters", equalizer)
         dst.fill_zero();
         eq.process(dst, src, BUF_SIZE);
 
+        // Save result
+        io::Path path;
+        UTEST_ASSERT(path.fmt("%s/%s-%s.csv", tempdir(), full_name(), label) > 0);
+        printf("  output results: %s\n", path.as_utf8());
+        FILE *out = fopen(path.as_native(), "w");
+        UTEST_ASSERT(out != NULL);
+        fprintf(out, "samples;in;out\n");
+        for (size_t i=0; i<BUF_SIZE; ++i)
+            fprintf(out, "%d;%.g;%.g\n", int(i), src[i], dst[i]);
+        fclose(out);
+
         // Check that latency matches
         size_t latency  = eq.get_latency();
         size_t index    = dsp::abs_max_index(dst, BUF_SIZE);
@@ -76,6 +88,7 @@ UTEST_BEGIN("dspu.filters", equalizer)
     {
         test_latency("FIR", dspu::EQM_FIR);
         test_latency("FFT", dspu::EQM_FFT);
+        test_latency("SPM", dspu::EQM_SPM);
     }
 
 UTEST_END
