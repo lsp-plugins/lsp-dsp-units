@@ -44,21 +44,37 @@ LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_TYPE           := src
 LSP_TEST_FW_URL            := https://github.com/sadko4u/$(LSP_TEST_FW_NAME).git
 
-ifeq ($(PLATFORM),Windows)
-  STDLIB_VERSION             := system
-  STDLIB_TYPE                := opt
-  STDLIB_LDFLAGS             := -lpthread -lshlwapi -lwinmm -lmsacm32
-else
-  STDLIB_VERSION             := system
-  STDLIB_TYPE                := opt
-  STDLIB_LDFLAGS             := -lpthread -ldl
-endif
+LIBPTHREAD_VERSION         := system
+LIBPTHREAD_NAME            := libpthread
+LIBPTHREAD_TYPE            := opt
+LIBPTHREAD_LDFLAGS         := -lpthread
+
+LIBDL_VERSION              := system
+LIBDL_NAME                 := libdl
+LIBDL_TYPE                 := opt
+LIBDL_LDFLAGS              := -ldl
 
 LIBICONV_VERSION           := system
+LIBICONV_NAME              := libiconv
 LIBICONV_TYPE              := opt
 LIBICONV_LDFLAGS           := -liconv
 
 LIBSNDFILE_VERSION         := system
 LIBSNDFILE_NAME            := sndfile
 LIBSNDFILE_TYPE            := pkg
+
+LIBSHLWAPI_VERSION         := system
+LIBSHLWAPI_NAME            := libshlwapi
+LIBSHLWAPI_TYPE            := opt
+LIBSHLWAPI_LDFLAGS         := -lshlwapi
+
+LIBWINMM_VERSION           := system
+LIBWINMM_NAME              := libwinmm
+LIBWINMM_TYPE              := opt
+LIBWINMM_LDFLAGS           := -lwinmm
+
+LIBMSACM_VERSION           := system
+LIBMSACM_NAME              := libmsacm
+LIBMSACM_TYPE              := opt
+LIBMSACM_LDFLAGS           := -lmsacm32
 

@@ -19,47 +19,55 @@
 #
 
 # Package version
+ARTIFACT_ID                 = LSP_DSP_UNITS
 ARTIFACT_NAME               = lsp-dsp-units
 ARTIFACT_DESC               = High-level classes for performing DSP
-ARTIFACT_VARS               = LSP_DSP_UNITS
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
 ARTIFACT_VERSION            = 0.5.1-devel
 
 # List of dependencies
 DEPENDENCIES = \
-  STDLIB \
+  LIBPTHREAD \
+  LIBDL \
   LSP_COMMON_LIB \
   LSP_DSP_LIB \
   LSP_LLTL_LIB \
   LSP_RUNTIME_LIB \
 
 TEST_DEPENDENCIES = \
-  TEST_STDLIB \
   LSP_TEST_FW
 
-LINUX_DEPENDENCIES = \
-  LIBSNDFILE
-
-BSD_DEPENDENCIES = \
-  LIBSNDFILE \
-  LIBICONV
-
-# For Linux-based systems, use libsndfile
+# Platform-specific dependencies
 ifeq ($(PLATFORM),Linux)
-  DEPENDENCIES             += $(LINUX_DEPENDENCIES)
+  DEPENDENCIES             += \
+    LIBSNDFILE
 endif
 
-# For BSD-based systems, use libsndfile
 ifeq ($(PLATFORM),BSD)
-  DEPENDENCIES             += $(BSD_DEPENDENCIES)
+  DEPENDENCIES             += \
+    LIBSNDFILE \
+    LIBICONV
+endif
+
+ifeq ($(PLATFORM),Windows)
+  DEPENDENCIES             += \
+    LIBSHLWAPI \
+    LIBWINMM \
+    LIBMSACM
 endif
 
 # All possible dependencies
 ALL_DEPENDENCIES = \
   $(DEPENDENCIES) \
   $(TEST_DEPENDENCIES) \
-  $(LINUX_DEPENDENCIES) \
-  $(BSD_DEPENDENCIES)
+  LIBPTHREAD \
+  LIBDL \
+  LIBSNDFILE \
+  LIBICONV \
+  LIBSHLWAPI \
+  LIBWINMM \
+  LIBMSACM
+
 
 
