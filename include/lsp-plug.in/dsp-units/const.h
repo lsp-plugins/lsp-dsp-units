@@ -80,6 +80,11 @@
 #define GAIN_AMP_N_60_DB                    GAIN_AMP_M_60_DB
 #define GAIN_AMP_N_72_DB                    GAIN_AMP_M_72_DB
 
+// Gain steps
+#define GAIN_AMP_S_0_1_DB                   0.01157945426
+#define GAIN_AMP_S_0_5_DB                   0.05925372518
+#define GAIN_AMP_S_1_DB                     0.1220184543
+
 // Float saturation limits
 #define FLOAT_SAT_P_NAN                     0.0f
 #define FLOAT_SAT_N_NAN                     0.0f

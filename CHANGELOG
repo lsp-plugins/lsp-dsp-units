@@ -2,7 +2,15 @@
 * RECENT CHANGES
 *******************************************************************************
 
-=== 0.5.0 ===
+=== 0.5.1 ===
+* Added DynamicDelay DSP processing unit.
+* Fixed latency computation error for FIR and FFT modes of the filter.
+* Optimized FIR and FFT dspu::Equalizer modes to use dsp::fastconv_ routines instead of FFT.
+* Added SPM (Spectral Processing Module) mode to dspu::Equalizer module.
+* Updated interface of dspu::Analyzer module, fixed inter-channel out-of-sync issue.
+* Added dspu::fade_in and dspu::fade_out functions.
+* Updated build system.
 
+=== 0.5.0 ===
 * Initial release.
 
