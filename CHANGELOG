@@ -2,6 +2,8 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 0.5.2 ===
+
 === 0.5.1 ===
 * Added DynamicDelay DSP processing unit.
 * Fixed latency computation error for FIR and FFT modes of the filter.
