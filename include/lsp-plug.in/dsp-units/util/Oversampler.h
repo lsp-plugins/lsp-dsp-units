@@ -216,6 +216,12 @@ namespace lsp
                  * @return oversampler latency in normal (non-oversampled) samples
                  */
                 size_t latency() const;
+
+                /**
+                 * Get maximum possible latency
+                 * @return maximum possible latency
+                 */
+                inline size_t max_latency() const       { return 8; }
     
                 /**
                  * Dump the state
