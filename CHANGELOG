@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 0.5.2 ===
+- Updated tracing information.
+- Added maximum latency estimation for several modules.
 
 === 0.5.1 ===
 * Added DynamicDelay DSP processing unit.
