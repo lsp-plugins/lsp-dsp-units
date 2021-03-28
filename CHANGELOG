@@ -5,6 +5,7 @@
 === 0.5.2 ===
 - Updated tracing information.
 - Added maximum latency estimation for several modules.
+- Updated the compressor module: added CM_BOOSTING mode for upward compression.
 
 === 0.5.1 ===
 * Added DynamicDelay DSP processing unit.
