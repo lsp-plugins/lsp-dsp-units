@@ -29,6 +29,7 @@
 #define LSP_DSP_UNITS_TEMP_ABS_ZERO                 -273.15             /* Temperature of the absolute zero [ C ]           */
 #define LSP_DSP_UNITS_SPEC_FREQ_MIN                 10.0f               /* Minimum frequency range [ Hz ]                   */
 #define LSP_DSP_UNITS_SPEC_FREQ_MAX                 24000.0f            /* Maximum frequency range [ Hz ]                   */
+#define LSP_DSP_UNITS_SOUND_SPEED_M_S               340.29f             /* The default sound speed [ m / s ]                */
 
 // Gain levels in decibels
 #define GAIN_AMP_P_96_DB                    3.98107e+4          /* +96 dB       */
