@@ -22,27 +22,27 @@
 LSP_COMMON_LIB_VERSION     := 1.0.13
 LSP_COMMON_LIB_NAME        := lsp-common-lib
 LSP_COMMON_LIB_TYPE        := src
-LSP_COMMON_LIB_URL         := https://github.com/sadko4u/$(LSP_COMMON_LIB_NAME).git
+LSP_COMMON_LIB_URL         := git@github.com:sadko4u/$(LSP_COMMON_LIB_NAME).git
 
 LSP_DSP_LIB_VERSION        := 0.5.13
 LSP_DSP_LIB_NAME           := lsp-dsp-lib
 LSP_DSP_LIB_TYPE           := src
-LSP_DSP_LIB_URL            := https://github.com/sadko4u/$(LSP_DSP_LIB_NAME).git
+LSP_DSP_LIB_URL            := git@github.com:sadko4u/$(LSP_DSP_LIB_NAME).git
 
 LSP_RUNTIME_LIB_VERSION    := 0.5.9
 LSP_RUNTIME_LIB_NAME       := lsp-runtime-lib
 LSP_RUNTIME_LIB_TYPE       := src
-LSP_RUNTIME_LIB_URL        := https://github.com/sadko4u/$(LSP_RUNTIME_LIB_NAME).git
+LSP_RUNTIME_LIB_URL        := git@github.com:sadko4u/$(LSP_RUNTIME_LIB_NAME).git
 
 LSP_LLTL_LIB_VERSION       := 0.5.6
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
 LSP_LLTL_LIB_TYPE          := src
-LSP_LLTL_LIB_URL           := https://github.com/sadko4u/$(LSP_LLTL_LIB_NAME).git
+LSP_LLTL_LIB_URL           := git@github.com:sadko4u/$(LSP_LLTL_LIB_NAME).git
 
 LSP_TEST_FW_VERSION        := 1.0.7
 LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_TYPE           := src
-LSP_TEST_FW_URL            := https://github.com/sadko4u/$(LSP_TEST_FW_NAME).git
+LSP_TEST_FW_URL            := git@github.com:sadko4u/$(LSP_TEST_FW_NAME).git
 
 LIBPTHREAD_VERSION         := system
 LIBPTHREAD_NAME            := libpthread
