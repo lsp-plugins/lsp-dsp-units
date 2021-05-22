@@ -224,6 +224,19 @@ namespace lsp
                 inline size_t       fir_ir_size() const     { return nFirSize << 1; }
 
                 /**
+                 * Get actual equalizer mode
+                 * @return actual equalizer mode
+                 */
+                inline equalizer_mode_t     mode() const    { return nMode;         }
+
+                /**
+                 * Get actual impulse response size depending on the currently set equalizer mode
+                 * For IIR filter, the zero IR size is returned
+                 * @return actual impulse response size
+                 */
+                size_t              ir_size() const;
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */

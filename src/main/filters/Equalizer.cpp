@@ -536,6 +536,25 @@ namespace lsp
             }
         }
 
+        size_t Equalizer::ir_size() const
+        {
+            switch (nMode)
+            {
+                case EQM_BYPASS:
+                case EQM_IIR:
+                    return 0;
+                    break;
+
+                case EQM_FIR:
+                case EQM_FFT:
+                case EQM_SPM:
+                    return nFirSize << 1;
+
+                default:
+                    return 0;
+            }
+        }
+
         void Equalizer::dump(IStateDumper *v) const
         {
             v->write_object("sBank", &sBank);
