@@ -226,11 +226,11 @@ namespace lsp
             for (size_t i=0; i<nFilters; ++i)
                 vFilters[i].rebuild();
             sBank.end(nFlags & EF_CLEAR);
-            nFlags              = 0;
 
             // Quit if working in IIR mode
             if (nMode == EQM_IIR)
             {
+                nFlags          = 0;
                 nLatency        = 0;
                 return;
             }
@@ -306,6 +306,16 @@ namespace lsp
 
                 nLatency    = nFirSize;
             }
+
+            // Clear state of equalizer?
+            if (nFlags & EF_CLEAR)
+            {
+                dsp::fill_zero(vInBuffer,  fft_size);
+                dsp::fill_zero(vOutBuffer, fft_size);
+                nBufSize    = 0;
+            }
+
+            nFlags      = 0;
         }
 
         void Equalizer::set_mode(equalizer_mode_t mode)
@@ -496,6 +506,33 @@ namespace lsp
                     dsp::copy(out, in, samples);
                     break;
                 }
+            }
+        }
+
+        /**
+         * Reset the internal memory of filters
+         */
+        void Equalizer::reset()
+        {
+            switch (nMode)
+            {
+                case EQM_BYPASS:
+                    return;
+
+                case EQM_IIR:
+                    sBank.reset();
+                    break;
+
+                case EQM_FIR:
+                case EQM_FFT:
+                case EQM_SPM:
+                    dsp::fill_zero(vInBuffer,  nFirSize << 1);
+                    dsp::fill_zero(vOutBuffer, nFirSize << 1);
+                    nBufSize    = 0;
+                    break;
+
+                default:
+                    break;
             }
         }
 

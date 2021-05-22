@@ -207,6 +207,23 @@ namespace lsp
                 void                process(float *out, const float *in, size_t samples);
 
                 /**
+                 * Reset the internal memory of filters
+                 */
+                void                reset();
+
+                /**
+                 * Get FIR filer rank
+                 * @return FIR filter rank
+                 */
+                inline size_t       fir_rank() const        { return nFirRank;      }
+
+                /**
+                 * Get FIR filer impulse respose size
+                 * @return FIR impulse response size
+                 */
+                inline size_t       fir_ir_size() const     { return nFirSize << 1; }
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */
