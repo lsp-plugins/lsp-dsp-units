@@ -25,7 +25,7 @@
 // Define version of headers
 #define LSP_DSP_UNITS_MAJOR         0
 #define LSP_DSP_UNITS_MINOR         5
-#define LSP_DSP_UNITS_MICRO         3
+#define LSP_DSP_UNITS_MICRO         4
 
 #ifdef LSP_DSP_UNITS_BUILTIN
     #define LSP_DSP_UNITS_CPPEXPORT
