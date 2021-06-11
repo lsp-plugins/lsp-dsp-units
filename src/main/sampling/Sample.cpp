@@ -440,6 +440,44 @@ namespace lsp
             }
         }
 
+        void Sample::normalize(float gain, sample_normalize_t mode)
+        {
+            if (mode == SAMPLE_NORM_NONE)
+                return;
+
+            // Estimate the maximum peak value for each channel
+            float peak  = 0.0f;
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                float cpeak = dsp::abs_max(channel(i), nLength);
+                peak        = lsp_max(peak, cpeak);
+            }
+
+            // No peak detected?
+            if (peak < 1e-8)
+                return;
+
+            switch (mode)
+            {
+                case SAMPLE_NORM_BELOW:
+                    if (peak >= gain)
+                        return;
+                    break;
+                case SAMPLE_NORM_ABOVE:
+                    if (peak <= gain)
+                        return;
+                    break;
+                default:
+                    break;
+            }
+
+            // Adjust gain
+            float k = gain / peak;
+            for (size_t i=0; i<nChannels; ++i)
+                dsp::mul_k2(channel(i), k, nLength);
+
+        }
+
         status_t Sample::fast_downsample(Sample *s, size_t new_sample_rate)
         {
             size_t rkf          = nSampleRate / new_sample_rate;
