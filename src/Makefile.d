@@ -750,11 +750,13 @@ $(LSP_DSP_UNITS_BIN)/main/util/Delay.o: main/util/Delay.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h
 $(LSP_DSP_UNITS_BIN)/main/util/Crossover.o: main/util/Crossover.cpp \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Crossover.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/Filter.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/common.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/FilterBank.h \
@@ -805,8 +807,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Crossover.o: main/util/Crossover.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/Equalizer.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
 $(LSP_DSP_UNITS_BIN)/main/util/Convolver.o: main/util/Convolver.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Convolver.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
@@ -1471,14 +1472,9 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/DynamicProcessor.o: \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h
 $(LSP_DSP_UNITS_BIN)/main/dynamics/Compressor.o: \
  main/dynamics/Compressor.cpp \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/dynamics/Compressor.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/misc/interpolation.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/types.h \
@@ -1523,7 +1519,12 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Compressor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/units.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/misc/interpolation.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/dynamics/Compressor.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h
 $(LSP_DSP_UNITS_BIN)/main/ctl/Toggle.o: main/ctl/Toggle.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/ctl/Toggle.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \

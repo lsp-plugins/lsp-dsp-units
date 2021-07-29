@@ -4,6 +4,7 @@
 
 === 0.5.4 ===
 - Added dspu::Sample::normalize method for sample normalization.
+- Updated build system.
 
 === 0.5.3 ===
 * Added LSP_DSP_UNITS_SOUND_SPEED_M_S constant that defines sound speed.
