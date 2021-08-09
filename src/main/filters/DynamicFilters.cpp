@@ -1965,5 +1965,32 @@ namespace lsp
 
             return true;
         }
+
+        void DynamicFilters::dump(dspu::IStateDumper *v) const
+        {
+            v->begin_array("vFilters", vFilters, nFilters);
+            for (size_t i=0; i<nFilters; ++i)
+            {
+                const filter_t *f = &vFilters[i];
+                v->begin_object(f, sizeof(filter_t));
+                {
+                    v->write("nType", f->sParams.nType);
+                    v->write("fFreq", f->sParams.fFreq);
+                    v->write("fFreq2", f->sParams.fFreq2);
+                    v->write("fGain", f->sParams.fGain);
+                    v->write("nSlope", f->sParams.nSlope);
+                    v->write("fQuality", f->sParams.fQuality);
+                    v->write("bActive", f->bActive);
+                }
+                v->end_object();
+            }
+            v->end_array();
+            v->write("vCascades", vCascades);
+            v->write("vBiquads", vBiquads.ptr);
+            v->write("nFilters", nFilters);
+            v->write("nSampleRate", nSampleRate);
+            v->write("pData", pData);
+            v->write("bClearMem", bClearMem);
+        }
     }
 } /* namespace lsp */

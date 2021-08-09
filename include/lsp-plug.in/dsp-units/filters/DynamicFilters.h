@@ -179,6 +179,9 @@ namespace lsp
                  * @param count number of dots for the chart
                  */
                 bool                freq_chart(size_t id, float *dst, const float *f, float gain, size_t count);
+
+            public:
+                void                dump(dspu::IStateDumper *v) const;
         };
     }
 } /* namespace lsp */
