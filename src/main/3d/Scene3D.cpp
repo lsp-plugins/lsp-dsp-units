@@ -20,6 +20,10 @@
  */
 
 #include <lsp-plug.in/dsp-units/3d/Scene3D.h>
+#include <lsp-plug.in/io/InFileStream.h>
+#include <lsp-plug.in/io/InSequence.h>
+
+#include <private/3d/scene/obj.h>
 
 namespace lsp
 {
@@ -427,6 +431,111 @@ namespace lsp
                 xn->id          += norms;
             }
         }
+
+        status_t Scene3D::load(const char *path, const char *charset)
+        {
+            status_t res;
+            Scene3D tmp;
+            io::InFileStream ifs;
+            if ((res = ifs.open(path)) != STATUS_OK)
+                return res;
+
+            if ((res = tmp.load_internal(&ifs, WRAP_NONE, charset)) == STATUS_OK)
+                res = ifs.close();
+            else
+                ifs.close();
+
+            if (res == STATUS_OK)
+                tmp.swap(this);
+            return res;
+        }
+
+        status_t Scene3D::load(const LSPString *path, const char *charset)
+        {
+            status_t res;
+            Scene3D tmp;
+            io::InFileStream ifs;
+            if ((res = ifs.open(path)) != STATUS_OK)
+                return res;
+
+            if ((res = tmp.load_internal(&ifs, WRAP_NONE, charset)) == STATUS_OK)
+                res = ifs.close();
+            else
+                ifs.close();
+
+            if (res == STATUS_OK)
+                tmp.swap(this);
+            return res;
+        }
+
+        status_t Scene3D::load(const io::Path *path, const char *charset)
+        {
+            status_t res;
+            Scene3D tmp;
+            io::InFileStream ifs;
+            if ((res = ifs.open(path)) != STATUS_OK)
+                return res;
+
+            if ((res = tmp.load_internal(&ifs, WRAP_NONE, charset)) == STATUS_OK)
+                res = ifs.close();
+            else
+                ifs.close();
+
+            if (res == STATUS_OK)
+                tmp.swap(this);
+            return res;
+        }
+
+        status_t Scene3D::load(io::IInStream *is, size_t flags, const char *charset)
+        {
+            status_t res;
+            Scene3D tmp;
+            if ((res = tmp.load_internal(is, flags, charset)) == STATUS_OK)
+                tmp.swap(this);
+            return res;
+        }
+
+        status_t Scene3D::load(io::IInSequence *is, size_t flags)
+        {
+            status_t res;
+            Scene3D tmp;
+            if ((res = tmp.load_internal(is, flags)) == STATUS_OK)
+                tmp.swap(this);
+            return res;
+        }
+
+        status_t Scene3D::load_internal(io::IInStream *is, size_t flags, const char *charset)
+        {
+            status_t res, res2;
+            res = load_scene_from_obj(this, is, charset);
+            if (flags & WRAP_CLOSE)
+            {
+                res2 = is->close();
+                if (res == STATUS_OK)
+                    res     = res2;
+            }
+            if (flags & WRAP_DELETE)
+                delete is;
+
+            return res;
+        }
+
+        status_t Scene3D::load_internal(io::IInSequence *is, size_t flags)
+        {
+            status_t res, res2;
+            res = load_scene_from_obj(this, is);
+            if (flags & WRAP_CLOSE)
+            {
+                res2 = is->close();
+                if (res == STATUS_OK)
+                    res     = res2;
+            }
+            if (flags & WRAP_DELETE)
+                delete is;
+
+            return res;
+        }
+
     } // namespace dspu
 } // namespace lsp
 

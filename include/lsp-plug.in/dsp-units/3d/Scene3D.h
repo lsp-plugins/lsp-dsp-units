@@ -29,6 +29,9 @@
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/lltl/parray.h>
+#include <lsp-plug.in/io/Path.h>
+#include <lsp-plug.in/io/IInStream.h>
+#include <lsp-plug.in/io/IInSequence.h>
 
 namespace lsp
 {
@@ -54,6 +57,9 @@ namespace lsp
             private:
                 status_t do_clone(Scene3D *s);
 
+                status_t    load_internal(io::IInStream *is, size_t flags, const char *charset);
+                status_t    load_internal(io::IInSequence *is, size_t flags);
+
             public:
                 /** Default constructor
                  *
@@ -70,7 +76,7 @@ namespace lsp
                  *
                  * @param recursive destroy attached objects
                  */
-                void destroy();
+                void        destroy();
 
                 /** Clear scene
                  *
@@ -81,13 +87,55 @@ namespace lsp
                  * Clone contents from another scene
                  * @param src
                  */
-                status_t clone_from(const Scene3D *src);
+                status_t    clone_from(const Scene3D *src);
 
                 /**
                  * Swap contents with another scene
                  * @param scene scene to perform swap
                  */
-                void swap(Scene3D *scene);
+                void        swap(Scene3D *scene);
+
+            public:
+                /**
+                 * Load scene from file
+                 * @param path path to the file (UTF-8 string)
+                 * @param charset character set of file contents
+                 * @return status of operation
+                 */
+                status_t    load(const char *path, const char *charset = NULL);
+
+                /**
+                 * Load scene from file
+                 * @param path path to the file
+                 * @param charset character set of file contents
+                 * @return status of operation
+                 */
+                status_t    load(const LSPString *path, const char *charset = NULL);
+
+                /**
+                 * Load scene from file
+                 * @param path path to the file
+                 * @param charset character set of file contents
+                 * @return status of operation
+                 */
+                status_t    load(const io::Path *path, const char *charset = NULL);
+
+                /**
+                 * Load scene from input stream
+                 * @param input stream
+                 * @param charset character set of file contents
+                 * @param flags wrapping flags
+                 * @return status of operation
+                 */
+                status_t    load(io::IInStream *is, size_t flags = WRAP_NONE, const char *charset = NULL);
+
+                /**
+                 * Load scene from input sequence
+                 * @param input sequence
+                 * @param flags wrapping flags
+                 * @return status of operation
+                 */
+                status_t    load(io::IInSequence *is, size_t flags = WRAP_NONE);
 
             public:
                 /**
