@@ -145,22 +145,27 @@ namespace lsp
             {
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
+                case OM_LANCZOS_2X4:
                     return 2;
 
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
+                case OM_LANCZOS_3X4:
                     return 3;
 
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
+                case OM_LANCZOS_4X4:
                     return 4;
 
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
+                case OM_LANCZOS_6X4:
                     return 6;
 
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
+                case OM_LANCZOS_8X4:
                     return 8;
 
                 default:
@@ -176,6 +181,7 @@ namespace lsp
             {
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
+                case OM_LANCZOS_2X4:
                 {
                     while (samples > 0)
                     {
@@ -194,8 +200,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_2X2)
                             dsp::lanczos_resample_2x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_2X3)
                             dsp::lanczos_resample_2x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_2x4(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do << 1);
 
                         // Update pointers
@@ -209,6 +217,7 @@ namespace lsp
 
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
+                case OM_LANCZOS_3X4:
                 {
                     while (samples > 0)
                     {
@@ -227,8 +236,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_3X2)
                             dsp::lanczos_resample_3x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_3X2)
                             dsp::lanczos_resample_3x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_3x4(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do * 3);
 
                         // Update pointers
@@ -242,6 +253,7 @@ namespace lsp
 
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
+                case OM_LANCZOS_4X4:
                 {
                     while (samples > 0)
                     {
@@ -260,8 +272,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_4X2)
                             dsp::lanczos_resample_4x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_4X3)
                             dsp::lanczos_resample_4x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_4x4(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do << 2);
 
                         // Update pointers
@@ -275,6 +289,7 @@ namespace lsp
 
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
+                case OM_LANCZOS_6X4:
                 {
                     while (samples > 0)
                     {
@@ -293,8 +308,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_6X2)
                             dsp::lanczos_resample_6x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_6X3)
                             dsp::lanczos_resample_6x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_6x4(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do * 6);
 
                         // Update pointers
@@ -308,6 +325,7 @@ namespace lsp
 
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
+                case OM_LANCZOS_8X4:
                 {
                     while (samples > 0)
                     {
@@ -326,8 +344,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_8X2)
                             dsp::lanczos_resample_8x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_8X3)
                             dsp::lanczos_resample_8x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_8x4(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do << 3);
 
                         // Update pointers
@@ -353,6 +373,7 @@ namespace lsp
             {
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
+                case OM_LANCZOS_2X4:
                 {
                     while (samples > 0)
                     {
@@ -378,6 +399,7 @@ namespace lsp
 
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
+                case OM_LANCZOS_3X4:
                 {
                     while (samples > 0)
                     {
@@ -403,6 +425,7 @@ namespace lsp
 
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
+                case OM_LANCZOS_4X4:
                 {
                     while (samples > 0)
                     {
@@ -428,6 +451,7 @@ namespace lsp
 
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
+                case OM_LANCZOS_6X4:
                 {
                     while (samples > 0)
                     {
@@ -454,6 +478,7 @@ namespace lsp
 
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
+                case OM_LANCZOS_8X4:
                 {
                     while (samples > 0)
                     {
@@ -491,6 +516,7 @@ namespace lsp
             {
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
+                case OM_LANCZOS_2X4:
                 {
                     while (samples > 0)
                     {
@@ -509,8 +535,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_2X2)
                             dsp::lanczos_resample_2x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_2X3)
                             dsp::lanczos_resample_2x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_2x4(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -532,6 +560,7 @@ namespace lsp
 
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
+                case OM_LANCZOS_3X4:
                 {
                     while (samples > 0)
                     {
@@ -550,8 +579,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_3X2)
                             dsp::lanczos_resample_3x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_3X3)
                             dsp::lanczos_resample_3x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_3x4(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -573,6 +604,7 @@ namespace lsp
 
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
+                case OM_LANCZOS_4X4:
                 {
                     while (samples > 0)
                     {
@@ -591,8 +623,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_4X2)
                             dsp::lanczos_resample_4x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_4X3)
                             dsp::lanczos_resample_4x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_4x4(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -614,6 +648,7 @@ namespace lsp
 
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
+                case OM_LANCZOS_6X4:
                 {
                     while (samples > 0)
                     {
@@ -632,8 +667,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_6X2)
                             dsp::lanczos_resample_6x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_6X3)
                             dsp::lanczos_resample_6x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_6x4(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -655,6 +692,7 @@ namespace lsp
 
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
+                case OM_LANCZOS_8X4:
                 {
                     while (samples > 0)
                     {
@@ -673,8 +711,10 @@ namespace lsp
                         // Do oversampling
                         if (nMode == OM_LANCZOS_8X2)
                             dsp::lanczos_resample_8x2(&fUpBuffer[nUpHead], src, to_do);
-                        else
+                        else if (nMode == OM_LANCZOS_8X3)
                             dsp::lanczos_resample_8x3(&fUpBuffer[nUpHead], src, to_do);
+                        else
+                            dsp::lanczos_resample_8x4(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -721,6 +761,13 @@ namespace lsp
                 case OM_LANCZOS_6X3:
                 case OM_LANCZOS_8X3:
                     return 3;
+
+                case OM_LANCZOS_2X4:
+                case OM_LANCZOS_3X4:
+                case OM_LANCZOS_4X4:
+                case OM_LANCZOS_6X4:
+                case OM_LANCZOS_8X4:
+                    return 4;
 
                 default:
                     break;
