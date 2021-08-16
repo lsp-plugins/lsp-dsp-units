@@ -2,6 +2,13 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 0.5.4 ===
+* Added dspu::Sample::normalize method for sample normalization.
+* Updated build system.
+* Added raytracing-related program modules.
+* Added trigger module.
+* Added x4 lobe support for oversampling.
+
 === 0.5.3 ===
 * Added LSP_DSP_UNITS_SOUND_SPEED_M_S constant that defines sound speed.
 * Added reset() method to the dspu::Equalizer class to reset internal memory.

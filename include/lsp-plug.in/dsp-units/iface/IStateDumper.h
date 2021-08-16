@@ -143,6 +143,70 @@ namespace lsp
                         else
                             write(name, value);
                     }
+
+                template <class T>
+                    inline void write_object_array(const T *value, size_t count)
+                    {
+                        if (value != NULL)
+                        {
+                            begin_array(value, count);
+                            {
+                                for (size_t i=0; i<count; ++i)
+                                    write_object(&value[i]);
+                            }
+                            end_array();
+                        }
+                        else
+                            write(value);
+                    }
+
+                template <class T>
+                    inline void write_object_array(const char *name, const T *value, size_t count)
+                    {
+                        if (value != NULL)
+                        {
+                            begin_array(name, value, count);
+                            {
+                                for (size_t i=0; i<count; ++i)
+                                    write_object(&value[i]);
+                            }
+                            end_array();
+                        }
+                        else
+                            write(name, value);
+                    }
+
+                template <class T>
+                    inline void write_object_array(const T * const *value, size_t count)
+                    {
+                        if (value != NULL)
+                        {
+                            begin_array(value, count);
+                            {
+                                for (size_t i=0; i<count; ++i)
+                                    write_object(value[i]);
+                            }
+                            end_array();
+                        }
+                        else
+                            write(value);
+                    }
+
+                template <class T>
+                    inline void write_object_array(const char *name, const T * const *value, size_t count)
+                    {
+                        if (value != NULL)
+                        {
+                            begin_array(name, value, count);
+                            {
+                                for (size_t i=0; i<count; ++i)
+                                    write_object(value[i]);
+                            }
+                            end_array();
+                        }
+                        else
+                            write(name, value);
+                    }
         };
 
     } /* namespace dspu */

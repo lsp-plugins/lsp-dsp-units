@@ -45,6 +45,29 @@ namespace lsp
         } sample_header_t;
     #pragma pack(pop)
 
+        enum sample_normalize_t
+        {
+            /**
+             * No normalization
+             */
+            SAMPLE_NORM_NONE,
+
+            /**
+             * Normalize if maximum peak is above threshold
+             */
+            SAMPLE_NORM_ABOVE,
+
+            /**
+             * Normalize if maximum peak is below threshold
+             */
+            SAMPLE_NORM_BELOW,
+
+            /**
+             * Normalize in any case
+             */
+            SAMPLE_NORM_ALWAYS
+        };
+
         class Sample
         {
             private:
@@ -171,6 +194,13 @@ namespace lsp
                  * @return true on success
                  */
                 void reverse();
+
+                /**
+                 * Normalize the sample
+                 * @param gain the maximum peak gain
+                 * @param mode the normalization mode
+                 */
+                void normalize(float gain, sample_normalize_t mode);
 
                 /**
                  * Swap contents with another sample
