@@ -2,6 +2,8 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 0.5.5 ===
+
 === 0.5.4 ===
 * Added dspu::Sample::normalize method for sample normalization.
 * Updated build system.

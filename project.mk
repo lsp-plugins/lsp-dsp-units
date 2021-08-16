@@ -24,7 +24,7 @@ ARTIFACT_NAME               = lsp-dsp-units
 ARTIFACT_DESC               = High-level classes for performing DSP
 ARTIFACT_HEADERS            = lsp-plug.in
 ARTIFACT_EXPORT_ALL         = 1
-ARTIFACT_VERSION            = 0.5.4
+ARTIFACT_VERSION            = 0.5.5-devel
 
 # List of dependencies
 DEPENDENCIES = \
