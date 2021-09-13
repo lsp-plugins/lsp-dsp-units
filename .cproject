@@ -62,24 +62,6 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.942206677.1604316259" name="main.cpp" rcbsApplicability="disable" resourcePath="modules/lsp-common-lib/src/test/main.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605.130322016">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605.130322016" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605">
-							<option id="gnu.cpp.compiler.option.dialect.std.1854046707" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.471678602" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.942206677.2102850854" name="main.cpp" rcbsApplicability="disable" resourcePath="modules/lsp-test-fw/src/test/main.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605.1197011509">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605.1197011509" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605">
-							<option id="gnu.cpp.compiler.option.dialect.std.344222836" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.517701954" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.942206677.1289353611" name="main.cpp" rcbsApplicability="disable" resourcePath="modules/lsp-dsp-lib/src/test/main.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605.637489413">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605.637489413" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.962442605">
-							<option id="gnu.cpp.compiler.option.dialect.std.1583625989" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1745362687" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<sourceEntries>
 						<entry excluding="modules/lsp-lltl-lib/src/test/main.cpp|modules/lsp-runtime-lib/src/test/main.cpp|modules/lsp-common-lib/src/test/main.cpp|modules/lsp-dsp-lib/src/test/main.cpp|modules/lsp-test-fw/src/test/main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
