@@ -2,7 +2,7 @@
  * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
  *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
  *
- * This file is part of lsp-plugins
+ * This file is part of lsp-dsp-units
  * Created on: 31 May 2021
  *
  * lsp-plugins is free software: you can redistribute it and/or modify
