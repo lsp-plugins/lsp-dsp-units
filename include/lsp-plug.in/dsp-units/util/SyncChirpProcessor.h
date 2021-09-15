@@ -19,8 +19,8 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_DSP_UINTS_UTIL_SYNCCHIRPPROCESSOR_H_
-#define LSP_PLUG_IN_DSP_UINTS_UTIL_SYNCCHIRPPROCESSOR_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_UTIL_SYNCCHIRPPROCESSOR_H_
+#define LSP_PLUG_IN_DSP_UNITS_UTIL_SYNCCHIRPPROCESSOR_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
@@ -878,4 +878,4 @@ namespace lsp
     }
 }
 
-#endif /* LSP_PLUG_IN_DSP_UINTS_UTIL_SYNCCHIRPPROCESSOR_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_SYNCCHIRPPROCESSOR_H_ */
