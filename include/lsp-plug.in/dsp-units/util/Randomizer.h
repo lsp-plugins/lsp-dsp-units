@@ -19,8 +19,8 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_DSP_UINTS_UTIL_RANDOMIZER_H_
-#define LSP_PLUG_IN_DSP_UINTS_UTIL_RANDOMIZER_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_UTIL_RANDOMIZER_H_
+#define LSP_PLUG_IN_DSP_UNITS_UTIL_RANDOMIZER_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
@@ -31,9 +31,11 @@ namespace lsp
     {
         enum random_function_t
         {
-            RND_LINEAR,
-            RND_EXP,
-            RND_TRIANGLE
+            RND_LINEAR,     // Uniform over [0, 1)
+            RND_EXP,        // Decaying exponential over [0, 1]
+            RND_TRIANGLE,   // Triangle over [0, 1]
+            RND_GAUSSIAN,   // Gaussian of mean 0 and standard deviation 1 (has negative values)
+            RND_MAX
         };
 
         class Randomizer
@@ -56,6 +58,9 @@ namespace lsp
 
                 randgen_t   vRandom[4];
                 size_t      nBufID;
+                
+			protected:
+                float generate_linear();
 
             public:
                 explicit Randomizer();
@@ -93,4 +98,4 @@ namespace lsp
     }
 } /* namespace lsp */
 
-#endif /* LSP_PLUG_IN_DSP_UINTS_UTIL_RANDOMIZER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_RANDOMIZER_H_ */
