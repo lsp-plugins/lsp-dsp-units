@@ -216,36 +216,25 @@ namespace lsp
 
         status_t SyncChirpProcessor::allocateConvolutionResult(size_t sampleRate, size_t nchannels, size_t count)
         {
-            bool bConvResultReAllocate  = false;
-
+            // Check if we need to allocate new audio sample
             if (pConvResult == NULL)
-                bConvResultReAllocate   = true;
-            else if ((pConvResult->length() != count) || (pConvResult->channels() != nchannels))
-                bConvResultReAllocate   = true;
-
-            if (bConvResultReAllocate)
             {
-                if (pConvResult != NULL)
-                {
-                    delete pConvResult;
-                    pConvResult         = NULL;
-                }
-
-                Sample *s               = new Sample();
-                if (s == NULL)
+                if ((pConvResult = new Sample()) == NULL)
                     return STATUS_NO_MEM;
-
-                status_t status         = s->resize(nchannels, count, count);
-                if (status != STATUS_OK)
-                {
-                    s->destroy();
-                    delete s;
-                    return status;
-                }
-
-                s->set_sample_rate(nSampleRate);
-                pConvResult             = s;
             }
+
+            // Resize the sample (if needed)
+            if (!pConvResult->resize(nchannels, count, count))
+            {
+                pConvResult->destroy();
+                delete pConvResult;
+                pConvResult = NULL;
+
+                return STATUS_NO_MEM;
+            }
+
+            // Remember the audio sample rate
+            pConvResult->set_sample_rate(nSampleRate);
 
             return STATUS_OK;
         }
@@ -2170,7 +2159,7 @@ namespace lsp
 
         void SyncChirpProcessor::get_convolution_result_plottable_samples(size_t channel, float *dst, ssize_t offset, size_t convLimit, size_t plotCount, bool normalize)
         {
-            size_t irSamples = pConvResult->length();
+            size_t irSamples = (pConvResult != NULL) ? pConvResult->length() : 0;
             if (irSamples == 0)
                 return;
 

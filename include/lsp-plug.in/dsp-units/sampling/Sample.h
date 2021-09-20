@@ -171,7 +171,7 @@ namespace lsp
                  * @param channels number of channels
                  * @param max_length maximum possible sample length
                  * @param length initial sample length
-                 * @return if data was successful resized
+                 * @return true if data was successful resized
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
 
