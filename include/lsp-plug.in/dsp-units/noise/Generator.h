@@ -25,6 +25,7 @@
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
 #include <lsp-plug.in/dsp-units/noise/LCG.h>
 #include <lsp-plug.in/dsp-units/noise/Velvet.h>
+#include <lsp-plug.in/dsp-units/filters/SpectralTilt.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
@@ -44,6 +45,7 @@ namespace lsp
             NG_COLOR_WHITE,
             NG_COLOR_PINK,
             NG_COLOR_RED, // AKA Brownian or Brown
+            NG_COLOR_ARBITRARY,
             NG_COLOR_MAX
         };
 
@@ -76,19 +78,28 @@ namespace lsp
                     float               fCrushProb;
                 } velvet_params_t;
 
+                typedef struct color_params_t
+                {
+                    ng_color_t          enColor;
+                    size_t              nOrder;
+                    float               fSlope;
+                    stlt_slope_unit_t   enSlopeUnit;
+                } color_params_t;
+
             private:
                 size_t              nSampleRate;
 
                 MLS                 sMLS;
                 LCG                 sLCG;
                 Velvet              sVelvetNoise;
+                SpectralTilt        sColorFilter;
 
                 mls_params_t        sMLSParams;
                 lcg_params_t        sLCGParams;
                 velvet_params_t     sVelvetParams;
+                color_params_t      sColorParams;
 
                 ng_generator_t      enGenerator;
-                ng_color_t          enColor;
 
                 float               fAmplitude;
                 float               fOffset;
@@ -277,10 +288,39 @@ namespace lsp
                     if ((color < NG_COLOR_WHITE) || (color >= NG_COLOR_MAX))
                         return;
 
-                    if (color == enColor)
+                    if (color == sColorParams.enColor)
                         return;
 
-                    enColor = color;
+                    sColorParams.enColor    = color;
+                    bSync                   = true;
+                }
+
+                /** Set the coloring filter order.
+                 *
+                 * @param order order.
+                 */
+                inline void set_coloring_order(size_t order)
+                {
+                    if (order == sColorParams.nOrder)
+                        return;
+
+                    sColorParams.nOrder     = order;
+                    bSync                   = true;
+                }
+
+                /** Set the color slope.
+                 *
+                 * @param slope slope.
+                 * çparam unit slope unit
+                 */
+                inline void set_color_slope(float slope, stlt_slope_unit_t unit)
+                {
+                    if ((slope == sColorParams.fSlope) && (unit == sColorParams.enSlopeUnit))
+                        return;
+
+                    sColorParams.fSlope         = slope;
+                    sColorParams.enSlopeUnit    = unit;
+                    bSync                       = true;
                 }
 
                 /** Set the noise amplitude.

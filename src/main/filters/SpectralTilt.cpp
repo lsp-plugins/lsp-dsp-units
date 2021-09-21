@@ -26,7 +26,7 @@
 #include <lsp-plug.in/stdlib/math.h>
 
 #define MAX_ORDER               100
-#define DFL_LOWER_FREQUENCY     20.0f
+#define DFL_LOWER_FREQUENCY     0.1f
 #define DFL_UPPER_FREQUENCY     20.0e3f
 #define BUF_LIM_SIZE            2048
 
@@ -49,7 +49,7 @@ namespace lsp
         {
             nOrder          = 1;
 
-            enSlopeType     = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+            enSlopeUnit     = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
             fSlopeVal       = 0.5f;
             fSlopeNepNep    = 0.5f;
 
@@ -150,7 +150,7 @@ namespace lsp
             nOrder = lsp_min(nOrder, MAX_ORDER);
 
             // Convert provided slope value to Neper-per-Neper.
-            switch (enSlopeType)
+            switch (enSlopeUnit)
             {
 
                 /** Log-Magnitude of the desired response is given by:
@@ -300,6 +300,27 @@ namespace lsp
         void SpectralTilt::process_overwrite(float *dst, const float *src, size_t count)
         {
             sFilter.process(dst, src, count);
+        }
+
+        void SpectralTilt::dump(IStateDumper *v) const
+        {
+            v->write("nOrder", nOrder);
+
+            v->write("enSlopeType", enSlopeUnit);
+            v->write("fSlopeVal", fSlopeVal);
+            v->write("fSlopeNepNep", fSlopeNepNep);
+
+            v->write("fLowerFrequency", fLowerFrequency);
+            v->write("fUpperFrequency", fUpperFrequency);
+
+            v->write("nSampleRate", nSampleRate);
+
+            v->write_object("sFilter", &sFilter);
+
+            v->write("pData", pData);
+            v->write("vBuffer", vBuffer);
+
+            v->write("bSync", bSync);
         }
     }
 }

@@ -71,7 +71,7 @@ namespace lsp
             private:
                 size_t              nOrder;
 
-                stlt_slope_unit_t   enSlopeType;
+                stlt_slope_unit_t   enSlopeUnit;
                 float               fSlopeVal;
                 float               fSlopeNepNep;
 
@@ -137,14 +137,14 @@ namespace lsp
                  */
                 inline void set_slope(float slope, stlt_slope_unit_t slopeType)
                 {
-                    if ((slope == fSlopeVal) && (slopeType == enSlopeType))
+                    if ((slope == fSlopeVal) && (slopeType == enSlopeUnit))
                         return;
 
                     if ((slopeType < STLT_SLOPE_UNIT_NEPER_PER_NEPER) || (slopeType >= STLT_SLOPE_UNIT_MAX))
                         return;
 
                     fSlopeVal   = slope;
-                    enSlopeType = slopeType;
+                    enSlopeUnit = slopeType;
                     bSync       = true;
                 }
 

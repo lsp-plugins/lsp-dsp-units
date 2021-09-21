@@ -24,7 +24,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/dsp-units/units.h>
 
-#define BUF_LIM_SIZE 2048
+#define BUF_LIM_SIZE    2048
 
 namespace lsp
 {
@@ -58,9 +58,12 @@ namespace lsp
             sVelvetParams.bCrush            = false;
             sVelvetParams.fCrushProb        = 0.5f;
 
-            enGenerator                     = NG_GEN_LCG;
-            enColor                         = NG_COLOR_WHITE;
+            sColorParams.enColor            = NG_COLOR_WHITE;
+            sColorParams.nOrder             = 50;
+            sColorParams.nOrder             = 0.0f;
+            sColorParams.enSlopeUnit        = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
 
+            enGenerator                     = NG_GEN_LCG;
             pData                           = NULL;
             vBuffer                         = NULL;
 
@@ -137,17 +140,23 @@ namespace lsp
 
         void NoiseGenerator::update_settings()
         {
+            if (!bSync)
+                return;
+
+            // MLS
             sMLS.set_n_bits(sMLSParams.nBits);
             sMLS.set_state(sMLSParams.nSeed);
             sMLS.set_amplitude(fAmplitude);
             sMLS.set_offset(fOffset);
             sMLS.update_settings();
 
+            // LCG
             sLCG.set_distribution(sLCGParams.enDistribution);
             sLCG.set_amplitude(fAmplitude);
             sLCG.set_offset(fOffset);
             // sLCG has no update_settings method.
 
+            // Velvet
             sVelvetNoise.set_core_type(sVelvetParams.enCore);
             sVelvetNoise.set_velvet_type(sVelvetParams.enVelvetType);
             sVelvetNoise.set_velvet_window_width(seconds_to_samples(nSampleRate, sVelvetParams.fWindowWidth_s));
@@ -157,6 +166,54 @@ namespace lsp
             sVelvetNoise.set_crush(sVelvetParams.bCrush);
             sVelvetNoise.set_crush_probability(sVelvetParams.fCrushProb);
             // sVelvetNoise has no update_settings method.
+
+            // Color
+
+            sColorFilter.set_sample_rate(nSampleRate);
+
+            float slope;
+            stlt_slope_unit_t unit;
+
+            switch (sColorParams.enColor)
+            {
+                case (NG_COLOR_PINK):
+                {
+                    slope = -0.5f;
+                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                }
+                break;
+
+                case (NG_COLOR_RED):
+                {
+                    slope = -1.0f;
+                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                }
+                break;
+
+                case (NG_COLOR_ARBITRARY):
+                {
+                    slope = sColorParams.fSlope;
+                    unit = sColorParams.enSlopeUnit;
+                }
+                break;
+
+                default:
+                case (NG_COLOR_WHITE):
+                {
+                    slope = 0.0f;
+                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                }
+                break;
+            }
+
+            sColorFilter.set_order(sColorParams.nOrder);
+            sColorFilter.set_slope(slope, unit);
+            // Filter seems to be most nice with the bandwidth below.
+            sColorFilter.set_lower_frequency(0.1f); // from 0.1 Hz
+            sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate); // to 90% of the digital bandwidth
+            sColorFilter.update_settings();
+
+            //
 
             bSync = true;
         }
@@ -184,6 +241,78 @@ namespace lsp
                 }
                 break;
             }
+
+            switch (sColorParams.enColor)
+            {
+                case NG_COLOR_PINK:
+                case NG_COLOR_RED:
+                case NG_COLOR_ARBITRARY:
+                {
+                    sColorFilter.process_overwrite(dst, dst, count);
+                }
+                break;
+
+                default:
+                case (NG_COLOR_WHITE):
+                {
+                    return;
+                }
+                break;
+            }
+        }
+
+        void NoiseGenerator::process_add(float *dst, const float *src, size_t count)
+        {
+            if (src != NULL)
+                dsp::copy(dst, src, count);
+            else
+                dsp::fill_zero(dst, count);
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
+
+                do_process(vBuffer, to_do);
+                dsp::add2(dst, vBuffer, to_do);
+
+                dst     += to_do;
+                count   -= to_do;
+            }
+        }
+
+        void NoiseGenerator::process_mul(float *dst, const float *src, size_t count)
+        {
+            if (src != NULL)
+                dsp::copy(dst, src, count);
+            else
+                dsp::fill_zero(dst, count);
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
+
+                do_process(vBuffer, to_do);
+                dsp::mul2(dst, vBuffer, to_do);
+
+                dst     += to_do;
+                count   -= to_do;
+            }
+        }
+
+        void NoiseGenerator::process_overwrite(float *dst, size_t count)
+        {
+            do_process(dst, count);
+
+//            while (count > 0)
+//            {
+//                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
+//
+//                do_process(vBuffer, to_do);
+//                dsp::copy(dst, vBuffer, to_do);
+//
+//                dst     += to_do;
+//                count   -= to_do;
+//            }
         }
 
         void NoiseGenerator::dump(IStateDumper *v) const
@@ -222,9 +351,16 @@ namespace lsp
             }
             v->end_object();
 
-            v->write("enGenerator", enGenerator);
+            v->begin_object("sColorParams", &sColorParams, sizeof(sColorParams));
+            {
+                v->write("enColor", sColorParams.enColor);
+                v->write("nOrder", sColorParams.nOrder);
+                v->write("fSlope", sColorParams.fSlope);
+                v->write("enSlopeUnit", sColorParams.enSlopeUnit);
+            }
+            v->end_object();
 
-            v->write("enColor", enColor);
+            v->write("enGenerator", enGenerator);
 
             v->write("fAmplitude", fAmplitude);
             v->write("fOffset", fOffset);
