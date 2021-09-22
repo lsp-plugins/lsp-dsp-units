@@ -45,6 +45,8 @@ namespace lsp
             NG_COLOR_WHITE,
             NG_COLOR_PINK,
             NG_COLOR_RED, // AKA Brownian or Brown
+            NG_COLOR_BLUE,
+            NG_COLOR_VIOLET,
             NG_COLOR_ARBITRARY,
             NG_COLOR_MAX
         };

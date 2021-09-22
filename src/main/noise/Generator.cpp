@@ -190,6 +190,20 @@ namespace lsp
                 }
                 break;
 
+                case (NG_COLOR_BLUE):
+                {
+                    slope = 0.5f;
+                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                }
+                break;
+
+                case (NG_COLOR_VIOLET):
+                {
+                    slope = 1.0f;
+                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                }
+                break;
+
                 case (NG_COLOR_ARBITRARY):
                 {
                     slope = sColorParams.fSlope;
