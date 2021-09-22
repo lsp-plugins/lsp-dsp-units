@@ -148,6 +148,8 @@ namespace lsp
                 return;
 
             nOrder = lsp_min(nOrder, MAX_ORDER);
+            // We force even order (so all biquads have all coefficients, maximal efficiency).
+            nOrder = (nOrder % 2 == 0) ? nOrder : nOrder + 1;
 
             // Convert provided slope value to Neper-per-Neper.
             switch (enSlopeUnit)
