@@ -1631,12 +1631,8 @@ namespace lsp
             size_t maxCount         = dataLength - head;
             count                   = (count > maxCount) ? maxCount : count;
 
-            status_t status         = pConvResult->save_range(path, head, count);
-
-            if (status != STATUS_OK)
-                return status;
-
-            return STATUS_OK;
+            ssize_t saved           = pConvResult->save_range(path, head, count);
+            return (saved < 0) ? -saved : STATUS_OK;
         }
 
         status_t SyncChirpProcessor::save_linear_convolution(const char *path, ssize_t offset, size_t count)
