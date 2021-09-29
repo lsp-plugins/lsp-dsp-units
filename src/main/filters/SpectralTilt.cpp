@@ -25,10 +25,10 @@
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MAX_ORDER               100
+#define MAX_ORDER               100u
 #define DFL_LOWER_FREQUENCY     0.1f
 #define DFL_UPPER_FREQUENCY     20.0e3f
-#define BUF_LIM_SIZE            2048
+#define BUF_LIM_SIZE            2048u
 
 namespace lsp
 {
@@ -120,7 +120,7 @@ namespace lsp
             float b_a_1 = 1.0f;
 
             float a_a_0 = bilinear_prewarp(c_prewarp, negPole, nSampleRate);
-            float a_a_1 = 1.0f;
+//            float a_a_1 = 1.0f;
 
             // This gain provides unit magnitude response at DC.
             float g_a = a_a_0 / b_a_0;
