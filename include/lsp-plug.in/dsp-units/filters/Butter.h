@@ -3,7 +3,7 @@
  *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
- * Created on: 15 Sept 2021
+ * Created on: 28 Sept 2021
  *
  * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,22 +19,13 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/** Based on Faust's spectral_tilt filter by Julius O. Smith III.
- *
- * References:
- *
- * J.O. Smith and H.F. Smith,
- * "Closed Form Fractional Integration and Differentiation via Real Exponentially Spaced Pole-Zero Pairs",
- * arXiv.org publication arXiv:1606.06154 [cs.CE], June 7, 2016,
- * <http://arxiv.org/abs/1606.06154>
- *
- * <https://github.com/grame-cncm/faustlibraries/blob/cabc562a79b36160c492b6f8128981994c0203da/filters.lib#L2311>
- *
+/** Even order high-pass and low-pass Butterworth filter, implemented as second order section.
+ * Pre-warped bilinear transform of analog Butterworth prototype.
  */
 
 
-#ifndef INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_
-#define INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_
+#ifndef INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_
+#define INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/dsp-units/filters/FilterBank.h>
@@ -43,42 +34,28 @@ namespace lsp
 {
     namespace dspu
     {
-        enum stlt_slope_unit_t
+
+        enum flt_type_t
         {
-            STLT_SLOPE_UNIT_NEPER_PER_NEPER,
-            STLT_SLOPE_UNIT_DB_PER_OCTAVE,
-            STLT_SLOPE_UNIT_DB_PER_DECADE,
-            STLT_SLOPE_UNIT_MAX
+            FLT_TYPE_LOWPASS,
+            FLT_TYPE_HIGHPASS,
+            FLT_TYPE_MAX
         };
 
-        class SpectralTilt
+        class Butter
         {
 
-            protected:
-
-                typedef struct bilinear_spec_t
-                {
-                    float b0;
-                    float b1;
-
-                    float a0;
-                    float a1;
-                } bq_spec_t;
-
             private:
-                SpectralTilt & operator = (const SpectralTilt &);
+                Butter & operator = (const Butter &);
 
             private:
                 size_t              nOrder;
 
-                stlt_slope_unit_t   enSlopeUnit;
-                float               fSlopeVal;
-                float               fSlopeNepNep;
-
-                float               fLowerFrequency;
-                float               fUpperFrequency;
+                float               fCutoffFreq;
 
                 size_t              nSampleRate;
+
+                flt_type_t          enFilterType;
 
                 dspu::FilterBank    sFilter;
 
@@ -88,21 +65,16 @@ namespace lsp
                 bool                bSync;
 
             public:
-                explicit SpectralTilt();
-                ~SpectralTilt();
+                explicit Butter();
+                ~Butter();
 
                 void construct();
                 void destroy();
 
-            protected:
-                float bilinear_coefficient(float angularFrequency, float samplerate);
-                float bilinear_prewarp(float coefficient, float angularFrequency, float samplerate);
-                bilinear_spec_t compute_bilinear_element(float negZero, float negPole, size_t order, float slopeNepNep, float c_prewarp, float c_final);
-
             public:
-                /** Check that SpectralTilt needs settings update.
+                /** Check that Butter needs settings update.
                  *
-                 * @return true if SpectralTilt needs settings update.
+                 * @return true if Butter needs settings update.
                  */
                 inline bool needs_update() const
                 {
@@ -115,7 +87,7 @@ namespace lsp
                  */
                 void update_settings();
 
-                /** Set the order of the Spectral Tilt filter.
+                /** Set the order of the filter.
                  *
                  * @param order order of the filter.
                  */
@@ -128,51 +100,33 @@ namespace lsp
                     bSync   = true;
                 }
 
-                /** Set the slope of the Spectral Tilt filter.
+                /** Set the cutoff frequency of the filter.
                  *
-                 * @param slope value.
-                 * @param slopeType units of the slope value.
+                 * @param frequency cutoff frequency.
                  */
-                inline void set_slope(float slope, stlt_slope_unit_t slopeType)
+                inline void set_cutoff_frequency(float frequency)
                 {
-                    if ((slope == fSlopeVal) && (slopeType == enSlopeUnit))
+                    if (frequency == fCutoffFreq)
                         return;
 
-                    if ((slopeType < STLT_SLOPE_UNIT_NEPER_PER_NEPER) || (slopeType >= STLT_SLOPE_UNIT_MAX))
-                        return;
-
-                    fSlopeVal   = slope;
-                    enSlopeUnit = slopeType;
+                    fCutoffFreq = frequency;
                     bSync       = true;
                 }
 
-                /** Set the lower frequency of the coverage bandwidth.
+                /** Set filter type.
                  *
-                 * @param lowerFrequency lower frequency.
+                 * @param type filter type.
                  */
-                inline void set_lower_frequency(float lowerFrequency)
+                inline void set_filter_type(flt_type_t type)
                 {
-                    if (lowerFrequency == fLowerFrequency)
+                    if ((type < FLT_TYPE_LOWPASS) && (type >= FLT_TYPE_MAX))
                         return;
 
-                    fLowerFrequency = lowerFrequency;
+                    enFilterType    = type;
                     bSync           = true;
                 }
 
-                /** Set the upper frequency of the coverage bandwidth.
-                 *
-                 * @param upperFrequency lower frequency.
-                 */
-                inline void set_upper_frequency(float upperFrequency)
-                {
-                    if (upperFrequency == fUpperFrequency)
-                        return;
-
-                    fUpperFrequency = upperFrequency;
-                    bSync           = true;
-                }
-
-                /** Set sample rate for the Spectral Tilt filter.
+                /** Set sample rate for the filter.
                  *
                  * @param sr sample rate.
                  */
@@ -219,4 +173,4 @@ namespace lsp
     }
 }
 
-#endif /* INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_ */
+#endif /* INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_ */
