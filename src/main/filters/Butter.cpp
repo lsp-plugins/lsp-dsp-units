@@ -128,6 +128,8 @@ namespace lsp
 
                 float digital_pole_im = 2.0f * scale * bin_c + analog_pole_im;
 
+                float digital_pole_sqabs = digital_pole_re * digital_pole_re + digital_pole_im * digital_pole_im
+
                 dsp::biquad_x1_t *f = sFilter.add_chain();
                 if (f == NULL)
                     return;
@@ -136,18 +138,21 @@ namespace lsp
 
                 switch (enFilterType)
                 {
+                    // Sign for a[n] (denominator) coefficients needs to be inverted for assignment.
+                    // In other words, with respect the maths, f->a1 and f->a2 below have inverted sign.
+
                     case FLT_TYPE_HIGHPASS:
                     {
                         f->b0 = 1.0f;
-                        f->b1 = -2.0f * digital_pole_re;
-                        f->b2 = digital_pole_re * digital_pole_re + digital_pole_im * digital_pole_im;
-                        f->a1 = -2.0f;
-                        f->a2 = 1.0f;
+                        f->b1 = -2.0f;
+                        f->b2 = 1.0f;
+                        f->a1 = 2.0f * digital_pole_re;
+                        f->a2 = -digital_pole_sqabs;
                         f->p0 = 0.0f;
                         f->p1 = 0.0f;
                         f->p2 = 0.0f;
 
-                        gain = (1.0f - f->a1 + f->a2) / (1.0f - f->b1 + f->b2);
+                        gain = (1.0f + f->a1 - f->a2) / (1.0f - f->b1 + f->b2);
                     }
                     break;
 
@@ -155,15 +160,15 @@ namespace lsp
                     default:
                     {
                         f->b0 = 1.0f;
-                        f->b1 = -2.0f * digital_pole_re;
-                        f->b2 = digital_pole_re * digital_pole_re + digital_pole_im * digital_pole_im;
-                        f->a1 = 2.0f;
-                        f->a2 = 1.0f;
+                        f->b1 = 2.0f;
+                        f->b2 = 1.0f;
+                        f->a1 = 2.0f * digital_pole_re;
+                        f->a2 = -digital_pole_sqabs;
                         f->p0 = 0.0f;
                         f->p1 = 0.0f;
                         f->p2 = 0.0f;
 
-                        gain = (1.0f + f->a1 + f->a2) / (1.0f + f->b1 + f->b2);
+                        gain = (1.0f - f->a1 - f->a2) / (1.0f + f->b1 + f->b2);
                     }
                     break;
                 }

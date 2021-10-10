@@ -243,11 +243,14 @@ namespace lsp
                     if (f == NULL)
                         return;
 
+                    // Sign for a[n] (denominator) coefficients needs to be inverted for assignment.
+                    // In other words, with respect the maths, f->a1 and f->a2 below have inverted sign.
+
                     f->b0 = spec_now.b0 * spec_nxt.b0;
                     f->b1 = spec_now.b0 * spec_nxt.b1 + spec_now.b1 * spec_nxt.b0;
                     f->b2 = spec_now.b1 * spec_nxt.b1;
-                    f->a1 = spec_now.a1 + spec_nxt.a1;
-                    f->a2 = spec_now.a1 * spec_nxt.a1;
+                    f->a1 = -spec_now.a1 - spec_nxt.a1;
+                    f->a2 = -spec_now.a1 * spec_nxt.a1;
                     f->p0 = 0.0f;
                     f->p1 = 0.0f;
                     f->p2 = 0.0f;
