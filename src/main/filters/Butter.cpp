@@ -128,7 +128,7 @@ namespace lsp
 
                 float digital_pole_im = 2.0f * scale * bin_c + analog_pole_im;
 
-                float digital_pole_sqabs = digital_pole_re * digital_pole_re + digital_pole_im * digital_pole_im
+                float digital_pole_sqabs = digital_pole_re * digital_pole_re + digital_pole_im * digital_pole_im;
 
                 dsp::biquad_x1_t *f = sFilter.add_chain();
                 if (f == NULL)
