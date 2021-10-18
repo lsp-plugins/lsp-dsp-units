@@ -67,12 +67,12 @@ namespace lsp
                 triangle.flush();
             }
 
-            status_t context_t::add_object(Object3D *obj, ssize_t oid, const dsp::matrix3d_t *transform, const dsp::color3d_t *col)
+            status_t context_t::add_object(Object3D *obj, const dsp::matrix3d_t *transform, const dsp::color3d_t *col)
             {
                 for (size_t i=0, n=obj->num_triangles(); i<n; ++i)
                 {
                     obj_triangle_t *st  = obj->triangle(i);
-                    bsp_triangle_t *dt  = triangle.alloc();
+                    bsp::triangle_t *dt = triangle.alloc();
                     if (dt == NULL)
                         return STATUS_NO_MEM;
 
@@ -84,8 +84,32 @@ namespace lsp
                     dt->n[2]            = dt->n[0];
 
                     dt->c               = *col;
-                    dt->oid             = oid;
-                    dt->face            = st->face;
+                }
+
+                return STATUS_OK;
+            }
+
+            status_t context_t::add_triangles
+            (
+                const dsp::point3d_t *v_vertices,
+                size_t n_triangles,
+                const dsp::matrix3d_t *transform,
+                const dsp::color3d_t *color
+            )
+            {
+                for (size_t i=0; i<n_triangles; ++i, v_vertices += 3)
+                {
+                    bsp::triangle_t *dt = triangle.alloc();
+                    if (dt == NULL)
+                        return STATUS_NO_MEM;
+
+                    dsp::apply_matrix3d_mp2(&dt->v[0], &v_vertices[0], transform);
+                    dsp::apply_matrix3d_mp2(&dt->v[1], &v_vertices[1], transform);
+                    dsp::apply_matrix3d_mp2(&dt->v[2], &v_vertices[2], transform);
+                    dsp::calc_normal3d_pv(&dt->n[0], dt->v);
+                    dt->n[1]            = dt->n[0];
+                    dt->n[2]            = dt->n[0];
+                    dt->c               = *color;
                 }
 
                 return STATUS_OK;
@@ -94,8 +118,8 @@ namespace lsp
             status_t context_t::build_tree()
             {
                 // Build list of triangles for processing
-                bsp_triangle_t *list = NULL;
-                RT_FOREACH(bsp_triangle_t, t, triangle)
+                bsp::triangle_t *list = NULL;
+                RT_FOREACH(bsp::triangle_t, t, triangle)
                     t->next     = list;
                     list        = t;
                 RT_FOREACH_END;
@@ -137,17 +161,17 @@ namespace lsp
 
             status_t context_t::split(lltl::parray<bsp::node_t> &queue, bsp::node_t *task)
             {
-                bsp_triangle_t *in = NULL, *out = NULL, *on = NULL;
+                bsp::triangle_t *in = NULL, *out = NULL, *on = NULL;
 
                 // Get current triangle
                 // TODO: add selection of the best-matching surface for better tree structure
-                bsp_triangle_t *ct = task->on;
+                bsp::triangle_t *ct = task->on;
                 if (ct == NULL)
                     return STATUS_OK;
 
                 size_t tag;
                 dsp::calc_plane_pv(&task->pl, ct->v);
-                bsp_triangle_t *t0, *t1;
+                bsp::triangle_t *t0, *t1;
 
                 // Add current triangle to 'on' list and walk through
                 on          = ct;
@@ -157,7 +181,7 @@ namespace lsp
                 // Process each triangle
                 while (ct != NULL)
                 {
-                    bsp_triangle_t *nt  = ct->next;
+                    bsp::triangle_t *nt  = ct->next;
 
                     tag = dsp::colocation_x3_v1pv(&task->pl, ct->v);
 
@@ -450,7 +474,7 @@ namespace lsp
 
                     if (curr->emit)
                     {
-                        for (bsp_triangle_t *ct=curr->on; ct != NULL; ct = ct->next)
+                        for (bsp::triangle_t *ct=curr->on; ct != NULL; ct = ct->next)
                         {
                             dsp::calc_plane_pv(&pl, ct->v);
                             float d         = pov->x*pl.dx + pov->y*pl.dy + pov->z*pl.dz + pl.dw;

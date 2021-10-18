@@ -23,8 +23,8 @@
 #define LSP_PLUG_IN_DSP_UNITS_3D_BSP_CONTEXT_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
-#include <lsp-plug.in/dsp-units/3d/Allocator3D.h>
 #include <lsp-plug.in/dsp-units/3d/Object3D.h>
+#include <lsp-plug.in/dsp-units/3d/Allocator3D.h>
 #include <lsp-plug.in/dsp-units/3d/bsp/types.h>
 #include <lsp-plug.in/dsp-units/3d/view/types.h>
 #include <lsp-plug.in/dsp/dsp.h>
@@ -74,9 +74,9 @@ namespace lsp
                      * @param col object color
                      * @return status of operation
                      */
-                    inline status_t add_object(Object3D *obj, ssize_t oid, const dsp::color3d_t *col)
+                    inline status_t add_object(Object3D *obj, const dsp::color3d_t *col)
                     {
-                        return add_object(obj, oid, obj->matrix(), col);
+                        return add_object(obj, obj->matrix(), col);
                     }
 
                     /**
@@ -87,7 +87,23 @@ namespace lsp
                      * @param col object color
                      * @return status of operation
                      */
-                    status_t add_object(Object3D *obj, ssize_t oid, const dsp::matrix3d_t *transform, const dsp::color3d_t *col);
+                    status_t add_object(Object3D *obj, const dsp::matrix3d_t *transform, const dsp::color3d_t *col);
+
+                    /**
+                     * Add triangles to the BSP tree
+                     * @param v_vertices list of triangle vertices
+                     * @param n_triangles number of triangles
+                     * @param transform object transformation
+                     * @param color the color for all triangles
+                     * @return status of operation
+                     */
+                    status_t add_triangles
+                    (
+                        const dsp::point3d_t *v_vertices,
+                        size_t n_triangles,
+                        const dsp::matrix3d_t *transform,
+                        const dsp::color3d_t *color
+                    );
 
                     /**
                      * Build the BSP tree
