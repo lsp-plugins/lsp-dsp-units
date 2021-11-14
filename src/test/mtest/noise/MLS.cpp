@@ -24,7 +24,7 @@
 
 using namespace lsp;
 
-#define MAX_N_BITS 32
+#define MAX_N_BITS 32u
 
 MTEST_BEGIN("dspu.noise", MLS)
 
@@ -47,7 +47,7 @@ MTEST_BEGIN("dspu.noise", MLS)
 
     MTEST_MAIN
     {
-        uint8_t nBits = 24;
+        size_t nBits = 24;
         nBits = lsp_min(nBits, MAX_N_BITS);
         dspu::MLS::mls_t nState = 0;  // Use 0 to force default state.
 
@@ -59,7 +59,7 @@ MTEST_BEGIN("dspu.noise", MLS)
 
         float *vBuffer = new float[nPeriod];
         for (size_t n = 0; n < nPeriod; ++n)
-            vBuffer[n] = mls.single_sample_processor();
+            vBuffer[n] = mls.process_single();
 
         write_buffer("tmp/mls.csv", "MLS Period", vBuffer, nPeriod);
 

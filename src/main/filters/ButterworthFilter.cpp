@@ -19,9 +19,9 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp-units/filters/Butter.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/debug.h>
+#include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
 #include <lsp-plug.in/stdlib/math.h>
 
 #define MAX_ORDER       100u
@@ -33,17 +33,17 @@ namespace lsp
     namespace dspu
     {
 
-        Butter::Butter()
+        ButterworthFilter::ButterworthFilter()
         {
             construct();
         }
 
-        Butter::~Butter()
+        ButterworthFilter::~ButterworthFilter()
         {
             destroy();
         }
 
-        void Butter::construct()
+        void ButterworthFilter::construct()
         {
             nOrder          = 2;
 
@@ -55,6 +55,8 @@ namespace lsp
 
             pData           = NULL;
             vBuffer         = NULL;
+
+            bBypass         = false;
 
             bSync           = true;
 
@@ -73,7 +75,7 @@ namespace lsp
             lsp_assert(ptr <= &save[samples]);
         }
 
-        void Butter::destroy()
+        void ButterworthFilter::destroy()
         {
             free_aligned(pData);
             pData = NULL;
@@ -85,10 +87,21 @@ namespace lsp
             }
         }
 
-        void Butter::update_settings()
+        void ButterworthFilter::update_settings()
         {
             if (!bSync)
                 return;
+
+            if (enFilterType == FLT_TYPE_NONE)
+            {
+                bBypass = true;
+                bSync = true;
+                return;
+            }
+            else
+            {
+                bBypass = false;
+            }
 
             nOrder = lsp_min(nOrder, MAX_ORDER);
             // We force even order (so all biquads have all coefficients, maximal efficiency).
@@ -182,18 +195,24 @@ namespace lsp
             bSync = true;
         }
 
-        void Butter::process_add(float *dst, const float *src, size_t count)
+        void ButterworthFilter::process_add(float *dst, const float *src, size_t count)
         {
             if (src != NULL)
                 dsp::copy(dst, src, count);
             else
                 dsp::fill_zero(dst, count);
 
+            if (bBypass)
+            {
+                dsp::mul_k2(dst, 2.0f, count);
+                return;
+            }
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(count, BUF_LIM_SIZE);
 
-                sFilter.process(vBuffer, src, to_do);
+                sFilter.process(vBuffer, dst, to_do);
                 dsp::add2(dst, vBuffer, to_do);
 
                 dst     += to_do;
@@ -202,18 +221,24 @@ namespace lsp
 
         }
 
-        void Butter::process_mul(float *dst, const float *src, size_t count)
+        void ButterworthFilter::process_mul(float *dst, const float *src, size_t count)
         {
             if (src != NULL)
                 dsp::copy(dst, src, count);
             else
                 dsp::fill_zero(dst, count);
 
+            if (bBypass)
+            {
+                dsp::mul2(dst, dst, count);
+                return;
+            }
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(count, BUF_LIM_SIZE);
 
-                sFilter.process(vBuffer, src, to_do);
+                sFilter.process(vBuffer, dst, to_do);
                 dsp::mul2(dst, vBuffer, to_do);
 
                 dst     += to_do;
@@ -222,26 +247,41 @@ namespace lsp
 
         }
 
-        void Butter::process_overwrite(float *dst, const float *src, size_t count)
+        void ButterworthFilter::process_overwrite(float *dst, const float *src, size_t count)
         {
-            sFilter.process(dst, src, count);
+            if (src != NULL)
+                dsp::copy(dst, src, count);
+            else
+                dsp::fill_zero(dst, count);
+
+            if (bBypass)
+            {
+                // Nothing to do.
+                return;
+            }
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
+
+                sFilter.process(vBuffer, dst, to_do);
+                dsp::copy(dst, vBuffer, to_do);
+
+                dst     += to_do;
+                count   -= to_do;
+            }
         }
 
-        void Butter::dump(IStateDumper *v) const
+        void ButterworthFilter::dump(IStateDumper *v) const
         {
             v->write("nOrder", nOrder);
-
             v->write("fCutoffFreq", fCutoffFreq);
-
             v->write("nSampleRate", nSampleRate);
-
             v->write("enFilterType", enFilterType);
-
             v->write_object("sFilter", &sFilter);
-
             v->write("pData", pData);
             v->write("vBuffer", vBuffer);
-
+            v->write("bBypass", bBypass);
             v->write("bSync", bSync);
         }
 

@@ -60,21 +60,15 @@ namespace lsp
              */
 
             public:
-                #ifdef ARCH_32_BIT
-                typedef uint32_t mls_t;
-                #else
-                typedef uint64_t mls_t;
-                #endif
+                typedef umword_t mls_t;
 
             private:
                 MLS & operator = (const MLS &);
+                MLS(const MLS &);
 
             private:
-                mls_t      *vTapsMaskTable;
-
-                uint8_t     nMaxBits;
-                uint8_t     nBits;
-                uint8_t     nFeedbackBit;
+                size_t      nBits;
+                size_t      nFeedbackBit;
                 mls_t       nFeedbackMask;
                 mls_t       nActiveMask;
                 mls_t       nTapsMask;
@@ -94,7 +88,6 @@ namespace lsp
                 void destroy();
 
             protected:
-                void construct_taps_mask_table();
                 mls_t xor_gate(mls_t value);
                 mls_t progress();
 
@@ -104,7 +97,7 @@ namespace lsp
                  *
                  * @return maximum number of supported bits.
                  */
-                uint8_t maximum_number_of_bits();
+                size_t maximum_number_of_bits();
 
                 /** Check that MLS needs settings update.
                  *
@@ -125,7 +118,7 @@ namespace lsp
                  *
                  * @param nbits number of bits
                  */
-                inline void set_n_bits(uint8_t nbits)
+                inline void set_n_bits(size_t nbits)
                 {
                     if (nbits == nBits)
                         return;
@@ -175,14 +168,14 @@ namespace lsp
                  *
                  * @return sequence period
                  */
-                mls_t get_period();
+                mls_t get_period() const;
 
 
                 /** Get a sample from the MLS generator.
                  *
                  * @return the next sample in the MLS sequence.
                  */
-                float single_sample_processor();
+                float process_single();
 
                 /** Output sequence to the destination buffer in additive mode
                  *

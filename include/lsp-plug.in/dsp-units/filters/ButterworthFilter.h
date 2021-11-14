@@ -19,13 +19,9 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/** Even order high-pass and low-pass Butterworth filter, implemented as second order section.
- * Pre-warped bilinear transform of analog Butterworth prototype.
- */
 
-
-#ifndef INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_
-#define INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_
+#define LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/dsp-units/filters/FilterBank.h>
@@ -39,34 +35,34 @@ namespace lsp
         {
             FLT_TYPE_LOWPASS,
             FLT_TYPE_HIGHPASS,
+            FLT_TYPE_NONE,
             FLT_TYPE_MAX
         };
 
-        class Butter
+        /** Even order high-pass and low-pass Butterworth filter, implemented as second order section.
+         * Pre-warped bilinear transform of analog Butterworth prototype.
+         */
+        class ButterworthFilter
         {
 
             private:
-                Butter & operator = (const Butter &);
+                ButterworthFilter & operator = (const ButterworthFilter &);
+                ButterworthFilter(const ButterworthFilter &);
 
             private:
                 size_t              nOrder;
-
                 float               fCutoffFreq;
-
                 size_t              nSampleRate;
-
                 flt_type_t          enFilterType;
-
                 dspu::FilterBank    sFilter;
-
                 uint8_t            *pData;
                 float              *vBuffer;
-
+                bool                bBypass;
                 bool                bSync;
 
             public:
-                explicit Butter();
-                ~Butter();
+                explicit ButterworthFilter();
+                ~ButterworthFilter();
 
                 void construct();
                 void destroy();
@@ -173,4 +169,4 @@ namespace lsp
     }
 }
 
-#endif /* INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_ */

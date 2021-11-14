@@ -19,13 +19,6 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/** As in GENERALIZATIONS OF VELVET NOISE AND THEIR USE IN 1-BIT MUSIC by Kurt James Werner
- * Link: https://dafx2019.bcu.ac.uk/papers/DAFx2019_paper_53.pdf
- * Archive: https://web.archive.org/web/20210711144324/https://dafx2019.bcu.ac.uk/papers/DAFx2019_paper_53.pdf
- *
- * Modified to use MLS samples for OVN, OVNA and ARN (not crushed).
- */
-
 #ifndef LSP_PLUG_IN_DSP_UNITS_NOISE_VELVET_H_
 #define LSP_PLUG_IN_DSP_UNITS_NOISE_VELVET_H_
 
@@ -53,6 +46,12 @@ namespace lsp
             VN_VELVET_MAX
         };
 
+        /** As in GENERALIZATIONS OF VELVET NOISE AND THEIR USE IN 1-BIT MUSIC by Kurt James Werner
+         * Link: https://dafx2019.bcu.ac.uk/papers/DAFx2019_paper_53.pdf
+         * Archive: https://web.archive.org/web/20210711144324/https://dafx2019.bcu.ac.uk/papers/DAFx2019_paper_53.pdf
+         *
+         * Modified to use MLS samples for OVN, OVNA and ARN (not crushed).
+         */
         class Velvet
         {
             protected:

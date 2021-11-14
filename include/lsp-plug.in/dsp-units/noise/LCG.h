@@ -41,7 +41,8 @@ namespace lsp
         class LCG
         {
             private:
-            LCG & operator = (const LCG &);
+                LCG & operator = (const LCG &);
+                LCG(const LCG &);
 
             private:
                 Randomizer  sRand;
@@ -110,7 +111,7 @@ namespace lsp
                  *
                  * @return the next sample in the LCG sequence.
                  */
-                float single_sample_processor();
+                float process_single();
 
                 /** Output sequence to the destination buffer in additive mode
                  *

@@ -57,7 +57,7 @@ namespace lsp
             sRand.init();
         }
 
-        float LCG::single_sample_processor()
+        float LCG::process_single()
         {
             switch (enDistribution)
             {
@@ -94,7 +94,7 @@ namespace lsp
         {
             while (count--)
             {
-                *(dst++) = *(src++) + single_sample_processor();
+                *(dst++) = *(src++) + process_single();
             }
         }
 
@@ -102,7 +102,7 @@ namespace lsp
         {
             while (count--)
             {
-                *(dst++) = *(src++) * single_sample_processor();
+                *(dst++) = *(src++) * process_single();
             }
         }
 
@@ -110,7 +110,7 @@ namespace lsp
         {
             while (count--)
             {
-                *(dst++) = single_sample_processor();
+                *(dst++) = process_single();
             }
         }
 

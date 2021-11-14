@@ -24,7 +24,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/dsp-units/units.h>
 
-#define BUF_LIM_SIZE    2048
+#define BUF_LIM_SIZE    2048u
 
 namespace lsp
 {
@@ -223,8 +223,9 @@ namespace lsp
             sColorFilter.set_order(sColorParams.nOrder);
             sColorFilter.set_slope(slope, unit);
             // Filter seems to be most nice with the bandwidth below.
-            sColorFilter.set_lower_frequency(0.1f); // from 0.1 Hz
-            sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate); // to 90% of the digital bandwidth
+            sColorFilter.set_lower_frequency(10.0f); // from 10 Hz
+            // Use 90% of the digital bandwidth, as this prevents a steep rise in the high end of the frequency response.
+            sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate);
             sColorFilter.update_settings();
 
             //
@@ -315,18 +316,16 @@ namespace lsp
 
         void NoiseGenerator::process_overwrite(float *dst, size_t count)
         {
-            do_process(dst, count);
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
 
-//            while (count > 0)
-//            {
-//                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
-//
-//                do_process(vBuffer, to_do);
-//                dsp::copy(dst, vBuffer, to_do);
-//
-//                dst     += to_do;
-//                count   -= to_do;
-//            }
+                do_process(vBuffer, to_do);
+                dsp::copy(dst, vBuffer, to_do);
+
+                dst     += to_do;
+                count   -= to_do;
+            }
         }
 
         void NoiseGenerator::dump(IStateDumper *v) const

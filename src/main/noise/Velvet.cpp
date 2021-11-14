@@ -25,10 +25,9 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MIN_WINDOW_WIDTH 1.0f
-#define DFL_WINDOW_WIDTH 10.0f
-
-#define BUF_LIM_SIZE 2048
+#define MIN_WINDOW_WIDTH    1.0f
+#define DFL_WINDOW_WIDTH    10.0f
+#define BUF_LIM_SIZE        2048u
 
 namespace lsp
 {
@@ -130,7 +129,7 @@ namespace lsp
             switch (enCore)
             {
                 case VN_CORE_MLS:
-                    return sMLS.single_sample_processor(); // Either 1 or -1
+                    return sMLS.process_single(); // Either 1 or -1
                 default:
                 case VN_CORE_LCG:
                     return 2.0f * roundf(get_random_value()) - 1.0f; // Either 1 or -1
@@ -291,7 +290,7 @@ namespace lsp
         {
             while (count > 0)
             {
-                size_t to_do = (count > BUF_LIM_SIZE) ? BUF_LIM_SIZE : count;
+                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
 
                 do_process(vBuffer, to_do);
                 dsp::mul_k2(vBuffer, fAmplitude, to_do);

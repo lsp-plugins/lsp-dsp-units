@@ -72,7 +72,7 @@ UTEST_BEGIN("dspu.noise", MLS)
             dspu::MLS::mls_t nPeriod = mls.get_period();
 
             for (size_t n = 0; n < nPeriod; ++n)
-                vPeriod[n] = mls.single_sample_processor();
+                vPeriod[n] = mls.process_single();
 
             cautocorr(vCautoX, vPeriod, nPeriod);
             float target = -1.0f / nPeriod;

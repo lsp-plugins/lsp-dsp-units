@@ -48,6 +48,7 @@ namespace lsp
             STLT_SLOPE_UNIT_NEPER_PER_NEPER,
             STLT_SLOPE_UNIT_DB_PER_OCTAVE,
             STLT_SLOPE_UNIT_DB_PER_DECADE,
+            STLT_SLOPE_UNIT_NONE,
             STLT_SLOPE_UNIT_MAX
         };
 
@@ -67,6 +68,7 @@ namespace lsp
 
             private:
                 SpectralTilt & operator = (const SpectralTilt &);
+                SpectralTilt(const SpectralTilt &);
 
             private:
                 size_t              nOrder;
@@ -85,6 +87,8 @@ namespace lsp
                 uint8_t            *pData;
                 float              *vBuffer;
 
+                bool                bBypass;
+
                 bool                bSync;
 
             public:
@@ -96,8 +100,9 @@ namespace lsp
 
             protected:
                 float bilinear_coefficient(float angularFrequency, float samplerate);
-                float bilinear_prewarp(float coefficient, float angularFrequency, float samplerate);
-                bilinear_spec_t compute_bilinear_element(float negZero, float negPole, size_t order, float slopeNepNep, float c_prewarp, float c_final);
+//                float bilinear_prewarp(float coefficient, float angularFrequency, float samplerate);
+//                bilinear_spec_t compute_bilinear_element(float negZero, float negPole, float c_prewarp, float c_final);
+                bilinear_spec_t compute_bilinear_element(float negZero, float negPole);
 
             public:
                 /** Check that SpectralTilt needs settings update.
