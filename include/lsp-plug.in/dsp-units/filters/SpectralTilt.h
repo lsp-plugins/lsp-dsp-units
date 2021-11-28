@@ -52,6 +52,15 @@ namespace lsp
             STLT_SLOPE_UNIT_MAX
         };
 
+        enum stlt_norm_t
+        {
+            STLT_NORM_AT_DC,
+            STLT_NORM_AT_NYQUIST,
+            STLT_NORM_AUTO,
+            STLT_NORM_NONE,
+            STLT_NORM_MAX
+        };
+
         class SpectralTilt
         {
 
@@ -74,6 +83,7 @@ namespace lsp
                 size_t              nOrder;
 
                 stlt_slope_unit_t   enSlopeUnit;
+                stlt_norm_t         enNorm;
                 float               fSlopeVal;
                 float               fSlopeNepNep;
 
@@ -100,8 +110,6 @@ namespace lsp
 
             protected:
                 float bilinear_coefficient(float angularFrequency, float samplerate);
-//                float bilinear_prewarp(float coefficient, float angularFrequency, float samplerate);
-//                bilinear_spec_t compute_bilinear_element(float negZero, float negPole, float c_prewarp, float c_final);
                 bilinear_spec_t compute_bilinear_element(float negZero, float negPole);
 
             public:
@@ -149,6 +157,19 @@ namespace lsp
                     fSlopeVal   = slope;
                     enSlopeUnit = slopeType;
                     bSync       = true;
+                }
+
+                /** Set the normalisation policy of the Spectral Tilt filter.
+                 *
+                 * @param norm normalization policy.
+                 */
+                inline void set_norm(stlt_norm_t norm)
+                {
+                    if ((norm < STLT_NORM_AT_DC) || (norm >= STLT_NORM_MAX))
+                        return;
+
+                    enNorm = norm;
+                    bSync = true;
                 }
 
                 /** Set the lower frequency of the coverage bandwidth.

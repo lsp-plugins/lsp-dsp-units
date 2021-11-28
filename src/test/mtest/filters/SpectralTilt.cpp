@@ -3,7 +3,7 @@
  *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
- * Created on: 10 Oct 2021
+ * Created on: 21 Nov 2021
  *
  * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,12 +21,13 @@
 
 #include <lsp-plug.in/test-fw/mtest.h>
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
+#include <lsp-plug.in/dsp-units/filters/SpectralTilt.h>
 
 #define MAX_N_BITS 32u
 
 using namespace lsp;
 
-MTEST_BEGIN("dspu.noise", MLS)
+MTEST_BEGIN("dspu.filters", SPECTRALTILT)
 
     void write_buffer(const char *filePath, const char *description, const float *buf, size_t count)
     {
@@ -47,9 +48,16 @@ MTEST_BEGIN("dspu.noise", MLS)
 
     MTEST_MAIN
     {
-        size_t nBits = 24;
+        size_t nBits = 18;
         nBits = lsp_min(nBits, MAX_N_BITS);
         dspu::MLS::mls_t nState = 0;  // Use 0 to force default state.
+
+        size_t nOrder = 16;
+        float fSlope = -2.0f;
+        dspu::stlt_slope_unit_t enSlopeUnit = dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+        size_t nSampleRate = 48000;
+        float fLowFreq = 10.0f;
+        float fUpFreq = 0.45f * nSampleRate;
 
         dspu::MLS mls;
         mls.set_n_bits(nBits);
@@ -57,13 +65,27 @@ MTEST_BEGIN("dspu.noise", MLS)
         mls.update_settings();
         dspu::MLS::mls_t nPeriod = mls.get_period();
 
-        float *vBuffer = new float[nPeriod];
+        dspu::SpectralTilt filter;
+        filter.set_order(nOrder);
+        filter.set_slope(fSlope, enSlopeUnit);
+        filter.set_lower_frequency(fLowFreq);
+        filter.set_upper_frequency(fUpFreq);
+        filter.set_sample_rate(nSampleRate);
+        filter.update_settings();
+
+        float *vIn = new float[nPeriod];
+        float *vOut = new float[nPeriod];
+
         for (size_t n = 0; n < nPeriod; ++n)
-            vBuffer[n] = mls.process_single();
+            vIn[n] = mls.process_single();
 
-        write_buffer("tmp/mls.csv", "MLS Period", vBuffer, nPeriod);
+        filter.process_overwrite(vOut, vIn, nPeriod);
 
-        delete [] vBuffer;
+        write_buffer("tmp/stilt_in.csv", "MLS Period", vIn, nPeriod);
+        write_buffer("tmp/stilt_out.csv", "MLS Period", vOut, nPeriod);
+
+        delete [] vIn;
+        delete [] vOut;
 
         mls.destroy();
     }
