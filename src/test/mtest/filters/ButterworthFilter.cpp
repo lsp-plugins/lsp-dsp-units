@@ -3,7 +3,7 @@
  *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
- * Created on: 21 Nov 2021
+ * Created on: 5 Dec 2021
  *
  * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,13 +21,13 @@
 
 #include <lsp-plug.in/test-fw/mtest.h>
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
-#include <lsp-plug.in/dsp-units/filters/SpectralTilt.h>
+#include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
 
 #define MAX_N_BITS 32u
 
 using namespace lsp;
 
-MTEST_BEGIN("dspu.filters", SPECTRALTILT)
+MTEST_BEGIN("dspu.filters", BUTTERWORTHFILTER)
 
     void write_buffer(const char *filePath, const char *description, const float *buf, size_t count)
     {
@@ -48,16 +48,20 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
 
     MTEST_MAIN
     {
-        size_t nBits = 18;
+        size_t nBits = 22;
         nBits = lsp_min(nBits, MAX_N_BITS);
         dspu::MLS::mls_t nState = 0;  // Use 0 to force default state.
 
-        size_t nOrder = 16;
-        float fSlope = -2.0f;
-        dspu::stlt_slope_unit_t enSlopeUnit = dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+        size_t nOrder = 32;
         size_t nSampleRate = 48000;
-        float fLowFreq = 10.0f;
-        float fUpFreq = 0.45f * nSampleRate;
+        dspu::flt_type_t enFilterType = dspu::FLT_TYPE_LOWPASS;
+        float fCutoff;
+        switch (enFilterType)
+        {
+            case dspu::FLT_TYPE_LOWPASS: fCutoff = 0.005f * nSampleRate; break;
+            default:
+            case dspu::FLT_TYPE_HIGHPASS: fCutoff = 0.48f * nSampleRate; break;
+        }
 
         dspu::MLS mls;
         mls.set_n_bits(nBits);
@@ -65,11 +69,10 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
         mls.update_settings();
         dspu::MLS::mls_t nPeriod = mls.get_period();
 
-        dspu::SpectralTilt filter;
+        dspu::ButterworthFilter filter;
         filter.set_order(nOrder);
-        filter.set_slope(fSlope, enSlopeUnit);
-        filter.set_lower_frequency(fLowFreq);
-        filter.set_upper_frequency(fUpFreq);
+        filter.set_cutoff_frequency(fCutoff);
+        filter.set_filter_type(enFilterType);
         filter.set_sample_rate(nSampleRate);
         filter.update_settings();
 
@@ -81,8 +84,8 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
 
         filter.process_overwrite(vOut, vIn, nPeriod);
 
-        write_buffer("tmp/stilt_in.csv", "MLS Period - In", vIn, nPeriod);
-        write_buffer("tmp/stilt_out.csv", "MLS Period - Out", vOut, nPeriod);
+        write_buffer("tmp/btwf_in.csv", "MLS Period - In", vIn, nPeriod);
+        write_buffer("tmp/btwf_out.csv", "MLS Period - Out", vOut, nPeriod);
 
         delete [] vIn;
         delete [] vOut;

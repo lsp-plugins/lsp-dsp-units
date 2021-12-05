@@ -73,18 +73,15 @@ namespace lsp
             ptr += BUF_LIM_SIZE;
 
             lsp_assert(ptr <= &save[samples]);
+
+            sFilter.init(MAX_ORDER);
         }
 
         void ButterworthFilter::destroy()
         {
             free_aligned(pData);
             pData = NULL;
-
-            if (vBuffer != NULL)
-            {
-                delete [] vBuffer;
-                vBuffer = NULL;
-            }
+            vBuffer = NULL;
         }
 
         void ButterworthFilter::update_settings()
@@ -110,6 +107,8 @@ namespace lsp
             fCutoffFreq = lsp_min(fCutoffFreq, 0.5f * nSampleRate - FREQUENCY_LIMIT);
             fCutoffFreq = lsp_max(fCutoffFreq, FREQUENCY_LIMIT);
 
+            // Accuracy of the filter can maybe improved using double precision.
+
             float ang_f_c       = 2.0f * M_PI * fCutoffFreq;
             float bin_c         = ang_f_c / tanf(0.5f * ang_f_c / nSampleRate);
             float bin_c_sq      = bin_c * bin_c;
@@ -120,8 +119,8 @@ namespace lsp
             {
                 float analog_pole_ang = 0.5f * M_PI * (2.0f * k + nOrder + 1.0f) / nOrder;
 
-                float analog_pole_re = cosf(analog_pole_ang);
-                float analog_pole_im = sinf(analog_pole_ang);
+                float analog_pole_re = ang_f_c * cosf(analog_pole_ang);
+                float analog_pole_im = ang_f_c * sinf(analog_pole_ang);
 
                 float analog_pole_re_sq = analog_pole_re * analog_pole_re;
                 float analog_pole_im_sq = analog_pole_im * analog_pole_im;
@@ -139,7 +138,7 @@ namespace lsp
                         - analog_pole_im_sq
                         );
 
-                float digital_pole_im = 2.0f * scale * bin_c + analog_pole_im;
+                float digital_pole_im = 2.0f * scale * bin_c * analog_pole_im;
 
                 float digital_pole_sqabs = digital_pole_re * digital_pole_re + digital_pole_im * digital_pole_im;
 
