@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/test-fw/mtest.h>
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
 
 #define MAX_N_BITS 32u
 
@@ -61,7 +62,9 @@ MTEST_BEGIN("dspu.noise", MLS)
         for (size_t n = 0; n < nPeriod; ++n)
             vBuffer[n] = mls.process_single();
 
-        write_buffer("tmp/mls.csv", "MLS Period", vBuffer, nPeriod);
+        io::Path path;
+        MTEST_ASSERT(path.fmt("%s/mls-%s.csv", tempdir(), full_name()));
+        write_buffer(path.as_native(), "MLS Period", vBuffer, nPeriod);
 
         delete [] vBuffer;
 

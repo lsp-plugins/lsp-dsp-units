@@ -22,6 +22,7 @@
 #include <lsp-plug.in/test-fw/mtest.h>
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
 #include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
 
 #define MAX_N_BITS 32u
 
@@ -84,8 +85,13 @@ MTEST_BEGIN("dspu.filters", BUTTERWORTHFILTER)
 
         filter.process_overwrite(vOut, vIn, nPeriod);
 
-        write_buffer("tmp/btwf_in.csv", "MLS Period - In", vIn, nPeriod);
-        write_buffer("tmp/btwf_out.csv", "MLS Period - Out", vOut, nPeriod);
+        io::Path path_in;
+        MTEST_ASSERT(path_in.fmt("%s/btwf_in-%s.csv", tempdir(), full_name()));
+        write_buffer(path_in.as_native(), "MLS Period - In", vIn, nPeriod);
+
+        io::Path path_out;
+        MTEST_ASSERT(path_out.fmt("%s/btwf_out-%s.csv", tempdir(), full_name()));
+        write_buffer(path_out.as_native(), "MLS Period - Out", vOut, nPeriod);
 
         delete [] vIn;
         delete [] vOut;
