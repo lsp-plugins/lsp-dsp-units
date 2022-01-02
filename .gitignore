@@ -11,4 +11,3 @@
 **/*.gmon
 *.core
 /.config.mk
-tmp/*

@@ -24,12 +24,13 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/dsp-units/units.h>
 
-#define BUF_LIM_SIZE    2048u
+#define BUF_LIM_SIZE    256u
 
 namespace lsp
 {
     namespace dspu
     {
+
         NoiseGenerator::NoiseGenerator()
         {
             construct();
@@ -64,8 +65,6 @@ namespace lsp
             sColorParams.enSlopeUnit        = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
 
             enGenerator                     = NG_GEN_LCG;
-            pData                           = NULL;
-            vBuffer                         = NULL;
 
             bSync                           = true;
         }
@@ -74,33 +73,6 @@ namespace lsp
         {
             sMLS.destroy();
             sLCG.destroy();
-            sVelvetNoise.destroy();
-
-            free_aligned(pData);
-            pData = NULL;
-
-            if (vBuffer != NULL)
-            {
-                delete [] vBuffer;
-                vBuffer = NULL;
-            }
-        }
-
-        void NoiseGenerator::init_buffers()
-        {
-            // 1X buffer for processing.
-            size_t samples = BUF_LIM_SIZE;
-
-            float *ptr = alloc_aligned<float>(pData, samples);
-            if (ptr == NULL)
-                return;
-
-            lsp_guard_assert(float *save = ptr);
-
-            vBuffer = ptr;
-            ptr += BUF_LIM_SIZE;
-
-            lsp_assert(ptr <= &save[samples]);
         }
 
         void NoiseGenerator::init(
@@ -120,8 +92,6 @@ namespace lsp
             sVelvetParams.nMLSseed = velvet_mls_seed;
             sVelvetNoise.init(sVelvetParams.nRandSeed, sVelvetParams.nMLSnBits, sVelvetParams.nMLSseed);
 
-            init_buffers();
-
             bSync = true;
         }
 
@@ -132,8 +102,6 @@ namespace lsp
 
             sLCG.init();
             sVelvetNoise.init();
-
-            init_buffers();
 
             bSync = true;
         }
@@ -228,8 +196,6 @@ namespace lsp
             sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate);
             sColorFilter.update_settings();
 
-            //
-
             bSync = true;
         }
 
@@ -283,12 +249,15 @@ namespace lsp
             else
                 dsp::fill_zero(dst, count);
 
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(BUF_LIM_SIZE, count);
 
-                do_process(vBuffer, to_do);
-                dsp::add2(dst, vBuffer, to_do);
+                do_process(vTemp, to_do);
+                dsp::add2(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -302,12 +271,15 @@ namespace lsp
             else
                 dsp::fill_zero(dst, count);
 
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(BUF_LIM_SIZE, count);
 
-                do_process(vBuffer, to_do);
-                dsp::mul2(dst, vBuffer, to_do);
+                do_process(vTemp, to_do);
+                dsp::mul2(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -316,16 +288,7 @@ namespace lsp
 
         void NoiseGenerator::process_overwrite(float *dst, size_t count)
         {
-            while (count > 0)
-            {
-                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
-
-                do_process(vBuffer, to_do);
-                dsp::copy(dst, vBuffer, to_do);
-
-                dst     += to_do;
-                count   -= to_do;
-            }
+            do_process(dst, count);
         }
 
         void NoiseGenerator::dump(IStateDumper *v) const
@@ -377,9 +340,6 @@ namespace lsp
 
             v->write("fAmplitude", fAmplitude);
             v->write("fOffset", fOffset);
-
-            v->write("pData", pData);
-            v->write("vBuffer", vBuffer);
 
             v->write("bSync", bSync);
         }

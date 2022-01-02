@@ -55,13 +55,13 @@ MTEST_BEGIN("dspu.filters", BUTTERWORTHFILTER)
 
         size_t nOrder = 32;
         size_t nSampleRate = 48000;
-        dspu::flt_type_t enFilterType = dspu::FLT_TYPE_LOWPASS;
+        dspu::bw_filt_type_t enFilterType = dspu::BW_FLT_TYPE_HIGHPASS;
         float fCutoff;
         switch (enFilterType)
         {
-            case dspu::FLT_TYPE_LOWPASS: fCutoff = 0.005f * nSampleRate; break;
+            case dspu::BW_FLT_TYPE_LOWPASS: fCutoff = 0.005f * nSampleRate; break;
             default:
-            case dspu::FLT_TYPE_HIGHPASS: fCutoff = 0.48f * nSampleRate; break;
+            case dspu::BW_FLT_TYPE_HIGHPASS: fCutoff = 0.48f * nSampleRate; break;
         }
 
         dspu::MLS mls;

@@ -29,7 +29,7 @@
 #define MAX_ORDER               100u
 #define DFL_LOWER_FREQUENCY     0.1f
 #define DFL_UPPER_FREQUENCY     20.0e3f
-#define BUF_LIM_SIZE            2048u
+#define BUF_LIM_SIZE            256u
 
 namespace lsp
 {
@@ -43,7 +43,6 @@ namespace lsp
 
         SpectralTilt::~SpectralTilt()
         {
-            destroy();
         }
 
         void SpectralTilt::construct()
@@ -60,35 +59,11 @@ namespace lsp
 
             nSampleRate     = -1;
 
-            pData           = NULL;
-            vBuffer         = NULL;
-
             bBypass         = false;
 
             bSync           = true;
 
-            // 1X buffer for processing.
-            size_t samples = BUF_LIM_SIZE;
-
-            float *ptr = alloc_aligned<float>(pData, samples);
-            if (ptr == NULL)
-                return;
-
-            lsp_guard_assert(float *save = ptr);
-
-            vBuffer = ptr;
-            ptr += BUF_LIM_SIZE;
-
-            lsp_assert(ptr <= &save[samples]);
-
             sFilter.init(MAX_ORDER);
-        }
-
-        void SpectralTilt::destroy()
-        {
-            free_aligned(pData);
-            pData = NULL;
-            vBuffer = NULL;
         }
 
         // Compute the coefficient for the bilinear transform warping equation.
@@ -184,18 +159,29 @@ namespace lsp
                  *
                  * a_g_b1_b2 = a_neper_per_neper * g * ln(b2) / ln(b1)
                  *
+                 * => a_neper_per_neper = ln(b1) * a_g_b1_b2 / (g * ln(b2))
+                 *
                  * with ln the base e logarithm.
+                 *
+                 * Hence:
+                 *
+                 * To convert from dB-per-octave to neper-per-neper multiply by:
+                 * ln(10) / (20 * ln(2)) = 0.16609640419483184814453125
+                 *
+                 * To convert from dB-per-decade to neper-per-neper multiply by:
+                 * ln(10) / (20 * ln(10)) = 1 / 20 = 0.05
+                 *
                  */
 
                 case STLT_SLOPE_UNIT_DB_PER_OCTAVE:
                 {
-                    fSlopeNepNep = fSlopeVal * logf(10.0f) / (20.0f * logf(2.0f));
+                    fSlopeNepNep = fSlopeVal * 0.16609640419483184814453125f;
                 }
                 break;
 
                 case STLT_SLOPE_UNIT_DB_PER_DECADE:
                 {
-                    fSlopeNepNep = fSlopeVal / 20.0f;
+                    fSlopeNepNep = fSlopeVal * 0.05f;
                 }
                 break;
 
@@ -299,12 +285,15 @@ namespace lsp
                 return;
             }
 
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(count, BUF_LIM_SIZE);
 
-                sFilter.process(vBuffer, dst, to_do);
-                dsp::add2(dst, vBuffer, to_do);
+                sFilter.process(vTemp, dst, to_do);
+                dsp::add2(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -314,52 +303,46 @@ namespace lsp
 
         void SpectralTilt::process_mul(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
-                dsp::fill_zero(dst, count);
-
-            if (bBypass)
+            if (src == NULL)
             {
-                dsp::mul2(dst, dst, count);
+                // No inputs, interpret `src` as zeros: dst[i] = dst[i] * 0 = 0
+                dsp::fill_zero(dst, count);
+                return;
+            }
+            else if (bBypass)
+            {
+                // Bypass is set: dst[i] = dst[i] * src[i]
+                dsp::mul2(dst, src, count);
                 return;
             }
 
-            while (count > 0)
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE];
+
+            for (size_t offset=0; offset < count; )
             {
-                size_t to_do = lsp_min(count, BUF_LIM_SIZE);
+                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
 
-                sFilter.process(vBuffer, dst, to_do);
-                dsp::mul2(dst, vBuffer, to_do);
+                // dst[i] = dst[i] * filter(src[i])
+                sFilter.process(vTemp, &src[offset], to_do);
+                dsp::mul2(&dst[offset], vTemp, to_do);
 
-                dst     += to_do;
-                count   -= to_do;
-            }
-
+                offset += to_do;
+             }
         }
 
         void SpectralTilt::process_overwrite(float *dst, const float *src, size_t count)
         {
             if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
-                dsp::fill_zero(dst, count);
-
-            if (bBypass)
             {
-                // Nothing to do.
-                return;
+                if (bBypass)
+                    dsp::copy(dst, src, count);
+                else
+                    sFilter.process(dst, src, count);
             }
-
-            while (count > 0)
+            else
             {
-                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
-
-                sFilter.process(vBuffer, dst, to_do);
-                dsp::copy(dst, vBuffer, to_do);
-
-                dst     += to_do;
-                count   -= to_do;
+                dsp::fill_zero(dst, count);
             }
         }
 
@@ -378,9 +361,6 @@ namespace lsp
             v->write("nSampleRate", nSampleRate);
 
             v->write_object("sFilter", &sFilter);
-
-            v->write("pData", pData);
-            v->write("vBuffer", vBuffer);
 
             v->write("bBypass", bBypass);
 

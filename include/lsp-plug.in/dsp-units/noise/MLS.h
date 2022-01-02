@@ -29,35 +29,36 @@ namespace lsp
 {
     namespace dspu
     {
+        /** MLS stands for Maximum Length Sequence.
+         * MLS is a type of pseudorandom sequence with a number of desirable properties:
+         *
+         * * Smallest crest factor;
+         * * 2^N - 1 period length;
+         * * MLS sequences are ideally decorrelated from themselves;
+         * * MLS spectrum is flat;
+         *
+         * Where N is the number of bits.
+         *
+         * MLS is implemented with a linear shift feedback register of N bits. At each step:
+         * * The leftmost bit is taken as output.
+         * * The values of certain bits in the register are passed through an XOR gate.
+         * * The values in the registers are shifted by one to the left.
+         * * The XOR gate output is now put into the rightmost bit.
+         *
+         * If the bits that feed the XOR gate (taps) are chosen appropriately, the resulting sequence will be an MLS of period 2^N - 1.
+         * Typically, if the output bit is 1 the value of the sequence will be 1. -1 otherwise.
+         * The register can be initialised (seeded) with any non-zero value.
+         *
+         * This class supports MLS generation with registers up to 128 bits depending on platform.
+         *
+         * Basic MLS Theory at:
+         *
+         * http://www.kempacoustics.com/thesis/node83.html
+         * https://dspguru.com/dsp/tutorials/a-little-mls-tutorial/
+         * http://in.ncu.edu.tw/ncume_ee/digilogi/prbs.htm
+         */
         class MLS
         {
-            /** MLS is a type of pseudorandom sequence with a number of desirable properties:
-             *
-             * * Smallest crest factor;
-             * * 2^N - 1 period length;
-             * * MLS sequences are ideally decorrelated from themselves;
-             * * MLS spectrum is flat;
-             *
-             * Where N is the number of bits.
-             *
-             * MLS is implemented with a linear shift feedback register of N bits. At each step:
-             * * The leftmost bit is taken as output.
-             * * The values of certain bits in the register are passed through an XOR gate.
-             * * The values in the registers are shifted by one to the left.
-             * * The XOR gate output is now put into the rightmost bit.
-             *
-             * If the bits that feed the XOR gate (taps) are chosen appropriately, the resulting sequence will be an MLS of period 2^N -1.
-             * Typically, if the output bit is 1 the value of the sequence will be 1. -1 otherwise.
-             * The register can be initialised (seeded) with any non-zero value.
-             *
-             * This class supports MLS generation with registers up to 32 bits on 32 platforms and 64 bits on 64 platforms.
-             *
-             * Basic MLS Theory at:
-             *
-             * http://www.kempacoustics.com/thesis/node83.html
-             * https://dspguru.com/dsp/tutorials/a-little-mls-tutorial/
-             * http://in.ncu.edu.tw/ncume_ee/digilogi/prbs.htm
-             */
 
             public:
                 typedef umword_t mls_t;
@@ -97,7 +98,7 @@ namespace lsp
                  *
                  * @return maximum number of supported bits.
                  */
-                size_t maximum_number_of_bits();
+                size_t maximum_number_of_bits() const;
 
                 /** Check that MLS needs settings update.
                  *

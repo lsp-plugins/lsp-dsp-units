@@ -24,9 +24,9 @@
 #include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MAX_ORDER       100u
-#define BUF_LIM_SIZE    2048u
-#define FREQUENCY_LIMIT 10.0f
+#define MAX_ORDER           100u
+#define BUF_LIM_SIZE        256u
+#define FREQUENCY_LIMIT     10.0f
 
 namespace lsp
 {
@@ -40,7 +40,6 @@ namespace lsp
 
         ButterworthFilter::~ButterworthFilter()
         {
-            destroy();
         }
 
         void ButterworthFilter::construct()
@@ -51,37 +50,13 @@ namespace lsp
 
             nSampleRate     = -1;
 
-            enFilterType    = FLT_TYPE_LOWPASS;
-
-            pData           = NULL;
-            vBuffer         = NULL;
+            enFilterType    = BW_FLT_TYPE_LOWPASS;
 
             bBypass         = false;
 
             bSync           = true;
 
-            // 1X buffer for processing.
-            size_t samples = BUF_LIM_SIZE;
-
-            float *ptr = alloc_aligned<float>(pData, samples);
-            if (ptr == NULL)
-                return;
-
-            lsp_guard_assert(float *save = ptr);
-
-            vBuffer = ptr;
-            ptr += BUF_LIM_SIZE;
-
-            lsp_assert(ptr <= &save[samples]);
-
             sFilter.init(MAX_ORDER);
-        }
-
-        void ButterworthFilter::destroy()
-        {
-            free_aligned(pData);
-            pData = NULL;
-            vBuffer = NULL;
         }
 
         void ButterworthFilter::update_settings()
@@ -89,7 +64,7 @@ namespace lsp
             if (!bSync)
                 return;
 
-            if (enFilterType == FLT_TYPE_NONE)
+            if (enFilterType == BW_FLT_TYPE_NONE)
             {
                 bBypass = true;
                 bSync = true;
@@ -104,8 +79,7 @@ namespace lsp
             // We force even order (so all biquads have all coefficients, maximal efficiency).
             nOrder = (nOrder % 2 == 0) ? nOrder : nOrder + 1;
 
-            fCutoffFreq = lsp_min(fCutoffFreq, 0.5f * nSampleRate - FREQUENCY_LIMIT);
-            fCutoffFreq = lsp_max(fCutoffFreq, FREQUENCY_LIMIT);
+            fCutoffFreq = lsp_limit(fCutoffFreq, FREQUENCY_LIMIT, 0.5f * nSampleRate - FREQUENCY_LIMIT);
 
             // Accuracy of the filter can maybe improved using double precision.
 
@@ -153,7 +127,7 @@ namespace lsp
                     // Sign for a[n] (denominator) coefficients needs to be inverted for assignment.
                     // In other words, with respect the maths, f->a1 and f->a2 below have inverted sign.
 
-                    case FLT_TYPE_HIGHPASS:
+                    case BW_FLT_TYPE_HIGHPASS:
                     {
                         f->b0 = 1.0f;
                         f->b1 = -2.0f;
@@ -168,7 +142,7 @@ namespace lsp
                     }
                     break;
 
-                    case FLT_TYPE_LOWPASS:
+                    case BW_FLT_TYPE_LOWPASS:
                     default:
                     {
                         f->b0 = 1.0f;
@@ -207,12 +181,15 @@ namespace lsp
                 return;
             }
 
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(count, BUF_LIM_SIZE);
 
-                sFilter.process(vBuffer, dst, to_do);
-                dsp::add2(dst, vBuffer, to_do);
+                sFilter.process(vTemp, dst, to_do);
+                dsp::add2(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -222,52 +199,46 @@ namespace lsp
 
         void ButterworthFilter::process_mul(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
-                dsp::fill_zero(dst, count);
-
-            if (bBypass)
+            if (src == NULL)
             {
-                dsp::mul2(dst, dst, count);
+                // No inputs, interpret `src` as zeros: dst[i] = dst[i] * 0 = 0
+                dsp::fill_zero(dst, count);
+                return;
+            }
+            else if (bBypass)
+            {
+                // Bypass is set: dst[i] = dst[i] * src[i]
+                dsp::mul2(dst, src, count);
                 return;
             }
 
-            while (count > 0)
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE];
+
+            for (size_t offset=0; offset < count; )
             {
-                size_t to_do = lsp_min(count, BUF_LIM_SIZE);
+                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
 
-                sFilter.process(vBuffer, dst, to_do);
-                dsp::mul2(dst, vBuffer, to_do);
+                // dst[i] = dst[i] * filter(src[i])
+                sFilter.process(vTemp, &src[offset], to_do);
+                dsp::mul2(&dst[offset], vTemp, to_do);
 
-                dst     += to_do;
-                count   -= to_do;
-            }
-
+                offset += to_do;
+             }
         }
 
         void ButterworthFilter::process_overwrite(float *dst, const float *src, size_t count)
         {
             if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
-                dsp::fill_zero(dst, count);
-
-            if (bBypass)
             {
-                // Nothing to do.
-                return;
+                if (bBypass)
+                    dsp::copy(dst, src, count);
+                else
+                    sFilter.process(dst, src, count);
             }
-
-            while (count > 0)
+            else
             {
-                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
-
-                sFilter.process(vBuffer, dst, to_do);
-                dsp::copy(dst, vBuffer, to_do);
-
-                dst     += to_do;
-                count   -= to_do;
+                dsp::fill_zero(dst, count);
             }
         }
 
@@ -278,8 +249,6 @@ namespace lsp
             v->write("nSampleRate", nSampleRate);
             v->write("enFilterType", enFilterType);
             v->write_object("sFilter", &sFilter);
-            v->write("pData", pData);
-            v->write("vBuffer", vBuffer);
             v->write("bBypass", bBypass);
             v->write("bSync", bSync);
         }

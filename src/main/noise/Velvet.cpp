@@ -27,12 +27,13 @@
 
 #define MIN_WINDOW_WIDTH    1.0f
 #define DFL_WINDOW_WIDTH    10.0f
-#define BUF_LIM_SIZE        2048u
+#define BUF_LIM_SIZE        256u
 
 namespace lsp
 {
     namespace dspu
     {
+
         Velvet::Velvet()
         {
             construct();
@@ -51,43 +52,10 @@ namespace lsp
             fARNdelta                   = 0.5f;
             fAmplitude                  = 1.0f;
             fOffset                     = 0.0f;
-
-            pData                       = NULL;
-            vBuffer                     = NULL;
         }
 
         Velvet::~Velvet()
         {
-            destroy();
-        }
-
-        void Velvet::destroy()
-        {
-            free_aligned(pData);
-            pData = NULL;
-
-            if (vBuffer != NULL)
-            {
-                delete [] vBuffer;
-                vBuffer = NULL;
-            }
-        }
-
-        void Velvet::init_buffers()
-        {
-            // 1X buffer for processing.
-            size_t samples = BUF_LIM_SIZE;
-
-            float *ptr = alloc_aligned<float>(pData, samples);
-            if (ptr == NULL)
-                return;
-
-            lsp_guard_assert(float *save = ptr);
-
-            vBuffer = ptr;
-            ptr += BUF_LIM_SIZE;
-
-            lsp_assert(ptr <= &save[samples]);
         }
 
         void Velvet::init(uint32_t randseed, uint8_t mlsnbits, MLS::mls_t mlsseed)
@@ -101,8 +69,6 @@ namespace lsp
             sMLS.set_n_bits(mlsnbits);
             sMLS.set_state(mlsseed);
             sMLS.update_settings();
-
-            init_buffers();
         }
 
         void Velvet::init()
@@ -115,8 +81,6 @@ namespace lsp
 
             // Simply use defaults in the class.
             sMLS.update_settings();
-
-            init_buffers();
         }
 
         float Velvet::get_random_value()
@@ -159,9 +123,10 @@ namespace lsp
                     size_t idx = 0;
                     size_t scan = 0;
 
+                    float k = fWindowWidth - 1.0f;
                     while (idx < count)
                     {
-                        idx = scan * fWindowWidth + get_random_value() * (fWindowWidth - 1.0f);
+                        idx = scan * fWindowWidth + get_random_value() * k;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -200,9 +165,11 @@ namespace lsp
 
                     size_t idx = 0;
 
+                    float k = 2.0f * fARNdelta * (fWindowWidth - 1.0f);
+                    float b = (1.0f - fARNdelta) * (fWindowWidth - 1.0f);
                     while (idx < count)
                     {
-                        idx += 1.0f + (1.0f - fARNdelta) * (fWindowWidth - 1.0f) + 2.0f * fARNdelta * (fWindowWidth - 1.0f) * get_random_value();
+                        idx += 1.0f + b + k * get_random_value();
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -214,23 +181,28 @@ namespace lsp
 
                 case VN_VELVET_TRN:
                 {
-                    while (count--)
+                    size_t idx = 0;
+                    float k = fWindowWidth / (fWindowWidth - 1.0f);
+                    while (idx < count)
                     {
-                        float value = roundf(fWindowWidth * (get_random_value() - 0.5f) / (fWindowWidth - 1.0f));
+                        dst[idx] = roundf(k * (get_random_value() - 0.5f));
+                        ++idx;
+                    }
 
-                        if (sCrushParams.bCrush)
+                    if (sCrushParams.bCrush)
+                    {
+                        idx = 0;
+                        while (idx < count)
                         {
                             float multiplier = 1.0f;
 
                             if (get_random_value() > sCrushParams.fCrushProb)
                                 multiplier = -1.0f;
 
-                            *(dst++) = multiplier * abs(value);
+                            dst[idx] = multiplier * abs(dst[idx]);
+                            ++idx;
                         }
-                        else
-                        {
-                            *(dst++) = value;
-                        }
+
                     }
                 }
                 break;
@@ -251,14 +223,17 @@ namespace lsp
             else
                 dsp::fill_zero(dst, count);
 
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = (count > BUF_LIM_SIZE) ? BUF_LIM_SIZE : count;
 
-                do_process(vBuffer, to_do);
-                dsp::mul_k2(vBuffer, fAmplitude, to_do);
-                dsp::add_k2(vBuffer, fOffset, to_do);
-                dsp::add2(dst, vBuffer, to_do);
+                do_process(vTemp, to_do);
+                dsp::mul_k2(vTemp, fAmplitude, to_do);
+                dsp::add_k2(vTemp, fOffset, to_do);
+                dsp::add2(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -272,14 +247,17 @@ namespace lsp
             else
                 dsp::fill_zero(dst, count);
 
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = (count > BUF_LIM_SIZE) ? BUF_LIM_SIZE : count;
 
-                do_process(vBuffer, to_do);
-                dsp::mul_k2(vBuffer, fAmplitude, to_do);
-                dsp::add_k2(vBuffer, fOffset, to_do);
-                dsp::mul2(dst, vBuffer, to_do);
+                do_process(vTemp, to_do);
+                dsp::mul_k2(vTemp, fAmplitude, to_do);
+                dsp::add_k2(vTemp, fOffset, to_do);
+                dsp::mul2(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -288,14 +266,17 @@ namespace lsp
 
         void Velvet::process_overwrite(float *dst, size_t count)
         {
+            // 1X buffer for temporary processing.
+            float vTemp[BUF_LIM_SIZE]{};
+
             while (count > 0)
             {
                 size_t to_do = lsp_min(BUF_LIM_SIZE, count);
 
-                do_process(vBuffer, to_do);
-                dsp::mul_k2(vBuffer, fAmplitude, to_do);
-                dsp::add_k2(vBuffer, fOffset, to_do);
-                dsp::copy(dst, vBuffer, to_do);
+                do_process(vTemp, to_do);
+                dsp::mul_k2(vTemp, fAmplitude, to_do);
+                dsp::add_k2(vTemp, fOffset, to_do);
+                dsp::copy(dst, vTemp, to_do);
 
                 dst     += to_do;
                 count   -= to_do;
@@ -323,9 +304,6 @@ namespace lsp
             v->write("fARNdelta", fARNdelta);
             v->write("fAmplitude", fAmplitude);
             v->write("fOffset", fOffset);
-
-            v->write("pData", pData);
-            v->write("vBuffer", vBuffer);
         }
     }
 }

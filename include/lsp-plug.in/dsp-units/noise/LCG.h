@@ -38,6 +38,13 @@ namespace lsp
             LCG_MAX
         };
 
+        /** LCG stands for Linear Congruential Generator.
+         * LCG generate pseudorandom sequences by using a recurrence relation.
+         * This relation is defined in the Randomizer class.
+         * This class builds upon Randomizer by providing support for common distributions.
+         * Output noise is easily scalable, and offset is also supported.
+         *
+         */
         class LCG
         {
             private:
@@ -45,12 +52,12 @@ namespace lsp
                 LCG(const LCG &);
 
             private:
-                Randomizer  sRand;
-
                 lcg_dist_t  enDistribution;
 
                 float       fAmplitude;
                 float       fOffset;
+
+                Randomizer  sRand;
 
             public:
                 explicit LCG();

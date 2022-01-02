@@ -33,8 +33,8 @@
  */
 
 
-#ifndef INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_
-#define INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_
+#define LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/dsp-units/filters/FilterBank.h>
@@ -64,6 +64,10 @@ namespace lsp
         class SpectralTilt
         {
 
+            private:
+                SpectralTilt & operator = (const SpectralTilt &);
+                SpectralTilt(const SpectralTilt &);
+
             protected:
 
                 typedef struct bilinear_spec_t
@@ -74,10 +78,6 @@ namespace lsp
                     float a0;
                     float a1;
                 } bq_spec_t;
-
-            private:
-                SpectralTilt & operator = (const SpectralTilt &);
-                SpectralTilt(const SpectralTilt &);
 
             private:
                 size_t              nOrder;
@@ -92,21 +92,17 @@ namespace lsp
 
                 size_t              nSampleRate;
 
-                dspu::FilterBank    sFilter;
-
-                uint8_t            *pData;
-                float              *vBuffer;
-
                 bool                bBypass;
 
                 bool                bSync;
+
+                dspu::FilterBank    sFilter;
 
             public:
                 explicit SpectralTilt();
                 ~SpectralTilt();
 
                 void construct();
-                void destroy();
 
             protected:
                 float bilinear_coefficient(float angularFrequency, float samplerate);
@@ -245,4 +241,4 @@ namespace lsp
     }
 }
 
-#endif /* INCLUDE_LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_ */

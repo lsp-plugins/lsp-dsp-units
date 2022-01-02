@@ -54,15 +54,16 @@ namespace lsp
          */
         class Velvet
         {
+            private:
+                Velvet & operator = (const Velvet &);
+                Velvet(const Velvet &);
+
             protected:
                 typedef struct crush_t
                 {
                     bool    bCrush;
                     float   fCrushProb;
                 } crush_t;
-
-            private:
-                Velvet & operator = (const Velvet &);
 
             private:
                 Randomizer          sRandomizer;
@@ -80,18 +81,13 @@ namespace lsp
                 float               fAmplitude;
                 float               fOffset;
 
-                uint8_t            *pData;
-                float              *vBuffer;
-
             public:
                 explicit Velvet();
                 ~Velvet();
 
                 void construct();
-                void destroy();
 
             protected:
-                void init_buffers();
 
                 /** Get a random value in [0, 1) using the Randomizer.
                  *

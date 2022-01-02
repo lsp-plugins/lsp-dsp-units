@@ -31,12 +31,12 @@ namespace lsp
     namespace dspu
     {
 
-        enum flt_type_t
+        enum bw_filt_type_t
         {
-            FLT_TYPE_LOWPASS,
-            FLT_TYPE_HIGHPASS,
-            FLT_TYPE_NONE,
-            FLT_TYPE_MAX
+            BW_FLT_TYPE_LOWPASS,
+            BW_FLT_TYPE_HIGHPASS,
+            BW_FLT_TYPE_NONE,
+            BW_FLT_TYPE_MAX
         };
 
         /** Even order high-pass and low-pass Butterworth filter, implemented as second order section.
@@ -53,24 +53,21 @@ namespace lsp
                 size_t              nOrder;
                 float               fCutoffFreq;
                 size_t              nSampleRate;
-                flt_type_t          enFilterType;
-                dspu::FilterBank    sFilter;
-                uint8_t            *pData;
-                float              *vBuffer;
+                bw_filt_type_t      enFilterType;
                 bool                bBypass;
                 bool                bSync;
+                dspu::FilterBank    sFilter;
 
             public:
                 explicit ButterworthFilter();
                 ~ButterworthFilter();
 
                 void construct();
-                void destroy();
 
             public:
-                /** Check that Butter needs settings update.
+                /** Check that filter needs settings update.
                  *
-                 * @return true if Butter needs settings update.
+                 * @return true if filter needs settings update.
                  */
                 inline bool needs_update() const
                 {
@@ -113,9 +110,9 @@ namespace lsp
                  *
                  * @param type filter type.
                  */
-                inline void set_filter_type(flt_type_t type)
+                inline void set_filter_type(bw_filt_type_t type)
                 {
-                    if ((type < FLT_TYPE_LOWPASS) && (type >= FLT_TYPE_MAX))
+                    if ((type < BW_FLT_TYPE_LOWPASS) && (type >= BW_FLT_TYPE_MAX))
                         return;
 
                     enFilterType    = type;

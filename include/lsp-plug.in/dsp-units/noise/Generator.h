@@ -19,8 +19,8 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef INCLUDE_LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_
-#define INCLUDE_LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_
+#define LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_
 
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
 #include <lsp-plug.in/dsp-units/noise/LCG.h>
@@ -44,15 +44,22 @@ namespace lsp
         {
             NG_COLOR_WHITE,
             NG_COLOR_PINK,
-            NG_COLOR_RED, // AKA Brownian or Brown
+            NG_COLOR_RED,
             NG_COLOR_BLUE,
             NG_COLOR_VIOLET,
             NG_COLOR_ARBITRARY,
-            NG_COLOR_MAX
+            NG_COLOR_MAX,
+            NG_COLOR_BROWN = NG_COLOR_RED,
+            NG_COLOR_BROWNIAN = NG_COLOR_RED
         };
 
         class NoiseGenerator
         {
+
+            private:
+                NoiseGenerator & operator = (const NoiseGenerator &);
+                NoiseGenerator(const NoiseGenerator &);
+
             protected:
 
                 typedef struct mls_params_t
@@ -106,9 +113,6 @@ namespace lsp
                 float               fAmplitude;
                 float               fOffset;
 
-                uint8_t            *pData;
-                float              *vBuffer;
-
                 bool                bSync;
 
             public:
@@ -119,7 +123,6 @@ namespace lsp
                 void destroy();
 
             protected:
-                void init_buffers();
                 void do_process(float *dst, size_t count);
 
             public:
@@ -384,4 +387,4 @@ namespace lsp
     }
 }
 
-#endif /* INCLUDE_LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_ */
+#endif /* LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_ */

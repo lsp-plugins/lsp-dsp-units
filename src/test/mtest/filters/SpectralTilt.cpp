@@ -54,7 +54,7 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
         dspu::MLS::mls_t nState = 0;  // Use 0 to force default state.
 
         size_t nOrder = 16;
-        float fSlope = -2.0f;
+        float fSlope = -0.5f;
         dspu::stlt_slope_unit_t enSlopeUnit = dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER;
         size_t nSampleRate = 48000;
         float fLowFreq = 10.0f;

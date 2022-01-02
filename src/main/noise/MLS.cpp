@@ -34,7 +34,9 @@ namespace lsp
         static const size_t nMaxBits = sizeof(MLS::mls_t) * 8;
 
         static const MLS::mls_t vTapsMaskTable[] = {
-                #if defined(ARCH_32BIT) || defined(ARCH_64BIT) || defined(ARCH_128BIT)
+            // These first 32 elements would use the condition:
+            // #if defined(ARCH_32BIT) || defined(ARCH_64BIT) || defined(ARCH_128BIT)
+            // but all platforms have 32 bit support, so we can simply omit.
                 1u,
                 3u,
                 3u,
@@ -67,8 +69,7 @@ namespace lsp
                 98307u,
                 9u,
                 402653187u, // <- 32
-                #endif
-                #if defined(ARCH_64BIT) || defined(ARCH_128BIT)
+            #if defined(ARCH_64BIT) || defined(ARCH_128BIT)
                 8193u,
                 49155u,
                 5u,
@@ -101,8 +102,8 @@ namespace lsp
                 216172782113783811u,
                 3u,
                 27u, // <- 64
-                #endif
-                #if defined(ARCH_128BIT)
+            #endif
+            #if defined(ARCH_128BIT)
                 262145u,
                 1539u,
                 1539u,
@@ -167,7 +168,7 @@ namespace lsp
                 206158430211u,
                 3u,
                 671088645u
-                #endif
+            #endif
         };
 
         MLS::MLS()
@@ -199,7 +200,7 @@ namespace lsp
         {
         }
 
-        size_t MLS::maximum_number_of_bits()
+        size_t MLS::maximum_number_of_bits() const
         {
             return nMaxBits;
         }
@@ -232,13 +233,19 @@ namespace lsp
         // Compute the xor of all the bits in value
         MLS::mls_t MLS::xor_gate(mls_t value)
         {
-            mls_t nXorValue;
-            for (nXorValue = 0; value; nXorValue ^= 1)
-            {
-                value &= value - 1;
-            }
-
-            return nXorValue;
+            /* Note: value should be unsigned for proper binary shift calculations */
+            #ifdef ARCH_128BIT
+            value ^= value >> 64;
+            #endif /* ARCH_128BIT */
+            #ifdef ARCH_64BIT
+            value ^= value >> 32;
+            #endif /* ARCH_64BIT */
+            value ^= value >> 16;
+            value ^= value >> 8;
+            value ^= value >> 4;
+            value ^= value >> 2;
+            value ^= value >> 1;
+            return value & mls_t(1u);
         }
 
         MLS::mls_t MLS::get_period() const
