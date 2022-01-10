@@ -44,11 +44,12 @@ else
   X_URL_SUFFIX                = _RO
 endif
 
+include $(BASEDIR)/project.mk
+include $(BASEDIR)/modules.mk
+include $(BASEDIR)/dependencies.mk
 include $(BASEDIR)/make/functions.mk
 include $(BASEDIR)/make/system.mk
 include $(BASEDIR)/make/tools.mk
-include $(BASEDIR)/dependencies.mk
-include $(BASEDIR)/project.mk
 
 # Compute the full list of dependencies
 MERGED_DEPENDENCIES        := \
