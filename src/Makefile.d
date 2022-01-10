@@ -2178,11 +2178,10 @@ $(LSP_DSP_UNITS_BIN)/main/3d/Object3D.o: main/3d/Object3D.cpp \
 $(LSP_DSP_UNITS_BIN)/main/3d/bsp/context.o: main/3d/bsp/context.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/bsp/context.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/Allocator3D.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/Object3D.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
@@ -2229,6 +2228,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/bsp/context.o: main/3d/bsp/context.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/Scene3D.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/Allocator3D.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/LSPString.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/string.h \

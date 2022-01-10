@@ -22,10 +22,11 @@ ifneq ($(VERBOSE),1)
 endif
 
 BASEDIR                 = $(CURDIR)
-CONFIG                 := $(CURDIR)/.config.mk
+CONFIG                 := $(BASEDIR)/../.config.mk
+PROJECT                := $(BASEDIR)/../project.mk
 
 include $(CONFIG)
-include $(BASEDIR)/../project.mk
+include $(PROJECT)
 include $(BASEDIR)/../make/functions.mk
 
 ifeq ($(TEST),1)
@@ -65,12 +66,14 @@ ARTIFACT_TARGETS        = $(ARTIFACT_LIB) $(ARTIFACT_SLIB) $(ARTIFACT_PC)
 
 # Source code
 CXX_SRC_MAIN            = $(call rwildcard, main, *.cpp)
+CXX_SRC_EXPORT          = $(call rwildcard, export, *.cpp)
 CXX_SRC_TEST            = $(call rwildcard, test, *.cpp)
 CXX_SRC_NOTEST          =
 CXX_SRC_EXT             =
 CXX_SRC                 = $(CXX_SRC_MAIN) $(CXX_SRC_EXT)
 
 CXX_OBJ_MAIN            = $(patsubst %.cpp, $(ARTIFACT_BIN)/%.o, $(CXX_SRC_MAIN))
+CXX_OBJ_EXPORT          = $(patsubst %.cpp, $(ARTIFACT_BIN)/%.o, $(CXX_SRC_EXPORT))
 CXX_OBJ_TEST            = $(patsubst %.cpp, $(ARTIFACT_BIN)/%.o, $(CXX_SRC_TEST))
 CXX_OBJ_NOTEST          = $(patsubst %.cpp, $(ARTIFACT_BIN)/%.o, $(CXX_SRC_NOTEST))
 CXX_OBJ_EXT             = $(patsubst %.cpp, $(ARTIFACT_BIN)/%.o, $(CXX_SRC_EXT))
@@ -93,7 +96,7 @@ ifeq ($($(ARTIFACT_ID)_TESTING),1)
   ARTIFACT_TARGETS       += $(ARTIFACT_TEST_BIN)
 endif
 
-DEP_CXX                 = $(foreach src,$(CXX_SRC_MAIN) $(CXX_SRC_EXT) $(CXX_SRC_TEST),$(patsubst %.cpp,$(ARTIFACT_BIN)/%.d,$(src)))
+DEP_CXX                 = $(foreach src,$(CXX_SRC_MAIN) $(CXX_SRC_EXPORT) $(CXX_SRC_EXT) $(CXX_SRC_TEST),$(patsubst %.cpp,$(ARTIFACT_BIN)/%.d,$(src)))
 DEP_CXX_FILE            = $(patsubst $(ARTIFACT_BIN)/%.d,%.cpp,$(@))
 DEP_DEP_FILE            = $(patsubst $(ARTIFACT_BIN)/%.d,%.o,$(@))
 
@@ -127,7 +130,7 @@ $(ARTIFACT_DEPS):
 # Compilation
 compile: $(ARTIFACT_OBJ)
 
-$(CXX_OBJ_MAIN) $(CXX_OBJ_EXT) $(CXX_OBJ_TEST) $(CXX_OBJ_NOTEST):
+$(CXX_OBJ_MAIN) $(CXX_OBJ_EXPORT) $(CXX_OBJ_EXT) $(CXX_OBJ_TEST) $(CXX_OBJ_NOTEST):
 	echo "  $($(HOST)CXX)  [$(ARTIFACT_NAME)] $(CXX_FILE)"
 	mkdir -p $(dir $@)
 	$($(HOST)CXX) -o $(@) -c $(CXX_FILE) -fPIC $($(HOST)CXXFLAGS) $(ARTIFACT_MFLAGS) $($(HOST)EXT_FLAGS) $(INCLUDE) $(ARTIFACT_CFLAGS)
@@ -144,9 +147,9 @@ $(ARTIFACT_OBJ_TEST): $(CXX_OBJ_TEST)
 # Linking
 all: $(ARTIFACT_TARGETS)
 
-$(ARTIFACT_LIB): $(ARTIFACT_DEPS) $(ARTIFACT_OBJ) $(CXX_OBJ_NOTEST)
+$(ARTIFACT_LIB): $(ARTIFACT_DEPS) $(ARTIFACT_OBJ) $(CXX_OBJ_EXPORT) $(CXX_OBJ_NOTEST)
 	echo "  $($(HOST)CXX)  [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_LIB))"
-	$($(HOST)CXX) -o $(ARTIFACT_LIB) $(ARTIFACT_OBJFILES) $(CXX_OBJ_NOTEST) $($(HOST)SO_FLAGS) $(ARTIFACT_LDFLAGS)
+	$($(HOST)CXX) -o $(ARTIFACT_LIB) $(ARTIFACT_OBJFILES) $(CXX_OBJ_EXPORT) $(CXX_OBJ_NOTEST) $($(HOST)SO_FLAGS) $(ARTIFACT_LDFLAGS)
 	
 $(ARTIFACT_SLIB): $(ARTIFACT_DEPS) $(ARTIFACT_OBJ) $(CXX_OBJ_NOTEST)
 	echo "  $($(HOST)AR)   [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_SLIB))"
@@ -175,7 +178,6 @@ install: all
 	mkdir -p "$(DESTDIR)$(LIBDIR)/pkgconfig"
 	$(if $(CXX_INSTALL_HEADERS), mkdir -p "$(DESTDIR)$(INCDIR)")
 	$(if $(CXX_INSTALL_HEADERS), cp -r "$(CXX_HDR_PATHS)" "$(DESTDIR)$(INCDIR)/")
-	cp -r "$(CXX_HDR_PATHS)" "$(DESTDIR)$(INCDIR)/"
 	cp $(ARTIFACT_PC) "$(DESTDIR)$(LIBDIR)/pkgconfig/"
 	echo $(INSTALL) $(ARTIFACT_LIB) -t "$(DESTDIR)$(LIBDIR)"
 	$(INSTALL) $(ARTIFACT_LIB) -t "$(DESTDIR)$(LIBDIR)"
