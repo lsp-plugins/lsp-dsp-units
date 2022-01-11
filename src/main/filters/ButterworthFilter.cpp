@@ -170,31 +170,32 @@ namespace lsp
 
         void ButterworthFilter::process_add(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
-                dsp::fill_zero(dst, count);
-
-            if (bBypass)
+            if (src == NULL)
             {
-                dsp::mul_k2(dst, 2.0f, count);
+                // No inputs, interpret `src` as zeros: dst[i] = dst[i] + 0 = dst[i]
+                // => Nothing to do
+                return;
+            }
+            else if (bBypass)
+            {
+                // Bypass is set: dst[i] = dst[i] + src[i]
+                dsp::add2(dst, src, count);
                 return;
             }
 
             // 1X buffer for temporary processing.
-            float vTemp[BUF_LIM_SIZE]{};
+            float vTemp[BUF_LIM_SIZE];
 
-            while (count > 0)
+            for (size_t offset=0; offset < count; )
             {
-                size_t to_do = lsp_min(count, BUF_LIM_SIZE);
+                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
 
-                sFilter.process(vTemp, dst, to_do);
-                dsp::add2(dst, vTemp, to_do);
+                // dst[i] = dst[i] + filter(src[i])
+                sFilter.process(vTemp, &src[offset], to_do);
+                dsp::add2(&dst[offset], vTemp, to_do);
 
-                dst     += to_do;
-                count   -= to_do;
-            }
-
+                offset += to_do;
+             }
         }
 
         void ButterworthFilter::process_mul(float *dst, const float *src, size_t count)

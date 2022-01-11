@@ -218,69 +218,63 @@ namespace lsp
 
         void Velvet::process_add(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
-                dsp::fill_zero(dst, count);
+            if (src == NULL)
+            {
+                // No inputs, interpret `src` as zeros: dst[i] = noise[i] + 0 = noise[i]
+                do_process(dst, count);
+                dsp::mul_k2(dst, fAmplitude, count);
+                dsp::add_k2(dst, fOffset, count);
+                return;
+            }
 
             // 1X buffer for temporary processing.
-            float vTemp[BUF_LIM_SIZE]{};
+            float vTemp[BUF_LIM_SIZE];
 
-            while (count > 0)
+            for (size_t offset=0; offset < count; )
             {
-                size_t to_do = (count > BUF_LIM_SIZE) ? BUF_LIM_SIZE : count;
+                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
 
+                // dst[i] = src[i] + noise[i]
                 do_process(vTemp, to_do);
                 dsp::mul_k2(vTemp, fAmplitude, to_do);
                 dsp::add_k2(vTemp, fOffset, to_do);
-                dsp::add2(dst, vTemp, to_do);
+                dsp::add3(&dst[offset], vTemp, &src[offset], to_do);
 
-                dst     += to_do;
-                count   -= to_do;
-            }
+                offset += to_do;
+             }
         }
 
         void Velvet::process_mul(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-                dsp::copy(dst, src, count);
-            else
+            if (src == NULL)
+            {
+                // No inputs, interpret `src` as zeros: dst[i] = noise[i] * 0 = 0
                 dsp::fill_zero(dst, count);
+                return;
+            }
 
             // 1X buffer for temporary processing.
-            float vTemp[BUF_LIM_SIZE]{};
+            float vTemp[BUF_LIM_SIZE];
 
-            while (count > 0)
+            for (size_t offset=0; offset < count; )
             {
-                size_t to_do = (count > BUF_LIM_SIZE) ? BUF_LIM_SIZE : count;
+                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
 
+                // dst[i] = src[i] * noise[i]
                 do_process(vTemp, to_do);
                 dsp::mul_k2(vTemp, fAmplitude, to_do);
                 dsp::add_k2(vTemp, fOffset, to_do);
-                dsp::mul2(dst, vTemp, to_do);
+                dsp::mul3(&dst[offset], vTemp, &src[offset], to_do);
 
-                dst     += to_do;
-                count   -= to_do;
-            }
+                offset += to_do;
+             }
         }
 
         void Velvet::process_overwrite(float *dst, size_t count)
         {
-            // 1X buffer for temporary processing.
-            float vTemp[BUF_LIM_SIZE]{};
-
-            while (count > 0)
-            {
-                size_t to_do = lsp_min(BUF_LIM_SIZE, count);
-
-                do_process(vTemp, to_do);
-                dsp::mul_k2(vTemp, fAmplitude, to_do);
-                dsp::add_k2(vTemp, fOffset, to_do);
-                dsp::copy(dst, vTemp, to_do);
-
-                dst     += to_do;
-                count   -= to_do;
-            }
+            do_process(dst, count);
+            dsp::mul_k2(dst, fAmplitude, count);
+            dsp::add_k2(dst, fOffset, count);
         }
 
         void Velvet::dump(IStateDumper *v) const
