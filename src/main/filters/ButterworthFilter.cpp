@@ -45,15 +45,10 @@ namespace lsp
         void ButterworthFilter::construct()
         {
             nOrder          = 2;
-
             fCutoffFreq     = 0.0f;
-
             nSampleRate     = -1;
-
             enFilterType    = BW_FLT_TYPE_LOWPASS;
-
             bBypass         = false;
-
             bSync           = true;
 
             sFilter.init(MAX_ORDER);
@@ -71,9 +66,7 @@ namespace lsp
                 return;
             }
             else
-            {
                 bBypass = false;
-            }
 
             nOrder = lsp_min(nOrder, MAX_ORDER);
             // We force even order (so all biquads have all coefficients, maximal efficiency).
@@ -230,17 +223,12 @@ namespace lsp
 
         void ButterworthFilter::process_overwrite(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-            {
-                if (bBypass)
-                    dsp::copy(dst, src, count);
-                else
-                    sFilter.process(dst, src, count);
-            }
-            else
-            {
+            if (src == NULL)
                 dsp::fill_zero(dst, count);
-            }
+            else if (bBypass)
+                dsp::copy(dst, src, count);
+            else
+                sFilter.process(dst, src, count);
         }
 
         void ButterworthFilter::dump(IStateDumper *v) const

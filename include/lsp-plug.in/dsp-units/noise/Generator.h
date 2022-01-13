@@ -55,7 +55,6 @@ namespace lsp
 
         class NoiseGenerator
         {
-
             private:
                 NoiseGenerator & operator = (const NoiseGenerator &);
                 NoiseGenerator(const NoiseGenerator &);

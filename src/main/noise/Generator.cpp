@@ -144,48 +144,36 @@ namespace lsp
 
             switch (sColorParams.enColor)
             {
-                case (NG_COLOR_PINK):
-                {
-                    slope = -0.5f;
-                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                }
-                break;
+                case NG_COLOR_PINK:
+                    slope   = -0.5f;
+                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                    break;
 
-                case (NG_COLOR_RED):
-                {
-                    slope = -1.0f;
-                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                }
-                break;
+                case NG_COLOR_RED:
+                    slope   = -1.0f;
+                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                    break;
 
-                case (NG_COLOR_BLUE):
-                {
-                    slope = 0.5f;
-                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                }
-                break;
+                case NG_COLOR_BLUE:
+                    slope   = 0.5f;
+                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                    break;
 
-                case (NG_COLOR_VIOLET):
-                {
-                    slope = 1.0f;
-                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                }
-                break;
+                case NG_COLOR_VIOLET:
+                    slope   = 1.0f;
+                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                    break;
 
-                case (NG_COLOR_ARBITRARY):
-                {
-                    slope = sColorParams.fSlope;
-                    unit = sColorParams.enSlopeUnit;
-                }
-                break;
+                case NG_COLOR_ARBITRARY:
+                    slope   = sColorParams.fSlope;
+                    unit    = sColorParams.enSlopeUnit;
+                    break;
 
                 default:
-                case (NG_COLOR_WHITE):
-                {
-                    slope = 0.0f;
-                    unit = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                }
-                break;
+                case NG_COLOR_WHITE:
+                    slope   = 0.0f;
+                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                    break;
             }
 
             sColorFilter.set_order(sColorParams.nOrder);
@@ -204,23 +192,17 @@ namespace lsp
             switch (enGenerator)
             {
                 case NG_GEN_MLS:
-                {
                     sMLS.process_overwrite(dst, count);
-                }
-                break;
+                    break;
 
                 case NG_GEN_VELVET:
-                {
                     sVelvetNoise.process_overwrite(dst, count);
-                }
-                break;
+                    break;
 
                 default:
                 case NG_GEN_LCG:
-                {
                     sLCG.process_overwrite(dst, count);
-                }
-                break;
+                    break;
             }
 
             switch (sColorParams.enColor)
@@ -228,17 +210,12 @@ namespace lsp
                 case NG_COLOR_PINK:
                 case NG_COLOR_RED:
                 case NG_COLOR_ARBITRARY:
-                {
                     sColorFilter.process_overwrite(dst, dst, count);
-                }
-                break;
+                    break;
 
                 default:
-                case (NG_COLOR_WHITE):
-                {
-                    return;
-                }
-                break;
+                case NG_COLOR_WHITE:
+                    break;
             }
         }
 

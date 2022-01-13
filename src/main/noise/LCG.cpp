@@ -73,45 +73,33 @@ namespace lsp
                 }
 
                 case LCG_TRIANGULAR:
-                {
                     return 2.0f * fAmplitude * sRand.random(RND_TRIANGLE) - 0.5f + fOffset;
-                }
 
                 case LCG_GAUSSIAN:
-                {
                     return fAmplitude * sRand.random(RND_GAUSSIAN) + fOffset;
-                }
 
                 default:
                 case LCG_UNIFORM:
-                {
                     return 2.0f * fAmplitude * (sRand.random(RND_LINEAR) - 0.5f) + fOffset;
-                }
             }
         }
 
         void LCG::process_add(float *dst, const float *src, size_t count)
         {
             while (count--)
-            {
                 *(dst++) = *(src++) + process_single();
-            }
         }
 
         void LCG::process_mul(float *dst, const float *src, size_t count)
         {
             while (count--)
-            {
                 *(dst++) = *(src++) * process_single();
-            }
         }
 
         void LCG::process_overwrite(float *dst, size_t count)
         {
             while (count--)
-            {
                 *(dst++) = process_single();
-            }
         }
 
         void LCG::dump(IStateDumper *v) const

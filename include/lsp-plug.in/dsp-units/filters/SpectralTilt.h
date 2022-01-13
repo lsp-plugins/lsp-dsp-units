@@ -63,7 +63,6 @@ namespace lsp
 
         class SpectralTilt
         {
-
             private:
                 SpectralTilt & operator = (const SpectralTilt &);
                 SpectralTilt(const SpectralTilt &);
@@ -93,7 +92,6 @@ namespace lsp
                 size_t              nSampleRate;
 
                 bool                bBypass;
-
                 bool                bSync;
 
                 dspu::FilterBank    sFilter;
@@ -105,8 +103,8 @@ namespace lsp
                 void construct();
 
             protected:
-                float bilinear_coefficient(float angularFrequency, float samplerate);
-                bilinear_spec_t compute_bilinear_element(float negZero, float negPole);
+                float               bilinear_coefficient(float angularFrequency, float samplerate);
+                bilinear_spec_t     compute_bilinear_element(float negZero, float negPole);
 
             public:
                 /** Check that SpectralTilt needs settings update.

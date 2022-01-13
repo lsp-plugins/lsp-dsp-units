@@ -59,7 +59,6 @@ namespace lsp
          */
         class MLS
         {
-
             public:
                 typedef umword_t mls_t;
 

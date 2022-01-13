@@ -42,7 +42,6 @@ namespace lsp
         void Velvet::construct()
         {
             enCore                      = VN_CORE_MLS;
-
             enVelvetType                = VN_VELVET_OVN;
 
             sCrushParams.bCrush         = false;
@@ -94,6 +93,7 @@ namespace lsp
             {
                 case VN_CORE_MLS:
                     return sMLS.process_single(); // Either 1 or -1
+
                 default:
                 case VN_CORE_LCG:
                     return 2.0f * roundf(get_random_value()) - 1.0f; // Either 1 or -1
@@ -102,20 +102,13 @@ namespace lsp
 
         float Velvet::get_crushed_spike()
         {
-            float spike = 0.0f;
-
-            if (get_random_value() > sCrushParams.fCrushProb)
-                spike = 1.0f;
-
-            return 2.0f * spike - 1.0f; // Either 1 or -1
+            return (get_random_value() > sCrushParams.fCrushProb) ? 1.0f : -1.0f;
         }
 
         void Velvet::do_process(float *dst, size_t count)
         {
-
             switch (enVelvetType)
             {
-
                 case VN_VELVET_OVN:
                 {
                     dsp::fill_zero(dst, count);
@@ -202,17 +195,14 @@ namespace lsp
                             dst[idx] = multiplier * abs(dst[idx]);
                             ++idx;
                         }
-
                     }
                 }
                 break;
 
                 default:
                 case VN_VELVET_MAX:
-                {
                     dsp::fill_zero(dst, count);
-                }
-                break;
+                    break;
             }
         }
 
@@ -280,11 +270,9 @@ namespace lsp
         void Velvet::dump(IStateDumper *v) const
         {
             v->write_object("sRandomizer", &sRandomizer);
-
             v->write_object("sMLS", &sMLS);
 
             v->write("enCore", enCore);
-
             v->write("enVelvetType", enVelvetType);
 
             v->begin_object("sCrushParams", &sCrushParams, sizeof(sCrushParams));

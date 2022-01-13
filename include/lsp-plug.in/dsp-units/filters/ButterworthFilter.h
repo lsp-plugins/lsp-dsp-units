@@ -44,7 +44,6 @@ namespace lsp
          */
         class ButterworthFilter
         {
-
             private:
                 ButterworthFilter & operator = (const ButterworthFilter &);
                 ButterworthFilter(const ButterworthFilter &);

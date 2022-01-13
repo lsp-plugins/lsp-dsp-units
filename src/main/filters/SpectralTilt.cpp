@@ -99,10 +99,8 @@ namespace lsp
             switch (enNorm)
             {
                 case STLT_NORM_NONE:
-                {
                     g_a = 1.0f;
-                }
-                break;
+                    break;
 
                 case STLT_NORM_AT_NYQUIST:
                 {
@@ -118,11 +116,9 @@ namespace lsp
 
                 default:
                 case STLT_NORM_AT_DC:
-                {
                     // Just the reciprocal of the gain at DC.
                     g_a = spec.a0 / spec.b0;
-                }
-                break;
+                    break;
             }
 
             spec.b0 *= g_a;
@@ -174,33 +170,21 @@ namespace lsp
                  */
 
                 case STLT_SLOPE_UNIT_DB_PER_OCTAVE:
-                {
                     fSlopeNepNep = fSlopeVal * 0.16609640419483184814453125f;
-                }
-                break;
+                    break;
 
                 case STLT_SLOPE_UNIT_DB_PER_DECADE:
-                {
                     fSlopeNepNep = fSlopeVal * 0.05f;
-                }
-                break;
+                    break;
 
                 default:
                 case STLT_SLOPE_UNIT_NEPER_PER_NEPER:
-                {
                     fSlopeNepNep = fSlopeVal;
-                }
-                break;
-
+                    break;
             }
 
             if (enNorm == STLT_NORM_AUTO)
-            {
-                if (fSlopeNepNep <= 0)
-                    enNorm = STLT_NORM_AT_DC;
-                else
-                    enNorm = STLT_NORM_AT_NYQUIST;
-            }
+                enNorm = (fSlopeNepNep <= 0) ? STLT_NORM_AT_DC : STLT_NORM_AT_NYQUIST;
 
             if (fLowerFrequency >= 0.5f * nSampleRate)
                 fLowerFrequency = DFL_LOWER_FREQUENCY;
@@ -221,9 +205,7 @@ namespace lsp
                 return;
             }
             else
-            {
                 bBypass = false;
-            }
 
             float l_angf = 2.0f * M_PI * fLowerFrequency;
             float u_angf = 2.0f * M_PI * fUpperFrequency;
@@ -334,17 +316,12 @@ namespace lsp
 
         void SpectralTilt::process_overwrite(float *dst, const float *src, size_t count)
         {
-            if (src != NULL)
-            {
-                if (bBypass)
-                    dsp::copy(dst, src, count);
-                else
-                    sFilter.process(dst, src, count);
-            }
-            else
-            {
+            if (src == NULL)
                 dsp::fill_zero(dst, count);
-            }
+            else if (bBypass)
+                dsp::copy(dst, src, count);
+            else
+                sFilter.process(dst, src, count);
         }
 
         void SpectralTilt::dump(IStateDumper *v) const
@@ -364,7 +341,6 @@ namespace lsp
             v->write_object("sFilter", &sFilter);
 
             v->write("bBypass", bBypass);
-
             v->write("bSync", bSync);
         }
     }
