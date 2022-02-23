@@ -2,7 +2,7 @@
 * RECENT CHANGES
 *******************************************************************************
 
-=== 0.5.5 ===
+=== 1.0.0 ===
 * Added MLS noise generator.
 * Added LCG Noise generator
 * Added Velvet Noise generator.
