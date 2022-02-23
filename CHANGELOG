@@ -2,6 +2,14 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.0 ===
+* Added MLS noise generator.
+* Added LCG Noise generator
+* Added Velvet Noise generator.
+* Added Spectral Tilt arbitrary color filter.
+* Added High order Butterworth filter for inaudible noise.
+* Added Noise Generator class for arbitrary noise generation.
+
 === 0.5.4 ===
 * Added dspu::Sample::normalize method for sample normalization.
 * Updated build system.

@@ -36,11 +36,9 @@ namespace lsp
             {
                 dsp::vector3d_t         n[3];       // Normals
                 dsp::color3d_t          c;          // Color
-                ssize_t                 oid;        // Object identifier
-                size_t                  face;       // Face identifier
                 bsp::triangle_t        *next;       // Pointer to next triangle
                 size_t                  __pad;      // Alignment to be sizeof() multiple of 16
-            } bsp_triangle_t;
+            } triangle_t;
         #pragma pack(pop)
 
             typedef struct node_t

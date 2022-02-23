@@ -26,10 +26,10 @@
 #include <lsp-plug.in/dsp-units/util/SyncChirpProcessor.h>
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
 #include <lsp-plug.in/dsp-units/units.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
 
 using namespace lsp;
 
-#define MAX_FNAME_LENGTH            100
 #define LINEAR_POSTPROC_OFFSET_S    -0.0018f
 
 MTEST_BEGIN("dspu.util", sync_chirp)
@@ -100,10 +100,14 @@ MTEST_BEGIN("dspu.util", sync_chirp)
         printf("Duration:         \t%.7f s\n", sc.get_chirp_duration_seconds());
 
         dspu::Sample *data = sc.get_chirp();
-        write_buffer("tmp/syncChirp.csv", "sync chirp samples", data->getBuffer(0), data->length());
+        io::Path path_sc;
+        MTEST_ASSERT(path_sc.fmt("%s/syncChirp-%s.csv", tempdir(), full_name()));
+        write_buffer(path_sc.as_native(), "sync chirp samples", data->getBuffer(0), data->length());
 
         data = sc.get_inverse_filter();
-        write_buffer("tmp/inverseFilter.csv", "inverse filter samples", data->getBuffer(0), data->length());
+        io::Path path_inv;
+        MTEST_ASSERT(path_inv.fmt("%s/inverseFilter-%s.csv", tempdir(), full_name()));
+        write_buffer(path_inv.as_native(), "inverse filter samples", data->getBuffer(0), data->length());
 
         for (size_t ch = 0; ch < nChannels; ++ch)
         {
@@ -134,7 +138,6 @@ MTEST_BEGIN("dspu.util", sync_chirp)
 
         }
 
-        char *fName                 = new char[MAX_FNAME_LENGTH];
         dspu::Sample **dataArray 	= new dspu::Sample*[nChannels];
         size_t *offsets             	= new size_t[nChannels];
 
@@ -143,8 +146,9 @@ MTEST_BEGIN("dspu.util", sync_chirp)
         	dataArray[ch] 	= rtArray[ch].get_capture();
         	offsets[ch] 	= rtArray[ch].get_capture_start();
 
-            snprintf(fName, MAX_FNAME_LENGTH, "tmp/chirpCapture%lu.csv", (unsigned long)ch);
-            write_buffer(fName, "Capture", dataArray[ch]->getBuffer(0), dataArray[ch]->length());
+            io::Path path_cc;
+            MTEST_ASSERT(path_cc.fmt("%s/chirpCapture%lu-%s.csv", tempdir(), (unsigned long)ch, full_name()));
+            write_buffer(path_cc.as_native(), "Capture", dataArray[ch]->getBuffer(0), dataArray[ch]->length());
 
             printf("Channel %lu offset: %lu\n", (unsigned long)ch, (unsigned long)offsets[ch]);
         }
@@ -158,8 +162,9 @@ MTEST_BEGIN("dspu.util", sync_chirp)
 
         for (size_t ch = 0; ch < nChannels; ++ch)
         {
-            snprintf(fName, MAX_FNAME_LENGTH, "tmp/result%lu.csv", (unsigned long)ch);
-            write_buffer(fName, "Convolution Result", conv->channel(ch), conv->samples());
+            io::Path path_re;
+            MTEST_ASSERT(path_re.fmt("%s/result%lu-%s.csv", tempdir(), (unsigned long)ch, full_name()));
+            write_buffer(path_re.as_native(), "Convolution Result", conv->channel(ch), conv->samples());
 
             sc.postprocess_linear_convolution(ch, offset, enAlgo, prWsize, prTol);
 
@@ -181,18 +186,28 @@ MTEST_BEGIN("dspu.util", sync_chirp)
             else
                 printf("Channel %lu background noise unsuitable for requested RT algorithm.\n", (unsigned long)ch);
         }
+        io::Path path_revt;
+        MTEST_ASSERT(path_revt.fmt("%s/fReverbTimes-%s.csv", tempdir(), full_name()));
+        write_buffer(path_revt.as_native(), "Reverberation Times [s]", fRT, nChannels);
 
-        write_buffer("tmp/fReverbTimes.csv", "Reverberation Times [s]", fRT, nChannels);
-        write_buffer("tmp/fCorrCoeffs.csv", "Correlation Coefficients", fcR, nChannels);
-        write_buffer("tmp/fIntLimits.csv", "Backward Integration Times [s]", fiL, nChannels);
+        io::Path path_corr;
+        MTEST_ASSERT(path_corr.fmt("%s/fCorrCoeffs-%s.csv", tempdir(), full_name()));
+        write_buffer(path_corr.as_native(), "Correlation Coefficients", fcR, nChannels);
 
-        sc.save_linear_convolution("tmp/impulseResponse.wav", -1);
-        sc.save_to_lspc("tmp/allData.lspc", 0);
+        io::Path path_lims;
+        MTEST_ASSERT(path_lims.fmt("%s/fIntLimits-%s.csv", tempdir(), full_name()));
+        write_buffer(path_lims.as_native(), "Backward Integration Times [s]", fiL, nChannels);
 
-        status_t readStatus = sc.load_from_lspc("tmp/allData.lspc");
+        io::Path path_ir;
+        MTEST_ASSERT(path_ir.fmt("%s/impulseResponse-%s.wav", tempdir(), full_name()));
+        sc.save_linear_convolution(path_ir.as_native(), -1);
+
+        io::Path path_all;
+        MTEST_ASSERT(path_all.fmt("%s/allData-%s.lspc", tempdir(), full_name()));
+        sc.save_to_lspc(path_all.as_native(), 0);
+
+        status_t readStatus = sc.load_from_lspc(path_all.as_native());
         MTEST_ASSERT(readStatus == STATUS_OK);
-
-        delete [] fName;
 
         for (size_t ch = 0; ch < nChannels; ++ch)
 		{

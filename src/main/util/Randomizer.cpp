@@ -96,13 +96,18 @@ namespace lsp
             init(ts.seconds ^ ts.nanos);
         }
 
-        float Randomizer::random(random_function_t func)
+        float Randomizer::generate_linear()
         {
             // Generate linear random number
             randgen_t *rg   = &vRandom[nBufID];
             nBufID          = (nBufID + 1) & 0x03;
             rg->vLast       = (rg->vMul1 * rg->vLast) + ((rg->vMul2 * rg->vLast) >> 16) + rg->vAdd;
-            float rv        = rg->vLast * RAND_RANGE;
+            return rg->vLast * RAND_RANGE;
+        }
+
+        float Randomizer::random(random_function_t func)
+        {
+            float rv = generate_linear();
 
             // Now we can analyze algorithm
             switch (func)
@@ -114,6 +119,14 @@ namespace lsp
                     return (rv <= 0.5f) ?
                         M_SQRT2 * RAND_T * sqrtf(rv) :
                         2.0f*RAND_T - sqrtf(4.0f - 2.0f*(1.0f + rv)) * RAND_T;
+
+                case RND_GAUSSIAN:
+                {
+                    // Two uniform (linear) random numbers are needed. (from https://www.dspguide.com/ch2/6.htm)
+                    float rv2 = generate_linear();
+
+                    return sqrtf(-2.0f * logf(rv)) * cosf(2.0f * M_PI * rv2);
+                }
 
                 default:
                     return rv;
