@@ -43,6 +43,7 @@ namespace lsp
         {
             private:
                 Compressor & operator = (const Compressor &);
+                Compressor(const Compressor &);
 
             protected:
                 // Basic parameters

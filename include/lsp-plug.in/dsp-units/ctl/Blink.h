@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 Blink & operator = (const Blink &);
+                Blink(const Blink &);
 
             protected:
                 ssize_t     nCounter;
@@ -52,6 +53,11 @@ namespace lsp
                  * Construct object
                  */
                 void            construct();
+
+                /**
+                 * Destroy object
+                 */
+                void            destroy();
 
             public:
                 /** Initialize blink

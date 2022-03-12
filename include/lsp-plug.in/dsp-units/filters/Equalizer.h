@@ -48,6 +48,7 @@ namespace lsp
         {
             private:
                 Equalizer & operator = (const Equalizer &);
+                Equalizer(const Equalizer &);
 
             protected:
                 enum eq_flags_t

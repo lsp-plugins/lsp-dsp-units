@@ -44,6 +44,10 @@ namespace lsp
          */
         class Scene3D
         {
+            private:
+                Scene3D & operator = (const Scene3D &);
+                Scene3D(const Scene3D &);
+
             protected:
                 lltl::parray<Object3D>      vObjects;
                 Allocator3D<obj_vertex_t>   vVertexes;      // Vertex allocator

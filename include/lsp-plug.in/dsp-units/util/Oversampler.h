@@ -82,6 +82,7 @@ namespace lsp
         {
             private:
                 Oversampler & operator = (const Oversampler &);
+                Oversampler(const Oversampler &);
 
             protected:
                 enum update_t

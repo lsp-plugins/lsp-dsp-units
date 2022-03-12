@@ -43,6 +43,7 @@ namespace lsp
         {
             private:
                 DynamicProcessor & operator = (const DynamicProcessor &);
+                DynamicProcessor(const DynamicProcessor &);
 
             protected:
                 typedef struct spline_t
@@ -109,6 +110,11 @@ namespace lsp
                  * Construct object
                  */
                 void    construct();
+
+                /**
+                 * Destroyp object
+                 */
+                void    destroy();
 
             public:
                 /** Check that some of processor's parameters have been modified

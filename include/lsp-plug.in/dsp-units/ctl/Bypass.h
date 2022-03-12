@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 Bypass & operator = (const Bypass &);
+                Bypass(const Bypass &);
 
             private:
                 enum state_t

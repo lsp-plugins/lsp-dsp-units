@@ -37,6 +37,7 @@ namespace lsp
 
         DynamicProcessor::~DynamicProcessor()
         {
+            destroy();
         }
 
         void DynamicProcessor::construct()
@@ -65,6 +66,10 @@ namespace lsp
 
             for (size_t i=0; i<CT_TOTAL; ++i)
                 fCount[i]           = 0;
+        }
+
+        void DynamicProcessor::destroy()
+        {
         }
 
         inline float DynamicProcessor::spline_amp(const spline_t *s, float lx)
@@ -149,12 +154,6 @@ namespace lsp
                 }
             }
 
-//            for (size_t i=0; i<count; ++i)
-//            {
-//                lsp_trace("i=%d, tr=%f, mk=%f, ks=%f",
-//                    int(i), s[i].fThresh, s[i].fMakeup, s[i].fKneeStart);
-//            }
-
             // Now we are ready to render splines
             float sub = 0.0f;
 
@@ -184,11 +183,6 @@ namespace lsp
 
                 float log_y1        = s[i].fMakeup + s[i].fPreRatio * knee;
                 interpolation::hermite_quadratic(s[i].vHermite, s[i].fKneeStart, log_y1, s[i].fPreRatio, s[i].fKneeStop, s[i].fPostRatio);
-
-//                lsp_trace("i=%d, tr=%f, mk=%f, rs=%f, re=%f, ks=%f, ke=%f",
-//                    int(i), s[i].fThresh, s[i].fMakeup,
-//                    s[i].fPreRatio, s[i].fPostRatio,
-//                    s[i].fKneeStart, s[i].fKneeStop);
             }
         }
 

@@ -33,6 +33,7 @@ namespace lsp
         {
             private:
                 Gate & operator = (const Gate &);
+                Gate(const Gate &);
 
             protected:
                 typedef struct curve_t
@@ -69,6 +70,11 @@ namespace lsp
                  * Construct the object
                  */
                 void        construct();
+
+                /**
+                 * Destroy the object
+                 */
+                void        destroy();
 
             public:
                 /** Check that some of parameters have been modified

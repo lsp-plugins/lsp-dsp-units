@@ -37,6 +37,7 @@ namespace lsp
         {
             private:
                 IStateDumper &operator = (const IStateDumper &);
+                IStateDumper(const IStateDumper &);
 
             public:
                 explicit IStateDumper();

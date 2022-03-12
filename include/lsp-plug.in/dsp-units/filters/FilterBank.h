@@ -35,6 +35,7 @@ namespace lsp
         {
             private:
                 FilterBank & operator = (const FilterBank &);
+                FilterBank(const FilterBank &);
 
             protected:
                 dsp::biquad_t      *vFilters;   // Optimized list of filters

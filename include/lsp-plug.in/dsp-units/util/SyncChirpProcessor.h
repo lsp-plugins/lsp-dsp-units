@@ -66,6 +66,7 @@ namespace lsp
         {
             private:
                 SyncChirpProcessor & operator = (const SyncChirpProcessor &);
+                SyncChirpProcessor(const SyncChirpProcessor &);
 
             protected:
 

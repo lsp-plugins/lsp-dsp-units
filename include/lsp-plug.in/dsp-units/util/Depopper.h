@@ -46,6 +46,7 @@ namespace lsp
         {
             private:
                 Depopper & operator = (const Depopper &);
+                Depopper(const Depopper &);
 
             protected:
                 enum state_t

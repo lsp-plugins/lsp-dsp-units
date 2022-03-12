@@ -46,6 +46,7 @@ namespace lsp
         {
             private:
                 SpectralProcessor & operator = (const SpectralProcessor &);
+                SpectralProcessor(const SpectralProcessor &);
 
             protected:
                 size_t                      nRank;      // Current FFT rank

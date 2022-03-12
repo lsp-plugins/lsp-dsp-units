@@ -33,6 +33,7 @@ namespace lsp
 
         Crossfade::~Crossfade()
         {
+            destroy();
         }
 
         void Crossfade::construct()
@@ -41,6 +42,10 @@ namespace lsp
             nCounter    = 0;
             fDelta      = 0.0f;
             fGain       = 1.0f;
+        }
+
+        void Crossfade::destroy()
+        {
         }
 
         void Crossfade::init(int sample_rate, float time)

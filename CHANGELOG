@@ -4,7 +4,8 @@
 
 === 1.0.1 ===
 
-- Fixed bugs in construct()/destroy() method pairs for several DSP modules. 
+- Fixed bugs in construct()/destroy() method pairs for several DSP modules.
+- Added denial of copy constructors for all DSP units.
 
 === 1.0.0 ===
 * Added MLS noise generator.

@@ -60,6 +60,7 @@ namespace lsp
         {
             private:
                 Oscillator & operator = (const Oscillator &);
+                Oscillator(const Oscillator &);
 
             protected:
                 typedef uint32_t phacc_t;

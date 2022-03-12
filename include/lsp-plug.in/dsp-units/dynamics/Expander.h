@@ -39,6 +39,7 @@ namespace lsp
         {
             private:
                 Expander & operator = (const Expander &);
+                Expander(const Expander &);
 
             protected:
                 // Basic parameters
@@ -71,6 +72,11 @@ namespace lsp
                  * Construct object
                  */
                 void        construct();
+
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
 
             public:
                 /** Check that some of parameters have been modified

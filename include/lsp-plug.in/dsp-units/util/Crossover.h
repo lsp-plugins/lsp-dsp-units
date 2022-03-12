@@ -91,6 +91,7 @@ namespace lsp
         {
             private:
                 Crossover & operator = (const Crossover &);
+                Crossover(const Crossover &);
 
             protected:
                 enum xover_type_t

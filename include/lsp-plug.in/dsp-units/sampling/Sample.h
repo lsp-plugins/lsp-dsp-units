@@ -72,6 +72,7 @@ namespace lsp
         {
             private:
                 Sample & operator = (const Sample &);
+                Sample(const Sample &);
 
             private:
                 float      *vBuffer;

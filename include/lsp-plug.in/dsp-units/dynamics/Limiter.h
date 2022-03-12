@@ -56,6 +56,7 @@ namespace lsp
         {
             private:
                 Limiter & operator = (const Limiter &);
+                Limiter(const Limiter &);
 
             protected:
                 typedef void (*apply_patch_t)(void *patch, float *dst, float amp);

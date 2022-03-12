@@ -58,6 +58,7 @@ namespace lsp
         {
             private:
                 Sidechain & operator = (const Sidechain &);
+                Sidechain(const Sidechain &);
 
             protected:
                 ShiftBuffer     sBuffer;                // Shift buffer for history

@@ -33,6 +33,7 @@ namespace lsp
         {
             private:
                 SamplePlayer & operator = (const SamplePlayer &);
+                SamplePlayer(const SamplePlayer &);
 
             protected:
                 typedef struct playback_t

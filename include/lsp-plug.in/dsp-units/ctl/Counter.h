@@ -31,6 +31,10 @@ namespace lsp
     {
         class Counter
         {
+            private:
+                Counter & operator = (const Counter &);
+                Counter(const Counter &);
+
             protected:
                 enum flags_t
                 {
@@ -53,6 +57,11 @@ namespace lsp
                  * Construct object
                  */
                 void        construct();
+
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
 
             public:
                 /**

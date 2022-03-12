@@ -40,6 +40,7 @@ namespace lsp
         {
             private:
                 DynamicFilters & operator = (const DynamicFilters &);
+                DynamicFilters(const DynamicFilters &);
 
             protected:
                 typedef struct filter_t

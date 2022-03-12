@@ -33,6 +33,7 @@ namespace lsp
 
         Counter::~Counter()
         {
+            destroy();
         }
 
         void Counter::construct()
@@ -42,6 +43,10 @@ namespace lsp
             nSampleRate     = LSP_DSP_UNITS_DEFAULT_SAMPLE_RATE;
             fFrequency      = 1.0f;
             nFlags          = 0;
+        }
+
+        void Counter::destroy()
+        {
         }
 
         void Counter::set_sample_rate(size_t sr, bool reset)

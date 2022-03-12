@@ -40,6 +40,7 @@ namespace lsp
         {
             private:
                 MeterGraph & operator = (const MeterGraph &);
+                MeterGraph(const MeterGraph &);
 
             protected:
                 ShiftBuffer         sBuffer;

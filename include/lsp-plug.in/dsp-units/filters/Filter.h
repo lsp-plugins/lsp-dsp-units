@@ -39,6 +39,7 @@ namespace lsp
         {
             private:
                 Filter & operator = (const Filter &);
+                Filter(const Filter &);
 
             protected:
                 enum filter_mode_t

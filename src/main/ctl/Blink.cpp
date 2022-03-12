@@ -33,8 +33,7 @@ namespace lsp
 
         Blink::~Blink()
         {
-            nCounter        = 0.0f;
-            nTime           = 0.0f;
+            destroy();
         }
 
         void Blink::construct()
@@ -44,6 +43,12 @@ namespace lsp
             fOnValue        = 1.0f;
             fOffValue       = 0.0f;
             fTime           = 0.1f;
+        }
+
+        void Blink::destroy()
+        {
+            nCounter        = 0.0f;
+            nTime           = 0.0f;
         }
 
         void Blink::init(size_t sample_rate, float time)

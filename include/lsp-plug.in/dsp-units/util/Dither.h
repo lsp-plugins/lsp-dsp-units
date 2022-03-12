@@ -37,6 +37,7 @@ namespace lsp
         {
             private:
                 Dither &operator = (const Dither &);
+                Dither(const Dither &);
 
             protected:
                 size_t      nBits;

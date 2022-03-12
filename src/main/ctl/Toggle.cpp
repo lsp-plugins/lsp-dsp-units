@@ -32,11 +32,16 @@ namespace lsp
 
         Toggle::~Toggle()
         {
+            destroy();
+        }
+
+        void Toggle::construct()
+        {
             fValue          = 0.0f;
             nState          = TRG_OFF;
         }
 
-        void Toggle::construct()
+        void Toggle::destroy()
         {
             fValue          = 0.0f;
             nState          = TRG_OFF;
