@@ -4,6 +4,8 @@
 
 === 1.0.1 ===
 
+- Fixed bugs in construct()/destroy() method pairs for several DSP modules. 
+
 === 1.0.0 ===
 * Added MLS noise generator.
 * Added LCG Noise generator

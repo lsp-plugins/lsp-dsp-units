@@ -85,6 +85,11 @@ namespace lsp
                  */
                 void        construct();
 
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
+
             public:
                 /** Check that some of compressor's parameters have been modified
                  * and we need to call update_settings();

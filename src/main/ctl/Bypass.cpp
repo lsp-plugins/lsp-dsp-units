@@ -33,9 +33,17 @@ namespace lsp
 
         Bypass::~Bypass()
         {
+            destroy();
         }
 
         void Bypass::construct()
+        {
+            nState      = S_OFF;
+            fDelta      = 0;
+            fGain       = 0;
+        }
+
+        void Bypass::destroy()
         {
             nState      = S_OFF;
             fDelta      = 0;

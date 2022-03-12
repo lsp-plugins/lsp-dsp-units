@@ -58,6 +58,11 @@ namespace lsp
                  */
                 void        construct();
 
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
+
             public:
                 /**
                  * Initialize bypass
