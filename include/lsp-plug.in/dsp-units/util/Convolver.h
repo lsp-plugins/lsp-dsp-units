@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 Convolver & operator = (const Convolver &);
+                Convolver(const Convolver &);
 
             private:
                 float          *vDataBuffer;            // Buffer for storing convolution tail data

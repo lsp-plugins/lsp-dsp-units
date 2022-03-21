@@ -35,6 +35,7 @@ namespace lsp
 
         Gate::~Gate()
         {
+            destroy();
         }
 
         void Gate::construct()
@@ -66,6 +67,10 @@ namespace lsp
             nSampleRate     = 0;
             nCurve          = 0;
             bUpdate         = true;
+        }
+
+        void Gate::destroy()
+        {
         }
     
         void Gate::update_settings()

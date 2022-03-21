@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 LatencyDetector & operator = (const LatencyDetector &);
+                LatencyDetector(const LatencyDetector &);
 
             protected:
 

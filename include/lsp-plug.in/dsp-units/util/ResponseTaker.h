@@ -35,6 +35,7 @@ namespace lsp
         {
             private:
                 ResponseTaker & operator = (const ResponseTaker &);
+                ResponseTaker(const ResponseTaker &);
 
             protected:
                 // Input processor state enumerator

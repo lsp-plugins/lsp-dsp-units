@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 Bypass & operator = (const Bypass &);
+                Bypass(const Bypass &);
 
             private:
                 enum state_t
@@ -57,6 +58,11 @@ namespace lsp
                  * Construct object
                  */
                 void        construct();
+
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
 
             public:
                 /**

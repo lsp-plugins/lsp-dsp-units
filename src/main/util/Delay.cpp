@@ -115,7 +115,6 @@ namespace lsp
 
         void Delay::process(float *dst, const float *src, float gain, size_t count)
         {
-    //        lsp_trace("dsp = %p, dst = %p, src = %p, count = %d", dsp, dst, src, int(count));
             size_t free_gap = nSize - nDelay;
 
             while (count > 0)
@@ -154,7 +153,6 @@ namespace lsp
 
         void Delay::process(float *dst, const float *src, const float *gain, size_t count)
         {
-    //        lsp_trace("dsp = %p, dst = %p, src = %p, count = %d", dsp, dst, src, int(count));
             size_t free_gap = nSize - nDelay;
 
             while (count > 0)

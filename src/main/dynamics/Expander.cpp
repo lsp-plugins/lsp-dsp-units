@@ -31,6 +31,16 @@ namespace lsp
     {
         Expander::Expander()
         {
+            construct();
+        }
+
+        Expander::~Expander()
+        {
+            destroy();
+        }
+
+        void Expander::construct()
+        {
             // Basic parameters
             fAttackThresh   = 0.0f;
             fReleaseThresh  = 0.0f;
@@ -56,7 +66,7 @@ namespace lsp
             bUpward         = true;
         }
 
-        Expander::~Expander()
+        void Expander::destroy()
         {
         }
 

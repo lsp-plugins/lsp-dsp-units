@@ -43,6 +43,7 @@ namespace lsp
         {
             private:
                 Compressor & operator = (const Compressor &);
+                Compressor(const Compressor &);
 
             protected:
                 // Basic parameters
@@ -84,6 +85,11 @@ namespace lsp
                  * Construct object
                  */
                 void        construct();
+
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
 
             public:
                 /** Check that some of compressor's parameters have been modified

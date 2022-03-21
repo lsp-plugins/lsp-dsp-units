@@ -54,6 +54,7 @@ namespace lsp
          {
              private:
                  Analyzer & operator = (const Analyzer &);
+                 Analyzer(const Analyzer &);
 
              protected:
                  enum reconfigure_flags

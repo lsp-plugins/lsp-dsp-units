@@ -37,6 +37,7 @@ namespace lsp
         {
             private:
                 DynamicDelay & operator = (const DynamicDelay &);
+                DynamicDelay(const DynamicDelay &);
 
             protected:
                 float      *vDelay;

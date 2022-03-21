@@ -39,6 +39,7 @@ namespace lsp
         {
             private:
                 ShiftBuffer & operator = (const ShiftBuffer &);
+                ShiftBuffer(const ShiftBuffer &);
 
             protected:
                 float      *pData;

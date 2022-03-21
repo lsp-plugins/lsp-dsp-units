@@ -33,6 +33,7 @@ namespace lsp
         {
             private:
                 Crossfade & operator = (const Crossfade &);
+                Crossfade(const Crossfade &);
 
             protected:
                 size_t      nSamples;
@@ -48,6 +49,11 @@ namespace lsp
                  * Construct object
                  */
                 void            construct();
+
+                /**
+                 * Destroy object
+                 */
+                void            destroy();
 
             public:
                 /**

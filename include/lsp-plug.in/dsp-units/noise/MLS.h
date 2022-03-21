@@ -59,12 +59,12 @@ namespace lsp
          */
         class MLS
         {
-            public:
-                typedef umword_t mls_t;
-
             private:
                 MLS & operator = (const MLS &);
                 MLS(const MLS &);
+
+            public:
+                typedef umword_t mls_t;
 
             private:
                 size_t      nBits;

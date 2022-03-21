@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 Delay & operator = (const Delay &);
+                Delay(const Delay &);
 
             protected:
                 float      *pBuffer;
@@ -144,6 +145,12 @@ namespace lsp
                  * @return delay in samples
                  */
                 inline size_t get_delay() const { return nDelay; };
+
+                /** Get delay in samples
+                 *
+                 * @return delay in samples
+                 */
+                inline size_t delay() const { return nDelay; };
 
                 /**
                  * Dump internal state

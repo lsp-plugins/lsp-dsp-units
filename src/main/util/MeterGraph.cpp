@@ -39,6 +39,7 @@ namespace lsp
         void MeterGraph::construct()
         {
             sBuffer.construct();
+
             fCurrent    = 0.0f;
             nCount      = 0;
             nPeriod     = 1;

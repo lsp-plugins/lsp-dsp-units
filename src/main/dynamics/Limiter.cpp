@@ -45,6 +45,8 @@ namespace lsp
 
         void Limiter::construct()
         {
+            sDelay.construct();
+
             fThreshold      = GAIN_AMP_0_DB;
             fReqThreshold   = GAIN_AMP_0_DB;
             fLookahead      = 0.0f;
@@ -69,6 +71,20 @@ namespace lsp
             vData           = NULL;
         }
 
+        void Limiter::destroy()
+        {
+            sDelay.destroy();
+
+            if (vData != NULL)
+            {
+                free_aligned(vData);
+                vData = NULL;
+            }
+
+            vGainBuf    = NULL;
+            vTmpBuf     = NULL;
+        }
+
         bool Limiter::init(size_t max_sr, float max_lookahead)
         {
             nMaxLookahead       = millis_to_samples(max_sr, max_lookahead);
@@ -91,20 +107,6 @@ namespace lsp
             nMaxSampleRate      = max_sr;
             fMaxLookahead       = max_lookahead;
             return true;
-        }
-
-        void Limiter::destroy()
-        {
-            sDelay.destroy();
-
-            if (vData != NULL)
-            {
-                free_aligned(vData);
-                vData = NULL;
-            }
-
-            vGainBuf    = NULL;
-            vTmpBuf     = NULL;
         }
 
         float Limiter::set_attack(float attack)

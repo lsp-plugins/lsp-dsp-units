@@ -36,6 +36,7 @@ namespace lsp
         {
             private:
                 Toggle &operator = (const Toggle &);
+                Toggle(const Toggle &);
 
             private:
                 enum state_t
@@ -56,6 +57,12 @@ namespace lsp
                  * Construct object
                  */
                 void        construct();
+
+                /**
+                 * Destroy object
+                 */
+                void        destroy();
+
 
             public:
                 /** Initialize toggle

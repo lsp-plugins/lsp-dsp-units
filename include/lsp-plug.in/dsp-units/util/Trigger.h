@@ -57,8 +57,11 @@ namespace lsp
 
         class Trigger
         {
-            protected:
+            private:
+                Trigger & operator = (const Trigger &);
+                Trigger(const Trigger &);
 
+            protected:
                 // To use with Manual and Single Mode
                 typedef struct trg_locks_t
                 {
@@ -80,9 +83,6 @@ namespace lsp
                     float   fUpperThreshold;
                     bool    bDisarm;
                 } advanced_trg_t;
-
-            private:
-                Trigger & operator = (const Trigger &);
 
             private:
                 float           fPrevious;

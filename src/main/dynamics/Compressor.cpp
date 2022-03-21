@@ -35,6 +35,16 @@ namespace lsp
     {
         Compressor::Compressor()
         {
+            construct();
+        }
+
+        Compressor::~Compressor()
+        {
+            destroy();
+        }
+
+        void Compressor::construct()
+        {
             // Basic parameters
             fAttackThresh   = 0.0f;
             fReleaseThresh  = 0.0f;
@@ -71,7 +81,7 @@ namespace lsp
             bUpdate         = true;
         }
 
-        Compressor::~Compressor()
+        void Compressor::destroy()
         {
         }
 

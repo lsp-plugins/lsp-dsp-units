@@ -32,6 +32,18 @@ namespace lsp
     {
         Sidechain::Sidechain()
         {
+            construct();
+        }
+
+        Sidechain::~Sidechain()
+        {
+            destroy();
+        }
+
+        void Sidechain::construct()
+        {
+            sBuffer.construct();
+
             nReactivity         = 0;
             fReactivity         = 0.0f;
             fTau                = 0.0f;
@@ -46,11 +58,6 @@ namespace lsp
             bUpdate             = true;
             bMidSide            = false;
             pPreEq              = NULL;
-        }
-
-        Sidechain::~Sidechain()
-        {
-            destroy();
         }
 
         void Sidechain::destroy()

@@ -42,6 +42,7 @@ namespace lsp
         {
             private:
                 Randomizer &operator = (const Randomizer &);
+                Randomizer(const Randomizer &);
 
             private:
                 static const uint32_t vMul1[];
