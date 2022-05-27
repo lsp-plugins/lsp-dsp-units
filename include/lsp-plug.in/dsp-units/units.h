@@ -153,6 +153,16 @@ namespace lsp
         {
             return (10.0f / M_LN10) * logf(pwr);
         }
+
+        /**
+         * Convert relative musical shift expressed in semitones to frequency shift multiplier
+         * @param pitch relative pitch expressed in semitones
+         * @return frequency multiplication coefficient
+         */
+        inline float semitones_to_frequency_shift(float pitch)
+        {
+            return expf(pitch * (M_LN2 / 12.0f));
+        }
     }
 }
 
