@@ -6,6 +6,7 @@
 - Fixed typo in Wavefront Object File Format name.
 - Added dspu::semitones_to_frequency_shift function that allows to compute relative
   frequency multiplier for relative musical pitch shift.
+- Added set_channels() method to the Sample class for easy resizing purpose.
 
 === 1.0.1 ===
 * Fixed bugs in construct()/destroy() method pairs for several DSP modules.

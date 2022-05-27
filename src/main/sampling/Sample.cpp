@@ -150,7 +150,7 @@ namespace lsp
             {
                 float *dptr         = buf;
                 const float *sptr   = vBuffer;
-                size_t to_copy      = (nMaxLength > max_length) ? max_length : nMaxLength;
+                size_t to_copy      = lsp_min(max_length, nMaxLength);
 
                 // Copy channels
                 for (size_t ch=0; ch < channels; ++ch)
@@ -180,6 +180,13 @@ namespace lsp
             nMaxLength      = max_length;
             nChannels       = channels;
             return true;
+        }
+
+        bool Sample::set_channels(size_t channels)
+        {
+            if (channels == nChannels)
+                return true;
+            return resize(channels, nMaxLength, nLength);
         }
 
         void Sample::swap(Sample *dst)
