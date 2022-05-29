@@ -45,6 +45,18 @@ namespace lsp
             return a;
         }
 
+        static void insert_chunk(const float *sptr, float *dptr, size_t chunk_size, size_t fsample_src, size_t fsample_dst, float fade_length, bool fin, bool fout) {
+            for (size_t i = 0; i < chunk_size; i++) {
+                // calculate gain for a sample[i] from the current chunk
+                float gain = (i > chunk_size / 2) ? 
+                  (fout && i > chunk_size-fade_length ? sqrtf(((float)chunk_size-i)/fade_length) : 1) :
+                  (fin && i < fade_length ? sqrtf((float)i/fade_length) : 1);
+
+                // add a sample[i] from the current chunk
+                dptr[fsample_dst + i] += sptr[fsample_src + i] * gain;
+            }
+        }
+
         Sample::Sample()
         {
             construct();
@@ -181,6 +193,122 @@ namespace lsp
             nChannels       = channels;
             return true;
         }
+
+        bool Sample::stretch(ssize_t stretch_samples, size_t chunk_size, size_t start, size_t end, float fade_size)
+        {
+            // original sample length
+            size_t to_copy = nMaxLength;
+            size_t olen = to_copy;
+
+            // resulting sample length
+            size_t nlen = lsp_max(ssize_t(to_copy)-stretch_samples, 0);
+            if (nlen == 0 || start >= end) 
+              return false;
+            if (nlen == to_copy)
+              return true;
+
+            size_t max_length = nlen;
+            size_t length = nlen;
+
+            // used original sample length (from `start` to `end`)
+            to_copy = end-start;
+
+            // length of the stretched part of the resulting sample (from `start` to `end`)
+            nlen = lsp_max(ssize_t(to_copy)-stretch_samples, 0);
+            if (nlen == 0) 
+              return false;
+
+            if (chunk_size > to_copy) {
+              return false;
+            }
+
+            size_t fade_length = float(chunk_size) / 2 / 100 * fade_size;
+            size_t indexing_interval = chunk_size - fade_length;
+            
+            // number of chunks in the original sample
+            size_t n_chunks = float(to_copy - chunk_size)/indexing_interval + 1;
+
+            // number of chunks in the resulting sample
+            size_t n_chunks_dst =  (nlen > chunk_size) ? float(nlen - chunk_size)/indexing_interval + 1 : 1;
+
+            chunk_size = float(n_chunks_dst * fade_length - fade_length + nlen) / n_chunks_dst;
+            indexing_interval = chunk_size - fade_length;
+ 
+            n_chunks = float(to_copy - chunk_size)/indexing_interval + 1;
+
+            // ratio between the number of chunks in original and resulting stretched parts of the sample.
+            float stretch_ratio = stretch_samples > 0 ? float(n_chunks)/n_chunks_dst : float(n_chunks_dst)/n_chunks;
+
+            // We have adjusted the size of chunks so resulting stretched region could
+            // be filled with them, though same does not apply for the original sample.
+            // That's why we calculate a converted index of the last chunk with the current
+            // stretch ratio.
+            float incorrect_n_chunks = stretch_samples > 0 ? 
+              float(n_chunks_dst-1) * stretch_ratio : // STRETCH DOWN
+              float(n_chunks_dst-1) / stretch_ratio; // STRETCH UP
+                                                     //
+            // proportionately recalculate stretch ratio so that the max converted index
+            //  would not be more than `n_chunk-1`
+            stretch_ratio = stretch_ratio * incorrect_n_chunks / (n_chunks-1);
+
+            float *buf      = static_cast<float *>(::malloc(max_length * nChannels * sizeof(float)));
+            if (buf == NULL)
+                return false;
+
+            if (vBuffer != NULL)
+            {
+                float *dptr         = buf;
+                const float *sptr   = vBuffer;
+
+                for (size_t ch=0; ch < nChannels; ++ch)
+                {
+                    dsp::fill_zero(dptr, max_length);
+
+                    // copy sample normaly till the `start` of stretching
+                    for (size_t i = 0; i < start; i++) {
+                        dptr[i] = sptr[i];
+                    }
+
+                    for (size_t c = 0; c < n_chunks_dst; c++) {
+
+                        // here we calculate approximate index of the chunk that is going to be copied
+                        float c_src = stretch_samples > 0 ? 
+                          float(c) * stretch_ratio : // STRETCH DOWN
+                          float(c) / stretch_ratio; // STRETCH UP
+
+                        size_t fsample_src = c_src * indexing_interval + start; // index of first sample in source chunk
+                        size_t fsample_dst = c * indexing_interval + start; // index of first sample in destination chunk
+
+                        if (c == 0) { // FIRST CHUNK (fade_in = false, fade_out = n_chunks_dst > 1)
+                            insert_chunk(sptr, dptr, chunk_size, fsample_src, fsample_dst, fade_size, false, n_chunks_dst > 1);
+                        } else if (c == n_chunks_dst-1) { // LAST CHUNK (true, false)
+                            insert_chunk(sptr, dptr, chunk_size, fsample_src, fsample_dst, fade_size, true, true);
+                        } else { // ANY OTHER CHUNK (true, true)
+                            insert_chunk(sptr, dptr, chunk_size, fsample_src, fsample_dst, fade_size, true, false);
+                        }
+                    }
+                    
+                    // copy the end normally from `end` of stretching to the end of the sample
+                    for (size_t i = 0; i < olen-end; i++) {
+                        dptr[start+nlen+i] = sptr[end+i];
+                    }
+
+                    dptr           += max_length;
+                }
+
+                // Destroy previously allocated data
+                if (vBuffer != NULL)
+                    free(vBuffer);
+            }
+            else
+                dsp::fill_zero(buf, max_length * nChannels);
+
+            vBuffer         = buf;
+            nLength         = length;
+            nMaxLength      = max_length;
+            return true;
+        }
+
 
         bool Sample::set_channels(size_t channels)
         {
