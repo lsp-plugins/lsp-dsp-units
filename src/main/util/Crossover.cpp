@@ -77,10 +77,11 @@ namespace lsp
             if (bands < 1)
                 return false;
 
+            size_t splits       = bands - 1;
             size_t xbuf_size    = align_size(buf_size * sizeof(float), DEFAULT_ALIGN);
             size_t band_size    = align_size(bands * sizeof(band_t), DEFAULT_ALIGN);
-            size_t split_size   = align_size((bands - 1) * sizeof(split_t), DEFAULT_ALIGN);
-            size_t plan_size    = align_size((bands - 1) * sizeof(split_t *), DEFAULT_ALIGN);
+            size_t split_size   = align_size(splits * sizeof(split_t), DEFAULT_ALIGN);
+            size_t plan_size    = align_size(splits * sizeof(split_t *), DEFAULT_ALIGN);
             size_t to_alloc     = band_size +
                                   split_size +
                                   plan_size +
@@ -106,7 +107,7 @@ namespace lsp
 
             // Initialize fields, keep sample_rate unchanged
             nReconfigure        = R_ALL;
-            nSplits             = bands - 1;
+            nSplits             = splits;
             nBufSize            = buf_size;
             nPlanSize           = 0;
 
@@ -124,7 +125,7 @@ namespace lsp
                 sp->sLPF.construct();
                 sp->sHPF.construct();
 
-                if (!sp->sLPF.init(bands-1, 0))
+                if (!sp->sLPF.init(splits, 0))
                 {
                     destroy();
                     return false;
@@ -155,7 +156,7 @@ namespace lsp
 
                 sb->fGain           = GAIN_AMP_0_DB;
                 sb->fStart          = (i == 0) ? LSP_DSP_UNITS_SPEC_FREQ_MIN : vSplit[i-1].fFreq;
-                sb->fEnd            = vSplit[i].fFreq;
+                sb->fEnd            = (i < nSplits) ? vSplit[i].fFreq : nSampleRate >> 1;
                 sb->bEnabled        = false;
                 sb->pStart          = NULL;
                 sb->pEnd            = NULL;
@@ -304,6 +305,7 @@ namespace lsp
                 vSplit[i].sLPF.set_sample_rate(sr);
                 vSplit[i].sHPF.set_sample_rate(sr);
             }
+            vBands[nSplits].fEnd = sr >> 1;
 
             nReconfigure   |= R_ALL;
         }
