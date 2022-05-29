@@ -176,6 +176,14 @@ namespace lsp
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
 
+                /** Stretch sample
+                 *
+                 * @param stretch_samples samples to stretch
+                 * @param chunk_size chunk size multiplier
+                 * @return true if data was successfuly stretched
+                 */
+                bool stretch(ssize_t stretch_samples, size_t chunk_size, size_t start, size_t end, float fade_size);
+
                 /** Resize sample to match the specified number of audio channels,
                  * all previously allocated data will be kept
                  *
