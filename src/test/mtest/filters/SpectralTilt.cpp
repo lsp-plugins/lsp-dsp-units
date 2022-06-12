@@ -72,7 +72,6 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
         filter.set_lower_frequency(fLowFreq);
         filter.set_upper_frequency(fUpFreq);
         filter.set_sample_rate(nSampleRate);
-        filter.update_settings();
 
         float *vIn = new float[nPeriod];
         float *vOut = new float[nPeriod];

@@ -31,6 +31,9 @@
 #define DFL_UPPER_FREQUENCY     20.0e3f
 #define BUF_LIM_SIZE            256u
 
+#define DB_PER_OCTAVE_FALLOFF   0.16609640419483184814453125f
+#define DB_PER_DECADE_FALLOFF   0.05f
+
 namespace lsp
 {
     namespace dspu
@@ -43,6 +46,7 @@ namespace lsp
 
         SpectralTilt::~SpectralTilt()
         {
+            destroy();
         }
 
         void SpectralTilt::construct()
@@ -65,6 +69,82 @@ namespace lsp
 
             sFilter.construct();
             sFilter.init(MAX_ORDER);
+        }
+
+        void SpectralTilt::destroy()
+        {
+            sFilter.destroy();
+        }
+
+        void SpectralTilt::set_sample_rate(size_t sr)
+        {
+            if (nSampleRate == sr)
+                return;
+
+            nSampleRate = sr;
+            bSync       = true;
+        }
+
+        void SpectralTilt::set_upper_frequency(float upperFrequency)
+        {
+            if (upperFrequency == fUpperFrequency)
+                return;
+
+            fUpperFrequency = upperFrequency;
+            bSync           = true;
+        }
+
+        void SpectralTilt::set_lower_frequency(float lowerFrequency)
+        {
+            if (lowerFrequency == fLowerFrequency)
+                return;
+
+            fLowerFrequency = lowerFrequency;
+            bSync           = true;
+        }
+
+        void SpectralTilt::set_frequency_range(float lower, float upper)
+        {
+            if (upper > lower)
+                lsp::swap(upper, lower);
+
+            if ((lower == fLowerFrequency) && (upper == fUpperFrequency))
+                return;
+
+            fLowerFrequency = lower;
+            fUpperFrequency = upper;
+            bSync           = true;
+        }
+
+        void SpectralTilt::set_norm(stlt_norm_t norm)
+        {
+            if ((norm < STLT_NORM_AT_DC) || (norm >= STLT_NORM_MAX))
+                return;
+
+            enNorm = norm;
+            bSync = true;
+        }
+
+        void SpectralTilt::set_slope(float slope, stlt_slope_unit_t slopeType)
+        {
+            if ((slope == fSlopeVal) && (slopeType == enSlopeUnit))
+                return;
+
+            if ((slopeType < STLT_SLOPE_UNIT_NEPER_PER_NEPER) || (slopeType >= STLT_SLOPE_UNIT_MAX))
+                return;
+
+            fSlopeVal   = slope;
+            enSlopeUnit = slopeType;
+            bSync       = true;
+        }
+
+        void SpectralTilt::set_order(size_t order)
+        {
+            if (order == nOrder)
+                return;
+
+            nOrder  = order;
+            bSync   = true;
         }
 
         // Compute the coefficient for the bilinear transform warping equation.
@@ -107,9 +187,9 @@ namespace lsp
             w = (w >= 0.0) ? w - M_PI : w + M_PI;
 
             double cw   = cos(w);
-            double c2w  = cos(2.0 * w);
             double sw   = sin(w);
-            double s2w  = sin(2.0 * w);
+            double c2w  = cw*cw - sw*sw;    // cos(2.0 * w);
+            double s2w  = 2.0f * cw * sw;   // sin(2.0 * w);
 
             double num_re = digitalbq->b0 + digitalbq->b1 * cw + digitalbq->b2 * c2w;
             double num_im = -digitalbq->b1 * sw - digitalbq->b2 * s2w;
@@ -137,6 +217,10 @@ namespace lsp
 
                 case STLT_NORM_AT_20_HZ:
                     gain = 1.0f / digital_biquad_gain(digitalbq, 20.0f);
+                    break;
+
+                case STLT_NORM_AT_1_KHZ:
+                    gain = 1.0f / digital_biquad_gain(digitalbq, 1000.0f);
                     break;
 
                 case STLT_NORM_AT_20_KHZ:
@@ -212,11 +296,11 @@ namespace lsp
                  */
 
                 case STLT_SLOPE_UNIT_DB_PER_OCTAVE:
-                    fSlopeNepNep = fSlopeVal * 0.16609640419483184814453125f;
+                    fSlopeNepNep = fSlopeVal * DB_PER_OCTAVE_FALLOFF;
                     break;
 
                 case STLT_SLOPE_UNIT_DB_PER_DECADE:
-                    fSlopeNepNep = fSlopeVal * 0.05f;
+                    fSlopeNepNep = fSlopeVal * DB_PER_DECADE_FALLOFF;
                     break;
 
                 default:
@@ -295,6 +379,8 @@ namespace lsp
 
         void SpectralTilt::process_add(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = dst[i] + 0 = dst[i]
@@ -325,6 +411,8 @@ namespace lsp
 
         void SpectralTilt::process_mul(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = dst[i] * 0 = 0
@@ -355,6 +443,8 @@ namespace lsp
 
         void SpectralTilt::process_overwrite(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
                 dsp::fill_zero(dst, count);
             else if (bBypass)

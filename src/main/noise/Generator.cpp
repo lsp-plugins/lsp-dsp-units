@@ -199,7 +199,6 @@ namespace lsp
                 sColorFilter.set_lower_frequency(10.0f); // from 10 Hz
                 // Use 90% of the digital bandwidth, as this prevents a steep rise in the high end of the frequency response.
                 sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate);
-                sColorFilter.update_settings();
             }
 
             nUpdate     = 0;
