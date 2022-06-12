@@ -55,6 +55,8 @@ namespace lsp
         enum stlt_norm_t
         {
             STLT_NORM_AT_DC,
+            STLT_NORM_AT_20_HZ,
+            STLT_NORM_AT_20_KHZ,
             STLT_NORM_AT_NYQUIST,
             STLT_NORM_AUTO,
             STLT_NORM_NONE,
@@ -105,6 +107,8 @@ namespace lsp
             protected:
                 float               bilinear_coefficient(float angularFrequency, float samplerate);
                 bilinear_spec_t     compute_bilinear_element(float negZero, float negPole);
+                inline float        digital_biquad_gain(dsp::biquad_x1_t *digitalbq, float frequency);
+                void                normalise_digital_biquad(dsp::biquad_x1_t *digitalbq);
 
             public:
                 /** Check that SpectralTilt needs settings update.

@@ -43,6 +43,11 @@ namespace lsp
 
         void NoiseGenerator::construct()
         {
+            sMLS.construct();
+            sLCG.construct();
+            sVelvetNoise.construct();
+            sColorFilter.construct();
+
             sMLSParams.nBits                = 0;
             sMLSParams.nSeed                = 0;
 
@@ -61,11 +66,11 @@ namespace lsp
 
             sColorParams.enColor            = NG_COLOR_WHITE;
             sColorParams.nOrder             = 50;
-            sColorParams.nOrder             = 0.0f;
             sColorParams.enSlopeUnit        = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
 
             enGenerator                     = NG_GEN_LCG;
 
+            nUpdate                         = -1;
             bSync                           = true;
         }
 
@@ -92,6 +97,8 @@ namespace lsp
             sVelvetParams.nMLSseed = velvet_mls_seed;
             sVelvetNoise.init(sVelvetParams.nRandSeed, sVelvetParams.nMLSnBits, sVelvetParams.nMLSseed);
 
+            sColorFilter.set_norm(STLT_NORM_AUTO);
+
             bSync = true;
         }
 
@@ -112,79 +119,91 @@ namespace lsp
                 return;
 
             // MLS
-            sMLS.set_n_bits(sMLSParams.nBits);
-            sMLS.set_state(sMLSParams.nSeed);
             sMLS.set_amplitude(fAmplitude);
             sMLS.set_offset(fOffset);
-            sMLS.update_settings();
+            if (nUpdate & UPD_MLS)
+            {
+                sMLS.set_n_bits(sMLSParams.nBits);
+                sMLS.set_state(sMLSParams.nSeed);
+                sMLS.update_settings();
+            }
 
             // LCG
-            sLCG.set_distribution(sLCGParams.enDistribution);
             sLCG.set_amplitude(fAmplitude);
             sLCG.set_offset(fOffset);
+            if (nUpdate & UPD_LCG)
+            {
+                sLCG.set_distribution(sLCGParams.enDistribution);
+            }
             // sLCG has no update_settings method.
 
             // Velvet
-            sVelvetNoise.set_core_type(sVelvetParams.enCore);
-            sVelvetNoise.set_velvet_type(sVelvetParams.enVelvetType);
-            sVelvetNoise.set_velvet_window_width(seconds_to_samples(nSampleRate, sVelvetParams.fWindowWidth_s));
-            sVelvetNoise.set_delta_value(sVelvetParams.fARNdelta);
             sVelvetNoise.set_amplitude(fAmplitude);
             sVelvetNoise.set_offset(fOffset);
-            sVelvetNoise.set_crush(sVelvetParams.bCrush);
-            sVelvetNoise.set_crush_probability(sVelvetParams.fCrushProb);
-            // sVelvetNoise has no update_settings method.
-
-            // Color
-
-            sColorFilter.set_sample_rate(nSampleRate);
-
-            float slope;
-            stlt_slope_unit_t unit;
-
-            switch (sColorParams.enColor)
+            if (nUpdate & UPD_VELVET)
             {
-                case NG_COLOR_PINK:
-                    slope   = -0.5f;
-                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                    break;
-
-                case NG_COLOR_RED:
-                    slope   = -1.0f;
-                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                    break;
-
-                case NG_COLOR_BLUE:
-                    slope   = 0.5f;
-                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                    break;
-
-                case NG_COLOR_VIOLET:
-                    slope   = 1.0f;
-                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                    break;
-
-                case NG_COLOR_ARBITRARY:
-                    slope   = sColorParams.fSlope;
-                    unit    = sColorParams.enSlopeUnit;
-                    break;
-
-                default:
-                case NG_COLOR_WHITE:
-                    slope   = 0.0f;
-                    unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
-                    break;
+                sVelvetNoise.set_core_type(sVelvetParams.enCore);
+                sVelvetNoise.set_velvet_type(sVelvetParams.enVelvetType);
+                sVelvetNoise.set_velvet_window_width(seconds_to_samples(nSampleRate, sVelvetParams.fWindowWidth_s));
+                sVelvetNoise.set_delta_value(sVelvetParams.fARNdelta);
+                sVelvetNoise.set_crush(sVelvetParams.bCrush);
+                sVelvetNoise.set_crush_probability(sVelvetParams.fCrushProb);
+            // sVelvetNoise has no update_settings method.
             }
 
-            sColorFilter.set_order(sColorParams.nOrder);
-            sColorFilter.set_slope(slope, unit);
-            // Filter seems to be most nice with the bandwidth below.
-            sColorFilter.set_lower_frequency(10.0f); // from 10 Hz
-            // Use 90% of the digital bandwidth, as this prevents a steep rise in the high end of the frequency response.
-            sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate);
-            sColorFilter.update_settings();
+            // Color
+            if (nUpdate & UPD_COLOR)
+            {
+                sColorFilter.set_sample_rate(nSampleRate);
 
-            bSync = true;
+                float slope;
+                stlt_slope_unit_t unit;
+
+                switch (sColorParams.enColor)
+                {
+                    case NG_COLOR_PINK:
+                        slope   = -0.5f;
+                        unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                        break;
+
+                    case NG_COLOR_RED:
+                        slope   = -1.0f;
+                        unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                        break;
+
+                    case NG_COLOR_BLUE:
+                        slope   = 0.5f;
+                        unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                        break;
+
+                    case NG_COLOR_VIOLET:
+                        slope   = 1.0f;
+                        unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                        break;
+
+                    case NG_COLOR_ARBITRARY:
+                        slope   = sColorParams.fSlope;
+                        unit    = sColorParams.enSlopeUnit;
+                        break;
+
+                    default:
+                    case NG_COLOR_WHITE:
+                        slope   = 0.0f;
+                        unit    = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
+                        break;
+                }
+
+                sColorFilter.set_order(sColorParams.nOrder);
+                sColorFilter.set_slope(slope, unit);
+                // Filter seems to be most nice with the bandwidth below.
+                sColorFilter.set_lower_frequency(10.0f); // from 10 Hz
+                // Use 90% of the digital bandwidth, as this prevents a steep rise in the high end of the frequency response.
+                sColorFilter.set_upper_frequency(0.9f * 0.5f * nSampleRate);
+                sColorFilter.update_settings();
+            }
+
+            nUpdate     = 0;
+            bSync       = false;
         }
 
         void NoiseGenerator::do_process(float *dst, size_t count)
@@ -209,6 +228,8 @@ namespace lsp
             {
                 case NG_COLOR_PINK:
                 case NG_COLOR_RED:
+                case NG_COLOR_BLUE:
+                case NG_COLOR_VIOLET:
                 case NG_COLOR_ARBITRARY:
                     sColorFilter.process_overwrite(dst, dst, count);
                     break;

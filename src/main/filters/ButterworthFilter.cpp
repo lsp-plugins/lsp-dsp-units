@@ -24,7 +24,7 @@
 #include <lsp-plug.in/dsp-units/filters/ButterworthFilter.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MAX_ORDER           100u
+#define MAX_ORDER           128u
 #define BUF_LIM_SIZE        256u
 #define FREQUENCY_LIMIT     10.0f
 
@@ -51,6 +51,7 @@ namespace lsp
             bBypass         = false;
             bSync           = true;
 
+            sFilter.construct();
             sFilter.init(MAX_ORDER);
         }
 

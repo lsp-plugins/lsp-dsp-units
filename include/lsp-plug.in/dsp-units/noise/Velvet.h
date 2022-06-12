@@ -26,6 +26,8 @@
 #include <lsp-plug.in/dsp-units/noise/MLS.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
+#define MIN_WINDOW_WIDTH    1.0f
+
 namespace lsp
 {
     namespace dspu
@@ -159,7 +161,7 @@ namespace lsp
                     if (width == fWindowWidth)
                         return;
 
-                    fWindowWidth = width;
+                    fWindowWidth = lsp_max(width, MIN_WINDOW_WIDTH);
                 }
 
                 /** Set delta value for ARN generator.

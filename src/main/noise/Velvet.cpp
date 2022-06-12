@@ -25,7 +25,6 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MIN_WINDOW_WIDTH    1.0f
 #define DFL_WINDOW_WIDTH    10.0f
 #define BUF_LIM_SIZE        256u
 
@@ -51,6 +50,8 @@ namespace lsp
             fARNdelta                   = 0.5f;
             fAmplitude                  = 1.0f;
             fOffset                     = 0.0f;
+
+            sRandomizer.construct();
         }
 
         Velvet::~Velvet()
@@ -117,9 +118,11 @@ namespace lsp
                     size_t scan = 0;
 
                     float k = fWindowWidth - 1.0f;
-                    while (idx < count)
+                    while (true)
                     {
                         idx = scan * fWindowWidth + get_random_value() * k;
+                        if (idx >= count)
+                            break;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -138,9 +141,11 @@ namespace lsp
                     size_t idx = 0;
                     size_t scan = 0;
 
-                    while (idx < count)
+                    while (true)
                     {
                         idx = scan * fWindowWidth + get_random_value() * fWindowWidth;
+                        if (idx >= count)
+                            break;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -160,9 +165,11 @@ namespace lsp
 
                     float k = 2.0f * fARNdelta * (fWindowWidth - 1.0f);
                     float b = (1.0f - fARNdelta) * (fWindowWidth - 1.0f);
-                    while (idx < count)
+                    while (true)
                     {
                         idx += 1.0f + b + k * get_random_value();
+                        if (idx >= count)
+                            break;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -188,7 +195,6 @@ namespace lsp
                         while (idx < count)
                         {
                             float multiplier = 1.0f;
-
                             if (get_random_value() > sCrushParams.fCrushProb)
                                 multiplier = -1.0f;
 

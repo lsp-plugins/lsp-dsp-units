@@ -60,6 +60,13 @@ namespace lsp
                 NoiseGenerator(const NoiseGenerator &);
 
             protected:
+                enum update_t
+                {
+                    UPD_MLS     = 1 << 0,
+                    UPD_LCG     = 1 << 1,
+                    UPD_VELVET  = 1 << 2,
+                    UPD_COLOR   = 1 << 3
+                };
 
                 typedef struct mls_params_t
                 {
@@ -112,6 +119,7 @@ namespace lsp
                 float               fAmplitude;
                 float               fOffset;
 
+                size_t              nUpdate;
                 bool                bSync;
 
             public:
@@ -166,6 +174,8 @@ namespace lsp
                         return;
 
                     nSampleRate = sr;
+                    nUpdate     |= UPD_COLOR;
+                    nUpdate     |= UPD_VELVET;
                     bSync       = true;
                 }
 
@@ -179,6 +189,7 @@ namespace lsp
                         return;
 
                     sMLSParams.nBits    = nbits;
+                    nUpdate             |= UPD_MLS;
                     bSync               = true;
                 }
 
@@ -192,6 +203,7 @@ namespace lsp
                         return;
 
                     sMLSParams.nSeed    = seed;
+                    nUpdate             |= UPD_MLS;
                     bSync               = true;
                 }
 
@@ -205,6 +217,7 @@ namespace lsp
                         return;
 
                     sLCGParams.enDistribution = dist;
+                    nUpdate             |= UPD_LCG;
                     bSync = true;
                 }
 
@@ -217,7 +230,9 @@ namespace lsp
                     if (type == sVelvetParams.enVelvetType)
                         return;
 
-                    sVelvetParams.enVelvetType = type;
+                    sVelvetParams.enVelvetType  = type;
+                    nUpdate                     |= UPD_VELVET;
+                    bSync                       = true;
                 }
 
                 /** Set the Velvet noise window width in samples. Velvet noise is emitted only if Sparsity is Velvet.
@@ -229,7 +244,9 @@ namespace lsp
                     if (width == sVelvetParams.fWindowWidth_s)
                         return;
 
-                    sVelvetParams.fWindowWidth_s = width;
+                    sVelvetParams.fWindowWidth_s    = width;
+                    nUpdate                         |= UPD_VELVET;
+                    bSync                           = true;
                 }
 
                 /** Set delta parameter for Velvet ARN noise.
@@ -241,7 +258,9 @@ namespace lsp
                     if (delta == sVelvetParams.fARNdelta)
                         return;
 
-                    sVelvetParams.fARNdelta = delta;
+                    sVelvetParams.fARNdelta     = delta;
+                    nUpdate                     |= UPD_VELVET;
+                    bSync                       = true;
                 }
 
                 /** Set whether to crush the velvet generator.
@@ -253,7 +272,9 @@ namespace lsp
                     if (crush == sVelvetParams.bCrush)
                         return;
 
-                    sVelvetParams.bCrush = crush;
+                    sVelvetParams.bCrush    = crush;
+                    nUpdate                 |= UPD_VELVET;
+                    bSync                   = true;
                 }
 
                 /** Set the crushing probability for the velvet generator.
@@ -265,7 +286,9 @@ namespace lsp
                     if (prob == sVelvetParams.fCrushProb)
                         return;
 
-                    sVelvetParams.fCrushProb = prob;
+                    sVelvetParams.fCrushProb    = prob;
+                    nUpdate                     |= UPD_VELVET;
+                    bSync                       = true;
                 }
 
                 /** Set which core generator to use.
@@ -296,6 +319,7 @@ namespace lsp
                         return;
 
                     sColorParams.enColor    = color;
+                    nUpdate                 |= UPD_COLOR;
                     bSync                   = true;
                 }
 
@@ -309,6 +333,7 @@ namespace lsp
                         return;
 
                     sColorParams.nOrder     = order;
+                    nUpdate                 |= UPD_COLOR;
                     bSync                   = true;
                 }
 
@@ -324,6 +349,7 @@ namespace lsp
 
                     sColorParams.fSlope         = slope;
                     sColorParams.enSlopeUnit    = unit;
+                    nUpdate                     |= UPD_COLOR;
                     bSync                       = true;
                 }
 
@@ -336,8 +362,8 @@ namespace lsp
                     if (amplitude == fAmplitude)
                         return;
 
-                    fAmplitude = amplitude;
-                    bSync = true;
+                    fAmplitude  = amplitude;
+                    bSync       = true;
                 }
 
                 /** Set the noise offset.
@@ -349,8 +375,8 @@ namespace lsp
                     if (offset == fOffset)
                         return;
 
-                    fOffset = offset;
-                    bSync = true;
+                    fOffset     = offset;
+                    bSync       = true;
                 }
 
                 /** Output noise to the destination buffer in additive mode

@@ -122,7 +122,10 @@ namespace lsp
             nFeedbackMask = mls_t(1) << nFeedbackBit;
 
             // Switch on all the first nBits bits.
-            nActiveMask = ~(~mls_t(0) << nBits);
+            if (nBits == nMaxBits)
+                nActiveMask = ~mls_t(0);
+            else
+                nActiveMask = ~(~mls_t(0) << nBits);
 
             nTapsMask = vTapsMaskTable[nBits - 1];
 
