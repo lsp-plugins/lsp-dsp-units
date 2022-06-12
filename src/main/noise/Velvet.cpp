@@ -25,6 +25,7 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
+#define MIN_WINDOW_WIDTH    1.0f
 #define DFL_WINDOW_WIDTH    10.0f
 #define BUF_LIM_SIZE        256u
 
@@ -36,6 +37,11 @@ namespace lsp
         Velvet::Velvet()
         {
             construct();
+        }
+
+        Velvet::~Velvet()
+        {
+            destroy();
         }
 
         void Velvet::construct()
@@ -54,8 +60,55 @@ namespace lsp
             sRandomizer.construct();
         }
 
-        Velvet::~Velvet()
+        void Velvet::destroy()
         {
+            sRandomizer.destroy();
+        }
+
+        void Velvet::set_core_type(vn_core_t core)
+        {
+            if ((core < VN_CORE_MLS) || (core >= VN_CORE_MAX))
+                return;
+
+            enCore = core;
+        }
+
+        void Velvet::set_velvet_type(vn_velvet_type_t type)
+        {
+            if ((type < VN_VELVET_OVN) || (type >= VN_VELVET_MAX))
+                return;
+
+            enVelvetType = type;
+        }
+
+        void Velvet::set_velvet_window_width(float width)
+        {
+            fWindowWidth = lsp_max(width, MIN_WINDOW_WIDTH);
+        }
+
+        void Velvet::set_delta_value(float delta)
+        {
+            fARNdelta       = lsp_limit(delta, 0.0f, 1.0f);
+        }
+
+        void Velvet::set_amplitude(float amplitude)
+        {
+            fAmplitude      = amplitude;
+        }
+
+        void Velvet::set_offset(float offset)
+        {
+            fOffset         = offset;
+        }
+
+        void Velvet::set_crush(bool crush)
+        {
+            sCrushParams.bCrush = crush;
+        }
+
+        void Velvet::set_crush_probability(float prob)
+        {
+            sCrushParams.fCrushProb = lsp_limit(prob, 0.0f, 1.0f);
         }
 
         void Velvet::init(uint32_t randseed, uint8_t mlsnbits, MLS::mls_t mlsseed)
