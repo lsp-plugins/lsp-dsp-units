@@ -61,6 +61,11 @@ namespace lsp
             construct();
         }
 
+        Randomizer::~Randomizer()
+        {
+            destroy();
+        }
+
         void Randomizer::construct()
         {
             for (size_t i=0; i<4; ++i)
@@ -72,6 +77,10 @@ namespace lsp
             }
 
             nBufID = -1;
+        }
+
+        void Randomizer::destroy()
+        {
         }
 
         void Randomizer::init(uint32_t seed)
