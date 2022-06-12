@@ -22,11 +22,11 @@
 #ifndef LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_
 #define LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_
 
-#include <lsp-plug.in/dsp-units/noise/MLS.h>
-#include <lsp-plug.in/dsp-units/noise/LCG.h>
-#include <lsp-plug.in/dsp-units/noise/Velvet.h>
 #include <lsp-plug.in/dsp-units/filters/SpectralTilt.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/noise/LCG.h>
+#include <lsp-plug.in/dsp-units/noise/MLS.h>
+#include <lsp-plug.in/dsp-units/noise/Velvet.h>
 
 namespace lsp
 {
@@ -65,7 +65,10 @@ namespace lsp
                     UPD_MLS     = 1 << 0,
                     UPD_LCG     = 1 << 1,
                     UPD_VELVET  = 1 << 2,
-                    UPD_COLOR   = 1 << 3
+                    UPD_COLOR   = 1 << 3,
+                    UPD_OTHER   = 1 << 4,
+
+                    UPD_ALL     = UPD_MLS | UPD_LCG | UPD_VELVET | UPD_COLOR | UPD_OTHER
                 };
 
                 typedef struct mls_params_t
@@ -120,7 +123,6 @@ namespace lsp
                 float               fOffset;
 
                 size_t              nUpdate;
-                bool                bSync;
 
             public:
                 explicit NoiseGenerator();
@@ -131,6 +133,7 @@ namespace lsp
 
             protected:
                 void do_process(float *dst, size_t count);
+                void update_settings();
 
             public:
 
@@ -149,235 +152,96 @@ namespace lsp
                  */
                 void init();
 
-                /** Check that NoiseGenerator needs settings update.
-                 *
-                 * @return true if NoiseGenerator needs settings update.
-                 */
-                inline bool needs_update() const
-                {
-                    return bSync;
-                }
-
-                /** This method should be called if needs_update() returns true.
-                 * before calling processing methods.
-                 *
-                 */
-                void update_settings();
-
                 /** Set sample rate
                  *
                  * @param sr sample rate
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (nSampleRate == sr)
-                        return;
-
-                    nSampleRate = sr;
-                    nUpdate     |= UPD_COLOR;
-                    nUpdate     |= UPD_VELVET;
-                    bSync       = true;
-                }
+                void set_sample_rate(size_t sr);
 
                 /** Set the number of bits of the MLS sequence generator.
                  *
                  * @param nbits number of bits.
                  */
-                inline void set_mls_n_bits(uint8_t nbits)
-                {
-                    if (nbits == sMLSParams.nBits)
-                        return;
-
-                    sMLSParams.nBits    = nbits;
-                    nUpdate             |= UPD_MLS;
-                    bSync               = true;
-                }
+                void set_mls_n_bits(uint8_t nbits);
 
                 /** Set MLS generator seed.
                  *
                  * @param seed MLS seed.
                  */
-                inline void set_mls_seed(MLS::mls_t seed)
-                {
-                    if (seed == sMLSParams.nSeed)
-                        return;
-
-                    sMLSParams.nSeed    = seed;
-                    nUpdate             |= UPD_MLS;
-                    bSync               = true;
-                }
+                void set_mls_seed(MLS::mls_t seed);
 
                 /** Set LCG distribution.
                  *
                  * @param dist LCG distribution.
                  */
-                inline void set_lcg_distribution(lcg_dist_t dist)
-                {
-                    if (dist == sLCGParams.enDistribution)
-                        return;
-
-                    sLCGParams.enDistribution = dist;
-                    nUpdate             |= UPD_LCG;
-                    bSync = true;
-                }
+                void set_lcg_distribution(lcg_dist_t dist);
 
                 /** Set the lcg_dist_telvet noise type. Velvet noise is emitted only if Sparsity is Velvet.
                  *
                  * @param type velvet type.
                  */
-                inline void set_velvet_type(vn_velvet_type_t type)
-                {
-                    if (type == sVelvetParams.enVelvetType)
-                        return;
-
-                    sVelvetParams.enVelvetType  = type;
-                    nUpdate                     |= UPD_VELVET;
-                    bSync                       = true;
-                }
+                void set_velvet_type(vn_velvet_type_t type);
 
                 /** Set the Velvet noise window width in samples. Velvet noise is emitted only if Sparsity is Velvet.
                  *
                  * @param width velvet noise width.
                  */
-                inline void set_velvet_window_width(float width)
-                {
-                    if (width == sVelvetParams.fWindowWidth_s)
-                        return;
-
-                    sVelvetParams.fWindowWidth_s    = width;
-                    nUpdate                         |= UPD_VELVET;
-                    bSync                           = true;
-                }
+                void set_velvet_window_width(float width);
 
                 /** Set delta parameter for Velvet ARN noise.
                  *
                  * @param delta value.
                  */
-                inline void set_velvet_arn_delta(float delta)
-                {
-                    if (delta == sVelvetParams.fARNdelta)
-                        return;
-
-                    sVelvetParams.fARNdelta     = delta;
-                    nUpdate                     |= UPD_VELVET;
-                    bSync                       = true;
-                }
+                void set_velvet_arn_delta(float delta);
 
                 /** Set whether to crush the velvet generator.
                  *
                  * @param true to crash.
                  */
-                inline void set_velvet_crush(bool crush)
-                {
-                    if (crush == sVelvetParams.bCrush)
-                        return;
-
-                    sVelvetParams.bCrush    = crush;
-                    nUpdate                 |= UPD_VELVET;
-                    bSync                   = true;
-                }
+                void set_velvet_crush(bool crush);
 
                 /** Set the crushing probability for the velvet generator.
                  *
                  * @param crushing probability.
                  */
-                inline void set_velvet_crushing_probability(float prob)
-                {
-                    if (prob == sVelvetParams.fCrushProb)
-                        return;
-
-                    sVelvetParams.fCrushProb    = prob;
-                    nUpdate                     |= UPD_VELVET;
-                    bSync                       = true;
-                }
+                void set_velvet_crushing_probability(float prob);
 
                 /** Set which core generator to use.
                  *
                  * @param core core generator specification.
                  */
-                inline void set_generator(ng_generator_t core)
-                {
-                    if ((core < NG_GEN_MLS) || (core >= NG_GEN_MAX))
-                        return;
-
-                    if (core == enGenerator)
-                        return;
-
-                    enGenerator = core;
-                }
+                void set_generator(ng_generator_t core);
 
                 /** Set the noise color.
                  *
                  * @param noise color specification.
                  */
-                inline void set_noise_color(ng_color_t color)
-                {
-                    if ((color < NG_COLOR_WHITE) || (color >= NG_COLOR_MAX))
-                        return;
-
-                    if (color == sColorParams.enColor)
-                        return;
-
-                    sColorParams.enColor    = color;
-                    nUpdate                 |= UPD_COLOR;
-                    bSync                   = true;
-                }
+                void set_noise_color(ng_color_t color);
 
                 /** Set the coloring filter order.
                  *
                  * @param order order.
                  */
-                inline void set_coloring_order(size_t order)
-                {
-                    if (order == sColorParams.nOrder)
-                        return;
-
-                    sColorParams.nOrder     = order;
-                    nUpdate                 |= UPD_COLOR;
-                    bSync                   = true;
-                }
+                void set_coloring_order(size_t order);
 
                 /** Set the color slope.
                  *
                  * @param slope slope.
                  * çparam unit slope unit
                  */
-                inline void set_color_slope(float slope, stlt_slope_unit_t unit)
-                {
-                    if ((slope == sColorParams.fSlope) && (unit == sColorParams.enSlopeUnit))
-                        return;
-
-                    sColorParams.fSlope         = slope;
-                    sColorParams.enSlopeUnit    = unit;
-                    nUpdate                     |= UPD_COLOR;
-                    bSync                       = true;
-                }
+                void set_color_slope(float slope, stlt_slope_unit_t unit);
 
                 /** Set the noise amplitude.
                  *
                  * @param amplitude noise amplitude.
                  */
-                inline void set_amplitude(float amplitude)
-                {
-                    if (amplitude == fAmplitude)
-                        return;
-
-                    fAmplitude  = amplitude;
-                    bSync       = true;
-                }
+                void set_amplitude(float amplitude);
 
                 /** Set the noise offset.
                  *
                  * @param offset noise offset.
                  */
-                inline void set_offset(float offset)
-                {
-                    if (offset == fOffset)
-                        return;
-
-                    fOffset     = offset;
-                    bSync       = true;
-                }
+                void set_offset(float offset);
 
                 /** Output noise to the destination buffer in additive mode
                  *

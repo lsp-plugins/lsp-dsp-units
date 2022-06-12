@@ -70,8 +70,7 @@ namespace lsp
 
             enGenerator                     = NG_GEN_LCG;
 
-            nUpdate                         = -1;
-            bSync                           = true;
+            nUpdate                         = UPD_ALL;
         }
 
         void NoiseGenerator::destroy()
@@ -94,28 +93,169 @@ namespace lsp
 
             sVelvetParams.nRandSeed = velvet_rand_seed;
             sVelvetParams.nMLSnBits = velvet_mls_n_bits;
-            sVelvetParams.nMLSseed = velvet_mls_seed;
+            sVelvetParams.nMLSseed  = velvet_mls_seed;
             sVelvetNoise.init(sVelvetParams.nRandSeed, sVelvetParams.nMLSnBits, sVelvetParams.nMLSseed);
 
             sColorFilter.set_norm(STLT_NORM_AUTO);
 
-            bSync = true;
+            nUpdate                 = UPD_ALL;
         }
 
         void NoiseGenerator::init()
         {
-            sMLSParams.nBits = sMLS.maximum_number_of_bits(); // By default, maximise so that period is maximal.
-            sMLSParams.nSeed = 0; // This forces default seed.
+            sMLSParams.nBits        = sMLS.maximum_number_of_bits(); // By default, maximise so that period is maximal.
+            sMLSParams.nSeed        = 0; // This forces default seed.
 
             sLCG.init();
             sVelvetNoise.init();
 
-            bSync = true;
+            nUpdate                 = UPD_ALL;
+        }
+
+        inline void NoiseGenerator::set_sample_rate(size_t sr)
+        {
+            if (nSampleRate == sr)
+                return;
+
+            nSampleRate = sr;
+            nUpdate     |= UPD_COLOR | UPD_VELVET;
+        }
+
+        void NoiseGenerator::set_mls_n_bits(uint8_t nbits)
+        {
+            if (nbits == sMLSParams.nBits)
+                return;
+
+            sMLSParams.nBits    = nbits;
+            nUpdate             |= UPD_MLS;
+        }
+
+        void NoiseGenerator::set_mls_seed(MLS::mls_t seed)
+        {
+            if (seed == sMLSParams.nSeed)
+                return;
+
+            sMLSParams.nSeed    = seed;
+            nUpdate             |= UPD_MLS;
+        }
+
+        void NoiseGenerator::set_lcg_distribution(lcg_dist_t dist)
+        {
+            if (dist == sLCGParams.enDistribution)
+                return;
+
+            sLCGParams.enDistribution = dist;
+            nUpdate             |= UPD_LCG;
+        }
+
+        void NoiseGenerator::set_velvet_type(vn_velvet_type_t type)
+        {
+            if (type == sVelvetParams.enVelvetType)
+                return;
+
+            sVelvetParams.enVelvetType  = type;
+            nUpdate                    |= UPD_VELVET;
+        }
+
+        void NoiseGenerator::set_velvet_window_width(float width)
+        {
+            if (width == sVelvetParams.fWindowWidth_s)
+                return;
+
+            sVelvetParams.fWindowWidth_s    = width;
+            nUpdate                        |= UPD_VELVET;
+        }
+
+        void NoiseGenerator::set_velvet_arn_delta(float delta)
+        {
+            if (delta == sVelvetParams.fARNdelta)
+                return;
+
+            sVelvetParams.fARNdelta     = delta;
+            nUpdate                    |= UPD_VELVET;
+        }
+
+        void NoiseGenerator::set_velvet_crush(bool crush)
+        {
+            if (crush == sVelvetParams.bCrush)
+                return;
+
+            sVelvetParams.bCrush    = crush;
+            nUpdate                |= UPD_VELVET;
+        }
+
+        void NoiseGenerator::set_velvet_crushing_probability(float prob)
+        {
+            if (prob == sVelvetParams.fCrushProb)
+                return;
+
+            sVelvetParams.fCrushProb    = prob;
+            nUpdate                    |= UPD_VELVET;
+        }
+
+        void NoiseGenerator::set_generator(ng_generator_t core)
+        {
+            if ((core < NG_GEN_MLS) || (core >= NG_GEN_MAX))
+                return;
+
+            if (core == enGenerator)
+                return;
+
+            enGenerator = core;
+        }
+
+        void NoiseGenerator::set_noise_color(ng_color_t color)
+        {
+            if ((color < NG_COLOR_WHITE) || (color >= NG_COLOR_MAX))
+                return;
+
+            if (color == sColorParams.enColor)
+                return;
+
+            sColorParams.enColor    = color;
+            nUpdate                |= UPD_COLOR;
+        }
+
+        void NoiseGenerator::set_coloring_order(size_t order)
+        {
+            if (order == sColorParams.nOrder)
+                return;
+
+            sColorParams.nOrder     = order;
+            nUpdate                |= UPD_COLOR;
+        }
+
+        void NoiseGenerator::set_color_slope(float slope, stlt_slope_unit_t unit)
+        {
+            if ((slope == sColorParams.fSlope) && (unit == sColorParams.enSlopeUnit))
+                return;
+
+            sColorParams.fSlope         = slope;
+            sColorParams.enSlopeUnit    = unit;
+            nUpdate                    |= UPD_COLOR;
+        }
+
+        void NoiseGenerator::set_amplitude(float amplitude)
+        {
+            if (amplitude == fAmplitude)
+                return;
+
+            fAmplitude  = amplitude;
+            nUpdate     = UPD_OTHER;
+        }
+
+        void NoiseGenerator::set_offset(float offset)
+        {
+            if (offset == fOffset)
+                return;
+
+            fOffset     = offset;
+            nUpdate     = UPD_OTHER;
         }
 
         void NoiseGenerator::update_settings()
         {
-            if (!bSync)
+            if (!nUpdate)
                 return;
 
             // MLS
@@ -202,7 +342,6 @@ namespace lsp
             }
 
             nUpdate     = 0;
-            bSync       = false;
         }
 
         void NoiseGenerator::do_process(float *dst, size_t count)
@@ -241,6 +380,8 @@ namespace lsp
 
         void NoiseGenerator::process_add(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = noise[i] + 0 = noise[i]
@@ -265,6 +406,8 @@ namespace lsp
 
         void NoiseGenerator::process_mul(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = noise[i] * 0 = 0
@@ -289,6 +432,8 @@ namespace lsp
 
         void NoiseGenerator::process_overwrite(float *dst, size_t count)
         {
+            update_settings();
+
             do_process(dst, count);
         }
 
@@ -341,8 +486,6 @@ namespace lsp
 
             v->write("fAmplitude", fAmplitude);
             v->write("fOffset", fOffset);
-
-            v->write("bSync", bSync);
         }
     }
 }
