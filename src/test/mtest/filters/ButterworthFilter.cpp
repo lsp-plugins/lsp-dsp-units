@@ -75,7 +75,6 @@ MTEST_BEGIN("dspu.filters", BUTTERWORTHFILTER)
         filter.set_cutoff_frequency(fCutoff);
         filter.set_filter_type(enFilterType);
         filter.set_sample_rate(nSampleRate);
-        filter.update_settings();
 
         float *vIn = new float[nPeriod];
         float *vOut = new float[nPeriod];

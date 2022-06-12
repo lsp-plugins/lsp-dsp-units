@@ -40,6 +40,7 @@ namespace lsp
 
         ButterworthFilter::~ButterworthFilter()
         {
+            destroy();
         }
 
         void ButterworthFilter::construct()
@@ -53,6 +54,47 @@ namespace lsp
 
             sFilter.construct();
             sFilter.init(MAX_ORDER);
+        }
+
+        void ButterworthFilter::destroy()
+        {
+            sFilter.destroy();
+        }
+
+        void ButterworthFilter::set_order(size_t order)
+        {
+            if (order == nOrder)
+                return;
+
+            nOrder  = order;
+            bSync   = true;
+        }
+
+        void ButterworthFilter::set_cutoff_frequency(float frequency)
+        {
+            if (frequency == fCutoffFreq)
+                return;
+
+            fCutoffFreq = frequency;
+            bSync       = true;
+        }
+
+        void ButterworthFilter::set_filter_type(bw_filt_type_t type)
+        {
+            if ((type < BW_FLT_TYPE_LOWPASS) && (type >= BW_FLT_TYPE_MAX))
+                return;
+
+            enFilterType    = type;
+            bSync           = true;
+        }
+
+        void ButterworthFilter::set_sample_rate(size_t sr)
+        {
+            if (nSampleRate == sr)
+                return;
+
+            nSampleRate = sr;
+            bSync       = true;
         }
 
         void ButterworthFilter::update_settings()
@@ -164,6 +206,8 @@ namespace lsp
 
         void ButterworthFilter::process_add(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = dst[i] + 0 = dst[i]
@@ -194,6 +238,8 @@ namespace lsp
 
         void ButterworthFilter::process_mul(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = dst[i] * 0 = 0
@@ -224,6 +270,8 @@ namespace lsp
 
         void ButterworthFilter::process_overwrite(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
                 dsp::fill_zero(dst, count);
             else if (bBypass)

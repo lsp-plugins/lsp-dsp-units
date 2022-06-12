@@ -62,74 +62,35 @@ namespace lsp
                 ~ButterworthFilter();
 
                 void construct();
+                void destroy();
 
-            public:
-                /** Check that filter needs settings update.
-                 *
-                 * @return true if filter needs settings update.
-                 */
-                inline bool needs_update() const
-                {
-                    return bSync;
-                }
-
-                /** This method should be called if needs_update() returns true.
-                 * before calling processing methods.
-                 *
-                 */
+            protected:
                 void update_settings();
 
+            public:
                 /** Set the order of the filter.
                  *
                  * @param order order of the filter.
                  */
-                inline void set_order(size_t order)
-                {
-                    if (order == nOrder)
-                        return;
-
-                    nOrder  = order;
-                    bSync   = true;
-                }
+                void set_order(size_t order);
 
                 /** Set the cutoff frequency of the filter.
                  *
                  * @param frequency cutoff frequency.
                  */
-                inline void set_cutoff_frequency(float frequency)
-                {
-                    if (frequency == fCutoffFreq)
-                        return;
-
-                    fCutoffFreq = frequency;
-                    bSync       = true;
-                }
+                void set_cutoff_frequency(float frequency);
 
                 /** Set filter type.
                  *
                  * @param type filter type.
                  */
-                inline void set_filter_type(bw_filt_type_t type)
-                {
-                    if ((type < BW_FLT_TYPE_LOWPASS) && (type >= BW_FLT_TYPE_MAX))
-                        return;
-
-                    enFilterType    = type;
-                    bSync           = true;
-                }
+                void set_filter_type(bw_filt_type_t type);
 
                 /** Set sample rate for the filter.
                  *
                  * @param sr sample rate.
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (nSampleRate == sr)
-                        return;
-
-                    nSampleRate = sr;
-                    bSync       = true;
-                }
+                void set_sample_rate(size_t sr);
 
                 /** Output sequence to the destination buffer in additive mode
                  *
