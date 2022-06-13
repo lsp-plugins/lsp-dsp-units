@@ -90,6 +90,7 @@ namespace lsp
             protected:
                 mls_t xor_gate(mls_t value);
                 mls_t progress();
+                void update_settings();
 
             public:
 
@@ -107,12 +108,6 @@ namespace lsp
                 {
                     return bSync;
                 }
-
-                /** This method should be called if needs_update() returns true.
-                 * before calling processing methods.
-                 *
-                 */
-                void update_settings();
 
                 /** Set the number of bits of the generator. This causes reset.
                  *

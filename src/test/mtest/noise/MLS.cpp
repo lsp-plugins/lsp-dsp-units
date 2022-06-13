@@ -55,7 +55,6 @@ MTEST_BEGIN("dspu.noise", MLS)
         dspu::MLS mls;
         mls.set_n_bits(nBits);
         mls.set_state(nState);
-        mls.update_settings();
         dspu::MLS::mls_t nPeriod = mls.get_period();
 
         float *vBuffer = new float[nPeriod];

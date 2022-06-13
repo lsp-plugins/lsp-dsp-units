@@ -25,9 +25,10 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MIN_WINDOW_WIDTH    1.0f
-#define DFL_WINDOW_WIDTH    10.0f
-#define BUF_LIM_SIZE        256u
+// These widths are in samples
+#define MIN_WINDOW_WIDTH        2.0f
+#define DFL_WINDOW_WIDTH        10.0f
+#define BUF_LIM_SIZE            256u
 
 namespace lsp
 {
@@ -121,7 +122,6 @@ namespace lsp
 
             sMLS.set_n_bits(mlsnbits);
             sMLS.set_state(mlsseed);
-            sMLS.update_settings();
         }
 
         void Velvet::init()
@@ -131,9 +131,6 @@ namespace lsp
             // Ensure that the MLS sequence has unit amplitude and 0 DC bias.
             sMLS.set_amplitude(1.0f);
             sMLS.set_offset(0.0f);
-
-            // Simply use defaults in the class.
-            sMLS.update_settings();
         }
 
         float Velvet::get_random_value()

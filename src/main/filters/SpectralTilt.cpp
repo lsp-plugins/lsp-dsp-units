@@ -324,7 +324,7 @@ namespace lsp
             if ((enSlopeUnit == STLT_SLOPE_UNIT_NONE) || (fSlopeNepNep == 0.0f))
             {
                 bBypass = true;
-                bSync = true;
+                bSync = false;
                 return;
             }
             else
@@ -374,7 +374,7 @@ namespace lsp
             }
             sFilter.end(true);
 
-            bSync = true;
+            bSync = false;
         }
 
         void SpectralTilt::process_add(float *dst, const float *src, size_t count)

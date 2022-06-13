@@ -112,7 +112,7 @@ namespace lsp
             nUpdate                 = UPD_ALL;
         }
 
-        inline void NoiseGenerator::set_sample_rate(size_t sr)
+        void NoiseGenerator::set_sample_rate(size_t sr)
         {
             if (nSampleRate == sr)
                 return;
@@ -265,7 +265,6 @@ namespace lsp
             {
                 sMLS.set_n_bits(sMLSParams.nBits);
                 sMLS.set_state(sMLSParams.nSeed);
-                sMLS.update_settings();
             }
 
             // LCG

@@ -167,6 +167,9 @@ namespace lsp
 
         MLS::mls_t MLS::progress()
         {
+            // Calling update_settings here ensure it is called by all processing methods.
+            update_settings();
+
             mls_t nOutput = nState & nOutputMask;
 
             mls_t nFeedbackValue = xor_gate(nState & nTapsMask);
@@ -179,6 +182,7 @@ namespace lsp
 
         float MLS::process_single()
         {
+
             return progress() ? fAmplitude + fOffset : -fAmplitude + fOffset;
         }
 

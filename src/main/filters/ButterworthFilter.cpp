@@ -105,7 +105,7 @@ namespace lsp
             if (enFilterType == BW_FLT_TYPE_NONE)
             {
                 bBypass = true;
-                bSync = true;
+                bSync = false;
                 return;
             }
             else
@@ -201,7 +201,7 @@ namespace lsp
             }
             sFilter.end(true);
 
-            bSync = true;
+            bSync = false;
         }
 
         void ButterworthFilter::process_add(float *dst, const float *src, size_t count)
