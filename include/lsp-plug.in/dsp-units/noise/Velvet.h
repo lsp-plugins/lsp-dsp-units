@@ -86,6 +86,7 @@ namespace lsp
                 ~Velvet();
 
                 void construct();
+                void destroy();
 
             protected:
 
@@ -124,100 +125,49 @@ namespace lsp
                  *
                  * @param core generator for the random sequence.
                  */
-                inline void set_core_type(vn_core_t core)
-                {
-                    if ((core < VN_CORE_MLS) || (core >= VN_CORE_MAX))
-                        return;
-
-                    if (enCore == core)
-                        return;
-
-                    enCore = core;
-                }
+                void set_core_type(vn_core_t core);
 
                 /** Set the type of the velvet noise.
                  *
                  * @param type velvet noise type.
                  */
-                inline void set_velvet_type(vn_velvet_type_t type)
-                {
-                    if ((type < VN_VELVET_OVN) || (type >= VN_VELVET_MAX))
-                        return;
-
-                    if (enVelvetType == type)
-                        return;
-
-                    enVelvetType = type;
-                }
+                void set_velvet_type(vn_velvet_type_t type);
 
                 /** Set velvet noise window width in samples.
                  *
                  * @param width velvet noise width.
                  */
-                inline void set_velvet_window_width(float width)
-                {
-                    if (width == fWindowWidth)
-                        return;
-
-                    fWindowWidth = width;
-                }
+                void set_velvet_window_width(float width);
 
                 /** Set delta value for ARN generator.
                  *
                  * @param delta delta value.
                  */
-                inline void set_delta_value(float delta)
-                {
-                    if ((delta < 0.0f) || (delta > 1.0f))
-                        return;
-
-                    fARNdelta = delta;
-                }
+                void set_delta_value(float delta);
 
                 /** Set the velvet noise amplitude.
                  *
                  * @param amplitude noise amplitude.
                  */
-                inline void set_amplitude(float amplitude)
-                {
-                    if (amplitude == fAmplitude)
-                        return;
-
-                    fAmplitude  = amplitude;
-                }
+                void set_amplitude(float amplitude);
 
                 /** Set the velvet noise offset.
                  *
                  * @param offset noise offset.
                  */
-                inline void set_offset(float offset)
-                {
-                    if (offset == fOffset)
-                        return;
-
-                    fOffset = offset;
-                }
+                void set_offset(float offset);
 
                 /** Set whether to produce crushed noise.
                  *
                  * @param crush true to activate crushed noise.
                  */
-                inline void set_crush(bool crush)
-                {
-                    sCrushParams.bCrush = crush;
-                }
+                void set_crush(bool crush);
 
                 /** Set the crushing probability.
                  *
                  * @param prob crushing probability.
                  */
-                inline void set_crush_probability(float prob)
-                {
-                    if ((prob < 0.0f) || (prob > 1.0f))
-                        return;
-
-                    sCrushParams.fCrushProb = prob;
-                }
+                void set_crush_probability(float prob);
 
                 /** Output velvet noise to the destination buffer in additive mode.
                  *

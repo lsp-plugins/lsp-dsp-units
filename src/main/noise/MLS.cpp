@@ -122,7 +122,10 @@ namespace lsp
             nFeedbackMask = mls_t(1) << nFeedbackBit;
 
             // Switch on all the first nBits bits.
-            nActiveMask = ~(~mls_t(0) << nBits);
+            if (nBits == nMaxBits)
+                nActiveMask = ~mls_t(0);
+            else
+                nActiveMask = ~(~mls_t(0) << nBits);
 
             nTapsMask = vTapsMaskTable[nBits - 1];
 
@@ -164,6 +167,9 @@ namespace lsp
 
         MLS::mls_t MLS::progress()
         {
+            // Calling update_settings here ensure it is called by all processing methods.
+            update_settings();
+
             mls_t nOutput = nState & nOutputMask;
 
             mls_t nFeedbackValue = xor_gate(nState & nTapsMask);
@@ -176,6 +182,7 @@ namespace lsp
 
         float MLS::process_single()
         {
+
             return progress() ? fAmplitude + fOffset : -fAmplitude + fOffset;
         }
 

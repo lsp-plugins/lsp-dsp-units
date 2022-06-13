@@ -26,10 +26,13 @@
 #include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/dsp/common/filters/transform.h>
 
-#define MAX_ORDER               100u
+#define MAX_ORDER               128u
 #define DFL_LOWER_FREQUENCY     0.1f
 #define DFL_UPPER_FREQUENCY     20.0e3f
 #define BUF_LIM_SIZE            256u
+
+#define DB_PER_OCTAVE_FALLOFF   0.16609640419483184814453125f
+#define DB_PER_DECADE_FALLOFF   0.05f
 
 namespace lsp
 {
@@ -43,6 +46,7 @@ namespace lsp
 
         SpectralTilt::~SpectralTilt()
         {
+            destroy();
         }
 
         void SpectralTilt::construct()
@@ -63,7 +67,84 @@ namespace lsp
 
             bSync           = true;
 
+            sFilter.construct();
             sFilter.init(MAX_ORDER);
+        }
+
+        void SpectralTilt::destroy()
+        {
+            sFilter.destroy();
+        }
+
+        void SpectralTilt::set_sample_rate(size_t sr)
+        {
+            if (nSampleRate == sr)
+                return;
+
+            nSampleRate = sr;
+            bSync       = true;
+        }
+
+        void SpectralTilt::set_upper_frequency(float upperFrequency)
+        {
+            if (upperFrequency == fUpperFrequency)
+                return;
+
+            fUpperFrequency = upperFrequency;
+            bSync           = true;
+        }
+
+        void SpectralTilt::set_lower_frequency(float lowerFrequency)
+        {
+            if (lowerFrequency == fLowerFrequency)
+                return;
+
+            fLowerFrequency = lowerFrequency;
+            bSync           = true;
+        }
+
+        void SpectralTilt::set_frequency_range(float lower, float upper)
+        {
+            if (upper > lower)
+                lsp::swap(upper, lower);
+
+            if ((lower == fLowerFrequency) && (upper == fUpperFrequency))
+                return;
+
+            fLowerFrequency = lower;
+            fUpperFrequency = upper;
+            bSync           = true;
+        }
+
+        void SpectralTilt::set_norm(stlt_norm_t norm)
+        {
+            if ((norm < STLT_NORM_AT_DC) || (norm >= STLT_NORM_MAX))
+                return;
+
+            enNorm = norm;
+            bSync = true;
+        }
+
+        void SpectralTilt::set_slope(float slope, stlt_slope_unit_t slopeType)
+        {
+            if ((slope == fSlopeVal) && (slopeType == enSlopeUnit))
+                return;
+
+            if ((slopeType < STLT_SLOPE_UNIT_NEPER_PER_NEPER) || (slopeType >= STLT_SLOPE_UNIT_MAX))
+                return;
+
+            fSlopeVal   = slope;
+            enSlopeUnit = slopeType;
+            bSync       = true;
+        }
+
+        void SpectralTilt::set_order(size_t order)
+        {
+            if (order == nOrder)
+                return;
+
+            nOrder  = order;
+            bSync   = true;
         }
 
         // Compute the coefficient for the bilinear transform warping equation.
@@ -95,36 +176,81 @@ namespace lsp
             spec.a0 = negPole;
             spec.a1 = 1.0f;
 
-            float g_a;
+            return spec;
+        }
+
+        float SpectralTilt::digital_biquad_gain(dsp::biquad_x1_t *digitalbq, float frequency)
+        {
+            // Using double and wrapped angles for maximal accuracy.
+            double w = 2 * M_PI * frequency / nSampleRate;
+            w = fmod(w + M_PI, 2.0 * M_PI);
+            w = (w >= 0.0) ? w - M_PI : w + M_PI;
+
+            double cw   = cos(w);
+            double sw   = sin(w);
+            double c2w  = cw*cw - sw*sw;    // cos(2.0 * w);
+            double s2w  = 2.0f * cw * sw;   // sin(2.0 * w);
+
+            double num_re = digitalbq->b0 + digitalbq->b1 * cw + digitalbq->b2 * c2w;
+            double num_im = -digitalbq->b1 * sw - digitalbq->b2 * s2w;
+
+            double den_re = 1.0 - digitalbq->a1 * cw - digitalbq->a2 * c2w;
+            double den_im = digitalbq->a1 * sw + digitalbq->a2 * s2w;
+            double den_sq_mag = den_re * den_re + den_im * den_im;
+
+            double gain_re = (num_re * den_re + num_im * den_im) / den_sq_mag;
+            double gain_im = (num_im * den_re - num_re * den_im) / den_sq_mag;
+
+            return sqrt(gain_re * gain_re + gain_im * gain_im);
+        }
+
+        void SpectralTilt::normalise_digital_biquad(dsp::biquad_x1_t *digitalbq)
+        {
+            // The gain to apply to the biquad is the reciprocal of the gain the biquad has at the specified frequency.
+            // In other words: make gain 1 at the specified frequency.
+            float gain;
             switch (enNorm)
             {
-                case STLT_NORM_NONE:
-                    g_a = 1.0f;
+                case STLT_NORM_AT_DC:
+                    gain = 1.0f / digital_biquad_gain(digitalbq, 0.0f);
+                    break;
+
+                case STLT_NORM_AT_20_HZ:
+                    gain = 1.0f / digital_biquad_gain(digitalbq, 20.0f);
+                    break;
+
+                case STLT_NORM_AT_1_KHZ:
+                    gain = 1.0f / digital_biquad_gain(digitalbq, 1000.0f);
+                    break;
+
+                case STLT_NORM_AT_20_KHZ:
+                    gain = 1.0f / digital_biquad_gain(digitalbq, 20000.0f);
                     break;
 
                 case STLT_NORM_AT_NYQUIST:
-                {
-                    // Just the reciprocal of the gain at Nyquist.
-                    float pi_fs_sq = M_PI * M_PI * nSampleRate * nSampleRate;
-                    float den = pi_fs_sq * spec.a1 * spec.a1 + spec.a0 * spec.a0;
-                    float re = (pi_fs_sq * spec.b1 * spec.a1 + spec.a0 * spec.b0) / den;
-                    float im = M_PI * nSampleRate * (spec.b1 * spec.a0 - spec.a1 * spec.b0) / den;
+                    gain = 1.0f / digital_biquad_gain(digitalbq, 0.5f * nSampleRate);
+                    break;
 
-                    g_a = 1.0f / sqrtf(re * re + im * im);
+                case STLT_NORM_AUTO:
+                {
+                    // Normalise at 20 Hz (if sample rate is big enough) when the slope is negative.
+                    // Normalise at 20 kHz (if the sample rate is big enough) when the slope is positive.
+                    if (fSlopeNepNep <= 0)
+                        gain = (0.5f * nSampleRate > 20.0f) ? 1.0f / digital_biquad_gain(digitalbq, 20.0f) : 1.0f / digital_biquad_gain(digitalbq, 0.0f);
+                    else
+                        gain = (0.5f * nSampleRate > 20000.0f) ? 1.0f / digital_biquad_gain(digitalbq, 20000.0f) : 1.0f / digital_biquad_gain(digitalbq, 0.5f * nSampleRate);
                 }
                 break;
 
                 default:
-                case STLT_NORM_AT_DC:
-                    // Just the reciprocal of the gain at DC.
-                    g_a = spec.a0 / spec.b0;
+                case STLT_NORM_NONE:
+                    gain = 1.0f;
                     break;
             }
 
-            spec.b0 *= g_a;
-            spec.b1 *= g_a;
-
-            return spec;
+            digitalbq->b0 *= gain;
+            digitalbq->b1 *= gain;
+            digitalbq->b2 *= gain;
         }
 
         void SpectralTilt::update_settings()
@@ -170,11 +296,11 @@ namespace lsp
                  */
 
                 case STLT_SLOPE_UNIT_DB_PER_OCTAVE:
-                    fSlopeNepNep = fSlopeVal * 0.16609640419483184814453125f;
+                    fSlopeNepNep = fSlopeVal * DB_PER_OCTAVE_FALLOFF;
                     break;
 
                 case STLT_SLOPE_UNIT_DB_PER_DECADE:
-                    fSlopeNepNep = fSlopeVal * 0.05f;
+                    fSlopeNepNep = fSlopeVal * DB_PER_DECADE_FALLOFF;
                     break;
 
                 default:
@@ -182,9 +308,6 @@ namespace lsp
                     fSlopeNepNep = fSlopeVal;
                     break;
             }
-
-            if (enNorm == STLT_NORM_AUTO)
-                enNorm = (fSlopeNepNep <= 0) ? STLT_NORM_AT_DC : STLT_NORM_AT_NYQUIST;
 
             if (fLowerFrequency >= 0.5f * nSampleRate)
                 fLowerFrequency = DFL_LOWER_FREQUENCY;
@@ -201,7 +324,7 @@ namespace lsp
             if ((enSlopeUnit == STLT_SLOPE_UNIT_NONE) || (fSlopeNepNep == 0.0f))
             {
                 bBypass = true;
-                bSync = true;
+                bSync = false;
                 return;
             }
             else
@@ -245,17 +368,19 @@ namespace lsp
                 analogbq.b[2] = spec_now.a1 * spec_nxt.a1;
 
                 dsp::bilinear_transform_x1(digitalbq, &analogbq, c_fn, 1);
-
                 // The denominator coefficients in digitalbq will have opposite sign with respect the maths.
                 // This is correct, as this is the LSP convention.
+                normalise_digital_biquad(digitalbq);
             }
             sFilter.end(true);
 
-            bSync = true;
+            bSync = false;
         }
 
         void SpectralTilt::process_add(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = dst[i] + 0 = dst[i]
@@ -286,6 +411,8 @@ namespace lsp
 
         void SpectralTilt::process_mul(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = dst[i] * 0 = 0
@@ -316,6 +443,8 @@ namespace lsp
 
         void SpectralTilt::process_overwrite(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
                 dsp::fill_zero(dst, count);
             else if (bBypass)

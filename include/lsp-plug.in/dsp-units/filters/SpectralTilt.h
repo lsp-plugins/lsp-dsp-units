@@ -55,6 +55,9 @@ namespace lsp
         enum stlt_norm_t
         {
             STLT_NORM_AT_DC,
+            STLT_NORM_AT_20_HZ,
+            STLT_NORM_AT_1_KHZ,
+            STLT_NORM_AT_20_KHZ,
             STLT_NORM_AT_NYQUIST,
             STLT_NORM_AUTO,
             STLT_NORM_NONE,
@@ -101,109 +104,59 @@ namespace lsp
                 ~SpectralTilt();
 
                 void construct();
+                void destroy();
 
             protected:
                 float               bilinear_coefficient(float angularFrequency, float samplerate);
                 bilinear_spec_t     compute_bilinear_element(float negZero, float negPole);
+                inline float        digital_biquad_gain(dsp::biquad_x1_t *digitalbq, float frequency);
+                void                normalise_digital_biquad(dsp::biquad_x1_t *digitalbq);
+                void                update_settings();
 
             public:
-                /** Check that SpectralTilt needs settings update.
-                 *
-                 * @return true if SpectralTilt needs settings update.
-                 */
-                inline bool needs_update() const
-                {
-                    return bSync;
-                }
-
-                /** This method should be called if needs_update() returns true.
-                 * before calling processing methods.
-                 *
-                 */
-                void update_settings();
-
                 /** Set the order of the Spectral Tilt filter.
                  *
                  * @param order order of the filter.
                  */
-                inline void set_order(size_t order)
-                {
-                    if (order == nOrder)
-                        return;
-
-                    nOrder  = order;
-                    bSync   = true;
-                }
+                void set_order(size_t order);
 
                 /** Set the slope of the Spectral Tilt filter.
                  *
                  * @param slope value.
                  * @param slopeType units of the slope value.
                  */
-                inline void set_slope(float slope, stlt_slope_unit_t slopeType)
-                {
-                    if ((slope == fSlopeVal) && (slopeType == enSlopeUnit))
-                        return;
-
-                    if ((slopeType < STLT_SLOPE_UNIT_NEPER_PER_NEPER) || (slopeType >= STLT_SLOPE_UNIT_MAX))
-                        return;
-
-                    fSlopeVal   = slope;
-                    enSlopeUnit = slopeType;
-                    bSync       = true;
-                }
+                void set_slope(float slope, stlt_slope_unit_t slopeType);
 
                 /** Set the normalisation policy of the Spectral Tilt filter.
                  *
                  * @param norm normalization policy.
                  */
-                inline void set_norm(stlt_norm_t norm)
-                {
-                    if ((norm < STLT_NORM_AT_DC) || (norm >= STLT_NORM_MAX))
-                        return;
-
-                    enNorm = norm;
-                    bSync = true;
-                }
+                void set_norm(stlt_norm_t norm);
 
                 /** Set the lower frequency of the coverage bandwidth.
                  *
                  * @param lowerFrequency lower frequency.
                  */
-                inline void set_lower_frequency(float lowerFrequency)
-                {
-                    if (lowerFrequency == fLowerFrequency)
-                        return;
-
-                    fLowerFrequency = lowerFrequency;
-                    bSync           = true;
-                }
+                void set_lower_frequency(float lowerFrequency);
 
                 /** Set the upper frequency of the coverage bandwidth.
                  *
-                 * @param upperFrequency lower frequency.
+                 * @param upperFrequency upper frequency.
                  */
-                inline void set_upper_frequency(float upperFrequency)
-                {
-                    if (upperFrequency == fUpperFrequency)
-                        return;
+                void set_upper_frequency(float upperFrequency);
 
-                    fUpperFrequency = upperFrequency;
-                    bSync           = true;
-                }
+                /**
+                 * Set up both the upper and lower frequencies of the coverage bandwidth.
+                 * @param lower lower frequency.
+                 * @param upper upper frequency.
+                 */
+                void set_frequency_range(float lower, float upper);
 
                 /** Set sample rate for the Spectral Tilt filter.
                  *
                  * @param sr sample rate.
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (nSampleRate == sr)
-                        return;
-
-                    nSampleRate = sr;
-                    bSync       = true;
-                }
+                void set_sample_rate(size_t sr);
 
                 /** Output sequence to the destination buffer in additive mode
                  *

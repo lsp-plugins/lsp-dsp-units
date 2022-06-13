@@ -25,9 +25,10 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define MIN_WINDOW_WIDTH    1.0f
-#define DFL_WINDOW_WIDTH    10.0f
-#define BUF_LIM_SIZE        256u
+// These widths are in samples
+#define MIN_WINDOW_WIDTH        2.0f
+#define DFL_WINDOW_WIDTH        10.0f
+#define BUF_LIM_SIZE            256u
 
 namespace lsp
 {
@@ -37,6 +38,11 @@ namespace lsp
         Velvet::Velvet()
         {
             construct();
+        }
+
+        Velvet::~Velvet()
+        {
+            destroy();
         }
 
         void Velvet::construct()
@@ -51,10 +57,59 @@ namespace lsp
             fARNdelta                   = 0.5f;
             fAmplitude                  = 1.0f;
             fOffset                     = 0.0f;
+
+            sRandomizer.construct();
         }
 
-        Velvet::~Velvet()
+        void Velvet::destroy()
         {
+            sRandomizer.destroy();
+        }
+
+        void Velvet::set_core_type(vn_core_t core)
+        {
+            if ((core < VN_CORE_MLS) || (core >= VN_CORE_MAX))
+                return;
+
+            enCore = core;
+        }
+
+        void Velvet::set_velvet_type(vn_velvet_type_t type)
+        {
+            if ((type < VN_VELVET_OVN) || (type >= VN_VELVET_MAX))
+                return;
+
+            enVelvetType = type;
+        }
+
+        void Velvet::set_velvet_window_width(float width)
+        {
+            fWindowWidth = lsp_max(width, MIN_WINDOW_WIDTH);
+        }
+
+        void Velvet::set_delta_value(float delta)
+        {
+            fARNdelta       = lsp_limit(delta, 0.0f, 1.0f);
+        }
+
+        void Velvet::set_amplitude(float amplitude)
+        {
+            fAmplitude      = amplitude;
+        }
+
+        void Velvet::set_offset(float offset)
+        {
+            fOffset         = offset;
+        }
+
+        void Velvet::set_crush(bool crush)
+        {
+            sCrushParams.bCrush = crush;
+        }
+
+        void Velvet::set_crush_probability(float prob)
+        {
+            sCrushParams.fCrushProb = lsp_limit(prob, 0.0f, 1.0f);
         }
 
         void Velvet::init(uint32_t randseed, uint8_t mlsnbits, MLS::mls_t mlsseed)
@@ -67,7 +122,6 @@ namespace lsp
 
             sMLS.set_n_bits(mlsnbits);
             sMLS.set_state(mlsseed);
-            sMLS.update_settings();
         }
 
         void Velvet::init()
@@ -77,9 +131,6 @@ namespace lsp
             // Ensure that the MLS sequence has unit amplitude and 0 DC bias.
             sMLS.set_amplitude(1.0f);
             sMLS.set_offset(0.0f);
-
-            // Simply use defaults in the class.
-            sMLS.update_settings();
         }
 
         float Velvet::get_random_value()
@@ -117,9 +168,11 @@ namespace lsp
                     size_t scan = 0;
 
                     float k = fWindowWidth - 1.0f;
-                    while (idx < count)
+                    while (true)
                     {
                         idx = scan * fWindowWidth + get_random_value() * k;
+                        if (idx >= count)
+                            break;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -138,9 +191,11 @@ namespace lsp
                     size_t idx = 0;
                     size_t scan = 0;
 
-                    while (idx < count)
+                    while (true)
                     {
                         idx = scan * fWindowWidth + get_random_value() * fWindowWidth;
+                        if (idx >= count)
+                            break;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -160,9 +215,11 @@ namespace lsp
 
                     float k = 2.0f * fARNdelta * (fWindowWidth - 1.0f);
                     float b = (1.0f - fARNdelta) * (fWindowWidth - 1.0f);
-                    while (idx < count)
+                    while (true)
                     {
                         idx += 1.0f + b + k * get_random_value();
+                        if (idx >= count)
+                            break;
 
                         if (sCrushParams.bCrush)
                             dst[idx] = get_crushed_spike();
@@ -188,7 +245,6 @@ namespace lsp
                         while (idx < count)
                         {
                             float multiplier = 1.0f;
-
                             if (get_random_value() > sCrushParams.fCrushProb)
                                 multiplier = -1.0f;
 
