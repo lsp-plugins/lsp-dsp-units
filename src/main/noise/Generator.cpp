@@ -241,7 +241,7 @@ namespace lsp
                 return;
 
             fAmplitude  = amplitude;
-            nUpdate     = UPD_OTHER;
+            nUpdate     |= UPD_OTHER;
         }
 
         void NoiseGenerator::set_offset(float offset)
@@ -250,7 +250,7 @@ namespace lsp
                 return;
 
             fOffset     = offset;
-            nUpdate     = UPD_OTHER;
+            nUpdate     |= UPD_OTHER;
         }
 
         void NoiseGenerator::update_settings()
@@ -274,7 +274,6 @@ namespace lsp
             {
                 sLCG.set_distribution(sLCGParams.enDistribution);
             }
-            // sLCG has no update_settings method.
 
             // Velvet
             sVelvetNoise.set_amplitude(fAmplitude);
@@ -287,7 +286,6 @@ namespace lsp
                 sVelvetNoise.set_delta_value(sVelvetParams.fARNdelta);
                 sVelvetNoise.set_crush(sVelvetParams.bCrush);
                 sVelvetNoise.set_crush_probability(sVelvetParams.fCrushProb);
-            // sVelvetNoise has no update_settings method.
             }
 
             // Color
