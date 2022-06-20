@@ -68,7 +68,6 @@ UTEST_BEGIN("dspu.noise", MLS)
         {
             mls.set_n_bits(nBits);
             mls.set_state(nState);
-            mls.update_settings();
             dspu::MLS::mls_t nPeriod = mls.get_period();
 
             for (size_t n = 0; n < nPeriod; ++n)

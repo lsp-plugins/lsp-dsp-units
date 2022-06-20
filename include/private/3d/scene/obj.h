@@ -34,7 +34,7 @@ namespace lsp
     namespace dspu
     {
         /**
-         * Handler of the Wavefont OBJ file format
+         * Handler of the Wavefront OBJ file format
          */
         class ObjSceneHandler: public obj::IObjHandler
         {

@@ -65,11 +65,17 @@ namespace lsp
 
             public:
                 explicit Randomizer();
+                ~Randomizer();
 
                 /**
-                 * Cunstruct the randomizer
+                 * Construct the randomizer
                  */
                 void construct();
+
+                /**
+                 * Destroy the randomizer
+                 */
+                void destroy();
 
                 /** Initialize random generator
                  *

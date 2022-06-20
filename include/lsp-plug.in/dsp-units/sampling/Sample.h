@@ -176,6 +176,13 @@ namespace lsp
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
 
+                /** Resize sample to match the specified number of audio channels,
+                 * all previously allocated data will be kept
+                 *
+                 * @param channels number of channels
+                 */
+                bool set_channels(size_t channels);
+
                 /** Resample sample
                  *
                  * @param new_sample_rate new sample rate
