@@ -3,12 +3,12 @@
 *******************************************************************************
 
 === 1.0.2 ===
-- Fixed typo in Wavefront Object File Format name.
-- Added dspu::semitones_to_frequency_shift function that allows to compute relative
+* Fixed typo in Wavefront Object File Format name.
+* Added dspu::semitones_to_frequency_shift function that allows to compute relative
   frequency multiplier for relative musical pitch shift.
-- Added set_channels() method to the Sample class for easy resizing purpose.
-- Fixed uninitialized variable usage in the dspu::Crossover module.
-- Many bugfixes and updates related to colored noise generation.
+* Added set_channels() method to the Sample class for easy resizing purpose.
+* Fixed uninitialized variable usage in the dspu::Crossover module.
+* Many bugfixes and updates related to colored noise generation.
 * Updated build scripts.
 
 === 1.0.1 ===
