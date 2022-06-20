@@ -1179,16 +1179,12 @@ $(LSP_DSP_UNITS_BIN)/main/noise/LCG.o: main/noise/LCG.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h
 $(LSP_DSP_UNITS_BIN)/main/noise/Generator.o: main/noise/Generator.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/Generator.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/MLS.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/SpectralTilt.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/LCG.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Randomizer.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/Velvet.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/SpectralTilt.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/FilterBank.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/filters/common.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
@@ -1234,6 +1230,10 @@ $(LSP_DSP_UNITS_BIN)/main/noise/Generator.o: main/noise/Generator.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/smath.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/interpolation/linear.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/LCG.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/util/Randomizer.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/MLS.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/noise/Velvet.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
