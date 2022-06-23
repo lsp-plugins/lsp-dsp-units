@@ -4,6 +4,7 @@
 
 === 1.0.3 ===
 * Fixed memory leak in dspu::LatencyDetector module.
+* Fixed operation on uninitialized values for dspu::Depopper module.
 * Updated build scripts.
 
 === 1.0.2 ===
