@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.3 ===
+* Fixed memory leak in dspu::LatencyDetector module.
 * Updated build scripts.
 
 === 1.0.2 ===
