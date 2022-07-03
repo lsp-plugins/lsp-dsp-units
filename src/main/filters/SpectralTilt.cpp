@@ -34,6 +34,8 @@
 #define DB_PER_OCTAVE_FALLOFF   0.16609640419483184814453125f
 #define DB_PER_DECADE_FALLOFF   0.05f
 
+#define STACK_BUF_SIZE_RE_IM      0x100U
+
 namespace lsp
 {
     namespace dspu
@@ -69,6 +71,7 @@ namespace lsp
 
             sFilter.construct();
             sFilter.init(MAX_ORDER);
+            nFilters        = 0;
         }
 
         void SpectralTilt::destroy()
@@ -339,8 +342,9 @@ namespace lsp
             float negZero = l_angf * powf(r, -fSlopeNepNep);
             float negPole = l_angf;
 
-            // We have nOrder bilinears. We combine them 2 by 2 to get biquads.
-
+            // We have nOrder bilinears. We combine them 2 by 2 to get nOrder / 2 biquads.
+            // We will store the number of biquads (filters) in nFilters. nFilters == nOrder / 2, but we accumulate it to be sure.
+            nFilters = 0;
             sFilter.begin();
             for (size_t n = 0; n < nOrder; ++n)
             {
@@ -371,6 +375,8 @@ namespace lsp
                 // The denominator coefficients in digitalbq will have opposite sign with respect the maths.
                 // This is correct, as this is the LSP convention.
                 normalise_digital_biquad(digitalbq);
+
+                ++nFilters;
             }
             sFilter.end(true);
 
@@ -453,6 +459,92 @@ namespace lsp
                 sFilter.process(dst, src, count);
         }
 
+        bool SpectralTilt::freq_chart(size_t id, float *re, float *im, const float *f, size_t count)
+        {
+            if (id >= nFilters)
+                return false;
+
+            // Temporary buffer to store updated frequency
+            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+
+                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
+                if (!sFilter.freq_chart(id, re, im, freqs, to_do))
+                    return false;
+
+                f       += to_do;
+                re      += to_do;
+                im      += to_do;
+                count   -= to_do;
+            }
+
+            return true;
+        }
+
+        bool SpectralTilt::freq_chart(size_t id, float *c, const float *f, size_t count)
+        {
+            if (id >= nFilters)
+                return false;
+
+            // Temporary buffer to store updated frequency
+            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+
+                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
+                if (!sFilter.freq_chart(id, c, freqs, to_do))
+                    return false;
+
+                f       += to_do;
+                c       += to_do*2;
+                count   -= to_do;
+            }
+
+            return true;
+        }
+
+        void SpectralTilt::freq_chart(float *re, float *im, const float *f, size_t count)
+        {
+            // Temporary buffer to store updated frequency
+            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+
+                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
+                sFilter.freq_chart(re, im, freqs, to_do);
+
+                f       += to_do;
+                re      += to_do;
+                im      += to_do;
+                count   -= to_do;
+            }
+        }
+
+        void SpectralTilt::freq_chart(float *c, const float *f, size_t count)
+        {
+            // Temporary buffer to store updated frequency
+            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+
+                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
+                sFilter.freq_chart(c, freqs, to_do);
+
+                f       += to_do;
+                c       += to_do*2;
+                count   -= to_do;
+            }
+        }
+
         void SpectralTilt::dump(IStateDumper *v) const
         {
             v->write("nOrder", nOrder);
@@ -468,6 +560,7 @@ namespace lsp
             v->write("nSampleRate", nSampleRate);
 
             v->write_object("sFilter", &sFilter);
+            v->write("nFilters", nFilters);
 
             v->write("bBypass", bBypass);
             v->write("bSync", bSync);

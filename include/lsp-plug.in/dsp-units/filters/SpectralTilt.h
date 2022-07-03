@@ -98,6 +98,7 @@ namespace lsp
                 bool                bSync;
 
                 dspu::FilterBank    sFilter;
+                size_t              nFilters;
 
             public:
                 explicit SpectralTilt();
@@ -181,6 +182,44 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, const float *src, size_t count);
+
+                /** Get frequency chart of the specific filter
+                 *
+                 * @param id ID of the filter
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 * @return status of operation
+                 */
+                bool freq_chart(size_t id, float *re, float *im, const float *f, size_t count);
+
+                /** Get frequency chart of the specific filter
+                 *
+                 * @param id ID of the filter
+                 * @param c complex numbers that contain the filter transfer function
+                 * @param f frequencies to calculate filter transfer function
+                 * @param count number of points
+                 * @return status of operation
+                 */
+                bool freq_chart(size_t id, float *c, const float *f, size_t count);
+
+                /**
+                 * Get frequency chart of the whole filter
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 */
+                void freq_chart(float *re, float *im, const float *f, size_t count);
+
+                /**
+                 * Get frequency chart of the whole filter
+                 * @param c complex numbers that contain the filter transfer function
+                 * @param f frequencies to calculate filter transfer function
+                 * @param count number of points
+                 */
+                void freq_chart(float *c, const float *f, size_t count);
 
                 /**
                  * Dump the state

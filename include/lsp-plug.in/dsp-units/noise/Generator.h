@@ -268,6 +268,23 @@ namespace lsp
                 void process_overwrite(float *dst, size_t count);
 
                 /**
+                 * Get frequency chart of the colouring filter
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 */
+                void color_freq_chart(float *re, float *im, const float *f, size_t count);
+
+                /**
+                 * Get frequency chart of the whole equalizer
+                 * @param c complex numbers that contain the filter transfer function
+                 * @param f frequencies to calculate filter transfer function
+                 * @param count number of points
+                 */
+                void color_freq_chart(float *c, const float *f, size_t count);
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */

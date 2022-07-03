@@ -21,6 +21,10 @@
 
 #include <lsp-plug.in/dsp-units/filters/FilterBank.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/stdlib/math.h>
+
+#define STACK_BUF_SIZE_RE_IM      0x80U
+#define STACK_BUF_SIZE_C          (2U * STACK_BUF_SIZE_RE_IM)
 
 namespace lsp
 {
@@ -320,6 +324,120 @@ namespace lsp
                 dsp::copy(f->d, dst, LSP_DSP_BIQUAD_D_ITEMS);
                 dst                += LSP_DSP_BIQUAD_D_ITEMS;
                 f                  ++;
+            }
+        }
+
+        void FilterBank::digital_biquad_frequency_response(dsp::biquad_x1_t *bq, double omega, float *re, float* im)
+        {
+            // Wrapping the normalised frequency omega for maximal cos and sin accuracy.
+            // Also using doubles for maximal accuracy.
+            omega = fmod(omega + M_PI, 2.0 * M_PI);
+            omega = omega >= 0.0 ? (omega - M_PI) : (omega + M_PI);
+
+            double c_omega      = cos(omega);
+            double s_omega      = sin(omega);
+            double c_2_omega    = cos(2.0 * omega);
+            double s_2_omega    = sin(2.0 * omega);
+
+            double num_re = bq->b0 + bq->b1 * c_omega + bq->b2 * c_2_omega;
+            double num_im = -bq->b1 * s_omega - bq->b2 * s_2_omega;
+
+            // Denominator coefficients have opposite sign in LSP with respect maths conventions.
+            double den_re = 1.0 - bq->a1 * c_omega - bq->a2 * c_2_omega;
+            double den_im = bq->a1 * s_omega + bq->a2 * s_2_omega;
+
+            double den_sq_mag = den_re * den_re + den_im * den_im;
+
+            *re = (num_re * den_re + num_im * den_im) / den_sq_mag;
+            *im = (den_re * num_im - num_re * den_im) / den_sq_mag;
+        }
+
+        bool FilterBank::freq_chart(size_t id, float *re, float *im, const float *f, size_t count)
+        {
+            if (id >= nItems)
+                return false;
+
+            for (size_t n = 0; n < count; ++n)
+                digital_biquad_frequency_response(&vChains[id], f[n], &re[n], &im[n]);
+
+            return true;
+        }
+
+        bool FilterBank::freq_chart(size_t id, float *c, const float *f, size_t count)
+        {
+            if (id >= nItems)
+                return false;
+
+            size_t c_idx = 0;
+            for (size_t n = 0; n < count; ++n)
+            {
+                digital_biquad_frequency_response(&vChains[id], f[n], &c[c_idx], &c[c_idx + 1]);
+                c_idx += 2;
+            }
+
+            return true;
+        }
+
+        void FilterBank::freq_chart(float *re, float *im, const float *f, size_t count)
+        {
+            float temp_re[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+            float temp_im[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+
+            freq_chart(0, re, im, f, count);
+
+            while (count > 0)
+            {
+                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+
+                for (size_t id = 1; id < nItems; ++id)
+                {
+                    freq_chart(id, temp_re, temp_im, f, to_do);
+
+                    for (size_t n = 0; n < to_do; ++n)
+                    {
+                        re[n] = re[n] * temp_re[n] - im[n] * temp_im[n];
+                        im[n] = re[n] * temp_im[n] + im[n] * temp_re[n];
+                    }
+                }
+
+                re      += to_do;
+                im      += to_do;
+                f       += to_do;
+                count   -= to_do;
+            }
+        }
+
+        void FilterBank::freq_chart(float *c, const float *f, size_t count)
+        {
+            float temp_c[STACK_BUF_SIZE_C] __lsp_aligned32;
+
+            size_t id = 0;
+            freq_chart(id, c, f, count);
+
+            while (count > 0)
+            {
+                // temp_c will be filled up to 2*to_do, that is why we use STACK_BUF_SIZE_RE_IM == STACK_BUF_SIZE_C / 2
+                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+
+                for (size_t id = 1; id < nItems; ++id)
+                {
+                    freq_chart(id, temp_c, f, to_do);
+
+                    size_t c_idx = 0;
+                    for (size_t n = 0; n < 2*to_do; ++n)
+                    {
+                        if (n % 2 != 0)
+                            continue;
+
+                        c[n] = c[n] * temp_c[c_idx] - c[n + 1] * temp_c[c_idx + 1];
+                        c[n + 1] = c[n] * temp_c[c_idx + 1] + temp_c[c_idx] * c[n + 1];
+                        c_idx += 2;
+                    }
+                }
+
+                c       += to_do*2;
+                f       += to_do;
+                count   -= to_do;
             }
         }
 
