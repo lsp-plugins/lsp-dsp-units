@@ -48,7 +48,6 @@ namespace lsp
 
             protected:
                 void                clear_delays();
-                void                digital_biquad_frequency_response(dsp::biquad_x1_t *bq, double omega, float *re, float* im);  // Frequency response of digital biquad at normalised frequency omega
 
             public:
                 explicit FilterBank();
@@ -87,6 +86,13 @@ namespace lsp
                  */
                 dsp::biquad_x1_t   *add_chain();
 
+                /** Get one of the current cascades
+                 *
+                 * @param id id number of the cascade
+                 * @return cascade
+                 */
+                dsp::biquad_x1_t   *get_chain(size_t id);
+
                 /** Optimize structure of filter bank
                  * @param clear force to clear delays
                  */
@@ -106,44 +112,6 @@ namespace lsp
                  * @param samples length of buffer in samples
                  */
                 void                impulse_response(float *out, size_t samples);
-
-                /** Get frequency chart of the specific filter
-                 *
-                 * @param id ID of the filter
-                 * @param re real part of the frequency chart
-                 * @param im imaginary part of the frequency chart
-                 * @param f normalised frequencies to calculate value
-                 * @param count number of dots for the chart
-                 * @return status of operation
-                 */
-                bool                freq_chart(size_t id, float *re, float *im, const float *f, size_t count);
-
-                /** Get frequency chart of the specific filter
-                 *
-                 * @param id ID of the filter
-                 * @param c complex numbers that contain the filter transfer function
-                 * @param f normalised frequencies to calculate filter transfer function
-                 * @param count number of points
-                 * @return status of operation
-                 */
-                bool                freq_chart(size_t id, float *c, const float *f, size_t count);
-
-                /**
-                 * Get frequency chart of the whole equalizer
-                 * @param re real part of the frequency chart
-                 * @param im imaginary part of the frequency chart
-                 * @param f normalised frequencies to calculate value
-                 * @param count number of dots for the chart
-                 */
-                void                freq_chart(float *re, float *im, const float *f, size_t count);
-
-                /**
-                 * Get frequency chart of the whole equalizer
-                 * @param c complex numbers that contain the filter transfer function
-                 * @param f normalised frequencies to calculate filter transfer function
-                 * @param count number of points
-                 */
-                void                freq_chart(float *c, const float *f, size_t count);
 
                 /** Get number of biquad filters
                  *

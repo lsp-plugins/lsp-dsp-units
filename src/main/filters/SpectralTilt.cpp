@@ -34,8 +34,6 @@
 #define DB_PER_OCTAVE_FALLOFF   0.16609640419483184814453125f
 #define DB_PER_DECADE_FALLOFF   0.05f
 
-#define STACK_BUF_SIZE_RE_IM      0x100U
-
 namespace lsp
 {
     namespace dspu
@@ -71,7 +69,6 @@ namespace lsp
 
             sFilter.construct();
             sFilter.init(MAX_ORDER);
-            nFilters        = 0;
         }
 
         void SpectralTilt::destroy()
@@ -343,8 +340,6 @@ namespace lsp
             float negPole = l_angf;
 
             // We have nOrder bilinears. We combine them 2 by 2 to get nOrder / 2 biquads.
-            // We will store the number of biquads (filters) in nFilters. nFilters == nOrder / 2, but we accumulate it to be sure.
-            nFilters = 0;
             sFilter.begin();
             for (size_t n = 0; n < nOrder; ++n)
             {
@@ -375,8 +370,6 @@ namespace lsp
                 // The denominator coefficients in digitalbq will have opposite sign with respect the maths.
                 // This is correct, as this is the LSP convention.
                 normalise_digital_biquad(digitalbq);
-
-                ++nFilters;
             }
             sFilter.end(true);
 
@@ -459,89 +452,71 @@ namespace lsp
                 sFilter.process(dst, src, count);
         }
 
-        bool SpectralTilt::freq_chart(size_t id, float *re, float *im, const float *f, size_t count)
+        void SpectralTilt::complex_transfer_calc(float *re, float *im, float f)
         {
-            if (id >= nFilters)
-                return false;
+            // Calculating normalized frequency, wrapped for maximal accuracy:
+            float kf    = f / float(nSampleRate);
+            float w     = 2.0f * M_PI * kf;
+            w           = fmodf(w + M_PI, 2.0 * M_PI);
+            w           = w >= 0.0f ? (w - M_PI) : (w + M_PI);
 
-            // Temporary buffer to store updated frequency
-            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
+            // Auxiliary variables:
+            float cw    = cosf(w);
+            float sw    = sinf(w);
 
-            while (count > 0)
+            // These equations are valid since sw has valid sign
+            float c2w   = cw * cw - sw * sw;    // cos(2 * w)
+            float s2w   = 2.0 * sw * cw;        // sin(2 * w)
+
+            float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
+            float b_re, b_im;                   // Temporary values for computing complex multiplication
+
+            for (size_t i=0; i<sFilter.size(); ++i)
             {
-                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
+                dsp::biquad_x1_t *bq = sFilter.get_chain(i);
+                if (!bq)
+                    continue;
 
-                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
-                if (!sFilter.freq_chart(id, re, im, freqs, to_do))
-                    return false;
+                float num_re = bq->b0 + bq->b1 * cw + bq->b2 * c2w;
+                float num_im = -bq->b1 * sw - bq->b2 * s2w;
 
-                f       += to_do;
-                re      += to_do;
-                im      += to_do;
-                count   -= to_do;
+                // Denominator coefficients have opposite sign in LSP with respect maths conventions.
+                float den_re = 1.0 - bq->a1 * cw - bq->a2 * c2w;
+                float den_im = bq->a1 * sw + bq->a2 * s2w;
+
+                float den_sq_mag = den_re * den_re + den_im * den_im;
+
+                // Compute current biquad's frequency response
+                float w_re = (num_re * den_re + num_im * den_im) / den_sq_mag;
+                float w_im = (den_re * num_im - num_re * den_im) / den_sq_mag;
+
+                // Compute common transfer function as a product between current biquad's
+                // transfer function and previous value
+                b_re            = r_re*w_re - r_im*w_im;
+                b_im            = r_re*w_im + r_im*w_re;
+
+                // Commit changes to the result complex number
+                r_re            = b_re;
+                r_im            = b_im;
             }
 
-            return true;
-        }
-
-        bool SpectralTilt::freq_chart(size_t id, float *c, const float *f, size_t count)
-        {
-            if (id >= nFilters)
-                return false;
-
-            // Temporary buffer to store updated frequency
-            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
-
-            while (count > 0)
-            {
-                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
-
-                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
-                if (!sFilter.freq_chart(id, c, freqs, to_do))
-                    return false;
-
-                f       += to_do;
-                c       += to_do*2;
-                count   -= to_do;
-            }
-
-            return true;
+            *re     = r_re;
+            *im     = r_im;
         }
 
         void SpectralTilt::freq_chart(float *re, float *im, const float *f, size_t count)
         {
-            // Temporary buffer to store updated frequency
-            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
-
-            while (count > 0)
-            {
-                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
-
-                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
-                sFilter.freq_chart(re, im, freqs, to_do);
-
-                f       += to_do;
-                re      += to_do;
-                im      += to_do;
-                count   -= to_do;
-            }
+            for (size_t i = 0; i<count; ++i)
+                complex_transfer_calc(&re[i], &im[i], f[i]);
         }
 
         void SpectralTilt::freq_chart(float *c, const float *f, size_t count)
         {
-            // Temporary buffer to store updated frequency
-            float freqs[STACK_BUF_SIZE_RE_IM] __lsp_aligned32;
-
-            while (count > 0)
+            size_t c_idx = 0;
+            for (size_t i = 0; i<count; ++i)
             {
-                size_t to_do = lsp_min(count, STACK_BUF_SIZE_RE_IM);
-
-                dsp::mul_k3(freqs, f, 2.0f * M_PI / nSampleRate, to_do);
-                sFilter.freq_chart(c, freqs, to_do);
-
-                f       += to_do;
-                c       += to_do*2;
-                count   -= to_do;
+                complex_transfer_calc(&c[c_idx], &c[c_idx + 1], f[i]);
+                c_idx += 2;
             }
         }
 
@@ -560,7 +535,6 @@ namespace lsp
             v->write("nSampleRate", nSampleRate);
 
             v->write_object("sFilter", &sFilter);
-            v->write("nFilters", nFilters);
 
             v->write("bBypass", bBypass);
             v->write("bSync", bSync);
