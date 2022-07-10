@@ -339,8 +339,7 @@ namespace lsp
             float negZero = l_angf * powf(r, -fSlopeNepNep);
             float negPole = l_angf;
 
-            // We have nOrder bilinears. We combine them 2 by 2 to get biquads.
-
+            // We have nOrder bilinears. We combine them 2 by 2 to get nOrder / 2 biquads.
             sFilter.begin();
             for (size_t n = 0; n < nOrder; ++n)
             {
@@ -451,6 +450,74 @@ namespace lsp
                 dsp::copy(dst, src, count);
             else
                 sFilter.process(dst, src, count);
+        }
+
+        void SpectralTilt::complex_transfer_calc(float *re, float *im, float f)
+        {
+            // Calculating normalized frequency, wrapped for maximal accuracy:
+            float kf    = f / float(nSampleRate);
+            float w     = 2.0f * M_PI * kf;
+            w           = fmodf(w + M_PI, 2.0 * M_PI);
+            w           = w >= 0.0f ? (w - M_PI) : (w + M_PI);
+
+            // Auxiliary variables:
+            float cw    = cosf(w);
+            float sw    = sinf(w);
+
+            // These equations are valid since sw has valid sign
+            float c2w   = cw * cw - sw * sw;    // cos(2 * w)
+            float s2w   = 2.0 * sw * cw;        // sin(2 * w)
+
+            float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
+            float b_re, b_im;                   // Temporary values for computing complex multiplication
+
+            for (size_t i=0, count=sFilter.size(); i<count; ++i)
+            {
+                dsp::biquad_x1_t *bq = sFilter.chain(i);
+                if (!bq)
+                    continue;
+
+                float num_re = bq->b0 + bq->b1 * cw + bq->b2 * c2w;
+                float num_im = -bq->b1 * sw - bq->b2 * s2w;
+
+                // Denominator coefficients have opposite sign in LSP with respect maths conventions.
+                float den_re = 1.0 - bq->a1 * cw - bq->a2 * c2w;
+                float den_im = bq->a1 * sw + bq->a2 * s2w;
+
+                float den_sq_mag = den_re * den_re + den_im * den_im;
+
+                // Compute current biquad's frequency response
+                float w_re = (num_re * den_re + num_im * den_im) / den_sq_mag;
+                float w_im = (den_re * num_im - num_re * den_im) / den_sq_mag;
+
+                // Compute common transfer function as a product between current biquad's
+                // transfer function and previous value
+                b_re            = r_re*w_re - r_im*w_im;
+                b_im            = r_re*w_im + r_im*w_re;
+
+                // Commit changes to the result complex number
+                r_re            = b_re;
+                r_im            = b_im;
+            }
+
+            *re     = r_re;
+            *im     = r_im;
+        }
+
+        void SpectralTilt::freq_chart(float *re, float *im, const float *f, size_t count)
+        {
+            for (size_t i = 0; i<count; ++i)
+                complex_transfer_calc(&re[i], &im[i], f[i]);
+        }
+
+        void SpectralTilt::freq_chart(float *c, const float *f, size_t count)
+        {
+            size_t c_idx = 0;
+            for (size_t i = 0; i<count; ++i)
+            {
+                complex_transfer_calc(&c[c_idx], &c[c_idx + 1], f[i]);
+                c_idx += 2;
+            }
         }
 
         void SpectralTilt::dump(IStateDumper *v) const

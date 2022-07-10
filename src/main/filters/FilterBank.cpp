@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/dsp-units/filters/FilterBank.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
@@ -95,6 +96,11 @@ namespace lsp
             if (nItems >= nMaxItems)
                 return (nItems <= 0) ? NULL : &vChains[nItems-1];
             return &vChains[nItems++];
+        }
+
+        dsp::biquad_x1_t *FilterBank::chain(size_t id)
+        {
+            return (id < nItems) ? &vChains[id] : NULL;
         }
 
         void FilterBank::end(bool clear)
