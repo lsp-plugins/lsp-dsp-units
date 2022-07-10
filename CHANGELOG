@@ -5,6 +5,8 @@
 === 1.0.3 ===
 * Fixed memory leak in dspu::LatencyDetector module.
 * Fixed operation on uninitialized values for dspu::Depopper module.
+* Added support of modern C++ 11 standard and above.
+* Updated dependencies.
 * Updated build scripts.
 
 === 1.0.2 ===
