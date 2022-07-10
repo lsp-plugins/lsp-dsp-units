@@ -98,12 +98,9 @@ namespace lsp
             return &vChains[nItems++];
         }
 
-        dsp::biquad_x1_t *FilterBank::get_chain(size_t id)
+        dsp::biquad_x1_t *FilterBank::chain(size_t id)
         {
-            if (id >= nItems)
-                return NULL;
-
-            return &vChains[id];
+            return (id < nItems) ? &vChains[id] : NULL;
         }
 
         void FilterBank::end(bool clear)

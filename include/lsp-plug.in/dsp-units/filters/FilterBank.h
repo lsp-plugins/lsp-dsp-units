@@ -91,7 +91,7 @@ namespace lsp
                  * @param id id number of the cascade
                  * @return cascade
                  */
-                dsp::biquad_x1_t   *get_chain(size_t id);
+                dsp::biquad_x1_t   *chain(size_t id);
 
                 /** Optimize structure of filter bank
                  * @param clear force to clear delays

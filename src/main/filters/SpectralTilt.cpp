@@ -471,9 +471,9 @@ namespace lsp
             float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
             float b_re, b_im;                   // Temporary values for computing complex multiplication
 
-            for (size_t i=0; i<sFilter.size(); ++i)
+            for (size_t i=0, count=sFilter.size(); i<count; ++i)
             {
-                dsp::biquad_x1_t *bq = sFilter.get_chain(i);
+                dsp::biquad_x1_t *bq = sFilter.chain(i);
                 if (!bq)
                     continue;
 

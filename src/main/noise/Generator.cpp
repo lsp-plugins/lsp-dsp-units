@@ -434,12 +434,12 @@ namespace lsp
             do_process(dst, count);
         }
 
-        void NoiseGenerator::color_freq_chart(float *re, float *im, const float *f, size_t count)
+        void NoiseGenerator::freq_chart(float *re, float *im, const float *f, size_t count)
         {
             sColorFilter.freq_chart(re, im, f, count);
         }
 
-        void NoiseGenerator::color_freq_chart(float *c, const float *f, size_t count)
+        void NoiseGenerator::freq_chart(float *c, const float *f, size_t count)
         {
             sColorFilter.freq_chart(c, f, count);
         }
