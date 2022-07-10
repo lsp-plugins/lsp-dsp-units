@@ -2,12 +2,21 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.3 ===
+* Fixed memory leak in dspu::LatencyDetector module.
+* Fixed operation on uninitialized values for dspu::Depopper module.
+* Added support of modern C++ 11 standard and above.
+* Updated dependencies.
+* Updated build scripts.
+
 === 1.0.2 ===
-- Fixed typo in Wavefront Object File Format name.
-- Added dspu::semitones_to_frequency_shift function that allows to compute relative
+* Fixed typo in Wavefront Object File Format name.
+* Added dspu::semitones_to_frequency_shift function that allows to compute relative
   frequency multiplier for relative musical pitch shift.
-- Added set_channels() method to the Sample class for easy resizing purpose.
-- Fixed uninitialized variable usage in the dspu::Crossover module.
+* Added set_channels() method to the Sample class for easy resizing purpose.
+* Fixed uninitialized variable usage in the dspu::Crossover module.
+* Many bugfixes and updates related to colored noise generation.
+* Updated build scripts.
 
 === 1.0.1 ===
 * Fixed bugs in construct()/destroy() method pairs for several DSP modules.

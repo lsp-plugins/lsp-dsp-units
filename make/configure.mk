@@ -46,11 +46,11 @@ else
   X_URL_SUFFIX                = _RO
 endif
 
+include $(BASEDIR)/modules.mk
+include $(BASEDIR)/project.mk
 include $(BASEDIR)/make/functions.mk
 include $(BASEDIR)/make/system.mk
 include $(BASEDIR)/make/tools.mk
-include $(BASEDIR)/modules.mk
-include $(BASEDIR)/project.mk
 include $(BASEDIR)/dependencies.mk
 
 # Compute the full list of dependencies
@@ -266,7 +266,7 @@ $(CONFIG_VARS): prepare
 	echo "$(@)=$($(@))" >> "$(CONFIG)"
 
 config: $(CONFIG_VARS)
-	echo "Architecture: $(ARCHITECTURE) ($(ARCHITECTURE_CFLAGS))"
+	echo "Architecture: $(ARCHITECTURE_FAMILY)/$(ARCHITECTURE) ($(ARCHITECTURE_CFLAGS))"
 	echo "Features:     $(FEATURES)"
 	echo "Configured OK"
 

@@ -37,6 +37,7 @@ namespace lsp
 
         LatencyDetector::~LatencyDetector()
         {
+            destroy();
         }
 
         void LatencyDetector::construct()
@@ -111,8 +112,7 @@ namespace lsp
             // 1x chirp + 1x anti-chirp + 1x capture + 2x buffer + 4x conv image + 4x temporary convolution buffer
             size_t samples  = 13 * LIM_BUF_SIZE;
 
-            pData           = new uint8_t[samples * sizeof(float) + DEFAULT_ALIGN];
-            uint8_t *ptr    = align_ptr(pData, DEFAULT_ALIGN);
+            uint8_t *ptr    = alloc_aligned<uint8_t>(pData, samples * sizeof(float), DEFAULT_ALIGN);
 
             vChirp          = reinterpret_cast<float *>(ptr);
             ptr            += LIM_BUF_SIZE * sizeof(float);
@@ -134,9 +134,10 @@ namespace lsp
         {
             if (pData != NULL)
             {
-                delete [] pData;
+                free_aligned(pData);
                 pData = NULL;
             }
+
             vChirp      = NULL;
             vAntiChirp  = NULL;
             vCapture    = NULL;

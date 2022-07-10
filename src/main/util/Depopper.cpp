@@ -65,7 +65,9 @@ namespace lsp
             sFadeIn.enMode      = DPM_LINEAR;
             sFadeIn.fThresh     = GAIN_AMP_M_80_DB;
             sFadeIn.fTime       = 50.0f;
+            sFadeIn.fDelay      = 0.0f;
             sFadeIn.nSamples    = 0;
+            sFadeIn.nDelay      = 0;
             sFadeIn.fPoly[0]    = 0.0f;
             sFadeIn.fPoly[1]    = 0.0f;
             sFadeIn.fPoly[2]    = 0.0f;
@@ -74,7 +76,9 @@ namespace lsp
             sFadeOut.enMode     = DPM_LINEAR;
             sFadeOut.fThresh    = GAIN_AMP_M_80_DB;
             sFadeOut.fTime      = 0.0f;
+            sFadeOut.fDelay     = 0.0f;
             sFadeOut.nSamples   = 0;
+            sFadeOut.nDelay     = 0;
             sFadeOut.fPoly[0]   = 0.0f;
             sFadeOut.fPoly[1]   = 0.0f;
             sFadeOut.fPoly[2]   = 0.0f;
