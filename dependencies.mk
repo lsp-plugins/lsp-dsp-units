@@ -21,7 +21,6 @@
 # List of dependencies
 DEPENDENCIES = \
   LIBPTHREAD \
-  LIBDL \
   LSP_COMMON_LIB \
   LSP_DSP_LIB \
   LSP_LLTL_LIB \
@@ -33,11 +32,13 @@ TEST_DEPENDENCIES = \
 # Platform-specific dependencies
 ifeq ($(PLATFORM),Linux)
   DEPENDENCIES             += \
+    LIBDL \
     LIBSNDFILE
 endif
 
 ifeq ($(PLATFORM),BSD)
   DEPENDENCIES             += \
+    LIBDL \
     LIBSNDFILE \
     LIBICONV
 endif

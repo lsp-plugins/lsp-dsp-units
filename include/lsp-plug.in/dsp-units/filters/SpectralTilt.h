@@ -111,6 +111,7 @@ namespace lsp
                 bilinear_spec_t     compute_bilinear_element(float negZero, float negPole);
                 inline float        digital_biquad_gain(dsp::biquad_x1_t *digitalbq, float frequency);
                 void                normalise_digital_biquad(dsp::biquad_x1_t *digitalbq);
+                void                complex_transfer_calc(float *re, float *im, float f);
                 void                update_settings();
 
             public:
@@ -181,6 +182,23 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, const float *src, size_t count);
+
+                /**
+                 * Get frequency chart of the whole filter
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 */
+                void freq_chart(float *re, float *im, const float *f, size_t count);
+
+                /**
+                 * Get frequency chart of the whole filter
+                 * @param c complex numbers that contain the filter transfer function
+                 * @param f frequencies to calculate filter transfer function
+                 * @param count number of points
+                 */
+                void freq_chart(float *c, const float *f, size_t count);
 
                 /**
                  * Dump the state

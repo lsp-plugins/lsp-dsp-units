@@ -53,7 +53,7 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
         nBits = lsp_min(nBits, MAX_N_BITS);
         dspu::MLS::mls_t nState = 0;  // Use 0 to force default state.
 
-        size_t nOrder = 16;
+        size_t nOrder = 32;
         float fSlope = -0.5f;
         dspu::stlt_slope_unit_t enSlopeUnit = dspu::STLT_SLOPE_UNIT_NEPER_PER_NEPER;
         size_t nSampleRate = 48000;
@@ -72,13 +72,25 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
         filter.set_upper_frequency(fUpFreq);
         filter.set_sample_rate(nSampleRate);
 
-        float *vIn = new float[nPeriod];
-        float *vOut = new float[nPeriod];
+        float *vIn      = new float[nPeriod];
+        float *vOut     = new float[nPeriod];
+
+        size_t n_freqs      = nSampleRate / 2;
+        float *freqs    = new float[n_freqs];
+        float *re_h     = new float[n_freqs];
+        float *im_h     = new float[n_freqs];
+        float *c_h      = new float[2 * n_freqs];
+
+        for (size_t k = 0; k < n_freqs; ++k)
+            freqs[k] = k;
 
         for (size_t n = 0; n < nPeriod; ++n)
             vIn[n] = mls.process_single();
 
         filter.process_overwrite(vOut, vIn, nPeriod);
+
+        filter.freq_chart(re_h, im_h, freqs, n_freqs);
+        filter.freq_chart(c_h, freqs, n_freqs);
 
         io::Path path_in;
         MTEST_ASSERT(path_in.fmt("%s/stilt_in-%s.csv", tempdir(), full_name()));
@@ -88,8 +100,28 @@ MTEST_BEGIN("dspu.filters", SPECTRALTILT)
         MTEST_ASSERT(path_out.fmt("%s/stilt_out-%s.csv", tempdir(), full_name()));
         write_buffer(path_out.as_native(), "MLS Period - Out", vOut, nPeriod);
 
+        io::Path path_freqs;
+        MTEST_ASSERT(path_freqs.fmt("%s/stilt_freqs-%s.csv", tempdir(), full_name()));
+        write_buffer(path_freqs.as_native(), "Frequency Axis", freqs, n_freqs);
+
+        io::Path path_re_h;
+        MTEST_ASSERT(path_re_h.fmt("%s/stilt_re_h-%s.csv", tempdir(), full_name()));
+        write_buffer(path_re_h.as_native(), "Frequency Response Real Part", re_h, n_freqs);
+
+        io::Path path_im_h;
+        MTEST_ASSERT(path_im_h.fmt("%s/stilt_im_h-%s.csv", tempdir(), full_name()));
+        write_buffer(path_im_h.as_native(), "Frequency Response Imaginary Part", im_h, n_freqs);
+
+        io::Path path_c_h;
+        MTEST_ASSERT(path_c_h.fmt("%s/stilt_c_h-%s.csv", tempdir(), full_name()));
+        write_buffer(path_c_h.as_native(), "Frequency Response Packed Complex", c_h, 2 * n_freqs);
+
         delete [] vIn;
         delete [] vOut;
+        delete [] freqs;
+        delete [] re_h;
+        delete [] im_h;
+        delete [] c_h;
 
         mls.destroy();
     }

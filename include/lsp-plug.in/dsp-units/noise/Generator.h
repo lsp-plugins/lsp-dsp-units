@@ -143,10 +143,9 @@ namespace lsp
                  * @param lcg_seed seed for the LCG generator.
                  */
                 void init(
-                        uint8_t mls_n_bits, MLS::mls_t mls_seed,
-                        uint32_t lcg_seed,
-                        uint32_t velvet_rand_seed, uint8_t velvet_mls_n_bits, MLS::mls_t velvet_mls_seed
-                        );
+                    uint8_t mls_n_bits, MLS::mls_t mls_seed,
+                    uint32_t lcg_seed,
+                    uint32_t velvet_rand_seed, uint8_t velvet_mls_n_bits, MLS::mls_t velvet_mls_seed);
 
                 /** Initialize random generator, automatic.
                  */
@@ -266,6 +265,23 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, size_t count);
+
+                /**
+                 * Get frequency chart of the colouring filter
+                 * @param re real part of the frequency chart
+                 * @param im imaginary part of the frequency chart
+                 * @param f frequencies to calculate value
+                 * @param count number of dots for the chart
+                 */
+                void freq_chart(float *re, float *im, const float *f, size_t count);
+
+                /**
+                 * Get frequency chart of the whole equalizer
+                 * @param c complex numbers that contain the filter transfer function
+                 * @param f frequencies to calculate filter transfer function
+                 * @param count number of points
+                 */
+                void freq_chart(float *c, const float *f, size_t count);
 
                 /**
                  * Dump the state
