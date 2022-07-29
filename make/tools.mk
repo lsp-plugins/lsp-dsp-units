@@ -40,13 +40,13 @@ X_GIT_TOOL         := git
 X_INSTALL_TOOL     := install
 
 # Define tool variables for (cross) build
-CC                 := $(X_CC_TOOL)
-CXX                := $(X_CXX_TOOL)
-AS                 := $(X_AS_TOOL)
-AR                 := $(X_AR_TOOL)
-LD                 := $(X_LD_TOOL)
-PHP                := $(X_PHP_TOOL)
-PKG_CONFIG         := $(X_PKG_CONFIG)
+CC                 ?= $(X_CC_TOOL)
+CXX                ?= $(X_CXX_TOOL)
+AS                 ?= $(X_AS_TOOL)
+AR                 ?= $(X_AR_TOOL)
+LD                 ?= $(X_LD_TOOL)
+PHP                ?= $(X_PHP_TOOL)
+PKG_CONFIG         ?= $(X_PKG_CONFIG)
 
 # Define tool variables for host build
 HOST_CC            := $(CC)
