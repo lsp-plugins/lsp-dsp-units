@@ -2426,7 +2426,8 @@ $(LSP_DSP_UNITS_BIN)/main/3d/RayTrace3D.o: main/3d/RayTrace3D.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/atomic.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/const.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h
 $(LSP_DSP_UNITS_BIN)/main/3d/Object3D.o: main/3d/Object3D.cpp \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/3d/Object3D.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/version.h \
