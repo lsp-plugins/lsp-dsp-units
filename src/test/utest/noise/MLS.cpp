@@ -30,7 +30,7 @@ using namespace lsp;
 // MLS supports up to a max of 32 or 64 bits (depending on architecture). Unfortunately testing for more than 18 is not practical...
 #define MAX_N_BITS 16
 // Set the numerical tolerance for error here.
-#define NUM_TOL    1e-15f
+#define NUM_TOL    1e-6f
 
 // The code below checks whether the MLS implementation is correct by checking whether the circular cross-corrleation of one period is correct.
 
