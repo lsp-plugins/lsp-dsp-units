@@ -39,7 +39,7 @@ namespace lsp
         /** Compressor class implementation
          *
          */
-        class Compressor
+        class LSP_DSP_UNITS_PUBLIC Compressor
         {
             private:
                 Compressor & operator = (const Compressor &);

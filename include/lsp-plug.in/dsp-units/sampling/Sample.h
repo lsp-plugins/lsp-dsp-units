@@ -68,7 +68,7 @@ namespace lsp
             SAMPLE_NORM_ALWAYS
         };
 
-        class Sample
+        class LSP_DSP_UNITS_PUBLIC Sample
         {
             private:
                 Sample & operator = (const Sample &);

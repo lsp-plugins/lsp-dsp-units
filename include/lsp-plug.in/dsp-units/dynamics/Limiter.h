@@ -52,7 +52,7 @@ namespace lsp
             LM_LINE_DUCK
         };
 
-        class Limiter
+        class LSP_DSP_UNITS_PUBLIC Limiter
         {
             private:
                 Limiter & operator = (const Limiter &);

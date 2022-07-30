@@ -64,7 +64,7 @@ namespace lsp
             STLT_NORM_MAX
         };
 
-        class SpectralTilt
+        class LSP_DSP_UNITS_PUBLIC SpectralTilt
         {
             private:
                 SpectralTilt & operator = (const SpectralTilt &);

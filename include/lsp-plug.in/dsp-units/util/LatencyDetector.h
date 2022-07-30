@@ -32,7 +32,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class LatencyDetector
+        class LSP_DSP_UNITS_PUBLIC LatencyDetector
         {
             private:
                 LatencyDetector & operator = (const LatencyDetector &);

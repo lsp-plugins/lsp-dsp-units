@@ -35,7 +35,7 @@ namespace lsp
          *    Old data is removed from buffer from the head position with shift() methods
          *
          */
-        class ShiftBuffer
+        class LSP_DSP_UNITS_PUBLIC ShiftBuffer
         {
             private:
                 ShiftBuffer & operator = (const ShiftBuffer &);

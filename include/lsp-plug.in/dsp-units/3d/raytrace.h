@@ -123,6 +123,7 @@ namespace lsp
          * @param cfg source configuration
          * @return status of operation
          */
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_gen_source_mesh(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg);
 
         /**
@@ -133,6 +134,7 @@ namespace lsp
          * @param cfg source configuration
          * @return status of operation
          */
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_gen_capture_mesh(lltl::darray<dsp::raw_triangle_t> &out, const rt_capture_settings_t *cfg);
 
         /**
@@ -142,6 +144,7 @@ namespace lsp
          * @param cfg capture configuration
          * @return status of operation
          */
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_configure_capture(size_t *n, rt_capture_settings_t *settings, const room_capture_config_t *cfg);
 
         /**
@@ -150,6 +153,7 @@ namespace lsp
          * @param in source configuration
          * @return status of operation
          */
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_configure_source(rt_source_settings_t *out, const room_source_config_t *in);
 
     } // namespace dspu

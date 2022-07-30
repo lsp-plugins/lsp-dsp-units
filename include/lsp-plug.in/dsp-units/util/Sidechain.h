@@ -54,7 +54,7 @@ namespace lsp
             SCSM_MIDSIDE
         };
 
-        class Sidechain
+        class LSP_DSP_UNITS_PUBLIC Sidechain
         {
             private:
                 Sidechain & operator = (const Sidechain &);

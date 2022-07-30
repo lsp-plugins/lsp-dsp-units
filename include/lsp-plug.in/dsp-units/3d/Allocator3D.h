@@ -33,7 +33,7 @@ namespace lsp
          * Fixed-pointer allocator, allocates data grouped into partitions or 'chunks'
          * to avoid huge memory fragmentation
          */
-        class BasicAllocator3D
+        class LSP_DSP_UNITS_PUBLIC BasicAllocator3D
         {
             private:
                 BasicAllocator3D(const BasicAllocator3D &);

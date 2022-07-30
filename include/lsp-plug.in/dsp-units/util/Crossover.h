@@ -87,7 +87,7 @@ namespace lsp
          * and mixes processed bands back after adjusting the post-processing amplification gain
          *
          */
-        class Crossover
+        class LSP_DSP_UNITS_PUBLIC Crossover
         {
             private:
                 Crossover & operator = (const Crossover &);

@@ -53,7 +53,7 @@ namespace lsp
             NG_COLOR_BROWNIAN = NG_COLOR_RED
         };
 
-        class NoiseGenerator
+        class LSP_DSP_UNITS_PUBLIC NoiseGenerator
         {
             private:
                 NoiseGenerator & operator = (const NoiseGenerator &);

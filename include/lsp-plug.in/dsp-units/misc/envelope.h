@@ -47,18 +47,25 @@ namespace lsp
                 LAST = TOTAL - 1
             };
 
+            LSP_DSP_UNITS_PUBLIC
             void noise(float *dst, size_t n, envelope_t type);
 
+            LSP_DSP_UNITS_PUBLIC
             void reverse_noise(float *dst, size_t n, envelope_t type);
 
+            LSP_DSP_UNITS_PUBLIC
             void white_noise(float *dst, size_t n);
 
+            LSP_DSP_UNITS_PUBLIC
             void pink_noise(float *dst, size_t n);
 
+            LSP_DSP_UNITS_PUBLIC
             void brown_noise(float *dst, size_t n);
 
+            LSP_DSP_UNITS_PUBLIC
             void blue_noise(float *dst, size_t n);
 
+            LSP_DSP_UNITS_PUBLIC
             void violet_noise(float *dst, size_t n);
         }
     }

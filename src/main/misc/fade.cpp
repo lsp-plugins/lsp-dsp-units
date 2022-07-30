@@ -25,6 +25,7 @@ namespace lsp
 {
     namespace dspu
     {
+        LSP_DSP_UNITS_PUBLIC
         void fade_in(float *dst, const float *src, size_t fade_len, size_t buf_len)
         {
             if ((fade_len <= 0) || (buf_len <= 0))
@@ -38,6 +39,7 @@ namespace lsp
                 dst[i] = src[i] * i * k;
         }
 
+        LSP_DSP_UNITS_PUBLIC
         void fade_out(float *dst, const float *src, size_t fade_len, size_t buf_len)
         {
             if ((fade_len <= 0) || (buf_len <= 0))

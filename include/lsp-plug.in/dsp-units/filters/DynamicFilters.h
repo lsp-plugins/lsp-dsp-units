@@ -36,7 +36,7 @@ namespace lsp
          * into one object for resource economy purpose.
          *
          */
-        class DynamicFilters
+        class LSP_DSP_UNITS_PUBLIC DynamicFilters
         {
             private:
                 DynamicFilters & operator = (const DynamicFilters &);

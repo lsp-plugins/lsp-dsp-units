@@ -40,7 +40,7 @@ namespace lsp
         /** One scene object in the 3D space
          *
          */
-        class Object3D
+        class LSP_DSP_UNITS_PUBLIC Object3D
         {
             private:
                 Object3D(const Object3D &);

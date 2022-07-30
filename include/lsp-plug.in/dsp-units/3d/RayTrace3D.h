@@ -41,7 +41,7 @@ namespace lsp
         /** Ray tracing storage implemented as a stack
          *
          */
-        class RayTrace3D
+        class LSP_DSP_UNITS_PUBLIC RayTrace3D
         {
             protected:
                 typedef struct sample_t

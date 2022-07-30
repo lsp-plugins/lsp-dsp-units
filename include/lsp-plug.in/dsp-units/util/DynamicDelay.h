@@ -33,7 +33,7 @@ namespace lsp
         /**
          * Dynamic Delay: Delay with varying in time delay, gain and feedback gain
          */
-        class DynamicDelay
+        class LSP_DSP_UNITS_PUBLIC DynamicDelay
         {
             private:
                 DynamicDelay & operator = (const DynamicDelay &);

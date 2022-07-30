@@ -33,7 +33,7 @@ namespace lsp
     {
         namespace rt
         {
-            typedef struct mesh_t
+            typedef struct LSP_DSP_UNITS_PUBLIC mesh_t
             {
                 private:
                     mesh_t(const mesh_t &);

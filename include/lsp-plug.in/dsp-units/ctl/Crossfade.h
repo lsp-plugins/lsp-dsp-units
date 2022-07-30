@@ -29,7 +29,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class Crossfade
+        class LSP_DSP_UNITS_PUBLIC Crossfade
         {
             private:
                 Crossfade & operator = (const Crossfade &);

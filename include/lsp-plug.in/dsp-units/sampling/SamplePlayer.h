@@ -29,7 +29,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class SamplePlayer
+        class LSP_DSP_UNITS_PUBLIC SamplePlayer
         {
             private:
                 SamplePlayer & operator = (const SamplePlayer &);

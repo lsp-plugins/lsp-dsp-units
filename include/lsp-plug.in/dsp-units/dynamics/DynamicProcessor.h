@@ -39,7 +39,7 @@ namespace lsp
             float   fKnee;          // Negative value means off
         } dyndot_t;
 
-        class DynamicProcessor
+        class LSP_DSP_UNITS_PUBLIC DynamicProcessor
         {
             private:
                 DynamicProcessor & operator = (const DynamicProcessor &);

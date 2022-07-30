@@ -36,7 +36,7 @@ namespace lsp
             /**
              * This is a space cutting plan for the raytracing algorithm
              */
-            typedef struct plan_t
+            typedef struct LSP_DSP_UNITS_PUBLIC plan_t
             {
                 private:
                     plan_t(const plan_t &);

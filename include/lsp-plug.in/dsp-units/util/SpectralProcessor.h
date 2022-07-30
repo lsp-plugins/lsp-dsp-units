@@ -42,7 +42,7 @@ namespace lsp
          * Spectral processor class, performs spectral transform of the input signal
          * and launches callback function to process the signal spectrum
          */
-        class SpectralProcessor
+        class LSP_DSP_UNITS_PUBLIC SpectralProcessor
         {
             private:
                 SpectralProcessor & operator = (const SpectralProcessor &);

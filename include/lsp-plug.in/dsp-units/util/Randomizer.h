@@ -38,7 +38,7 @@ namespace lsp
             RND_MAX
         };
 
-        class Randomizer
+        class LSP_DSP_UNITS_PUBLIC Randomizer
         {
             private:
                 Randomizer &operator = (const Randomizer &);

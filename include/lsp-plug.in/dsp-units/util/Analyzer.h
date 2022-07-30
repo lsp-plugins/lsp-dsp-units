@@ -50,7 +50,7 @@ namespace lsp
             FRQA_INT_MASK           = 0x0300
         };
 
-        class Analyzer
+        class LSP_DSP_UNITS_PUBLIC Analyzer
          {
              private:
                  Analyzer & operator = (const Analyzer &);

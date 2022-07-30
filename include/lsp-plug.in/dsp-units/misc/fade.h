@@ -29,22 +29,24 @@ namespace lsp
 {
     namespace dspu
     {
-        /** Fade-in (with range check)
+        /** Apply linear fade-in to the signal (with range check)
          *
          * @param dst destination buffer
          * @param src source buffer
          * @param fade_len length of fade (in elements)
          * @param buf_len length of the buffer
          */
+        LSP_DSP_UNITS_PUBLIC
         void fade_in(float *dst, const float *src, size_t fade_len, size_t buf_len);
 
-        /** Fade-out (with range check)
+        /** Apply linear fade-out to the signal (with range check)
          *
          * @param dst destination buffer
          * @param src source buffer
          * @param fade_len length of fade (in elements)
          * @param buf_len length of the buffer
          */
+        LSP_DSP_UNITS_PUBLIC
         void fade_out(float *dst, const float *src, size_t fade_len, size_t buf_len);
     }
 }

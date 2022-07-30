@@ -32,7 +32,7 @@ namespace lsp
         /**
          * Bypass class, provides utilitary class for implementing mono bypass function
          */
-        class Bypass
+        class LSP_DSP_UNITS_PUBLIC Bypass
         {
             private:
                 Bypass & operator = (const Bypass &);

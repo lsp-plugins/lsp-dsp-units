@@ -57,7 +57,7 @@ namespace lsp
          * https://dspguru.com/dsp/tutorials/a-little-mls-tutorial/
          * http://in.ncu.edu.tw/ncume_ee/digilogi/prbs.htm
          */
-        class MLS
+        class LSP_DSP_UNITS_PUBLIC MLS
         {
             private:
                 MLS & operator = (const MLS &);

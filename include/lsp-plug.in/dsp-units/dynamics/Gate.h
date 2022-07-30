@@ -29,7 +29,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class Gate
+        class LSP_DSP_UNITS_PUBLIC Gate
         {
             private:
                 Gate & operator = (const Gate &);

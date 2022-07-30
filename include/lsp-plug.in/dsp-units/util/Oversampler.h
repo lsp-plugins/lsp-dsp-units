@@ -33,7 +33,7 @@ namespace lsp
         /** Callback to perform processing of oversampled signal
          *
          */
-        class IOversamplerCallback
+        class LSP_DSP_UNITS_PUBLIC IOversamplerCallback
         {
             public:
                 /** Virtual destructor
@@ -78,7 +78,7 @@ namespace lsp
         /** Oversampler class
          *
          */
-        class Oversampler
+        class LSP_DSP_UNITS_PUBLIC Oversampler
         {
             private:
                 Oversampler & operator = (const Oversampler &);

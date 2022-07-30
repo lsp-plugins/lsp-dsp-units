@@ -32,7 +32,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class Convolver
+        class LSP_DSP_UNITS_PUBLIC Convolver
         {
             private:
                 Convolver & operator = (const Convolver &);

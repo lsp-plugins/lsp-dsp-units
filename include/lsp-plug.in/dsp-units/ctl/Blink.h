@@ -32,7 +32,7 @@ namespace lsp
         /** Simple blink counter
          *
          */
-        class Blink
+        class LSP_DSP_UNITS_PUBLIC Blink
         {
             private:
                 Blink & operator = (const Blink &);
