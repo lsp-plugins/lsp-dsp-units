@@ -81,6 +81,8 @@ namespace lsp
         {
             sMLS.destroy();
             sLCG.destroy();
+            sVelvetNoise.destroy();
+            sColorFilter.destroy();
         }
 
         void NoiseGenerator::init(

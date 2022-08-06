@@ -104,60 +104,31 @@ namespace lsp
                  *
                  * @return true if MLS needs settings update.
                  */
-                inline bool needs_update() const
-                {
-                    return bSync;
-                }
+                bool needs_update() const;
 
                 /** Set the number of bits of the generator. This causes reset.
                  *
                  * @param nbits number of bits
                  */
-                inline void set_n_bits(size_t nbits)
-                {
-                    if (nbits == nBits)
-                        return;
-
-                    nBits = nbits;
-                    bSync = true;
-                }
+                void set_n_bits(size_t nbits);
 
                 /** Set the state (seed). This causes reset. States must be non-zero. If 0 is passed, all the active bits will be flipped to 1.
                  *
                  * @param targetstate state to be set.
                  */
-                inline void set_state(mls_t targetstate)
-                {
-                    if (targetstate == nState)
-                        return;
-
-                    nState = targetstate;
-                    bSync = true;
-                }
+                void set_state(mls_t targetstate);
 
                 /** Set the amplitude of the MLS sequence.
                  *
                  * @param amplitude amplitude value for the sequence.
                  */
-                inline void set_amplitude(float amplitude)
-                {
-                    if (amplitude == fAmplitude)
-                        return;
-
-                    fAmplitude = amplitude;
-                }
+                void set_amplitude(float amplitude);
 
                 /** Set the offset of the MLS sequence.
                  *
                  * @param offset offset value for the sequence.
                  */
-                inline void set_offset(float offset)
-                {
-                    if (offset == fOffset)
-                        return;
-
-                    fOffset = offset;
-                }
+                void set_offset(float offset);
 
                 /** Get the sequence period
                  *
