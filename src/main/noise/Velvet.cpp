@@ -59,11 +59,13 @@ namespace lsp
             fOffset                     = 0.0f;
 
             sRandomizer.construct();
+            sMLS.construct();
         }
 
         void Velvet::destroy()
         {
             sRandomizer.destroy();
+            sMLS.destroy();
         }
 
         void Velvet::set_core_type(vn_core_t core)
