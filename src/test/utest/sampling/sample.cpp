@@ -75,6 +75,32 @@ UTEST_BEGIN("dspu.sampling", sample)
         }
     }
 
+    void test_stretch()
+    {
+        printf("Testing sample stretch...\n");
+
+        dspu::Sample sampl;
+        init_sample(&sampl);
+
+        ssize_t stretch_values [] = { 1000, -1000 };
+        size_t chunk_sizes [] = { 50, 125, 250, 500, 775 };
+        size_t start_values [] = { 0, 500, 1000 };
+        size_t end_values [] = { sampl.length(), sampl.length()-500, sampl.length()-1000 };
+        float fade_sizes [] = { 100.0f, 75.0f, 50.0f, 25.0f, 0.0f };
+
+        for (size_t sc = 0; sc < *(&stretch_values + 1) - stretch_values; sc++) {
+            for (size_t c = 0; c < *(&chunk_sizes + 1) - chunk_sizes; c++) {
+                for (size_t s = 0; s < *(&start_values + 1) - start_values; s++) {
+                    for (size_t e = 0; e < *(&end_values + 1) - end_values; e++) {
+                        for (size_t f = 0; f < *(&fade_sizes + 1) - fade_sizes; f++) {
+                          UTEST_ASSERT(sampl.stretch(stretch_values[sc], chunk_sizes[c], start_values[s], end_values[e], fade_sizes[f]) == STATUS_OK);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     void test_io()
     {
         printf("Testing save & load for Sample...\n");
