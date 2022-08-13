@@ -28,6 +28,8 @@
 #define TONE_RATE       440.0f
 
 UTEST_BEGIN("dspu.sampling", sample)
+    UTEST_TIMELIMIT(30)
+
     void init_sample(dspu::Sample *s)
     {
         UTEST_ASSERT(s->init(2, TEST_SRATE, TEST_SRATE));
@@ -40,7 +42,7 @@ UTEST_BEGIN("dspu.sampling", sample)
 
         for (size_t i=0; i<TEST_SRATE; ++i)
         {
-            c0[i] = sinf(w * i);
+            c0[i] = 0.5f * sinf(w * i);
             c1[i] = i * k;
         }
     }
@@ -79,25 +81,103 @@ UTEST_BEGIN("dspu.sampling", sample)
     {
         printf("Testing sample stretch...\n");
 
-        dspu::Sample s;
+        static const dspu::sample_crossfade_t crossfades[] =
+        {
+            dspu::SAMPLE_CROSSFADE_LINEAR,
+            dspu::SAMPLE_CROSSFADE_CONST_POWER
+        };
+
+        static const char *names[] =
+        {
+            "linear",
+            "const-power"
+        };
+
+        io::Path path;
+        dspu::Sample s, ss;
         init_sample(&s);
 
-        ssize_t stretch_values [] = { 1000, -1000 };
-        size_t chunk_sizes [] = { 50, 125, 250, 500, 775 };
-        size_t start_values [] = { 0, 500, 1000 }
-        size_t end_values [] = { s.length(), s.length()-500, s.length()-1000 }
-        float fade_sizes [] = { 100.0f, 75.0f, 50.0f, 25.0f, 0.0f };
+        for (size_t i=0, n=sizeof(crossfades)/sizeof(dspu::sample_crossfade_t); i<n; ++i)
+        {
+            // Testing simple stretch
+            printf("Testing simple stretch of 0 sample region for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, TEST_SRATE/2, TEST_SRATE/2) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 256);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-simple-0-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
 
-        for (size_t sc = 0; sc < *(&stretch_values + 1) - stretch_values; sc++) {
-            for (size_t c = 0; c < *(&chunk_sizes + 1) - chunk_sizes; c++) {
-                for (size_t s = 0; s < *(&start_values + 1) - start_values; s++) {
-                    for (size_t e = 0; e < *(&end_values + 1) - end_values; e++) {
-                        for (size_t f = 0; f < *(&fade_sizes + 1) - fade_sizes; f++) {
-                          UTEST_ASSERT(c.stretch(stretch_values[sc], chunk_sizes[c], start_values[s], end_values[e], fade_sizes[f]) == STATUS_OK);
-                        }
-                    }
-                }
-            }
+            // Testing simple stretch
+            printf("Testing simple stretch of 1 sample region for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, TEST_SRATE/2 + 72, TEST_SRATE/2 + 73) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 256 - 1);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-simple-1-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Testing single cross-fade stretch
+            printf("Testing single cross-fade stretch for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(3072, 2048, crossfades[i], 0.25f, TEST_SRATE/2, TEST_SRATE/2 + 8192) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 3072 - 8192);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-single-cross-fade-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Testing short-region stretch
+            printf("Testing simple short-region stretch for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(1630, 2048, crossfades[i], 0.25f, TEST_SRATE/2, TEST_SRATE/2 + 64) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 1630 - 64);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-short-region-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            printf("Testing simple short-region stretch 2 for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(1630, 2048, crossfades[i], 1.0f, TEST_SRATE/2, TEST_SRATE/2 + 64) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 1630 - 64);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-short-region-2-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Testing common widening stretch
+            printf("Testing common widening stretch for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(16200, 1024, crossfades[i], 0.25f, TEST_SRATE/2, TEST_SRATE/2 + 4000) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 16200 - 4000);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-widening-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Testing common shortening stretch
+            printf("Testing common shortening stretch for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(4200, 1024, crossfades[i], 0.25f, TEST_SRATE/2, TEST_SRATE/2 + 16000) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 4200 - 16000);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-shortening-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Testing extreme case: cut-off part of sample
+            printf("Testing sample cutoff for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(0, 1024, crossfades[i], 0.25f, TEST_SRATE/2, TEST_SRATE/2 + 16000) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 0 - 16000);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-cutoff-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Testing extreme case: very short region to stretch
+            printf("Testing short region for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(6200, 1024, crossfades[i], 1.0f, TEST_SRATE/2, TEST_SRATE/2 + 2) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 6200 - 2);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-short-region-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
         }
     }
 
@@ -170,6 +250,7 @@ UTEST_BEGIN("dspu.sampling", sample)
         test_resample(TEST_SRATE * 2);
         test_resample(44100);
         test_resample(88200);
+        test_stretch();
     }
 UTEST_END
 
