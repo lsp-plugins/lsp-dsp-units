@@ -82,10 +82,15 @@ namespace lsp
                 size_t      nChannels;
 
             protected:
+                static void         put_chunk(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
+
+            protected:
                 status_t            fast_downsample(Sample *s, size_t new_sample_rate);
                 status_t            fast_upsample(Sample *s, size_t new_sample_rate);
                 status_t            complex_downsample(Sample *s, size_t new_sample_rate);
                 status_t            complex_upsample(Sample *s, size_t new_sample_rate);
+                status_t            do_simple_stretch(size_t new_length, size_t start, size_t end);
+                status_t            do_single_crossfade_stretch(size_t new_length, size_t fade_len, size_t start, size_t end);
 
             public:
                 explicit Sample();
@@ -176,13 +181,25 @@ namespace lsp
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
 
-                /** Stretch sample
+                /** Stretch part of the sample
                  *
-                 * @param stretch_samples samples to stretch
+                 * @param new_length the new length of the stretched region in samples
                  * @param chunk_size chunk size multiplier
+                 * @param fade size the relative size of the crossfade region between two chunks in range of 0 to 1
+                 * @param start the number of the sample associated with the start of the range to be stretched
+                 * @param end the number of the first sample after the end of the range to be stretched
+                 * @return status of operation
+                 */
+                status_t stretch(size_t new_length, size_t chunk_size, float fade_size, size_t start, size_t end);
+
+                /** Stretch the whole sample
+                 *
+                 * @param new_length the new length of the stretched region in samples
+                 * @param chunk_size chunk size multiplier
+                 * @param fade size the relative size of the crossfade region between two chunks in range of 0 to 1
                  * @return true if data was successfuly stretched
                  */
-                bool stretch(ssize_t stretch_samples, size_t chunk_size, size_t start, size_t end, float fade_size);
+                status_t stretch(size_t new_length, size_t chunk_size, float fade_size);
 
                 /** Resize sample to match the specified number of audio channels,
                  * all previously allocated data will be kept
