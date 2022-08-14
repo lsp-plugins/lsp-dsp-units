@@ -99,6 +99,18 @@ UTEST_BEGIN("dspu.sampling", sample)
 
         for (size_t i=0, n=sizeof(crossfades)/sizeof(dspu::sample_crossfade_t); i<n; ++i)
         {
+            // Test invalid cases
+            printf("Testing invalid cases for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            // Region with negative length
+            UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, TEST_SRATE/2, TEST_SRATE/2 - 1024) == STATUS_BAD_ARGUMENTS);
+            // Region with invalid start position
+            UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, s.length() + 1, s.length() + 1024) == STATUS_BAD_ARGUMENTS);
+            // Region with invalid end position
+            UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, 0, s.length() + 1024) == STATUS_BAD_ARGUMENTS);
+            // Chunk size of zero length
+            UTEST_ASSERT(ss.stretch(256, 0, crossfades[i], 0.5f, TEST_SRATE/2, TEST_SRATE/2 + 1024) == STATUS_BAD_ARGUMENTS);
+
             // Testing simple stretch
             printf("Testing simple stretch of 0 sample region for %s fade...\n", names[i]);
             UTEST_ASSERT(ss.copy(s) == STATUS_OK);
