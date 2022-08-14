@@ -5,6 +5,7 @@
 === 1.0.4 ===
 * Fixed unintialized values issue.
 * Updated build scripts.
+* Added Sample::stretch() method for stretching samples.
 
 === 1.0.3 ===
 * Fixed memory leak in dspu::LatencyDetector module.

@@ -68,6 +68,19 @@ namespace lsp
             SAMPLE_NORM_ALWAYS
         };
 
+        enum sample_crossfade_t
+        {
+            /**
+             * Linear crossfade
+             */
+            SAMPLE_CROSSFADE_LINEAR,
+
+            /**
+             * Constant-power crossfade
+             */
+            SAMPLE_CROSSFADE_CONST_POWER
+        };
+
         class LSP_DSP_UNITS_PUBLIC Sample
         {
             private:
@@ -82,10 +95,18 @@ namespace lsp
                 size_t      nChannels;
 
             protected:
+                static void         put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
+                static void         put_chunk_const_power(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
+
+                typedef void        (*put_chunk_t)(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
+
+            protected:
                 status_t            fast_downsample(Sample *s, size_t new_sample_rate);
                 status_t            fast_upsample(Sample *s, size_t new_sample_rate);
                 status_t            complex_downsample(Sample *s, size_t new_sample_rate);
                 status_t            complex_upsample(Sample *s, size_t new_sample_rate);
+                status_t            do_simple_stretch(size_t new_length, size_t start, size_t end, put_chunk_t put_chunk);
+                status_t            do_single_crossfade_stretch(size_t new_length, size_t fade_len, size_t start, size_t end, put_chunk_t put_chunk);
 
             public:
                 explicit Sample();
@@ -175,6 +196,31 @@ namespace lsp
                  * @return true if data was successful resized
                  */
                 bool resize(size_t channels, size_t max_length, size_t length = 0);
+
+                /** Stretch part of the sample
+                 *
+                 * @param new_length the new length of the stretched region in samples
+                 * @param chunk_size chunk size in samples, 0 means automatic chunk size selection
+                 * @param fade_type the crossfade type between chunks
+                 * @param fade_size the relative size of the crossfade region between two chunks in range of 0 to 1
+                 * @param start the number of the sample associated with the start of the range to be stretched
+                 * @param end the number of the first sample after the end of the range to be stretched
+                 * @return status of operation
+                 */
+                status_t stretch(
+                    size_t new_length, size_t chunk_size,
+                    sample_crossfade_t fade_type, float fade_size,
+                    size_t start, size_t end);
+
+                /** Stretch the whole sample
+                 *
+                 * @param new_length the new length of the sample in samples
+                 * @param chunk_size chunk size in samples, 0 means automatic chunk size selection
+                 * @param fade_type the crossfade type between chunks
+                 * @param fade_size the relative size of the crossfade region between two chunks in range of 0 to 1
+                 * @return true if data was successfuly stretched
+                 */
+                status_t stretch(size_t new_length, size_t chunk_size, sample_crossfade_t fade_type, float fade_size);
 
                 /** Resize sample to match the specified number of audio channels,
                  * all previously allocated data will be kept
