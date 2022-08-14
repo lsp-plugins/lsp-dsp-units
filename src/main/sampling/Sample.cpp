@@ -314,7 +314,7 @@ namespace lsp
             size_t doff, soff;
 
             // Verify that the proper values have been submitted
-            if ((chunk_size == 0) || (start > nLength) || (end > nLength) || (start > end))
+            if ((start > nLength) || (end > nLength) || (start > end))
                 return STATUS_BAD_ARGUMENTS;
 
             // What crossfade to use?
@@ -337,10 +337,17 @@ namespace lsp
                 return do_simple_stretch(new_length, start, end, put_chunk);
 
             // Limit the chunk size if it is greater than source length
-            chunk_size              = lsp_min(chunk_size, src_length);
+            // If chunk_size is zero, try to select the best chunk size from this equation:
+            //   chunk_size * 2 = src_size + fade_size * chunk_size
+            //   chunk_size * (2 - fade_size) = src_length
+            fade_size               = lsp_limit(fade_size * 0.5f, 0.0f, 0.5f);
+            if (chunk_size == 0)
+                chunk_size              = src_length / (2.0f - fade_size);
+            else
+                chunk_size              = lsp_min(chunk_size, src_length);
 
             // Special case: the new length does not allow to cross-fade at least 2 chunks
-            size_t fade_length      = chunk_size * lsp_limit(fade_size * 0.5f, 0.0f, 0.5f);
+            size_t fade_length      = chunk_size * fade_size;
             if ((new_length + fade_length) <= (chunk_size * 2))
                 return do_single_crossfade_stretch(new_length, fade_length, start, end, put_chunk);
 

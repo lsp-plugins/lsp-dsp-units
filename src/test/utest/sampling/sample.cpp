@@ -108,8 +108,6 @@ UTEST_BEGIN("dspu.sampling", sample)
             UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, s.length() + 1, s.length() + 1024) == STATUS_BAD_ARGUMENTS);
             // Region with invalid end position
             UTEST_ASSERT(ss.stretch(256, 1024, crossfades[i], 0.5f, 0, s.length() + 1024) == STATUS_BAD_ARGUMENTS);
-            // Chunk size of zero length
-            UTEST_ASSERT(ss.stretch(256, 0, crossfades[i], 0.5f, TEST_SRATE/2, TEST_SRATE/2 + 1024) == STATUS_BAD_ARGUMENTS);
 
             // Testing simple stretch
             printf("Testing simple stretch of 0 sample region for %s fade...\n", names[i]);
@@ -188,6 +186,15 @@ UTEST_BEGIN("dspu.sampling", sample)
             UTEST_ASSERT(ss.stretch(6200, 1024, crossfades[i], 1.0f, TEST_SRATE/2, TEST_SRATE/2 + 2) == STATUS_OK);
             UTEST_ASSERT(ss.length() == s.length() + 6200 - 2);
             UTEST_ASSERT(path.fmt("%s/%s-stretch-short-region-%s.wav", tempdir(), full_name(), names[i]) > 0);
+            printf("Saving sample to '%s'\n", path.as_utf8());
+            UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
+
+            // Test automatic chunk selection when stretching
+            printf("Testing automatic chunk selection for %s fade...\n", names[i]);
+            UTEST_ASSERT(ss.copy(s) == STATUS_OK);
+            UTEST_ASSERT(ss.stretch(16300, 0, crossfades[i], 0.25f, TEST_SRATE/2, TEST_SRATE/2 + 2048) == STATUS_OK);
+            UTEST_ASSERT(ss.length() == s.length() + 16300 - 2048);
+            UTEST_ASSERT(path.fmt("%s/%s-stretch-auto-chunk-size-%s.wav", tempdir(), full_name(), names[i]) > 0);
             printf("Saving sample to '%s'\n", path.as_utf8());
             UTEST_ASSERT(ss.save(&path) == ssize_t(ss.length()));
         }

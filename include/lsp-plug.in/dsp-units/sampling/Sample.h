@@ -200,7 +200,7 @@ namespace lsp
                 /** Stretch part of the sample
                  *
                  * @param new_length the new length of the stretched region in samples
-                 * @param chunk_size chunk size multiplier
+                 * @param chunk_size chunk size in samples, 0 means automatic chunk size selection
                  * @param fade_type the crossfade type between chunks
                  * @param fade_size the relative size of the crossfade region between two chunks in range of 0 to 1
                  * @param start the number of the sample associated with the start of the range to be stretched
@@ -215,7 +215,7 @@ namespace lsp
                 /** Stretch the whole sample
                  *
                  * @param new_length the new length of the sample in samples
-                 * @param chunk_size chunk size multiplier
+                 * @param chunk_size chunk size in samples, 0 means automatic chunk size selection
                  * @param fade_type the crossfade type between chunks
                  * @param fade_size the relative size of the crossfade region between two chunks in range of 0 to 1
                  * @return true if data was successfuly stretched
