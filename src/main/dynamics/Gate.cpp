@@ -48,8 +48,6 @@ namespace lsp
                 c->fZone        = 1.0f;
                 c->fZS          = 0.0f;
                 c->fZE          = 0.0f;
-                c->fLogZS       = 0.0f;
-                c->fLogZE       = 0.0f;
                 c->vHermite[0]  = 0.0f;
                 c->vHermite[1]  = 0.0f;
                 c->vHermite[2]  = 0.0f;
@@ -86,62 +84,97 @@ namespace lsp
 
                 c->fZS          = c->fThreshold * c->fZone;
                 c->fZE          = c->fThreshold;
-                c->fLogZS       = logf(c->fZS);
-                c->fLogZE       = logf(c->fZE);
+                c->fZSGain      = (fReduction <= 1.0f) ? fReduction : 1.0f;
+                c->fZEGain      = (fReduction <= 1.0f) ? 1.0f : 1.0f / fReduction;
 
                 interpolation::hermite_cubic(
-                        c->vHermite,
-                        c->fLogZS, c->fLogZS + logf(fReduction), 1.0f,
-                        c->fLogZE, c->fLogZE, 1.0f
-                    );
+                    c->vHermite,
+                    logf(c->fZS), logf(c->fZSGain), 0.0f,
+                    logf(c->fZE), logf(c->fZEGain), 0.0f);
             }
 
             // Reset update flag
             bUpdate         = false;
         }
 
-        void Gate::curve(float *out, const float *in, size_t dots, bool hyst)
+        void Gate::curve(float *out, const float *in, size_t dots, bool hyst) const
         {
-            curve_t *c      = &sCurves[(hyst) ? 1 : 0];
+            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
 
             for (size_t i=0; i<dots; ++i)
             {
-                float x     = *(in++);
-                if (x < 0.0f)
-                    x       = -x;
-
-                if (x > c->fZS)
-                {
-                    if (x < c->fZE)
-                    {
-                        float lx    = logf(x);
-                        x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
-                    }
-                    *out    = x;
-                }
+                float x     = lsp_abs(in[i]);
+                float lx    = logf(lsp_limit(x, c->fZS, c->fZE));
+                if (x <= c->fZS)
+                    x          *= c->fZSGain;
+                else if (x >= c->fZE)
+                    x          *= c->fZEGain;
                 else
-                    *out    = fReduction * x;
-                out++;
+                    x          *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+                out[i]      = x;
             }
         }
 
-        float Gate::curve(float in, bool hyst)
+        float Gate::curve(float in, bool hyst) const
         {
-            curve_t *c      = &sCurves[(hyst) ? 1 : 0];
-            if (in < 0.0f)
-                in      = -in;
+            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
+            float x             = lsp_abs(in);
+            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
+            if (x <= c->fZS)
+                x          *= c->fZSGain;
+            else if (x >= c->fZE)
+                x          *= c->fZEGain;
+            else
+                x          *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            return x;
+        }
 
-            if (in > c->fZS)
+        void Gate::amplification(float *out, const float *in, size_t dots, bool hyst) const
+        {
+            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
+
+            for (size_t i=0; i<dots; ++i)
             {
-                if (in < c->fZE)
-                {
-                    float lx    = logf(in);
-                    in      = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
-                }
-                return in;
+                float x     = lsp_abs(in[i]);
+                float lx    = logf(lsp_limit(x, c->fZS, c->fZE));
+                if (x <= c->fZS)
+                    x           = c->fZSGain;
+                else if (x >= c->fZE)
+                    x           = c->fZEGain;
+                else
+                    x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+                out[i]      = x;
             }
+        }
 
-            return fReduction * in;
+        float Gate::amplification(float in, bool hyst) const
+        {
+            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
+            float x             = lsp_abs(in);
+            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
+            if (x <= c->fZS)
+                x           = c->fZSGain;
+            else if (x >= c->fZE)
+                x           = c->fZEGain;
+            else
+                x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+
+            return x;
+        }
+
+        float Gate::amplification(float in) const
+        {
+            const curve_t *c    = &sCurves[nCurve];
+            float x             = lsp_abs(in);
+            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
+            if (x <= c->fZS)
+                x           = c->fZSGain;
+            else if (x >= c->fZE)
+                x           = c->fZEGain;
+            else
+                x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+
+            return x;
         }
 
         void Gate::process(float *out, float *env, const float *in, size_t samples)
@@ -149,120 +182,41 @@ namespace lsp
             // Calculate envelope of gate
             for (size_t i=0; i<samples; ++i)
             {
-                float s         = *(in++);
-
-                fEnvelope       += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-
-                // Update result
-                if (env != NULL)
-                    env[i]          = fEnvelope;
-                out[i]          = amplification(fEnvelope);
+                float s         = in[i];
 
                 // Change state
                 curve_t *c      = &sCurves[nCurve];
-                if (fEnvelope > c->fZS)
-                {
-                    if (fEnvelope < c->fZE)
-                    {
-                        float lx    = logf(fEnvelope);
-                        out[i]      = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2] - 1.0f)*lx + c->vHermite[3]);
-                    }
-                    else
-                    {
-                        nCurve      = 1;
-                        out[i]      = 1.0f;
-                    }
-                }
-                else
-                {
-                    nCurve      = 0;
-                    out[i]      = fReduction;
-                }
+                fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+                if (fEnvelope < c->fZS)
+                    nCurve          = 0;
+                else if (fEnvelope > c->fZE)
+                    nCurve          = 1;
+
+                // Update result
+                c               = &sCurves[nCurve];
+                if (env != NULL)
+                    env[i]          = fEnvelope;
+                out[i]          = amplification(fEnvelope);
             }
         }
 
         float Gate::process(float *env, float s)
         {
+            // Change state
             curve_t *c      = &sCurves[nCurve];
-
             fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-            s               = amplification(fEnvelope);
-
-            if (fEnvelope > c->fZE)
-                nCurve          = 1;
-            else if (fEnvelope < c->fZS)
+            if (fEnvelope < c->fZS)
                 nCurve          = 0;
+            else if (fEnvelope > c->fZE)
+                nCurve          = 1;
 
+            // Compute result
+            c               = &sCurves[nCurve];
+            s               = amplification(fEnvelope);
             if (env != NULL)
                 *env = fEnvelope;
 
             return s;
-        }
-
-        void Gate::amplification(float *out, const float *in, size_t dots, bool hyst)
-        {
-            curve_t *c      = &sCurves[(hyst) ? 1 : 0];
-
-            for (size_t i=0; i<dots; ++i)
-            {
-                float x     = *(in++);
-                if (x < 0.0f)
-                    x       = -x;
-
-                if (x > c->fZS)
-                {
-                    if (x < c->fZE)
-                    {
-                        float lx    = logf(x);
-                        *out        = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2] - 1.0f)*lx + c->vHermite[3]);
-                    }
-                    else
-                        *out    = 1.0f;
-                }
-                else
-                    *out    = fReduction;
-                out++;
-            }
-        }
-
-        float Gate::amplification(float in)
-        {
-            curve_t *c      = &sCurves[nCurve];
-
-            if (in < 0.0f)
-                in          = -in;
-
-            if (in > c->fZS)
-            {
-                if (in < c->fZE)
-                {
-                    float lx    = logf(in);
-                    return expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2] - 1.0f)*lx + c->vHermite[3]);
-                }
-                return 1.0f;
-            }
-
-            return fReduction;
-        }
-
-        float Gate::amplification(float in, bool hyst)
-        {
-            curve_t *c      = &sCurves[(hyst) ? 1 : 0];
-
-            if (in < 0.0f)
-                in          = -in;
-
-            if (in > c->fZS)
-            {
-                if (in < c->fZE)
-                {
-                    float lx    = logf(in);
-                    return expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2] - 1.0f)*lx + c->vHermite[3]);
-                }
-                return 1.0f;
-            }
-
-            return fReduction;
         }
 
         void Gate::dump(IStateDumper *v) const
@@ -277,8 +231,8 @@ namespace lsp
                     v->write("fZone", c->fZone);
                     v->write("fZS", c->fZS);
                     v->write("fZE", c->fZE);
-                    v->write("fLogZS", c->fLogZS);
-                    v->write("fLogZE", c->fLogZE);
+                    v->write("fZSGain", c->fZSGain);
+                    v->write("fZEGain", c->fZEGain);
                     v->writev("vHermite", c->vHermite, 4);
                 }
                 v->end_object();

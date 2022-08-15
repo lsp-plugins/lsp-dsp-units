@@ -6,6 +6,7 @@
 * Fixed unintialized values issue.
 * Updated build scripts.
 * Added Sample::stretch() method for stretching samples.
+* Updated dspu::Gate module, now it allows to properly use the reverse gate option.
 
 === 1.0.3 ===
 * Fixed memory leak in dspu::LatencyDetector module.
