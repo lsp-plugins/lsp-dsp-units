@@ -64,11 +64,16 @@ namespace lsp
                 float       fLogTH;         // Logarithmic threshold
                 float       fKS;            // Knee start
                 float       fKE;            // Knee end
+                float       vBefore[2];     // Before knee
+                float       vAfter[2];      // After knee
                 float       vHermite[3];    // Knee hermite interpolation
 
                 float       fBLogTH;        // Logarithmic boost threshold
                 float       fBKS;           // Boost knee start
                 float       fBKE;           // Boost knee end
+                float       fBGain;         // Gain value
+                float       vBBefore[2];    // Before knee
+                float       vBAfter[2];     // After knee
                 float       vBHermite[3];   // Boost hermite interpolation
                 float       fBoost;         // Overall gain boost
 

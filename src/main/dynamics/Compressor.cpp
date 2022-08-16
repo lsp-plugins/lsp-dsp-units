@@ -19,13 +19,13 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/const.h>
-#include <lsp-plug.in/dsp-units/units.h>
-#include <lsp-plug.in/dsp-units/misc/interpolation.h>
-
 #include <lsp-plug.in/dsp-units/dynamics/Compressor.h>
+#include <lsp-plug.in/dsp-units/misc/interpolation.h>
+#include <lsp-plug.in/dsp-units/units.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 #define RATIO_PREC              1e-5f
 
@@ -126,22 +126,84 @@ namespace lsp
                     // fLogTH    = log(fAttachThresh)
                     // log_boost = log(fBoost)
                     // ratio
-                    float log_boost     = logf(fBoostThresh) * fRatio;
-                    float k_ratio       = 1.0f - fRatio;
-                    k_ratio             = lsp_min(k_ratio, -RATIO_PREC * log_boost);
-                    fBLogTH             = fLogTH + log_boost / k_ratio;
-                    float bthresh       = expf(fBLogTH);
+                    float r         = lsp_max(fRatio, 1.0f + RATIO_PREC);
+                    float rr        = 1.0f/r;
+                    float b         = log(fBoostThresh);
 
-                    fBKS                = bthresh * fKnee;         // Boost knee start
-                    fBKE                = bthresh / fKnee;         // Boost knee end
+                    if (fBoostThresh >= 1.0f)
+                    {
+                        float th1       = log(fAttackThresh);
+                        float th2       = th1 + b/(rr - 1.0f);
 
-                    float boost         = (fXRatio-1.0f)*(fBLogTH - fLogTH);
-                    fBoost              = expf(boost);
-                    float log_bks       = logf(fBKS);
-                    float log_bke       = logf(fBKE);
+                        vBefore[0]      = 0.0f;
+                        vBefore[1]      = 0.0f;
+                        vAfter[0]       = 1.0f - rr;
+                        vAfter[1]       = th1 * (rr - 1.0f);
 
-                    interpolation::hermite_quadratic(vHermite, log_ks, log_ks, 1.0f, log_ke, 2.0f - fXRatio);
-                    interpolation::hermite_quadratic(vBHermite, log_bks, log_bks, 1.0f, log_bke, fXRatio);
+                        vBBefore[0]     = 0.0f;
+                        vBBefore[1]     = b;
+                        vBAfter[0]      = rr - 1.0f;
+                        vBAfter[1]      = (1.0f - rr) * th2 + b;
+
+                        float log_s1    = th1 + logf(fKnee);
+                        float log_e1    = th1 - logf(fKnee);
+                        float log_s2    = th2 + logf(fKnee);
+                        float log_e2    = th2 - logf(fKnee);
+
+                        fKS             = expf(th1) * fKnee;
+                        fKE             = expf(th1) / fKnee;
+                        fBKS            = expf(th2) * fKnee;
+                        fBKE            = expf(th2) / fKnee;
+
+                        lsp_trace("r = %f, b = %f", r, gain_to_db(expf(b)));
+                        lsp_trace("th1 = %f, th2 = %f", gain_to_db(expf(th1)), gain_to_db(expf(th2)));
+
+                        interpolation::hermite_quadratic(
+                            vHermite,
+                            log_s1, 0.0f, 0.0f,
+                            log_e1, vAfter[0]);
+                        interpolation::hermite_quadratic(
+                            vBHermite,
+                            log_s2, b, 0.0f,
+                            log_e2, vBAfter[0]);
+                    }
+                    else
+                    {
+                        float th2       = log(fAttackThresh);
+                        float th1       = th2 + b/(rr - 1.0f);
+
+                        vBefore[0]      = 0.0f;
+                        vBefore[1]      = 0.0f;
+                        vAfter[0]       = 1.0f - rr;
+                        vAfter[1]       = th1 * (rr - 1.0f);
+
+                        vBBefore[0]     = 0.0f;
+                        vBBefore[1]     = 0.0f;
+                        vBAfter[0]      = rr - 1.0f;
+                        vBAfter[1]      = (1.0f - rr) * th1 + b;
+
+                        float log_s1    = th1 + logf(fKnee);
+                        float log_e1    = th1 - logf(fKnee);
+                        float log_s2    = th2 + logf(fKnee);
+                        float log_e2    = th2 - logf(fKnee);
+
+                        fKS             = expf(th1) * fKnee;
+                        fKE             = expf(th1) / fKnee;
+                        fBKS            = expf(th2) * fKnee;
+                        fBKE            = expf(th2) / fKnee;
+
+                        lsp_trace("r = %f, b = %f", r, gain_to_db(expf(b)));
+                        lsp_trace("th1 = %f, th2 = %f", gain_to_db(expf(th1)), gain_to_db(expf(th2)));
+
+                        interpolation::hermite_quadratic(
+                            vHermite,
+                            log_s1, 0.0f, 0.0f,
+                            log_e1, vAfter[0]);
+                        interpolation::hermite_quadratic(
+                            vBHermite,
+                            log_s2, 0.0f, 0.0f,
+                            log_e2, vBAfter[0]);
+                    }
 
                     break;
                 }
@@ -217,22 +279,15 @@ namespace lsp
                 {
                     float x     = fabs(in[i]);
                     float lx    = logf(x);
-                    float g1    = 1.0f, g2 = 1.0f;
-                    if (x > fBKS)
-                    {
-                        g1  = (x >= fBKE) ?
-                            expf((fXRatio - 1.0f)*(lx-fBLogTH)) :
-                            expf((vBHermite[0]*lx + vBHermite[1] - 1.0f)*lx + vBHermite[2]);
-                    }
 
-                    if (x > fKS)
-                    {
-                        g2  = (x >= fKE) ?
-                            expf((1.0f - fXRatio)*(lx-fLogTH)) :
-                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
-                    }
+                    float g1    = (x <= fKS) ? vBefore[0] * lx + vBefore[1] :
+                                  (x >= fKE) ? lx * vAfter[0] + vAfter[1] :
+                                  (vHermite[0]*lx + vHermite[1])*lx + vHermite[2];
+                    float g2    = (x <= fBKS) ? vBBefore[0] * lx + vBBefore[1] :
+                                  (x >= fBKE) ? lx * vBAfter[0] + vBAfter[1] :
+                                  (vBHermite[0]*lx + vBHermite[1])*lx + vBHermite[2];
 
-                    out[i]      = x * g1 * g2 * fBoost;
+                    out[i]      =  expf(g1 + g2) * x;
                 }
             }
         }
@@ -409,6 +464,7 @@ namespace lsp
 
         void Compressor::set_knee(float knee)
         {
+            knee        = lsp_limit(knee, 0.0f, 1.0f);
             if (knee == fKnee)
                 return;
             fKnee       = knee;
