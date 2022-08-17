@@ -88,8 +88,8 @@ namespace lsp
                 return;
 
             // Update settings if necessary
-            fTauAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
-            fTauRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
+            fTauAttack          = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
+            fTauRelease         = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
 
             // Mode-dependent configuration
             switch (nMode)
@@ -97,7 +97,6 @@ namespace lsp
                 case CM_UPWARD:
                 {
                     float rr            = 1.0f / fRatio;
-
                     float th1           = logf(fAttackThresh);
                     float th2           = logf(fBoostThresh);
                     float b             = (rr - 1.0f) * (th2 - th1);
@@ -112,7 +111,7 @@ namespace lsp
                     vKnees[1].fKE       = fBoostThresh / fKnee;
                     vKnees[1].fGain     = expf(b);
                     vKnees[1].vTilt[0]  = rr - 1.0f;
-                    vKnees[1].vTilt[1]  = (1.0f - rr) * th2 + b;
+                    vKnees[1].vTilt[1]  = (1.0f - rr) * th1;
 
                     interpolation::hermite_quadratic(
                         vKnees[0].vKnee,
@@ -128,25 +127,25 @@ namespace lsp
 
                 case CM_BOOSTING:
                 {
-                    float rr        = 1.0f / lsp_max(fRatio, 1.0f + RATIO_PREC);
-                    float b         = logf(fBoostThresh);
+                    float rr            = 1.0f / lsp_max(fRatio, 1.0f + RATIO_PREC);
+                    float b             = logf(fBoostThresh);
+                    float th1           = logf(fAttackThresh);
+                    float th2           = th1 + b/(rr - 1.0f);
+                    float eth2          = expf(th2);
 
                     if (fBoostThresh >= 1.0f)
                     {
-                        float th1           = logf(fAttackThresh);
-                        float th2           = th1 + b/(rr - 1.0f);
-
                         vKnees[0].fKS       = fAttackThresh * fKnee;
                         vKnees[0].fKE       = fAttackThresh / fKnee;
                         vKnees[0].fGain     = 1.0f;
                         vKnees[0].vTilt[0]  = 1.0f - rr;
                         vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
 
-                        vKnees[1].fKS       = expf(th2) * fKnee;
-                        vKnees[1].fKE       = expf(th2) / fKnee;
+                        vKnees[1].fKS       = eth2 * fKnee;
+                        vKnees[1].fKE       = eth2 / fKnee;
                         vKnees[1].fGain     = fBoostThresh;
                         vKnees[1].vTilt[0]  = rr - 1.0f;
-                        vKnees[1].vTilt[1]  = (1.0f - rr) * th2 + b;
+                        vKnees[1].vTilt[1]  = (1.0f - rr) * th1;
 
                         interpolation::hermite_quadratic(
                             vKnees[0].vKnee,
@@ -159,20 +158,17 @@ namespace lsp
                     }
                     else
                     {
-                        float th2           = logf(fAttackThresh);
-                        float th1           = th2 + b/(rr - 1.0f);
-
-                        vKnees[0].fKS       = expf(th1) * fKnee;
-                        vKnees[0].fKE       = expf(th1) / fKnee;
+                        vKnees[0].fKS       = fAttackThresh * fKnee;
+                        vKnees[0].fKE       = fAttackThresh / fKnee;
                         vKnees[0].fGain     = 1.0f;
-                        vKnees[0].vTilt[0]  = 1.0f - rr;
-                        vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
+                        vKnees[0].vTilt[0]  = rr - 1.0f;
+                        vKnees[0].vTilt[1]  = (1.0f - rr) * th1;
 
-                        vKnees[1].fKS       = fAttackThresh * fKnee;
-                        vKnees[1].fKE       = fAttackThresh / fKnee;
+                        vKnees[1].fKS       = eth2 * fKnee;
+                        vKnees[1].fKE       = eth2 / fKnee;
                         vKnees[1].fGain     = 1.0f;
-                        vKnees[1].vTilt[0]  = rr - 1.0f;
-                        vKnees[1].vTilt[1]  = (1.0f - rr) * th1 + b;
+                        vKnees[1].vTilt[0]  = 1.0f - rr;
+                        vKnees[1].vTilt[1]  = (rr - 1.0f) * th2;
 
                         interpolation::hermite_quadratic(
                             vKnees[0].vKnee,
@@ -220,6 +216,8 @@ namespace lsp
 
         void Compressor::process(float *out, float *env, const float *in, size_t samples)
         {
+            update_settings();
+
             // Calculate envelope of compressor
             for (size_t i=0; i<samples; ++i)
             {
@@ -238,11 +236,26 @@ namespace lsp
                 dsp::copy(env, out, samples);
 
             // Now calculate compressor's curve
-            reduction(out, out, samples);
+            for (size_t i=0; i<samples; ++i)
+            {
+                float x     = fabs(out[i]);
+                float lx    = logf(x);
+
+                float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
+                              (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
+                              expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
+                float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
+                              (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
+                              expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
+
+                out[i]      = g1 * g2;
+            }
         }
 
         float Compressor::process(float *env, float s)
         {
+            update_settings();
+
             if (fEnvelope > fReleaseThresh)
                 fEnvelope       += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
             else
@@ -251,11 +264,24 @@ namespace lsp
             if (env != NULL)
                 *env    = fEnvelope;
 
-            return reduction(fEnvelope);
+            float x     = fabs(fEnvelope);
+            float lx    = logf(x);
+
+            float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
+                          (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
+                          expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
+            float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
+                          (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
+                          expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
+
+            x           = g1 * g2;
+            return x;
         }
 
         void Compressor::curve(float *out, const float *in, size_t dots)
         {
+            update_settings();
+
             for (size_t i=0; i<dots; ++i)
             {
                 float x     = fabs(in[i]);
@@ -274,6 +300,8 @@ namespace lsp
 
         float Compressor::curve(float in)
         {
+            update_settings();
+
             float x     = fabs(in);
             float lx    = logf(x);
 
@@ -290,6 +318,8 @@ namespace lsp
 
         void Compressor::reduction(float *out, const float *in, size_t dots)
         {
+            update_settings();
+
             for (size_t i=0; i<dots; ++i)
             {
                 float x     = fabs(in[i]);
@@ -308,6 +338,8 @@ namespace lsp
 
         float Compressor::reduction(float in)
         {
+            update_settings();
+
             float x     = fabs(in);
             float lx    = logf(x);
 
