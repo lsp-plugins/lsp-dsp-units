@@ -58,22 +58,19 @@ namespace lsp
             // Pre-calculated parameters
             fTauAttack      = 0.0f;
             fTauRelease     = 0.0f;
-            fXRatio         = 0.0f;
 
-            fLogTH          = 0.0f;
-            fKS             = 0.0f;
-            fKE             = 0.0f;
-            vHermite[0]     = 0.0f;
-            vHermite[1]     = 0.0f;
-            vHermite[2]     = 0.0f;
-
-            fBLogTH         = 0.0f;
-            vBHermite[0]    = 0.0f;
-            vBHermite[1]    = 0.0f;
-            vBHermite[2]    = 0.0f;
-            fBKS            = 0.0f;
-            fBKE            = 0.0f;
-            fBoost          = 1.0f;
+            for (size_t i=0; i<2; ++i)
+            {
+                knee_t *k       = &vKnees[i];
+                k->fKS          = 0.0f;
+                k->fKE          = 0.0f;
+                k->fGain        = 1.0f;
+                k->vKnee[0]     = 0.0f;
+                k->vKnee[1]     = 0.0f;
+                k->vKnee[2]     = 0.0f;
+                k->vTilt[0]     = 0.0f;
+                k->vTilt[1]     = 0.0f;
+            }
 
             // Additional parameters
             nSampleRate     = 0;
@@ -87,147 +84,104 @@ namespace lsp
 
         void Compressor::update_settings()
         {
+            if (!bUpdate)
+                return;
+
             // Update settings if necessary
             fTauAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
             fTauRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
-
-            // Configure according to the mode
-            float ratio     = 1.0f / fRatio;
-            fKS             = fAttackThresh * fKnee;        // Knee start
-            fKE             = fAttackThresh / fKnee;        // Knee end
-            fXRatio         = ratio;
-
-            fLogTH          = logf(fAttackThresh);
 
             // Mode-dependent configuration
             switch (nMode)
             {
                 case CM_UPWARD:
                 {
-                    float r         = lsp_max(fRatio, 1.0f + RATIO_PREC);
-                    float rr        = 1.0f/r;
+                    float rr            = 1.0f / fRatio;
 
-                    float th1       = logf(fAttackThresh);
-                    float th2       = logf(fBoostThresh);
-                    float b         = (rr - 1.0) * (th2 - th1);
+                    float th1           = logf(fAttackThresh);
+                    float th2           = logf(fBoostThresh);
+                    float b             = (rr - 1.0f) * (th2 - th1);
 
-                    vBefore[0]      = 0.0f;
-                    vBefore[1]      = 0.0f;
-                    fPreGain        = 1.0f;
-                    vAfter[0]       = 1.0f - rr;
-                    vAfter[1]       = (rr - 1.0f) * th1;
+                    vKnees[0].fKS       = fAttackThresh * fKnee;
+                    vKnees[0].fKE       = fAttackThresh / fKnee;
+                    vKnees[0].fGain     = 1.0f;
+                    vKnees[0].vTilt[0]  = 1.0f - rr;
+                    vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
 
-                    vBBefore[0]     = 0.0f;
-                    vBBefore[1]     = b;
-                    fBPreGain       = expf(b);
-                    vBAfter[0]      = rr - 1.0f;
-                    vBAfter[1]      = (1.0f - rr) * th2 + b;
-
-                    float log_s1    = th1 + logf(fKnee);
-                    float log_e1    = th1 - logf(fKnee);
-                    float log_s2    = th2 + logf(fKnee);
-                    float log_e2    = th2 - logf(fKnee);
-
-                    fKS             = expf(th1) * fKnee;
-                    fKE             = expf(th1) / fKnee;
-                    fBKS            = expf(th2) * fKnee;
-                    fBKE            = expf(th2) / fKnee;
+                    vKnees[1].fKS       = fBoostThresh * fKnee;
+                    vKnees[1].fKE       = fBoostThresh / fKnee;
+                    vKnees[1].fGain     = expf(b);
+                    vKnees[1].vTilt[0]  = rr - 1.0f;
+                    vKnees[1].vTilt[1]  = (1.0f - rr) * th2 + b;
 
                     interpolation::hermite_quadratic(
-                        vHermite,
-                        log_s1, 0.0f, 0.0f,
-                        log_e1, vAfter[0]);
+                        vKnees[0].vKnee,
+                        logf(vKnees[0].fKS), 0.0f, 0.0f,
+                        logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
                     interpolation::hermite_quadratic(
-                        vBHermite,
-                        log_s2, b, 0.0f,
-                        log_e2, vBAfter[0]);
+                        vKnees[1].vKnee,
+                        logf(vKnees[1].fKS), b, 0.0f,
+                        logf(vKnees[1].fKE), vKnees[1].vTilt[0]);
 
                     break;
                 }
 
                 case CM_BOOSTING:
                 {
-                    float r         = lsp_max(fRatio, 1.0f + RATIO_PREC);
-                    float rr        = 1.0f/r;
+                    float rr        = 1.0f / lsp_max(fRatio, 1.0f + RATIO_PREC);
                     float b         = logf(fBoostThresh);
 
                     if (fBoostThresh >= 1.0f)
                     {
-                        float th1       = logf(fAttackThresh);
-                        float th2       = th1 + b/(rr - 1.0f);
+                        float th1           = logf(fAttackThresh);
+                        float th2           = th1 + b/(rr - 1.0f);
 
-                        vBefore[0]      = 0.0f;
-                        vBefore[1]      = 0.0f;
-                        fPreGain        = 1.0f;
-                        vAfter[0]       = 1.0f - rr;
-                        vAfter[1]       = (rr - 1.0f) * th1;
+                        vKnees[0].fKS       = fAttackThresh * fKnee;
+                        vKnees[0].fKE       = fAttackThresh / fKnee;
+                        vKnees[0].fGain     = 1.0f;
+                        vKnees[0].vTilt[0]  = 1.0f - rr;
+                        vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
 
-                        vBBefore[0]     = 0.0f;
-                        vBBefore[1]     = b;
-                        fBPreGain       = expf(b);
-                        vBAfter[0]      = rr - 1.0f;
-                        vBAfter[1]      = (1.0f - rr) * th2 + b;
-
-                        float log_s1    = th1 + logf(fKnee);
-                        float log_e1    = th1 - logf(fKnee);
-                        float log_s2    = th2 + logf(fKnee);
-                        float log_e2    = th2 - logf(fKnee);
-
-                        fKS             = expf(th1) * fKnee;
-                        fKE             = expf(th1) / fKnee;
-                        fBKS            = expf(th2) * fKnee;
-                        fBKE            = expf(th2) / fKnee;
-
-                        lsp_trace("r = %f, b = %f", r, gain_to_db(expf(b)));
-                        lsp_trace("th1 = %f, th2 = %f", gain_to_db(expf(th1)), gain_to_db(expf(th2)));
+                        vKnees[1].fKS       = expf(th2) * fKnee;
+                        vKnees[1].fKE       = expf(th2) / fKnee;
+                        vKnees[1].fGain     = fBoostThresh;
+                        vKnees[1].vTilt[0]  = rr - 1.0f;
+                        vKnees[1].vTilt[1]  = (1.0f - rr) * th2 + b;
 
                         interpolation::hermite_quadratic(
-                            vHermite,
-                            log_s1, 0.0f, 0.0f,
-                            log_e1, vAfter[0]);
+                            vKnees[0].vKnee,
+                            logf(vKnees[0].fKS), 0.0f, 0.0f,
+                            logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
                         interpolation::hermite_quadratic(
-                            vBHermite,
-                            log_s2, b, 0.0f,
-                            log_e2, vBAfter[0]);
+                            vKnees[1].vKnee,
+                            logf(vKnees[1].fKS), b, 0.0f,
+                            logf(vKnees[1].fKE), vKnees[1].vTilt[0]);
                     }
                     else
                     {
-                        float th2       = logf(fAttackThresh);
-                        float th1       = th2 + b/(rr - 1.0f);
+                        float th2           = logf(fAttackThresh);
+                        float th1           = th2 + b/(rr - 1.0f);
 
-                        vBefore[0]      = 0.0f;
-                        vBefore[1]      = 0.0f;
-                        fPreGain        = 1.0f;
-                        vAfter[0]       = 1.0f - rr;
-                        vAfter[1]       = (rr - 1.0f) * th1;
+                        vKnees[0].fKS       = expf(th1) * fKnee;
+                        vKnees[0].fKE       = expf(th1) / fKnee;
+                        vKnees[0].fGain     = 1.0f;
+                        vKnees[0].vTilt[0]  = 1.0f - rr;
+                        vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
 
-                        vBBefore[0]     = 0.0f;
-                        vBBefore[1]     = 0.0f;
-                        fBPreGain       = 1.0f;
-                        vBAfter[0]      = rr - 1.0f;
-                        vBAfter[1]      = (1.0f - rr) * th1 + b;
-
-                        float log_s1    = th1 + logf(fKnee);
-                        float log_e1    = th1 - logf(fKnee);
-                        float log_s2    = th2 + logf(fKnee);
-                        float log_e2    = th2 - logf(fKnee);
-
-                        fKS             = expf(th1) * fKnee;
-                        fKE             = expf(th1) / fKnee;
-                        fBKS            = expf(th2) * fKnee;
-                        fBKE            = expf(th2) / fKnee;
-
-                        lsp_trace("r = %f, b = %f", r, gain_to_db(expf(b)));
-                        lsp_trace("th1 = %f, th2 = %f", gain_to_db(expf(th1)), gain_to_db(expf(th2)));
+                        vKnees[1].fKS       = fAttackThresh * fKnee;
+                        vKnees[1].fKE       = fAttackThresh / fKnee;
+                        vKnees[1].fGain     = 1.0f;
+                        vKnees[1].vTilt[0]  = rr - 1.0f;
+                        vKnees[1].vTilt[1]  = (1.0f - rr) * th1 + b;
 
                         interpolation::hermite_quadratic(
-                            vHermite,
-                            log_s1, 0.0f, 0.0f,
-                            log_e1, vAfter[0]);
+                            vKnees[0].vKnee,
+                            logf(vKnees[0].fKS), 0.0f, 0.0f,
+                            logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
                         interpolation::hermite_quadratic(
-                            vBHermite,
-                            log_s2, 0.0f, 0.0f,
-                            log_e2, vBAfter[0]);
+                            vKnees[1].vKnee,
+                            logf(vKnees[1].fKS), 0.0f, 0.0f,
+                            logf(vKnees[1].fKE), vKnees[1].vTilt[0]);
                     }
 
                     break;
@@ -236,34 +190,26 @@ namespace lsp
                 case CM_DOWNWARD:
                 default:
                 {
-                    float r         = fRatio;
-                    float rr        = 1.0f/r;
-                    float th1       = logf(fAttackThresh);
+                    float rr            = 1.0f / fRatio;
+                    float th1           = logf(fAttackThresh);
 
-                    vBefore[0]      = 0.0f;
-                    vBefore[1]      = 0.0f;
-                    fPreGain        = 1.0f;
-                    vAfter[0]       = rr - 1.0f;
-                    vAfter[1]       = (1.0f - rr) * th1;
+                    vKnees[0].fKS       = fAttackThresh * fKnee;
+                    vKnees[0].fKE       = fAttackThresh / fKnee;
+                    vKnees[0].fGain     = 1.0f;
+                    vKnees[0].vTilt[0]  = rr - 1.0f;
+                    vKnees[0].vTilt[1]  = (1.0f - rr) * th1;
 
-                    vBBefore[0]     = 0.0f;
-                    vBBefore[1]     = 0.0f;
-                    fBPreGain       = 1.0f;
-                    vBAfter[0]      = 0.0f;
-                    vBAfter[1]      = 0.0f;
-
-                    float log_s1    = th1 + logf(fKnee);
-                    float log_e1    = th1 - logf(fKnee);
-
-                    fKS             = expf(th1) * fKnee;
-                    fKE             = expf(th1) / fKnee;
-                    fBKS            = expf(th1);
-                    fBKE            = expf(th1);
+                    vKnees[1].fKS       = 0.0f;
+                    vKnees[1].fKE       = 0.0f;
+                    vKnees[1].fGain     = 1.0f;
+                    vKnees[1].vTilt[0]  = 0.0f;
+                    vKnees[1].vTilt[1]  = 0.0f;
 
                     interpolation::hermite_quadratic(
-                        vHermite,
-                        log_s1, 0.0f, 0.0f,
-                        log_e1, vAfter[0]);
+                        vKnees[0].vKnee,
+                        logf(vKnees[0].fKS), 0.0f, 0.0f,
+                        logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
+
                     break;
                 }
             }
@@ -315,12 +261,12 @@ namespace lsp
                 float x     = fabs(in[i]);
                 float lx    = logf(x);
 
-                float g1    = (x <= fKS) ? fPreGain :
-                              (x >= fKE) ? expf(lx * vAfter[0] + vAfter[1]) :
-                              expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
-                float g2    = (x <= fBKS) ? fBPreGain :
-                              (x >= fBKE) ? expf(lx * vBAfter[0] + vBAfter[1]) :
-                              expf((vBHermite[0]*lx + vBHermite[1])*lx + vBHermite[2]);
+                float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
+                              (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
+                              expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
+                float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
+                              (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
+                              expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
 
                 out[i]      = g1 * g2 * x;
             }
@@ -331,12 +277,12 @@ namespace lsp
             float x     = fabs(in);
             float lx    = logf(x);
 
-            float g1    = (x <= fKS) ? fPreGain :
-                          (x >= fKE) ? expf(lx * vAfter[0] + vAfter[1]) :
-                          expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
-            float g2    = (x <= fBKS) ? fBPreGain :
-                          (x >= fBKE) ? expf(lx * vBAfter[0] + vBAfter[1]) :
-                          expf((vBHermite[0]*lx + vBHermite[1])*lx + vBHermite[2]);
+            float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
+                          (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
+                          expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
+            float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
+                          (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
+                          expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
 
             x           = g1 * g2 * x;
             return x;
@@ -347,14 +293,14 @@ namespace lsp
             for (size_t i=0; i<dots; ++i)
             {
                 float x     = fabs(in[i]);
-                float lx    = logf(lsp_max(x, GAIN_AMP_M_120_DB));
+                float lx    = logf(x);
 
-                float g1    = (x <= fKS) ? fPreGain :
-                              (x >= fKE) ? expf(lx * vAfter[0] + vAfter[1]) :
-                              expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
-                float g2    = (x <= fBKS) ? fBPreGain :
-                              (x >= fBKE) ? expf(lx * vBAfter[0] + vBAfter[1]) :
-                              expf((vBHermite[0]*lx + vBHermite[1])*lx + vBHermite[2]);
+                float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
+                              (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
+                              expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
+                float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
+                              (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
+                              expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
 
                 out[i]      = g1 * g2;
             }
@@ -363,14 +309,14 @@ namespace lsp
         float Compressor::reduction(float in)
         {
             float x     = fabs(in);
-            float lx    = logf(lsp_max(x, GAIN_AMP_M_120_DB));
+            float lx    = logf(x);
 
-            float g1    = (x <= fKS) ? fPreGain :
-                          (x >= fKE) ? expf(lx * vAfter[0] + vAfter[1]) :
-                          expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
-            float g2    = (x <= fBKS) ? fBPreGain :
-                          (x >= fBKE) ? expf(lx * vBAfter[0] + vBAfter[1]) :
-                          expf((vBHermite[0]*lx + vBHermite[1])*lx + vBHermite[2]);
+            float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
+                          (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
+                          expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
+            float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
+                          (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
+                          expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
 
             x           = g1 * g2;
             return x;
@@ -464,16 +410,19 @@ namespace lsp
             v->write("fEnvelope", fEnvelope);
             v->write("fTauAttack", fTauAttack);
             v->write("fTauRelease", fTauRelease);
-            v->write("fXRatio", fXRatio);
-            v->write("fLogTH", fLogTH);
-            v->write("fKS", fKS);
-            v->write("fKE", fKE);
-            v->writev("vHermite", vHermite, 3);
-            v->write("fBLogTH", fBLogTH);
-            v->write("fBKS", fBKS);
-            v->write("fBKE", fBKE);
-            v->writev("vBHermite", vBHermite, 3);
-            v->write("fBoost", fBoost);
+            v->begin_array("vKnees", vKnees, 2);
+            {
+                for (size_t i=0; i<2; ++i)
+                {
+                    const knee_t *k = &vKnees[i];
+                    v->write("fKS", k->fKS);
+                    v->write("fKE", k->fKE);
+                    v->write("fGain", k->fGain);
+                    v->writev("vKnee", k->vKnee, 3);
+                    v->writev("vTilt", k->vTilt, 2);
+                }
+            }
+            v->end_array();
             v->write("nSampleRate", nSampleRate);
             v->write("nMode", nMode);
             v->write("bUpdate", bUpdate);
