@@ -28,6 +28,7 @@ namespace lsp
     {
         namespace interpolation
         {
+            LSP_DSP_UNITS_PUBLIC
             void hermite_quadratic(float *p, float x0, float y0, float k0, float x1, float k1)
             {
                 // y = p[0]*x^2 + p[1]*x + p[2]
@@ -36,6 +37,7 @@ namespace lsp
                 p[2]    = y0 - p[0]*x0*x0 - p[1]*x0;
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void hermite_cubic(float *p, float x0, float y0, float k0, float x1, float y1, float k1)
             {
                 // y = p[0]*x^3 + p[1]*x^2 + p[2]*x + p[3]
@@ -57,6 +59,7 @@ namespace lsp
                 p[3]    = d;
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void exponent(float *p, float x0, float y0, float x1, float y1, float k)
             {
                 double e        = exp(k*(x0 - x1));
@@ -65,6 +68,7 @@ namespace lsp
                 p[2]            = k;
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void linear(float *p, float x0, float y0, float x1, float y1)
             {
                 p[0]            = (y1 - y0) / (x1 - x0);

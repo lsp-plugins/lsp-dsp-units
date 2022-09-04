@@ -52,7 +52,7 @@ namespace lsp
          *
          * Modified to use MLS samples for OVN, OVNA and ARN (not crushed).
          */
-        class Velvet
+        class LSP_DSP_UNITS_PUBLIC Velvet
         {
             private:
                 Velvet & operator = (const Velvet &);

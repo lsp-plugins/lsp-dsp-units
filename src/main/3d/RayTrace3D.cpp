@@ -23,6 +23,7 @@
 #include <lsp-plug.in/dsp-units/const.h>
 #include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/stdlib/math.h>
+#include <lsp-plug.in/runtime/system.h>
 
 #define SAMPLE_QUANTITY     512
 #define TASK_LO_THRESH      0x2000
@@ -1561,10 +1562,10 @@ namespace lsp
             bFailed      = false;
 
             // Get time of execution start
-    #ifdef LSP_TRACE
-            struct timespec tstart;
-            clock_gettime(CLOCK_REALTIME, &tstart);
-    #endif
+        #ifdef LSP_TRACE
+            system::time_t tstart;
+            system::get_time(&tstart);
+        #endif
 
             // Create main thread
             TaskThread *root = new TaskThread(this);
@@ -1655,11 +1656,11 @@ namespace lsp
             if (res != STATUS_BREAK_POINT)
             {
                 // Get time of execution end
-    #ifdef LSP_TRACE
-                struct timespec tend;
-                clock_gettime(CLOCK_REALTIME, &tend);
-                double etime = double(tend.tv_sec - tstart.tv_sec) + double(tend.tv_nsec - tend.tv_nsec) * 1e-6;
-    #endif
+            #ifdef LSP_TRACE
+                system::time_t tend;
+                system::get_time(&tend);
+                double etime = double(tend.seconds - tstart.seconds) + double(tend.nanos - tend.nanos) * 1e-6;
+            #endif
 
                 dump_stats("Overall statistics", &overall);
                 lsp_trace("Overall execution time:      %f s", etime);

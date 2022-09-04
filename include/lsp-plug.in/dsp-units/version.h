@@ -25,23 +25,14 @@
 // Define version of headers
 #define LSP_DSP_UNITS_MAJOR         1
 #define LSP_DSP_UNITS_MINOR         0
-#define LSP_DSP_UNITS_MICRO         3
+#define LSP_DSP_UNITS_MICRO         4
 
-#ifdef LSP_DSP_UNITS_BUILTIN
-    #define LSP_DSP_UNITS_CPPEXPORT
-    #define LSP_DSP_UNITS_CEXPORT
+#if defined(LSP_DSP_UNITS_PUBLISHER)
+    #define LSP_DSP_UNITS_PUBLIC        LSP_EXPORT_MODIFIER
+#elif defined(LSP_DSP_UNITS_BUILTIN) || defined(LSP_IDE_DEBUG)
+    #define LSP_DSP_UNITS_PUBLIC
 #else
-    #define LSP_DSP_UNITS_CPPEXPORT     __attribute__((visibility("default")))
-    #define LSP_DSP_UNITS_CEXPORT       __attribute__((visibility("default")))
+    #define LSP_DSP_UNITS_PUBLIC        LSP_IMPORT_MODIFIER
 #endif
-
-#ifdef __cplusplus
-    #define LSP_DSP_UNITS_CPPIMPORT     extern
-    #define LSP_DSP_UNITS_CIMPORT       extern "C"
-#else
-    #define LSP_DSP_UNITS_CPPIMPORT
-    #define LSP_DSP_UNITS_CIMPORT       extern
-#endif
-
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_VERSION_H_ */

@@ -40,6 +40,7 @@ namespace lsp
              * @param x1 x-coordinate of second point used for interpolation
              * @param k1 the tangent angle of the line at second point
              */
+            LSP_DSP_UNITS_PUBLIC
             void hermite_quadratic(float *p, float x0, float y0, float k0, float x1, float k1);
 
             /** Perform cubic Hermite interpolation
@@ -52,6 +53,7 @@ namespace lsp
              * @param y1 y-coordinate of second point used for interpolation
              * @param k1 the tangent angle of the line at second point
              */
+            LSP_DSP_UNITS_PUBLIC
             void hermite_cubic(float *p, float x0, float y0, float k0, float x1, float y1, float k1);
 
             /** Perform exponent interpolation
@@ -63,6 +65,7 @@ namespace lsp
              * @param y1 y-coordinate of second point used for interpolation
              * @param k growing/lowering coefficient
              */
+            LSP_DSP_UNITS_PUBLIC
             void exponent(float *p, float x0, float y0, float x1, float y1, float k);
 
             /** Perform linear interpolation
@@ -73,6 +76,7 @@ namespace lsp
              * @param x1 x-coordinate of second point used for interpolation
              * @param y1 y-coordinate of second point used for interpolation
              */
+            LSP_DSP_UNITS_PUBLIC
             void linear(float *p, float x0, float y0, float x1, float y1);
         }
     }

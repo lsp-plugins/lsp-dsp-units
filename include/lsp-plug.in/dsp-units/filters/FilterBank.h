@@ -31,7 +31,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class FilterBank
+        class LSP_DSP_UNITS_PUBLIC FilterBank
         {
             private:
                 FilterBank & operator = (const FilterBank &);

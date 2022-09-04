@@ -42,7 +42,7 @@ namespace lsp
          * This module is designed to prevent loud popping sounds
          * when the signal level raises dramatically
          */
-        class Depopper
+        class LSP_DSP_UNITS_PUBLIC Depopper
         {
             private:
                 Depopper & operator = (const Depopper &);

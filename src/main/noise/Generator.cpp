@@ -66,9 +66,13 @@ namespace lsp
 
             sColorParams.enColor            = NG_COLOR_WHITE;
             sColorParams.nOrder             = 50;
+            sColorParams.fSlope             = 0.0f;
             sColorParams.enSlopeUnit        = STLT_SLOPE_UNIT_NEPER_PER_NEPER;
 
+            nSampleRate                     = 0;
             enGenerator                     = NG_GEN_LCG;
+            fAmplitude                      = 1.0f;
+            fOffset                         = 0.0f;
 
             nUpdate                         = UPD_ALL;
         }
@@ -77,13 +81,14 @@ namespace lsp
         {
             sMLS.destroy();
             sLCG.destroy();
+            sVelvetNoise.destroy();
+            sColorFilter.destroy();
         }
 
         void NoiseGenerator::init(
-                uint8_t mls_n_bits, MLS::mls_t mls_seed,
-                uint32_t lcg_seed,
-                uint32_t velvet_rand_seed, uint8_t velvet_mls_n_bits, MLS::mls_t velvet_mls_seed
-                )
+            uint8_t mls_n_bits, MLS::mls_t mls_seed,
+            uint32_t lcg_seed,
+            uint32_t velvet_rand_seed, uint8_t velvet_mls_n_bits, MLS::mls_t velvet_mls_seed)
         {
             sMLSParams.nBits = mls_n_bits;
             sMLSParams.nSeed = mls_seed;

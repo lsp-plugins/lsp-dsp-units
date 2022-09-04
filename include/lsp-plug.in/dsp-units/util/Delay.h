@@ -32,7 +32,7 @@ namespace lsp
         /**
          * Delay processor
          */
-        class Delay
+        class LSP_DSP_UNITS_PUBLIC Delay
         {
             private:
                 Delay & operator = (const Delay &);

@@ -55,7 +55,7 @@ namespace lsp
             TRG_STATE_MAX
         };
 
-        class Trigger
+        class LSP_DSP_UNITS_PUBLIC Trigger
         {
             private:
                 Trigger & operator = (const Trigger &);

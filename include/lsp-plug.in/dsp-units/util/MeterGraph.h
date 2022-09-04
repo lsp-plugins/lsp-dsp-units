@@ -36,7 +36,7 @@ namespace lsp
             MM_MINIMUM
         };
 
-        class MeterGraph
+        class LSP_DSP_UNITS_PUBLIC MeterGraph
         {
             private:
                 MeterGraph & operator = (const MeterGraph &);

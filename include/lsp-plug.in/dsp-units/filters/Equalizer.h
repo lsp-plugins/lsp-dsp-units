@@ -44,7 +44,7 @@ namespace lsp
         /**
          * Set of multiple controllable sequential filters combined into one managed object
          */
-        class Equalizer
+        class LSP_DSP_UNITS_PUBLIC Equalizer
         {
             private:
                 Equalizer & operator = (const Equalizer &);

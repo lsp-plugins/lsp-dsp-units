@@ -29,7 +29,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class Gate
+        class LSP_DSP_UNITS_PUBLIC Gate
         {
             private:
                 Gate & operator = (const Gate &);
@@ -42,8 +42,8 @@ namespace lsp
                     float       fZone;
                     float       fZS;
                     float       fZE;
-                    float       fLogZS;
-                    float       fLogZE;
+                    float       fZSGain;
+                    float       fZEGain;
                     float       vHermite[4];
                 } curve_t;
 
@@ -207,14 +207,14 @@ namespace lsp
                  * @param dots number of input dots
                  * @param hyst output hysteresis curve or direct curve
                  */
-                void curve(float *out, const float *in, size_t dots, bool hyst);
+                void curve(float *out, const float *in, size_t dots, bool hyst) const;
 
                 /** Get curve point
                  *
                  * @param in input level
                  * @param hyst output hysteresis curve or direct curve
                  */
-                float curve(float in, bool hyst);
+                float curve(float in, bool hyst) const;
 
                 /** Get gain amplification
                  *
@@ -223,20 +223,20 @@ namespace lsp
                  * @param dots number of dots
                  * @param hyst output hysteresis amplification or direct amplification
                  */
-                void amplification(float *out, const float *in, size_t dots, bool hyst);
+                void amplification(float *out, const float *in, size_t dots, bool hyst) const;
 
                 /** Get gain amplification at current state
                  *
                  * @param in input level
                  */
-                float amplification(float in);
+                float amplification(float in) const;
 
                 /** Get gain amplification
                  *
                  * @param in input level
                  * @param hyst output hysteresis amplification or direct amplification
                  */
-                float amplification(float in, bool hyst);
+                float amplification(float in, bool hyst) const;
 
                 /**
                  * Dump internal state

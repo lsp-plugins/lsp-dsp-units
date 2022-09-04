@@ -31,7 +31,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class ResponseTaker
+        class LSP_DSP_UNITS_PUBLIC ResponseTaker
         {
             private:
                 ResponseTaker & operator = (const ResponseTaker &);

@@ -33,7 +33,7 @@ namespace lsp
          * The interface for dumping DSP module state
          * Allows to dump module state to any format by overriding virtual methods
          */
-        class IStateDumper
+        class LSP_DSP_UNITS_PUBLIC IStateDumper
         {
             private:
                 IStateDumper &operator = (const IStateDumper &);

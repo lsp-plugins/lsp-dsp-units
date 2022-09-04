@@ -97,12 +97,52 @@ namespace lsp
             nState              = 0;
 
             fAmplitude          = 1.0f;
+            fOffset             = 0.0f;
 
             bSync               = true;
         }
 
         void MLS::destroy()
         {
+        }
+
+        bool MLS::needs_update() const
+        {
+            return bSync;
+        }
+
+        void MLS::set_n_bits(size_t nbits)
+        {
+            if (nbits == nBits)
+                return;
+
+            nBits = nbits;
+            bSync = true;
+        }
+
+        void MLS::set_state(mls_t targetstate)
+        {
+            if (targetstate == nState)
+                return;
+
+            nState = targetstate;
+            bSync = true;
+        }
+
+        void MLS::set_amplitude(float amplitude)
+        {
+            if (amplitude == fAmplitude)
+                return;
+
+            fAmplitude = amplitude;
+        }
+
+        void MLS::set_offset(float offset)
+        {
+            if (offset == fOffset)
+                return;
+
+            fOffset = offset;
         }
 
         size_t MLS::maximum_number_of_bits() const

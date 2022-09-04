@@ -38,7 +38,7 @@ namespace lsp
     {
         namespace bsp
         {
-            typedef struct context_t
+            typedef struct LSP_DSP_UNITS_PUBLIC context_t
             {
                 private:
                     context_t (const context_t &);

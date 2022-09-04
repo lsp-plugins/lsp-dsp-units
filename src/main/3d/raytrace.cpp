@@ -153,7 +153,7 @@ namespace lsp
             1, 2, 3
         };
 
-        inline float apply_tangent(rt::group_t *g, float tg)
+        static inline float apply_tangent(rt::group_t *g, float tg)
         {
             dsp::vector3d_t xn;
             dsp::calc_plane_pv(&xn, g->p);
@@ -163,7 +163,7 @@ namespace lsp
             return d;
         }
 
-        status_t gen_triangle_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_triangle_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             rt::group_t *g = out.append();
             if (g == NULL)
@@ -181,7 +181,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_octa_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_octa_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = sizeof(octa_faces) / (sizeof(uint8_t) * 3);
             rt::group_t *g      = out.append_n(n);
@@ -210,7 +210,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_ico_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_ico_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = sizeof(ico_faces) / (sizeof(uint8_t) * 3);
             rt::group_t *g      = out.append_n(n);
@@ -239,7 +239,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_box_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_box_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = sizeof(box_faces) / (sizeof(uint8_t) * 3);
             rt::group_t *g      = out.append_n(n);
@@ -268,7 +268,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_tetra_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_tetra_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = sizeof(tetra_faces) / (sizeof(uint8_t) * 3);
             rt::group_t *g      = out.append_n(n);
@@ -297,7 +297,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_cyl_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_cyl_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = 16;
             rt::group_t *g      = out.append_n(n*2);
@@ -344,7 +344,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_cone_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_cone_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = 16;
             rt::group_t *g      = out.append_n(n);
@@ -375,7 +375,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_flat_spot_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_flat_spot_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = 16;
             rt::group_t *g      = out.append_n(n);
@@ -406,7 +406,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_sphere_spot_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_sphere_spot_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n = 16, r = 4;
             rt::group_t *g      = out.append_n(n * r * 2);
@@ -470,7 +470,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_cyl_spot_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_cyl_spot_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = 8;
             rt::group_t *g      = out.append_n(n*2 + 1);
@@ -533,7 +533,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_icosphere_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_icosphere_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = sizeof(ico_faces) / (sizeof(uint8_t) * 3);
             rt::group_t *g      = out.append_n(n * 4);
@@ -599,7 +599,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t gen_octasphere_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
+        static status_t gen_octasphere_source(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             size_t n            = sizeof(octa_faces) / (sizeof(uint8_t) * 3);
             rt::group_t *g      = out.append_n(n * 4);
@@ -665,6 +665,7 @@ namespace lsp
             return STATUS_OK;
         }
 
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_gen_source_mesh(lltl::darray<rt::group_t> &out, const rt_source_settings_t *cfg)
         {
             out.clear();
@@ -686,6 +687,7 @@ namespace lsp
             return STATUS_BAD_ARGUMENTS;
         }
 
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_gen_capture_mesh(lltl::darray<dsp::raw_triangle_t> &out, const rt_capture_settings_t *cfg)
         {
             out.clear();
@@ -742,6 +744,7 @@ namespace lsp
             return STATUS_OK;
         }
 
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_configure_source(rt_source_settings_t *out, const room_source_config_t *in)
         {
             dsp::matrix3d_t delta, m;
@@ -770,6 +773,7 @@ namespace lsp
             return STATUS_OK;
         }
 
+        LSP_DSP_UNITS_PUBLIC
         status_t rt_configure_capture(size_t *n, rt_capture_settings_t *out, const room_capture_config_t *cfg)
         {
             dsp::matrix3d_t m, delta;

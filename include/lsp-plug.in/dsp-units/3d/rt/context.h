@@ -46,7 +46,7 @@ namespace lsp
             /**
              * Ray tracing context
              */
-            typedef struct context_t
+            typedef struct LSP_DSP_UNITS_PUBLIC context_t
             {
                 private:
                     context_t & operator = (const context_t &);

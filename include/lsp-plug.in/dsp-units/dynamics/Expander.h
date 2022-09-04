@@ -35,7 +35,7 @@ namespace lsp
             EM_UPWARD
         };
 
-        class Expander
+        class LSP_DSP_UNITS_PUBLIC Expander
         {
             private:
                 Expander & operator = (const Expander &);

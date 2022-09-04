@@ -32,7 +32,7 @@ namespace lsp
         /** Simple toggle class
          *
          */
-        class Toggle
+        class LSP_DSP_UNITS_PUBLIC Toggle
         {
             private:
                 Toggle &operator = (const Toggle &);

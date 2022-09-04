@@ -42,7 +42,7 @@ namespace lsp
         /** 3D scene
          *
          */
-        class Scene3D
+        class LSP_DSP_UNITS_PUBLIC Scene3D
         {
             private:
                 Scene3D & operator = (const Scene3D &);

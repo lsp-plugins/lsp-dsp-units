@@ -53,7 +53,7 @@ namespace lsp
             NG_COLOR_BROWNIAN = NG_COLOR_RED
         };
 
-        class NoiseGenerator
+        class LSP_DSP_UNITS_PUBLIC NoiseGenerator
         {
             private:
                 NoiseGenerator & operator = (const NoiseGenerator &);
@@ -105,8 +105,6 @@ namespace lsp
                 } color_params_t;
 
             private:
-                size_t              nSampleRate;
-
                 MLS                 sMLS;
                 LCG                 sLCG;
                 Velvet              sVelvetNoise;
@@ -117,6 +115,7 @@ namespace lsp
                 velvet_params_t     sVelvetParams;
                 color_params_t      sColorParams;
 
+                size_t              nSampleRate;
                 ng_generator_t      enGenerator;
 
                 float               fAmplitude;

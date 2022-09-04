@@ -40,6 +40,7 @@ namespace lsp
                     dst[i]      = expf(k * logf(i * kd));
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void noise(float *dst, size_t n, envelope_t type)
             {
                 switch (type)
@@ -56,6 +57,7 @@ namespace lsp
                 }
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void reverse_noise(float *dst, size_t n, envelope_t type)
             {
                 switch (type)
@@ -72,27 +74,32 @@ namespace lsp
                 }
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void white_noise(float *dst, size_t n)
             {
                 while (n--)
                     *(dst++)        = 1.0f;
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void pink_noise(float *dst, size_t n)
             {
                 basic_noise(dst, n, logf(0.5) / logf(4));
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void brown_noise(float *dst, size_t n)
             {
                 basic_noise(dst, n, -1);
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void blue_noise(float *dst, size_t n)
             {
                 basic_noise(dst, n, logf(2) / logf(4));
             }
 
+            LSP_DSP_UNITS_PUBLIC
             void violet_noise(float *dst, size_t n)
             {
                 basic_noise(dst, n, 1);

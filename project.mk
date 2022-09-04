@@ -23,6 +23,5 @@ ARTIFACT_ID                 = LSP_DSP_UNITS
 ARTIFACT_NAME               = lsp-dsp-units
 ARTIFACT_DESC               = High-level classes for performing DSP
 ARTIFACT_HEADERS            = lsp-plug.in
-ARTIFACT_VERSION            = 1.0.3
-ARTIFACT_EXPORT_SYMBOLS     = 1
+ARTIFACT_VERSION            = 1.0.4
 

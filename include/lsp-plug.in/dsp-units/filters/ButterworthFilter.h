@@ -42,7 +42,7 @@ namespace lsp
         /** Even order high-pass and low-pass Butterworth filter, implemented as second order section.
          * Pre-warped bilinear transform of analog Butterworth prototype.
          */
-        class ButterworthFilter
+        class LSP_DSP_UNITS_PUBLIC ButterworthFilter
         {
             private:
                 ButterworthFilter & operator = (const ButterworthFilter &);

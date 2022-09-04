@@ -62,7 +62,7 @@ namespace lsp
             SCP_RT_DEFAULT          = SCP_RT_EDT_0
         };
 
-        class SyncChirpProcessor
+        class LSP_DSP_UNITS_PUBLIC SyncChirpProcessor
         {
             private:
                 SyncChirpProcessor & operator = (const SyncChirpProcessor &);

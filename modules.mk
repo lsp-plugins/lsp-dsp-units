@@ -18,38 +18,40 @@
 # along with lsp-dsp-units.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Variables that describe dependencies
-LSP_COMMON_LIB_VERSION     := 1.0.20
+#------------------------------------------------------------------------------
+# Variables that describe source code dependencies
+LSP_COMMON_LIB_VERSION     := 1.0.21
 LSP_COMMON_LIB_NAME        := lsp-common-lib
 LSP_COMMON_LIB_TYPE        := src
 LSP_COMMON_LIB_URL_RO      := https://github.com/lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 LSP_COMMON_LIB_URL_RW      := git@github.com:lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 
-LSP_DSP_LIB_VERSION        := 1.0.4
+LSP_DSP_LIB_VERSION        := 1.0.5
 LSP_DSP_LIB_NAME           := lsp-dsp-lib
 LSP_DSP_LIB_TYPE           := src
 LSP_DSP_LIB_URL_RO         := https://github.com/lsp-plugins/$(LSP_DSP_LIB_NAME).git
 LSP_DSP_LIB_URL_RW         := git@github.com:lsp-plugins/$(LSP_DSP_LIB_NAME).git
 
-LSP_LLTL_LIB_VERSION       := 1.0.4
+LSP_LLTL_LIB_VERSION       := 1.0.5
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
 LSP_LLTL_LIB_TYPE          := src
 LSP_LLTL_LIB_URL_RO        := https://github.com/lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 LSP_LLTL_LIB_URL_RW        := git@github.com:lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 
-LSP_RUNTIME_LIB_VERSION    := 1.0.6
+LSP_RUNTIME_LIB_VERSION    := 1.0.7
 LSP_RUNTIME_LIB_NAME       := lsp-runtime-lib
 LSP_RUNTIME_LIB_TYPE       := src
 LSP_RUNTIME_LIB_URL_RO     := https://github.com/lsp-plugins/$(LSP_RUNTIME_LIB_NAME).git
 LSP_RUNTIME_LIB_URL_RW     := git@github.com:lsp-plugins/$(LSP_RUNTIME_LIB_NAME).git
 
-LSP_TEST_FW_VERSION        := 1.0.14
+LSP_TEST_FW_VERSION        := 1.0.15
 LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_TYPE           := src
 LSP_TEST_FW_URL_RO         := https://github.com/lsp-plugins/$(LSP_TEST_FW_NAME).git
 LSP_TEST_FW_URL_RW         := git@github.com:lsp-plugins/$(LSP_TEST_FW_NAME).git
 
-# System libraries
+#------------------------------------------------------------------------------
+# Variables that describe system dependencies
 LIBPTHREAD_VERSION         := system
 LIBPTHREAD_NAME            := libpthread
 LIBPTHREAD_TYPE            := opt

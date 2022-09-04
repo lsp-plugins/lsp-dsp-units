@@ -2,6 +2,13 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.4 ===
+* Fixed unintialized values in several modules.
+* Added Sample::stretch() method for stretching samples.
+* Updated dspu::Gate module, now it allows to properly use the reverse gate option.
+* Improved mathematics in dspu::Compressor module, added support of limited compression gain.
+* Updated build scripts.
+
 === 1.0.3 ===
 * Fixed memory leak in dspu::LatencyDetector module.
 * Fixed operation on uninitialized values for dspu::Depopper module.

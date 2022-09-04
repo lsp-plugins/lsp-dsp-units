@@ -56,7 +56,7 @@ namespace lsp
             DC_MAX
         };
 
-        class Oscillator
+        class LSP_DSP_UNITS_PUBLIC Oscillator
         {
             private:
                 Oscillator & operator = (const Oscillator &);

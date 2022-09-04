@@ -39,11 +39,21 @@ namespace lsp
         /** Compressor class implementation
          *
          */
-        class Compressor
+        class LSP_DSP_UNITS_PUBLIC Compressor
         {
             private:
                 Compressor & operator = (const Compressor &);
                 Compressor(const Compressor &);
+
+            protected:
+                typedef struct knee_t
+                {
+                    float       fKS;            // Knee start
+                    float       fKE;            // Knee end
+                    float       fGain;          // Pre-amplification gain
+                    float       vKnee[3];       // Hermite interpolation of the knee
+                    float       vTilt[2];       // Tilt parameters after the knee
+                } knee_t;
 
             protected:
                 // Basic parameters
@@ -59,18 +69,7 @@ namespace lsp
                 // Pre-calculated parameters
                 float       fTauAttack;
                 float       fTauRelease;
-                float       fXRatio;        // Compression ratio
-
-                float       fLogTH;         // Logarithmic threshold
-                float       fKS;            // Knee start
-                float       fKE;            // Knee end
-                float       vHermite[3];    // Knee hermite interpolation
-
-                float       fBLogTH;        // Logarithmic boost threshold
-                float       fBKS;           // Boost knee start
-                float       fBKE;           // Boost knee end
-                float       vBHermite[3];   // Boost hermite interpolation
-                float       fBoost;         // Overall gain boost
+                knee_t      vKnees[2];      // Two compressor knees
 
                 // Additional parameters
                 size_t      nSampleRate;

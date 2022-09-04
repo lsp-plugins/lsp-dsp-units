@@ -45,7 +45,7 @@ namespace lsp
          * Output noise is easily scalable, and offset is also supported.
          *
          */
-        class LCG
+        class LSP_DSP_UNITS_PUBLIC LCG
         {
             private:
                 LCG & operator = (const LCG &);

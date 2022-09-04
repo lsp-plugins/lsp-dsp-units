@@ -29,7 +29,7 @@ namespace lsp
 {
     namespace dspu
     {
-        class Counter
+        class LSP_DSP_UNITS_PUBLIC Counter
         {
             private:
                 Counter & operator = (const Counter &);

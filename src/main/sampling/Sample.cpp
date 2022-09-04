@@ -182,6 +182,228 @@ namespace lsp
             return true;
         }
 
+        void Sample::put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out)
+        {
+            // Apply the fade-in (if present)
+            if (fade_in > 0)
+            {
+                float k = 1.0f / fade_in;
+                for (size_t i=0; i<fade_in; ++i)
+                    dst[i] += src[i] * (i * k);
+                dst    += fade_in;
+                src    += fade_in;
+            }
+
+            // Apply non-modified data
+            size_t unmodified = len - fade_in - fade_out;
+            if (unmodified > 0)
+            {
+                dsp::add2(dst, src, unmodified);
+                dst    += unmodified;
+                src    += unmodified;
+            }
+
+            // Apply the fade-out (if present)
+            if (fade_out > 0)
+            {
+                float k = 1.0f / fade_out;
+                for (size_t i=0; i<fade_out; ++i)
+                    dst[i] += src[i] * ((fade_out - i) * k);
+            }
+        }
+
+        void Sample::put_chunk_const_power(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out)
+        {
+            // Apply the fade-in (if present)
+            if (fade_in > 0)
+            {
+                float k = 1.0f / fade_in;
+                for (size_t i=0; i<fade_in; ++i)
+                    dst[i] += src[i] * sqrtf(i * k);
+                dst    += fade_in;
+                src    += fade_in;
+            }
+
+            // Apply non-modified data
+            size_t unmodified = len - fade_in - fade_out;
+            if (unmodified > 0)
+            {
+                dsp::add2(dst, src, unmodified);
+                dst    += unmodified;
+                src    += unmodified;
+            }
+
+            // Apply the fade-out (if present)
+            if (fade_out > 0)
+            {
+                float k = 1.0f / fade_out;
+                for (size_t i=0; i<fade_out; ++i)
+                    dst[i] += src[i] * sqrtf((fade_out - i) * k);
+            }
+        }
+
+        status_t Sample::do_simple_stretch(size_t new_length, size_t start, size_t end, put_chunk_t put_chunk)
+        {
+            dspu::Sample tmp;
+
+            // Compute the length as the beginning part + end part + stretched part
+            size_t len      = start + (nLength - end) + new_length;
+            if (!tmp.init(nChannels, len, len))
+                return STATUS_NO_MEM;
+            tmp.set_sample_rate(nSampleRate);
+
+            // Perform stretching
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                const float *src    = channel(i);
+                float *dst          = tmp.channel(i);
+                float s             = (end > start) ? src[start] : 0.0f;
+
+                dsp::copy(dst, src, start);
+                dsp::fill(&dst[start], s, new_length);
+                dsp::copy(&dst[start + new_length], &src[end], nLength-end);
+            }
+
+            // Swap the contents and return success
+            tmp.swap(this);
+            return STATUS_OK;
+        }
+
+        status_t Sample::do_single_crossfade_stretch(size_t new_length, size_t fade_len, size_t start, size_t end, put_chunk_t put_chunk)
+        {
+            dspu::Sample tmp;
+
+            // Compute the length as the beginning part + end part + stretched part
+            size_t len      = start + (nLength - end) + new_length;
+            if (!tmp.init(nChannels, len, len))
+                return STATUS_NO_MEM;
+            tmp.set_sample_rate(nSampleRate);
+
+            // Check that crossfade is not longer than new_length
+            fade_len        = lsp_min(fade_len, new_length);
+            // Chunks should be shorter than passed in arguments
+            size_t c1_size  = (new_length + fade_len) >> 1;
+            size_t c2_size  = new_length - c1_size + fade_len;
+
+            // Perform stretching
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                const float *src    = channel(i);
+                float *dst          = tmp.channel(i);
+
+                // Copy data, fill the stretched area with zeros
+                dsp::copy(dst, src, start);
+                dsp::fill_zero(&dst[start], new_length);
+                dsp::copy(&dst[start + new_length], &src[end], nLength-end);
+
+                // Put two chunks onto the stretched area with crossfades applied
+                put_chunk(&dst[start], &src[start], c1_size, 0, fade_len);
+                put_chunk(&dst[start + new_length - c2_size], &src[end - c2_size], c2_size, fade_len, 0);
+            }
+
+            // Swap the contents and return success
+            tmp.swap(this);
+            return STATUS_OK;
+        }
+
+        status_t Sample::stretch(
+            size_t new_length, size_t chunk_size,
+            sample_crossfade_t fade_type, float fade_size,
+            size_t start, size_t end)
+        {
+            size_t doff, soff;
+
+            // Verify that the proper values have been submitted
+            if ((start > nLength) || (end > nLength) || (start > end))
+                return STATUS_BAD_ARGUMENTS;
+
+            // What crossfade to use?
+            put_chunk_t put_chunk;
+            switch (fade_type)
+            {
+                case SAMPLE_CROSSFADE_LINEAR:       put_chunk   = put_chunk_linear; break;
+                case SAMPLE_CROSSFADE_CONST_POWER:  put_chunk   = put_chunk_const_power; break;
+                default:
+                    return STATUS_BAD_ARGUMENTS;
+            }
+
+            // Special case: the new length of the region is equal to the length of the region to stretch
+            size_t src_length   = end - start;
+            if (src_length == new_length)
+                return STATUS_OK;
+
+            // Special case: the region for stretching is of not longer than 1 sample
+            if (src_length <= 1)
+                return do_simple_stretch(new_length, start, end, put_chunk);
+
+            // Limit the chunk size if it is greater than source length
+            // If chunk_size is zero, try to select the best chunk size from this equation:
+            //   chunk_size * 2 = src_size + fade_size * chunk_size
+            //   chunk_size * (2 - fade_size) = src_length
+            fade_size               = lsp_limit(fade_size * 0.5f, 0.0f, 0.5f);
+            if (chunk_size == 0)
+                chunk_size              = src_length / (2.0f - fade_size);
+            else
+                chunk_size              = lsp_min(chunk_size, src_length);
+
+            // Special case: the new length does not allow to cross-fade at least 2 chunks
+            size_t fade_length      = chunk_size * fade_size;
+            if ((new_length + fade_length) <= (chunk_size * 2))
+                return do_single_crossfade_stretch(new_length, fade_length, start, end, put_chunk);
+
+            // Compute the effective length of the chunk and number of chunks
+            // We also need to make the new length multiple of the effective_length of the chunk
+            size_t eff_chunk_len    = chunk_size - fade_length;
+            size_t n_chunks         = (new_length - fade_length) / eff_chunk_len;
+            size_t last_chunk_len   = new_length - n_chunks * eff_chunk_len;
+            if (end <= start)
+                return STATUS_UNKNOWN_ERR; // This normally should not ever happen.
+
+            // Create new sample
+            dspu::Sample tmp;
+            size_t len      = nLength + new_length - src_length;
+            if (!tmp.init(nChannels, len, len))
+                return STATUS_NO_MEM;
+            tmp.set_sample_rate(nSampleRate);
+
+            // Perform stretching
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                const float *src    = channel(i);
+                float *dst          = tmp.channel(i);
+
+                // Copy data, fill the stretched area with zeros
+                dsp::copy(dst, src, start);
+                dsp::fill_zero(&dst[start], new_length);
+                dsp::copy(&dst[start + new_length], &src[end], nLength-end);
+                src    += start;
+                dst    += start;
+
+                // Put chunks onto the stretched area with crossfades applied
+//                lsp_trace("put chunk 0 -> 0 x %d", int(chunk_size));
+                put_chunk(dst, src, chunk_size, 0, fade_length); // First chunk
+                for (size_t j=1; j<n_chunks; ++j)
+                {
+                    soff      = (j * (src_length - chunk_size)) / (n_chunks - 1);
+                    doff      = j * eff_chunk_len;
+//                    lsp_trace("put chunk %d -> %d x %d", int(soff), int(doff), int(chunk_size));
+                    put_chunk(&dst[doff], &src[soff], chunk_size, fade_length, fade_length); // Intermediate chunk
+                }
+//                lsp_trace("put chunk %d -> %d x %d", int(src_length - last_chunk_len), int(new_length - last_chunk_len), int(last_chunk_len));
+                put_chunk(&dst[new_length - last_chunk_len], &src[src_length - last_chunk_len], last_chunk_len, fade_length, 0); // Last chunk
+            }
+
+            // Swap the contents and return success
+            tmp.swap(this);
+            return STATUS_OK;
+        }
+
+        status_t Sample::stretch(size_t new_length, size_t chunk_size, sample_crossfade_t fade_type, float fade_size)
+        {
+            // Here we just define the stretch range as [0, nLength)
+            return stretch(new_length, chunk_size, fade_type, fade_size, 0, nLength);
+        }
+
         bool Sample::set_channels(size_t channels)
         {
             if (channels == nChannels)

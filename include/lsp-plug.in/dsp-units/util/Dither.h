@@ -33,7 +33,7 @@ namespace lsp
         /**
          * Dither class: generates dither noise with specified characteristics
          */
-        class Dither
+        class LSP_DSP_UNITS_PUBLIC Dither
         {
             private:
                 Dither &operator = (const Dither &);

@@ -35,7 +35,7 @@ namespace lsp
         /**
          * Single filter implementation
          */
-        class Filter
+        class LSP_DSP_UNITS_PUBLIC Filter
         {
             private:
                 Filter & operator = (const Filter &);
