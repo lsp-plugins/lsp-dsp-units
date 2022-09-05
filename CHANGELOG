@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.5 ===
+* Updated build scripts.
 
 === 1.0.4 ===
 * Fixed unintialized values in several modules.
