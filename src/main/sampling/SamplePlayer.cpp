@@ -275,7 +275,7 @@ namespace lsp
 
         bool SamplePlayer::unbind(size_t id, bool destroy)
         {
-            return bind(id, reinterpret_cast<Sample *>(NULL), destroy);
+            return bind(id, static_cast<Sample *>(NULL), destroy);
         }
 
         void SamplePlayer::process(float *dst, const float *src, size_t samples)
