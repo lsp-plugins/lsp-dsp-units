@@ -50,9 +50,9 @@ MTEST_BEGIN("dspu.util", latency_detector)
     //        ld.set_pause(0.025f);
 
         // Random Parameters:
-        ld.set_duration((float(rand()) * 0.040f / RAND_MAX) + 0.010f);
-        ld.set_op_fading((float(rand()) * 0.045f / RAND_MAX) + 0.005f);
-        ld.set_op_pause((float(rand()) * 0.045f / RAND_MAX) + 0.005f);
+        ld.set_duration((float(rand()) * (0.040f / RAND_MAX)) + 0.010f);
+        ld.set_op_fading((float(rand()) * (0.045f / RAND_MAX)) + 0.005f);
+        ld.set_op_pause((float(rand()) * (0.045f / RAND_MAX)) + 0.005f);
 
         ld.set_ip_detection((3 * 0.050f) + (float(LATENCYDETECTOR_MAX_DELAY) / LATENCYDETECTOR_SAMPLE_RATE) + 0.005f);
 
