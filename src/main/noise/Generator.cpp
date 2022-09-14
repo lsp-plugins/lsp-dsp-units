@@ -101,6 +101,7 @@ namespace lsp
             sVelvetParams.nMLSseed  = velvet_mls_seed;
             sVelvetNoise.init(sVelvetParams.nRandSeed, sVelvetParams.nMLSnBits, sVelvetParams.nMLSseed);
 
+            sColorFilter.init();
             sColorFilter.set_norm(STLT_NORM_AUTO);
 
             nUpdate                 = UPD_ALL;
@@ -113,6 +114,9 @@ namespace lsp
 
             sLCG.init();
             sVelvetNoise.init();
+
+            sColorFilter.init();
+            sColorFilter.set_norm(STLT_NORM_AUTO);
 
             nUpdate                 = UPD_ALL;
         }

@@ -68,6 +68,10 @@ namespace lsp
             bSync           = true;
 
             sFilter.construct();
+        }
+
+        void SpectralTilt::init()
+        {
             sFilter.init(MAX_ORDER);
         }
 
