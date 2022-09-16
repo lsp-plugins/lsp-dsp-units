@@ -63,6 +63,7 @@ namespace lsp
 
                 void construct();
                 void destroy();
+                void init();
 
             protected:
                 void update_settings();
