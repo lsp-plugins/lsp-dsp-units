@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.7 ===
-
+* Added dspu::Analyzer::activity() method to check the analyzer's activity.
 
 === 1.0.6 ===
 * Fixed clang errors.
