@@ -445,12 +445,41 @@ namespace lsp
 
         void NoiseGenerator::freq_chart(float *re, float *im, const float *f, size_t count)
         {
-            sColorFilter.freq_chart(re, im, f, count);
+            switch (sColorParams.enColor)
+            {
+                case NG_COLOR_PINK:
+                case NG_COLOR_RED:
+                case NG_COLOR_BLUE:
+                case NG_COLOR_VIOLET:
+                case NG_COLOR_ARBITRARY:
+                    sColorFilter.freq_chart(re, im, f, count);
+                    break;
+
+                default:
+                case NG_COLOR_WHITE:
+                    dsp::fill(re, 1.0f, count);
+                    dsp::fill(im, 0.0f, count);
+                    break;
+            }
         }
 
         void NoiseGenerator::freq_chart(float *c, const float *f, size_t count)
         {
-            sColorFilter.freq_chart(c, f, count);
+            switch (sColorParams.enColor)
+            {
+                case NG_COLOR_PINK:
+                case NG_COLOR_RED:
+                case NG_COLOR_BLUE:
+                case NG_COLOR_VIOLET:
+                case NG_COLOR_ARBITRARY:
+                    sColorFilter.freq_chart(c, f, count);
+                    break;
+
+                default:
+                case NG_COLOR_WHITE:
+                    dsp::pcomplex_fill_ri(c, 1.0f, 0.0f, count);
+                    break;
+            }
         }
 
         void NoiseGenerator::dump(IStateDumper *v) const
