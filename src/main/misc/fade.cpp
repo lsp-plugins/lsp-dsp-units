@@ -19,6 +19,7 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/misc/fade.h>
 
 namespace lsp
@@ -28,8 +29,12 @@ namespace lsp
         LSP_DSP_UNITS_PUBLIC
         void fade_in(float *dst, const float *src, size_t fade_len, size_t buf_len)
         {
-            if ((fade_len <= 0) || (buf_len <= 0))
+            if (fade_len <= 0)
+            {
+                if (buf_len > 0)
+                    dsp::move(dst, src, buf_len);
                 return;
+            }
 
             float k = 1.0f / fade_len;
             if (fade_len > buf_len)
@@ -42,8 +47,12 @@ namespace lsp
         LSP_DSP_UNITS_PUBLIC
         void fade_out(float *dst, const float *src, size_t fade_len, size_t buf_len)
         {
-            if ((fade_len <= 0) || (buf_len <= 0))
+            if (fade_len <= 0)
+            {
+                if (buf_len > 0)
+                    dsp::move(dst, src, buf_len);
                 return;
+            }
 
             float k = 1.0f / fade_len;
             if (fade_len > buf_len)
