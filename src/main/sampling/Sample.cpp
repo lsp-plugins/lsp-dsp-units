@@ -19,10 +19,11 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp-units/sampling/Sample.h>
-#include <lsp-plug.in/dsp-units/filters/Filter.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/finally.h>
 #include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/dsp-units/filters/Filter.h>
+#include <lsp-plug.in/dsp-units/sampling/Sample.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
 #include <lsp-plug.in/stdlib/math.h>
@@ -485,6 +486,7 @@ namespace lsp
             float *buf      = alloc_aligned<float>(data, nChannels * bufsize);
             if (buf == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free_aligned(data); };
 
             // Perform writes to underlying stream
             while (count > 0)
@@ -505,7 +507,6 @@ namespace lsp
                 {
                     if (written > 0)
                         break;
-                    free_aligned(data);
                     return nframes;
                 }
 
@@ -515,7 +516,6 @@ namespace lsp
                 count          -= nframes;
             }
 
-            free_aligned(data);
             return written;
         }
 
@@ -618,6 +618,7 @@ namespace lsp
             float *buf      = alloc_aligned<float>(data, fmt.channels * bufsize);
             if (buf == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free_aligned(data); };
 
             // Perform reads from underlying stream
             while (count > 0)
@@ -643,7 +644,6 @@ namespace lsp
             }
 
             // All is OK, free temporary buffer and swap self state with the temporary sample
-            free_aligned(data);
             tmp.set_sample_rate(fmt.srate);
             tmp.swap(this);
 
@@ -745,6 +745,7 @@ namespace lsp
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
             if (k == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(k); };
 
             // Estimate resampled sample size
             size_t new_samples  = kf * nLength;
@@ -752,10 +753,7 @@ namespace lsp
 
             // Prepare new data structure to store resampled data
             if (!s->init(nChannels, b_len, b_len))
-            {
-                free(k);
                 return STATUS_NO_MEM;
-            }
             s->set_sample_rate(new_sample_rate);
 
             // Generate Lanczos kernel
@@ -786,7 +784,6 @@ namespace lsp
             }
 
             // Delete temporary buffer and decrease length of sample
-            free(k);
             s->nLength -= k_len;
 
             return STATUS_OK;
@@ -810,6 +807,7 @@ namespace lsp
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
             if (k == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(k); };
 
             // Estimate resampled sample size
             size_t new_samples  = kf * nLength;
@@ -817,10 +815,8 @@ namespace lsp
 
             // Prepare new data structure to store resampled data
             if (!s->init(nChannels, b_len, b_len))
-            {
-                free(k);
                 return STATUS_NO_MEM;
-            }
+
             s->set_sample_rate(new_sample_rate);
 
             // Iterate each channel
@@ -862,7 +858,6 @@ namespace lsp
             }
 
             // Delete temporary buffer and decrease length of sample
-            free(k);
             s->nLength -= k_len;
 
             return STATUS_OK;
@@ -886,6 +881,7 @@ namespace lsp
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
             if (k == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(k); };
 
             // Estimate resampled sample size
             size_t new_samples  = kf * nLength;
@@ -893,10 +889,7 @@ namespace lsp
 
             // Prepare new data structure to store resampled data
             if (!s->init(nChannels, b_len, b_len))
-            {
-                free(k);
                 return STATUS_NO_MEM;
-            }
             s->set_sample_rate(new_sample_rate);
 
             // Iterate each channel
@@ -938,7 +931,6 @@ namespace lsp
             }
 
             // Delete temporary buffer and decrease length of sample
-            free(k);
             s->nLength -= k_len;
 
             return STATUS_OK;
@@ -1015,5 +1007,5 @@ namespace lsp
             v->write("nMaxLength", nMaxLength);
             v->write("nChannels", nChannels);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

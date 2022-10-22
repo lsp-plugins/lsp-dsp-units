@@ -4,6 +4,7 @@
 
 === 1.0.7 ===
 * Added dspu::Analyzer::activity() method to check the analyzer's activity.
+* Fixed possible memory leakage in dspu::Sample methods.
 * Fixed bug in dspu::fade_in and dspu::fade_out methods that didn't copy data
   to destination buffer when the fade length is zero.
 
