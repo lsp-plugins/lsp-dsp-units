@@ -24,7 +24,7 @@
 #include <lsp-plug.in/stdlib/math.h>
 
 #define REFRESH_RATE        0x1000
-#define MIN_GAP_ITEMS       0x200
+#define MIN_GAP_ITEMS       0x200U
 
 namespace lsp
 {
@@ -91,7 +91,7 @@ namespace lsp
             nSampleRate         = sr;
             bUpdate             = true;
             size_t gap          = millis_to_samples(sr, fMaxReactivity);
-            size_t buf_size     = (gap < MIN_GAP_ITEMS) ? MIN_GAP_ITEMS : gap;
+            size_t buf_size     = lsp_max(gap, MIN_GAP_ITEMS);
             sBuffer.init(buf_size * 4, gap);
         }
 
