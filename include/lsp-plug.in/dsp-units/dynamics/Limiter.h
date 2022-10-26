@@ -130,6 +130,7 @@ namespace lsp
                 float       fKnee;
                 size_t      nMaxLookahead;
                 size_t      nLookahead;
+                size_t      nHead;
                 size_t      nMaxSampleRate;
                 size_t      nSampleRate;
                 size_t      nUpdate;

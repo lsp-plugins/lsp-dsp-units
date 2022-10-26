@@ -7,6 +7,8 @@
 * Fixed possible memory leakage in dspu::Sample methods.
 * Fixed bug in dspu::fade_in and dspu::fade_out methods that didn't copy data
   to destination buffer when the fade length is zero.
+* Found and fixed serious performance penalties that could be issued
+  by dspu::Limiter on small input buffers.
 
 === 1.0.6 ===
 * Fixed clang errors.
