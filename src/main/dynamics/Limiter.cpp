@@ -90,7 +90,8 @@ namespace lsp
         {
             nMaxLookahead       = millis_to_samples(max_sr, max_lookahead);
             nHead               = 0;
-            size_t buf_size     = nMaxLookahead*8 + BUF_GRANULARITY;
+            size_t buf_gap      = nMaxLookahead*8;
+            size_t buf_size     = buf_gap + nMaxLookahead*4 + BUF_GRANULARITY;
             size_t alloc        = buf_size + BUF_GRANULARITY;
             float *ptr          = alloc_aligned<float>(vData, alloc, DEFAULT_ALIGN);
             if (ptr == NULL)
@@ -632,9 +633,10 @@ namespace lsp
             // Force settings update if there are any
             update_settings();
 
+            size_t buf_gap      = nMaxLookahead*8;
             while (samples > 0)
             {
-                size_t can_do   = lsp_min(nMaxLookahead*4 - nHead, BUF_GRANULARITY);
+                size_t can_do   = lsp_min(buf_gap - nHead, BUF_GRANULARITY);
                 size_t to_do    = lsp_min(samples, can_do);
                 float *gbuf     = &vGainBuf[nMaxLookahead + nHead];
 
@@ -698,9 +700,9 @@ namespace lsp
                 // Copy gain value and shift gain buffer
                 dsp::copy(gain, &gbuf[-nLookahead], to_do);
                 nHead          += to_do;
-                if (nHead >= nMaxLookahead*4)
+                if (nHead >= buf_gap)
                 {
-                    dsp::move(vGainBuf, &vGainBuf[nHead + to_do], nMaxLookahead*4);
+                    dsp::move(vGainBuf, &vGainBuf[nHead + to_do], nLookahead * 4);
                     nHead       = 0;
                 }
 
