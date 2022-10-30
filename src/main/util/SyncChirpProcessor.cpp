@@ -1748,9 +1748,9 @@ namespace lsp
 
             // Write complete convolution result as audio chunk
             p.channels          = sConvParams.nChannels;
-            p.sample_format     = __IF_LEBE(LSPC_SAMPLE_FMT_F32LE, LSPC_SAMPLE_FMT_F32BE);;
+            p.sample_format     = __IF_LEBE(lspc::SAMPLE_FMT_F32LE, lspc::SAMPLE_FMT_F32BE);
             p.sample_rate       = nSampleRate;
-            p.codec             = LSPC_CODEC_PCM;
+            p.codec             = lspc::CODEC_PCM;
             p.frames            = dataLength;
 
             res = aw.open(&fd, &p);

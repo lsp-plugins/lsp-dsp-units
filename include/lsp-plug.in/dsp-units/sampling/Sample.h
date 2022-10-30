@@ -107,6 +107,9 @@ namespace lsp
                 status_t            complex_upsample(Sample *s, size_t new_sample_rate);
                 status_t            do_simple_stretch(size_t new_length, size_t start, size_t end, put_chunk_t put_chunk);
                 status_t            do_single_crossfade_stretch(size_t new_length, size_t fade_len, size_t start, size_t end, put_chunk_t put_chunk);
+                status_t            open_stream_ext(mm::IInAudioStream **is, const io::Path *path);
+                status_t            try_open_regular_file(mm::IInAudioStream **is, const io::Path *path);
+                status_t            try_open_lspc(mm::IInAudioStream **is, const io::Path *lspc, const io::Path *item);
 
             public:
                 explicit Sample();
@@ -306,6 +309,26 @@ namespace lsp
                 status_t loads(const LSPString *path, ssize_t max_samples = -1);
                 status_t loads(const io::Path *path, ssize_t max_samples = -1);
                 status_t loads(mm::IInAudioStream *in, ssize_t max_samples = -1);
+
+                /**
+                 * Extended load file: if no success, try to locate file in the archive like LSPC, etc.
+                 * @param path path to the file
+                 * @param max_duration maximum duration in seconds
+                 * @return status of operation
+                 */
+                status_t load_ext(const char *path, float max_duration = -1);
+                status_t load_ext(const LSPString *path, float max_duration = -1);
+                status_t load_ext(const io::Path *path, float max_duration = -1);
+
+                /**
+                 * Extended load file: if no success, try to locate file in the archive like LSPC, etc.
+                 * @param path location of the file
+                 * @param max_samples maximum number of samples
+                 * @return status of operation
+                 */
+                status_t loads_ext(const char *path, ssize_t max_samples = -1);
+                status_t loads_ext(const LSPString *path, ssize_t max_samples = -1);
+                status_t loads_ext(const io::Path *path, ssize_t max_samples = -1);
 
                 /**
                  * Dump the state

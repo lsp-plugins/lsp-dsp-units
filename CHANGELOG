@@ -9,6 +9,9 @@
   to destination buffer when the fade length is zero.
 * Found and fixed serious performance penalties that could be issued
   by dspu::Limiter on small input buffers.
+* Added dspu::InSampleStream class for working with audio sample in streaming manner.
+* Added dspu::Sample::load_ext and dspu::Sample::loads_ext methods for loading sample
+  as a part of LSPC file when possible.
 
 === 1.0.6 ===
 * Fixed clang errors.

@@ -24,6 +24,9 @@
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/filters/Filter.h>
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
+#include <lsp-plug.in/fmt/lspc/lspc.h>
+#include <lsp-plug.in/fmt/lspc/util.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
 #include <lsp-plug.in/stdlib/math.h>
@@ -473,6 +476,8 @@ namespace lsp
         {
             if ((nSampleRate <= 0) || (nChannels < 0))
                 return -STATUS_BAD_STATE;
+            if ((out->channels() != nChannels) || (out->sample_rate() != nSampleRate))
+                return STATUS_INCOMPATIBLE;
 
             ssize_t avail   = lsp_max(ssize_t(nLength - offset), 0);
             count           = (count < 0) ? avail : lsp_min(count, avail);
@@ -996,6 +1001,152 @@ namespace lsp
                 tmp.swap(this);
 
             // Return OK status
+            return STATUS_OK;
+        }
+
+        status_t Sample::load_ext(const char *path, float max_duration)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? load_ext(&tmp, max_duration) : res;
+        }
+
+        status_t Sample::load_ext(const LSPString *path, float max_duration)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? load_ext(&tmp, max_duration) : res;
+        }
+
+        status_t Sample::load_ext(const io::Path *path, float max_duration)
+        {
+            mm::IInAudioStream *in = NULL;
+            status_t res = open_stream_ext(&in, path);
+            if (res != STATUS_OK)
+                return res;
+            res             = load(in, max_duration);
+            status_t res2   = in->close();
+            delete in;
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        status_t Sample::loads_ext(const char *path, ssize_t max_samples)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? loads_ext(&tmp, max_samples) : res;
+        }
+
+        status_t Sample::loads_ext(const LSPString *path, ssize_t max_samples)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? loads_ext(&tmp, max_samples) : res;
+        }
+
+        status_t Sample::loads_ext(const io::Path *path, ssize_t max_samples)
+        {
+            mm::IInAudioStream *in = NULL;
+            status_t res = open_stream_ext(&in, path);
+            if (res != STATUS_OK)
+                return res;
+
+            res             = loads(in, max_samples);
+            status_t res2   = in->close();
+            delete in;
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        status_t Sample::open_stream_ext(mm::IInAudioStream **is, const io::Path *path)
+        {
+            // Try to load regular file
+            status_t res = try_open_regular_file(is, path);
+            if (res == STATUS_OK)
+                return res;
+
+            // Now we need to walk the whole path from the end to the begin and look for archive
+            LSPString item;
+            io::Path parent, child;
+            if ((res = parent.set(path)) != STATUS_OK)
+                return res;
+            if ((res = parent.canonicalize()) != STATUS_OK)
+                return res;
+
+            while (true)
+            {
+                // Check that there is nothing to do with
+                if ((parent.is_root()) || (parent.is_empty()))
+                    return STATUS_NOT_FOUND;
+
+                // Remove child entry from parent and prepend for the child
+                if ((res = parent.get_last(&item)) != STATUS_OK)
+                    return res;
+                if ((res = parent.remove_last()) != STATUS_OK)
+                    return res;
+                if (child.is_empty())
+                {
+                    if ((res = child.set(&item)) != STATUS_OK)
+                        return res;
+                }
+                else
+                {
+                    if ((res = child.set_parent(&item)) != STATUS_OK)
+                        return res;
+                }
+
+                // Try o read as LSPC
+                if ((res = try_open_lspc(is, &parent, &child)) == STATUS_OK)
+                    return res;
+            }
+        }
+
+        status_t Sample::try_open_lspc(mm::IInAudioStream **is, const io::Path *lspc, const io::Path *item)
+        {
+            // Try to open LSPC
+            lspc::File fd;
+            status_t res = fd.open(lspc);
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally { fd.close(); };
+
+            // We have LSPC file, lookup for the audio entry
+            lspc::chunk_id_t *path_list = NULL;
+            ssize_t path_count = fd.enumerate_chunks(LSPC_CHUNK_PATH, &path_list);
+            if (path_count < 0)
+                return -path_count;
+            lsp_finally { free(path_list); };
+
+            // Now iterate over all chunks and check it for match to the item
+            io::Path path_item;
+            size_t flags = 0;
+            lspc::chunk_id_t ref_id;
+            for (ssize_t i=0; i<path_count; ++i)
+            {
+                if ((res = lspc::read_path(path_list[i], &fd, &path_item, &flags, &ref_id)) != STATUS_OK)
+                    return res;
+                if (flags & lspc::PATH_DIR)
+                    continue;
+                if (!item->equals(&path_item))
+                    continue;
+
+                return lspc::read_audio(ref_id, &fd, is);
+            }
+
+            return STATUS_NOT_FOUND;
+        }
+
+        status_t Sample::try_open_regular_file(mm::IInAudioStream **is, const io::Path *path)
+        {
+            mm::InAudioFileStream *ias = new mm::InAudioFileStream();
+            status_t res = ias->open(path);
+            if (res != STATUS_OK)
+            {
+                ias->close();
+                delete ias;
+                return res;
+            }
+
+            *is = ias;
             return STATUS_OK;
         }
 
