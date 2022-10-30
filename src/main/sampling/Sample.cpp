@@ -1079,10 +1079,20 @@ namespace lsp
                     return STATUS_NOT_FOUND;
 
                 // Remove child entry from parent and prepend for the child
-                if ((res = parent.remove_first(&item)) != STATUS_OK)
+                if ((res = parent.get_last(&item)) != STATUS_OK)
                     return res;
-                if ((res = child.set_parent(&item)) != STATUS_OK)
+                if ((res = parent.remove_last()) != STATUS_OK)
                     return res;
+                if (child.is_empty())
+                {
+                    if ((res = child.set(&item)) != STATUS_OK)
+                        return res;
+                }
+                else
+                {
+                    if ((res = child.set_parent(&item)) != STATUS_OK)
+                        return res;
+                }
 
                 // Try o read as LSPC
                 if ((res = try_open_lspc(is, &parent, &child)) == STATUS_OK)

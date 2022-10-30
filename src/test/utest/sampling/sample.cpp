@@ -19,10 +19,13 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/dsp-units/sampling/InSampleStream.h>
+#include <lsp-plug.in/dsp-units/sampling/Sample.h>
+#include <lsp-plug.in/fmt/lspc/lspc.h>
+#include <lsp-plug.in/fmt/lspc/util.h>
+#include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/test-fw/FloatBuffer.h>
-#include <lsp-plug.in/dsp-units/sampling/Sample.h>
-#include <lsp-plug.in/stdlib/math.h>
 
 #define TEST_SRATE      48000
 #define TONE_RATE       440.0f
@@ -47,6 +50,30 @@ UTEST_BEGIN("dspu.sampling", sample)
         }
     }
 
+    void compare_samples(const dspu::Sample &s, const dspu::Sample &c)
+    {
+        UTEST_ASSERT_MSG(
+            s.length() == c.length(),
+            "Sample length differ: %d vs %d",
+            int(s.length()), int(c.length()));
+
+        for (size_t i=0; i<s.channels(); ++i)
+        {
+            const float *s0 = s.channel(i);
+            const float *s1 = c.channel(i);
+
+            for (size_t j=0; j<s.length(); ++j)
+            {
+                if (!float_equals_absolute(s0[j], s1[j]))
+                {
+                    eprintf("Failed sample check at sample %d, channel %d: s0=%f, s1=%f\n",
+                            int(j), int(i), s0[j], s1[j]);
+                    UTEST_FAIL();
+                }
+            }
+        }
+    }
+
     void test_copy()
     {
         printf("Testing sample copy...\n");
@@ -59,22 +86,7 @@ UTEST_BEGIN("dspu.sampling", sample)
 
         UTEST_ASSERT(c.copy(&s) == STATUS_OK);
 
-        // Check the sample
-        for (size_t i=0; i<s.channels(); ++i)
-        {
-            float *s0 = s.channel(i);
-            float *s1 = c.channel(i);
-
-            for (size_t j=0; j<s.length(); ++j)
-            {
-                if (!float_equals_absolute(s0[j], s1[j]))
-                {
-                    eprintf("Failed sample check at sample %d, channel %d: s0=%f, s1=%f\n",
-                            int(j), int(i), s0[j], s1[j]);
-                    UTEST_FAIL();
-                }
-            }
-        }
+        compare_samples(s, c);
     }
 
     void test_stretch()
@@ -260,6 +272,105 @@ UTEST_BEGIN("dspu.sampling", sample)
         UTEST_ASSERT(l.sample_rate() == srate);
     }
 
+    void create_lspc_file(const dspu::Sample *s, const io::Path *path, const char *relpath)
+    {
+        lspc::File fd;
+        lspc::chunk_id_t audio_id, path_id;
+        dspu::InSampleStream is;
+
+        printf("  creating file '%s'...\n", path->as_native());
+        UTEST_ASSERT(fd.create(path) == STATUS_OK);
+        UTEST_ASSERT(is.wrap(s) == STATUS_OK);
+        printf("  writing audio chunk...\n");
+        UTEST_ASSERT(lspc::write_audio(&audio_id, &fd, &is) == STATUS_OK);
+        printf("  written as id=%d\n", int(audio_id));
+        printf("  writing path chunk...\n");
+        UTEST_ASSERT(lspc::write_path(&path_id, &fd, relpath, 0, audio_id) == STATUS_OK);
+        printf("  written as id=%d\n", int(path_id));
+        UTEST_ASSERT(is.close() == STATUS_OK);
+        UTEST_ASSERT(fd.close() == STATUS_OK);
+        printf("  successfully created file '%s'\n", path->as_native());
+    }
+
+    void test_lspc_named_file(const char *entry, const char *file)
+    {
+        printf("Testing saving and loading archived sample using LSPC format...\n");
+
+        io::Path lspc, missing, invalid;
+        io::Path audio_lspc, audio_missing, audio_invalid;
+        LSPString str_lspc, str_missing, str_invalid;
+        dspu::Sample src, dst;
+
+        // Initialize base paths
+        UTEST_ASSERT(lspc.fmt("%s/%s-data.lspc", tempdir(), full_name()) > 0);
+        UTEST_ASSERT(missing.set(&lspc, "missing") == STATUS_OK);
+        UTEST_ASSERT(invalid.fmt("%s/%s-invalid.lspc", tempdir(), full_name()) > 0);
+
+        // Initialize file paths
+        UTEST_ASSERT(audio_lspc.set(&lspc, file) == STATUS_OK);
+        UTEST_ASSERT(lspc.get(&str_lspc) == STATUS_OK);
+        UTEST_ASSERT(str_lspc.append('/'));
+        UTEST_ASSERT(str_lspc.append_utf8(file));
+
+        UTEST_ASSERT(audio_missing.set(&missing, file) == STATUS_OK);
+        UTEST_ASSERT(missing.get(&str_missing) == STATUS_OK);
+        UTEST_ASSERT(str_missing.append('/'));
+        UTEST_ASSERT(str_missing.append_utf8(file));
+
+        UTEST_ASSERT(audio_invalid.set(&invalid, file) == STATUS_OK);
+        UTEST_ASSERT(invalid.get(&str_invalid) == STATUS_OK);
+        UTEST_ASSERT(str_invalid.append('/'));
+        UTEST_ASSERT(str_invalid.append_utf8(file));
+
+        // Initalize data
+        init_sample(&src);
+        create_lspc_file(&src, &lspc, entry);
+
+        // Test existing file
+        printf("  reading existing file as io::Path '%s'...\n", audio_lspc.as_native());
+        UTEST_ASSERT(dst.load_ext(&audio_lspc) == STATUS_OK);
+        compare_samples(src, dst);
+        dst.destroy();
+
+        printf("  reading existing file as LSPString '%s'...\n", str_lspc.get_native());
+        UTEST_ASSERT(dst.load_ext(&str_lspc) == STATUS_OK);
+        compare_samples(src, dst);
+        dst.destroy();
+
+        printf("  reading existing file as (char *) '%s'...\n", str_lspc.get_native());
+        UTEST_ASSERT(dst.load_ext(str_lspc.get_native()) == STATUS_OK);
+        compare_samples(src, dst);
+        dst.destroy();
+
+        // Test file with missing entry
+        printf("  reading missing file as io::Path '%s'...\n", audio_missing.as_native());
+        UTEST_ASSERT(dst.load_ext(&audio_missing) == STATUS_NOT_FOUND);
+
+        printf("  reading missing file as LSPString '%s'...\n", str_missing.get_native());
+        UTEST_ASSERT(dst.load_ext(&str_missing) == STATUS_NOT_FOUND);
+
+        printf("  reading missing file as (char *) '%s'...\n", str_missing.get_native());
+        UTEST_ASSERT(dst.load_ext(str_missing.get_native()) == STATUS_NOT_FOUND);
+
+        // Test file with invalid path
+        printf("  reading invalid file as io::Path '%s'...\n", audio_invalid.as_native());
+        UTEST_ASSERT(dst.load_ext(&audio_invalid) == STATUS_NOT_FOUND);
+
+        printf("  reading invalid file as LSPString '%s'...\n", str_invalid.get_native());
+        UTEST_ASSERT(dst.load_ext(&str_invalid) == STATUS_NOT_FOUND);
+
+        printf("  reading invalid file as (char *) '%s'...\n", str_invalid.get_native());
+        UTEST_ASSERT(dst.load_ext(str_invalid.get_native()) == STATUS_NOT_FOUND);
+    }
+
+    void test_lspc_named_files()
+    {
+        test_lspc_named_file("some/test/fileA.wav", "some/test/fileA.wav");
+        test_lspc_named_file("some/test/fileB.wav", "some\\test\\fileB.wav");
+        test_lspc_named_file("some\\test\\fileC.wav", "some/test/fileC.wav");
+        test_lspc_named_file("some\\test\\fileD.wav", "some\\test\\fileD.wav");
+    }
+
     UTEST_MAIN
     {
         test_copy();
@@ -270,6 +381,7 @@ UTEST_BEGIN("dspu.sampling", sample)
         test_resample(44100);
         test_resample(88200);
         test_stretch();
+        test_lspc_named_files();
     }
 UTEST_END
 
