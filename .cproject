@@ -245,6 +245,7 @@
 								<option id="gnu.cpp.link.option.flags.1247610204" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.libs.1203375790" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="shlwapi"/>
+									<listOptionValue builtIn="false" value="mpr"/>
 									<listOptionValue builtIn="false" value="winmm"/>
 									<listOptionValue builtIn="false" value="msacm32"/>
 								</option>
