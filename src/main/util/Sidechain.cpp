@@ -128,8 +128,33 @@ namespace lsp
             }
         }
 
+        void Sidechain::select_buffer(float **a, float **b, size_t *size)
+        {
+            size_t buf_size;
+            float *base;
+
+            // Allocate some space in the shift buffer which can be reused for sure
+            if (sBuffer.tail_gap_size() > sBuffer.head_gap_size())
+            {
+                buf_size    = sBuffer.tail_gap_size() >> 1;
+                base        = sBuffer.tail();
+            }
+            else
+            {
+                buf_size    = sBuffer.head_gap_size() >> 1;
+                base        = sBuffer.data();
+            }
+
+            *a          = &base[0];
+            *b          = &base[buf_size];
+            *size       = buf_size;
+        }
+
         bool Sidechain::preprocess(float *out, const float **in, size_t samples)
         {
+            float *a, *b;
+            size_t max_samples;
+
             if (nChannels == 2)
             {
                 if (bMidSide)
@@ -165,6 +190,56 @@ namespace lsp
                             }
                             else
                                 dsp::abs2(out, in[1], samples);
+                            break;
+                        case SCS_AMIN:
+                            select_buffer(&a, &b, &max_samples);
+                            if (pPreEq != NULL)
+                            {
+                                for (size_t off=0; off<samples; )
+                                {
+                                    size_t count    = lsp_min(samples, max_samples);
+                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
+                                    dsp::psmin3(&out[off], a, b, count);
+                                    off            += count;
+                                }
+                                pPreEq->process(out, out, samples);
+                                dsp::abs1(out, samples);
+                            }
+                            else
+                            {
+                                for (size_t off=0; off<samples; )
+                                {
+                                    size_t count    = lsp_min(samples, max_samples);
+                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
+                                    dsp::pamin3(&out[off], a, b, samples);
+                                    off            += count;
+                                }
+                            }
+                            break;
+                        case SCS_AMAX:
+                            select_buffer(&a, &b, &max_samples);
+                            if (pPreEq != NULL)
+                            {
+                                for (size_t off=0; off<samples; )
+                                {
+                                    size_t count    = lsp_min(samples, max_samples);
+                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
+                                    dsp::psmax3(&out[off], a, b, count);
+                                    off            += count;
+                                }
+                                pPreEq->process(out, out, samples);
+                                dsp::abs1(out, samples);
+                            }
+                            else
+                            {
+                                for (size_t off=0; off<samples; )
+                                {
+                                    size_t count    = lsp_min(samples, max_samples);
+                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
+                                    dsp::pamax3(&out[off], a, b, samples);
+                                    off            += count;
+                                }
+                            }
                             break;
                         default:
                             break;
@@ -204,6 +279,26 @@ namespace lsp
                                 pPreEq->process(out, out, samples);
                             dsp::abs1(out, samples);
                             break;
+                        case SCS_AMIN:
+                            if (pPreEq != NULL)
+                            {
+                                dsp::psmin3(out, in[0], in[1], samples);
+                                pPreEq->process(out, out, samples);
+                                dsp::abs1(out, samples);
+                            }
+                            else
+                                dsp::pamin3(out, in[0], in[1], samples);
+                            break;
+                        case SCS_AMAX:
+                            if (pPreEq != NULL)
+                            {
+                                dsp::psmax3(out, in[0], in[1], samples);
+                                pPreEq->process(out, out, samples);
+                                dsp::abs1(out, samples);
+                            }
+                            else
+                                dsp::pamax3(out, in[0], in[1], samples);
+                            break;
                         default:
                             break;
                     }
@@ -235,7 +330,7 @@ namespace lsp
 
         bool Sidechain::preprocess(float *out, const float *in)
         {
-            float s;
+            float s, a, b;
 
             if (nChannels == 2)
             {
@@ -263,6 +358,20 @@ namespace lsp
                             if (pPreEq != NULL)
                                 pPreEq->process(&s, &s, 1);
                             break;
+                        case SCS_AMIN:
+                            a = in[0] + in[1];
+                            b = in[0] - in[1];
+                            s   = (fabs(a) < fabs(b)) ? a : b;
+                            if (pPreEq != NULL)
+                                pPreEq->process(&s, &s, 1);
+                            break;
+                        case SCS_AMAX:
+                            a = in[0] + in[1];
+                            b = in[0] - in[1];
+                            s   = (fabs(b) < fabs(a)) ? a : b;
+                            if (pPreEq != NULL)
+                                pPreEq->process(&s, &s, 1);
+                            break;
                         default:
                             s = in[0];
                             break;
@@ -285,6 +394,16 @@ namespace lsp
                             break;
                         case SCS_SIDE:
                             s = (in[0] - in[1])*0.5f;
+                            if (pPreEq != NULL)
+                                pPreEq->process(&s, &s, 1);
+                            break;
+                        case SCS_AMIN:
+                            s   = (fabs(in[0]) < fabs(in[1])) ? in[0] : in[1];
+                            if (pPreEq != NULL)
+                                pPreEq->process(&s, &s, 1);
+                            break;
+                        case SCS_AMAX:
+                            s   = (fabs(in[1]) < fabs(in[0])) ? in[0] : in[1];
                             if (pPreEq != NULL)
                                 pPreEq->process(&s, &s, 1);
                             break;

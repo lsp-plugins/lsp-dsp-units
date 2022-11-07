@@ -34,10 +34,12 @@ namespace lsp
         // Sidechain signal source
         enum sidechain_source_t
         {
-            SCS_MIDDLE,
-            SCS_SIDE,
-            SCS_LEFT,
-            SCS_RIGHT
+            SCS_MIDDLE,         // Take the middle part out of the stereo signal
+            SCS_SIDE,           // Take the side part out of the stereo signal
+            SCS_LEFT,           // Take the left channel out of the stereo signal
+            SCS_RIGHT,          // Take the right channel out of the stereo signal
+            SCS_AMIN,           // Take the absolute minimum value out of the stereo signal
+            SCS_AMAX            // Take the absolute maximum value out of the stereo signal
         };
 
         enum sidechain_mode_t
@@ -82,6 +84,7 @@ namespace lsp
                 void            refresh_processing();
                 bool            preprocess(float *out, const float **in, size_t samples);
                 bool            preprocess(float *out, const float *in);
+                void            select_buffer(float **a, float **b, size_t *size);
 
             public:
                 explicit Sidechain();
@@ -97,12 +100,12 @@ namespace lsp
                  * @param channels number of input channels, possible 1 or 2
                  * @param max_reactivity maximum reactivity
                  */
-                bool init(size_t channels, float max_reactivity);
+                bool            init(size_t channels, float max_reactivity);
 
                 /** Destroy sidechain
                  *
                  */
-                void destroy();
+                void            destroy();
 
             public:
                 /** Set pre-processing equalizer
@@ -178,14 +181,14 @@ namespace lsp
                 /** Process sidechain signal
                  *
                  * @param out output buffer
-                 * @param in input buffers
+                 * @param in array of input buffers
                  * @param samples number of samples to process
                  */
                 void process(float *out, const float **in, size_t samples);
 
                 /** Process sidechain signal (single sample)
                  *
-                 * @param in input data (one sample per channel)
+                 * @param in input data array (one sample per each input channel)
                  */
                 float process(const float *in);
     

@@ -120,6 +120,18 @@ namespace lsp
                  */
                 inline size_t size() const { return nTail - nHead;  };
 
+                /**
+                 * Get the size of free space after the tail
+                 * @return size of free space after the tail
+                 */
+                inline size_t tail_gap_size() const     { return nCapacity - nTail;     }
+
+                /**
+                 * Get the size of free space before the heade
+                 * @return size of free space before the head
+                 */
+                inline size_t head_gap_size() const     { return nHead;                 }
+
                 /** Get maximum size of the buffer
                  *
                  * @return maximum size of the buffer
@@ -130,6 +142,12 @@ namespace lsp
                  *
                  */
                 inline void clear() { nHead = nTail = 0; }
+
+                /** Get the pointer to the beginning of the entire buffer
+                 *
+                 * @return data pointer at the head of buffer
+                 */
+                float *data();
 
                 /** Get the data pointer at the head of buffer
                  *
