@@ -77,6 +77,36 @@ namespace lsp
             SAMPLE_CROSSFADE_CONST_POWER
         };
 
+        enum sample_loop_t
+        {
+            /**
+             * The loop mode is disabled
+             */
+            SAMPLE_LOOP_NONE,
+
+            /**
+             * The loop part of sample is always played from the start to the end of the range
+             */
+            SAMPLE_LOOP_DIRECT,
+
+            /**
+             * The loop part of sample is always played from the end to the start of the range
+             */
+            SAMPLE_LOOP_REVERSE,
+
+            /**
+             * The loop part of sample is played in ping-pong mode, the first repeat is played from the
+             * start to the end
+             */
+            SAMPLE_LOOP_DIRECT_PP,
+
+            /**
+             * The loop part of sample is played in ping-pong mode, the first repeat is played from the
+             * end to the start (in reverse mode)
+             */
+            SAMPLE_LOOP_REVERSE_PP
+        };
+
     } /* namesapace dspu */
 } /* namespace lsp */
 

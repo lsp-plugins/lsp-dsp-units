@@ -24,6 +24,8 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
+#include <lsp-plug.in/dsp-units/sampling/Playback.h>
+#include <lsp-plug.in/dsp-units/sampling/PlaySettings.h>
 
 namespace lsp
 {
@@ -36,29 +38,22 @@ namespace lsp
                 SamplePlayer(const SamplePlayer &);
 
             protected:
-                typedef struct playback_t
+                typedef struct play_item_t: public playback_t
                 {
-                    Sample     *pSample;    // Pointer to the sample
-                    ssize_t     nID;        // ID of playback
-                    size_t      nChannel;   // Channel to play
-                    ssize_t     nOffset;    // Current offset
-                    ssize_t     nFadeout;   // Fadeout (cancelling)
-                    ssize_t     nFadeOffset;// Fadeout offset
-                    float       nVolume;    // The volume of the sample
-                    playback_t *pNext;      // Pointer to the next playback in the list
-                    playback_t *pPrev;      // Pointer to the previous playback in the list
-                } playback_t;
+                    play_item_t *pNext;     // Pointer to the next playback in the list
+                    play_item_t *pPrev;     // Pointer to the previous playback in the list
+                } play_item_t;
 
                 typedef struct list_t
                 {
-                    playback_t *pHead;      // The head of the list
-                    playback_t *pTail;      // The tail of the list
+                    play_item_t *pHead;     // The head of the list
+                    play_item_t *pTail;     // The tail of the list
                 } list_t;
 
             private:
                 Sample        **vSamples;
                 size_t          nSamples;
-                playback_t     *vPlayback;
+                play_item_t    *vPlayback;
                 size_t          nPlayback;
                 list_t          sActive;
                 list_t          sInactive;
@@ -66,10 +61,10 @@ namespace lsp
 
             protected:
                 static inline void cleanup(playback_t *pb);
-                static inline void list_remove(list_t *list, playback_t *pb);
-                static inline playback_t *list_remove_first(list_t *list);
-                static inline void list_add_first(list_t *list, playback_t *pb);
-                static inline void list_insert_from_tail(list_t *list, playback_t *pb);
+                static inline void list_remove(list_t *list, play_item_t *pb);
+                static inline play_item_t *list_remove_first(list_t *list);
+                static inline void list_add_first(list_t *list, play_item_t *pb);
+                static inline void list_insert_from_tail(list_t *list, play_item_t *pb);
                 void do_process(float *dst, size_t samples);
 
                 static void dump_list(IStateDumper *v, const char *name, const list_t *list);
@@ -163,6 +158,15 @@ namespace lsp
                  */
                 bool play(size_t id, size_t channel, float volume, ssize_t delay = 0);
 
+                /**
+                 * Trigger the playback of the sample
+                 * @param id ID of the sample
+                 * @param channel ID of the sample's channel
+                 * @param settings playback settings
+                 * @return true if parameters are valid
+                 */
+                Playback play(size_t id, size_t channel, const PlaySettings *settings = NULL);
+
                 /** Soft cancel playback of the sample
                  *
                  * @param id ID of the sample
@@ -184,7 +188,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_SAMPLING_SAMPLEPLAYER_H_ */

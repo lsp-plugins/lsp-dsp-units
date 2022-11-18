@@ -44,7 +44,7 @@ namespace lsp
             destroy(true);
         }
     
-        inline void SamplePlayer::list_remove(list_t *list, playback_t *pb)
+        inline void SamplePlayer::list_remove(list_t *list, play_item_t *pb)
         {
             if (pb->pPrev != NULL)
                 pb->pPrev->pNext    = pb->pNext;
@@ -56,9 +56,9 @@ namespace lsp
                 list->pTail         = pb->pPrev;
         }
 
-        inline SamplePlayer::playback_t *SamplePlayer::list_remove_first(list_t *list)
+        inline SamplePlayer::play_item_t *SamplePlayer::list_remove_first(list_t *list)
         {
-            playback_t *pb          = list->pHead;
+            play_item_t *pb         = list->pHead;
             if (pb == NULL)
                 return NULL;
             list->pHead             = pb->pNext;
@@ -69,7 +69,7 @@ namespace lsp
             return pb;
         }
 
-        inline void SamplePlayer::list_add_first(list_t *list, playback_t *pb)
+        inline void SamplePlayer::list_add_first(list_t *list, play_item_t *pb)
         {
             if (list->pHead == NULL)
             {
@@ -87,10 +87,10 @@ namespace lsp
             }
         }
 
-        inline void SamplePlayer::list_insert_from_tail(list_t *list, playback_t *pb)
+        inline void SamplePlayer::list_insert_from_tail(list_t *list, play_item_t *pb)
         {
             // Find the position to insert data
-            playback_t *prev    = list->pTail;
+            play_item_t *prev    = list->pTail;
             while (prev != NULL)
             {
                 if (pb->nOffset <= prev->nOffset)
@@ -118,6 +118,7 @@ namespace lsp
         inline void SamplePlayer::cleanup(playback_t *pb)
         {
             pb->pSample         = NULL;
+            pb->nSerial        += 1;
             pb->nID             = -1;
             pb->nChannel        = 0;
             pb->nFadeout        = -1;
@@ -138,7 +139,7 @@ namespace lsp
                 return false;
 
             // Allocate playback array
-            vPlayback           = new playback_t[max_playbacks];
+            vPlayback           = new play_item_t[max_playbacks];
             if (vPlayback == NULL)
             {
                 delete [] vSamples;
@@ -157,13 +158,14 @@ namespace lsp
             sActive.pTail       = NULL;
 
             // Init inactive list (full)
-            playback_t *last    = NULL;
+            play_item_t *last   = NULL;
             sInactive.pHead     = NULL;
             for (size_t i=0; i<max_playbacks; ++i)
             {
-                playback_t *curr = &vPlayback[i];
+                play_item_t *curr = &vPlayback[i];
 
                 // Initialize fields
+                curr->nSerial    = 0;
                 cleanup(curr);
 
                 // Link
@@ -237,10 +239,10 @@ namespace lsp
             }
 
             // Cleanup all active playbacks associated with this sample
-            playback_t *pb = sActive.pHead;
+            play_item_t *pb = sActive.pHead;
             while (pb != NULL)
             {
-                playback_t *next    = pb->pNext;
+                play_item_t *next    = pb->pNext;
                 if (pb->pSample == old)
                 {
                     pb->pSample     = NULL;
@@ -295,13 +297,13 @@ namespace lsp
 
         void SamplePlayer::do_process(float *dst, size_t samples)
         {
-            playback_t *pb      = sActive.pHead;
+            play_item_t *pb      = sActive.pHead;
 
             // Iterate playbacks
             while (pb != NULL)
             {
                 // Get next playback
-                playback_t *next    = pb->pNext;
+                play_item_t *next    = pb->pNext;
 
                 // Check bounds
                 ssize_t src_head    = pb->nOffset;
@@ -373,41 +375,54 @@ namespace lsp
 
         bool SamplePlayer::play(size_t id, size_t channel, float volume, ssize_t delay)
         {
+            PlaySettings settings;
+            settings.set_playback(0, size_t(delay), volume);
+            Playback result = play(id, channel, &settings);
+            return result.valid();
+        }
+
+        Playback SamplePlayer::play(size_t id, size_t channel, const PlaySettings *settings)
+        {
             // Check that ID of the sample is correct
             if (id >= nSamples)
-                return false;
+                return Playback();
 
             // Check that the sample is bound and valid
             Sample *s       = vSamples[id];
             if ((s == NULL) || (!s->valid()))
-                return false;
+                return Playback();
 
             // Check that ID of channel matches
             if (channel >= s->channels())
-                return false;
+                return Playback();
 
-            // Try to acquire playback
-            playback_t *pb  = list_remove_first(&sInactive);
+            // Try to allocate new playback
+            play_item_t *pb  = list_remove_first(&sInactive);
             if (pb == NULL)
                 pb              = list_remove_first(&sActive);
             if (pb == NULL)
-                return false;
+                return Playback();
 
     //        lsp_trace("acquired playback %p", pb);
 
             // Now we are ready to activate sample
+            // TODO: implement playback planning
+            if (settings == NULL)
+                settings        = &PlaySettings::default_settings;
+
             pb->pSample     = s;
+            pb->nSerial    += 1;
             pb->nID         = id;
             pb->nChannel    = channel;
-            pb->nVolume     = volume;
-            pb->nOffset     = -delay;
+            pb->nVolume     = settings->volume();
+            pb->nOffset     = -ssize_t(settings->delay());
             pb->nFadeout    = -1;  // No fadeout
             pb->nFadeOffset = -1; // No cancellation
 
             // Add the playback to the active list
             list_insert_from_tail(&sActive, pb);
 
-            return true;
+            return Playback(pb);
         }
 
         ssize_t SamplePlayer::cancel_all(size_t id, size_t channel, size_t fadeout, ssize_t delay)
@@ -419,7 +434,7 @@ namespace lsp
             ssize_t result = 0;
 
             // Get first playback
-            playback_t *pb      = sActive.pHead;
+            play_item_t *pb      = sActive.pHead;
             if (pb == NULL)
                 return result;
 
@@ -427,7 +442,7 @@ namespace lsp
             do
             {
                 // Remember next playback
-                playback_t *next        = pb->pNext;
+                play_item_t *next        = pb->pNext;
 
                 // Cancel playback if not already cancelled
                 if ((pb->nID == ssize_t(id)) &&
@@ -451,7 +466,7 @@ namespace lsp
         void SamplePlayer::stop()
         {
             // Get first playback
-            playback_t *pb      = sActive.pHead;
+            play_item_t *pb      = sActive.pHead;
             if (pb == NULL)
                 return;
 
@@ -503,10 +518,11 @@ namespace lsp
             {
                 for (size_t i=0; i<nPlayback; ++i)
                 {
-                    const playback_t *p = &vPlayback[i];
-                    v->begin_object(p, sizeof(playback_t));
+                    const play_item_t *p = &vPlayback[i];
+                    v->begin_object(p, sizeof(play_item_t));
                     {
                         v->write("pSample", p->pSample);
+                        v->write("nSerial", p->nSerial);
                         v->write("nID", p->nID);
                         v->write("nChannel", p->nChannel);
                         v->write("nOffset", p->nOffset);
