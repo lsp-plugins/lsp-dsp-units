@@ -163,7 +163,7 @@ namespace lsp
                  */
                 bool play(size_t id, size_t channel, float volume, ssize_t delay = 0);
 
-                /** Softly cancel playback of the sample
+                /** Soft cancel playback of the sample
                  *
                  * @param id ID of the sample
                  * @param channel ID of the sample's channel

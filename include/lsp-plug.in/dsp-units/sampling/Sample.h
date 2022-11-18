@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/sampling/types.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/mm/IOutAudioStream.h>
@@ -35,52 +36,10 @@ namespace lsp
 {
     namespace dspu
     {
-    #pragma pack(push, 1)
-        typedef struct sample_header_t
-        {
-            uint16_t    version;        // Version + endianess
-            uint16_t    channels;
-            uint32_t    sample_rate;
-            uint32_t    samples;
-        } sample_header_t;
-    #pragma pack(pop)
-
-        enum sample_normalize_t
-        {
-            /**
-             * No normalization
-             */
-            SAMPLE_NORM_NONE,
-
-            /**
-             * Normalize if maximum peak is above threshold
-             */
-            SAMPLE_NORM_ABOVE,
-
-            /**
-             * Normalize if maximum peak is below threshold
-             */
-            SAMPLE_NORM_BELOW,
-
-            /**
-             * Normalize in any case
-             */
-            SAMPLE_NORM_ALWAYS
-        };
-
-        enum sample_crossfade_t
-        {
-            /**
-             * Linear crossfade
-             */
-            SAMPLE_CROSSFADE_LINEAR,
-
-            /**
-             * Constant-power crossfade
-             */
-            SAMPLE_CROSSFADE_CONST_POWER
-        };
-
+        /**
+         * An audio sample: audio data in PCM format that stores each audio channel in
+         * a separate sequential part of the memory as 32-bit float values.
+         */
         class LSP_DSP_UNITS_PUBLIC Sample
         {
             private:
