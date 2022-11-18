@@ -297,79 +297,80 @@ namespace lsp
 
         void SamplePlayer::do_process(float *dst, size_t samples)
         {
-            play_item_t *pb      = sActive.pHead;
-
             // Iterate playbacks
-            while (pb != NULL)
+            for (play_item_t *pb = sActive.pHead; pb != NULL; )
             {
-                // Get next playback
-                play_item_t *next    = pb->pNext;
+                play_item_t *next   = pb->pNext;
 
-                // Check bounds
-                ssize_t src_head    = pb->nOffset;
-                pb->nOffset        += samples;
-                Sample *s           = pb->pSample;
-                ssize_t s_len       = s->length();
+                process_single_playback(dst, pb, samples);
 
-                // Handle sample if active
-                if (pb->nOffset > 0)
-                {
-    //                lsp_trace("pb->nOffset=%d, samples=%d, s_len=%d", int(pb->nOffset), int(samples), int(s_len));
-
-                    ssize_t dst_off     = 0;
-                    ssize_t count       = samples;
-                    if (pb->nOffset < count)
-                    {
-                        src_head    = 0;
-                        dst_off     = samples - pb->nOffset;
-                        count       = pb->nOffset;
-                    }
-                    if (pb->nOffset > s_len)
-                        count      += s_len - pb->nOffset;
-
-                    // Add sample data to the output buffer
-                    if (count > 0)
-                    {
-    //                    lsp_trace("add_multiplied dst_off=%d, src_head=%d, volume=%f, count=%d", int(dst_off), int(src_head), pb->nVolume, int(count));
-                        if (pb->nFadeout < 0)
-                            dsp::fmadd_k3(&dst[dst_off], s->getBuffer(pb->nChannel, src_head), pb->nVolume * fGain, count);
-                        else
-                        {
-                            ssize_t fade_head   = pb->nFadeOffset;
-                            float gain          = pb->nVolume * fGain;
-                            float *sp           = s->getBuffer(pb->nChannel, src_head);
-                            float *dp           = &dst[dst_off];
-
-                            float fgain         = gain / (pb->nFadeout + 1);
-                            for (ssize_t i=0; (i<count) && (fade_head < pb->nFadeout); ++i, ++fade_head)
-                            {
-                                if (fade_head < 0)
-                                    *(dp++)        += *(sp++) * gain;
-                                else
-                                    *(dp++)        += *(sp++) * fgain * (pb->nFadeout - fade_head);
-                            }
-
-                            pb->nFadeOffset     = fade_head;
-                        }
-                    }
-                }
-
-                // Check that there are no samples to process in the future
-                if ((pb->nOffset >= s_len) ||
-                    ((pb->nFadeout >= 0) && (pb->nFadeOffset >= pb->nFadeout)))
-                {
-                    // Cleanup playback
-                    cleanup(pb);
-
-                    // Move to inactive
-                    list_remove(&sActive, pb);
-                    list_add_first(&sInactive, pb);
-
-    //                lsp_trace("freed playback %p", pb);
-                }
-
-                // Iterate next playback
                 pb                  = next;
+            }
+        }
+
+        void SamplePlayer::process_single_playback(float *dst, play_item_t *pb, size_t samples)
+        {
+            // Check bounds
+            ssize_t src_head    = pb->nOffset;
+            pb->nOffset        += samples;
+            Sample *s           = pb->pSample;
+            ssize_t s_len       = s->length();
+
+            // Handle sample if active
+            if (pb->nOffset > 0)
+            {
+//                lsp_trace("pb->nOffset=%d, samples=%d, s_len=%d", int(pb->nOffset), int(samples), int(s_len));
+
+                ssize_t dst_off     = 0;
+                ssize_t count       = samples;
+                if (pb->nOffset < count)
+                {
+                    src_head    = 0;
+                    dst_off     = samples - pb->nOffset;
+                    count       = pb->nOffset;
+                }
+                if (pb->nOffset > s_len)
+                    count      += s_len - pb->nOffset;
+
+                // Add sample data to the output buffer
+                if (count > 0)
+                {
+//                    lsp_trace("add_multiplied dst_off=%d, src_head=%d, volume=%f, count=%d", int(dst_off), int(src_head), pb->nVolume, int(count));
+                    if (pb->nFadeout < 0)
+                        dsp::fmadd_k3(&dst[dst_off], s->getBuffer(pb->nChannel, src_head), pb->nVolume * fGain, count);
+                    else
+                    {
+                        ssize_t fade_head   = pb->nFadeOffset;
+                        float gain          = pb->nVolume * fGain;
+                        float *sp           = s->getBuffer(pb->nChannel, src_head);
+                        float *dp           = &dst[dst_off];
+
+                        float fgain         = gain / (pb->nFadeout + 1);
+                        for (ssize_t i=0; (i<count) && (fade_head < pb->nFadeout); ++i, ++fade_head)
+                        {
+                            if (fade_head < 0)
+                                *(dp++)        += *(sp++) * gain;
+                            else
+                                *(dp++)        += *(sp++) * fgain * (pb->nFadeout - fade_head);
+                        }
+
+                        pb->nFadeOffset     = fade_head;
+                    }
+                }
+            }
+
+            // Check that there are no samples to process in the future
+            if ((pb->nOffset >= s_len) ||
+                ((pb->nFadeout >= 0) && (pb->nFadeOffset >= pb->nFadeout)))
+            {
+                // Cleanup playback
+                cleanup(pb);
+
+                // Move to inactive
+                list_remove(&sActive, pb);
+                list_add_first(&sInactive, pb);
+
+//                lsp_trace("freed playback %p", pb);
             }
         }
 
@@ -431,19 +432,11 @@ namespace lsp
             if (id >= nSamples)
                 return -1;
 
+            // Stop all playbacks
             ssize_t result = 0;
 
-            // Get first playback
-            play_item_t *pb      = sActive.pHead;
-            if (pb == NULL)
-                return result;
-
-            // Stop all playbacks
-            do
+            for (play_item_t *pb = sActive.pHead; pb != NULL; pb = pb->pNext)
             {
-                // Remember next playback
-                play_item_t *next        = pb->pNext;
-
                 // Cancel playback if not already cancelled
                 if ((pb->nID == ssize_t(id)) &&
                     (pb->pSample != NULL) &&
@@ -455,30 +448,16 @@ namespace lsp
 
     //                lsp_trace("marked playback %p for cancelling", pb);
                 }
-
-                // Iterate to next playback
-                pb                      = next;
-            } while (pb != NULL);
+            }
 
             return result;
         }
 
         void SamplePlayer::stop()
         {
-            // Get first playback
-            play_item_t *pb      = sActive.pHead;
-            if (pb == NULL)
-                return;
-
             // Stop all playbacks
-            do
-            {
-                // Cancel playback
+            for (play_item_t *pb = sActive.pHead; pb != NULL; pb = pb->pNext)
                 cleanup(pb);
-
-                // Iterate next playback
-                pb                      = pb->pNext;
-            } while (pb != NULL);
 
             // Move all data from active list to inactive
             if (sInactive.pHead == NULL)

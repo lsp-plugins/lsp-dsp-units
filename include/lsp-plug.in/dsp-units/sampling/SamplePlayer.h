@@ -66,6 +66,7 @@ namespace lsp
                 static inline void list_add_first(list_t *list, play_item_t *pb);
                 static inline void list_insert_from_tail(list_t *list, play_item_t *pb);
                 void do_process(float *dst, size_t samples);
+                void process_single_playback(float *dst, play_item_t *pb, size_t samples);
 
                 static void dump_list(IStateDumper *v, const char *name, const list_t *list);
 
