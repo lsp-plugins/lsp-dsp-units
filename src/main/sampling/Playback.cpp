@@ -83,11 +83,18 @@ namespace lsp
             return (pPlayback != NULL) && (pPlayback->nSerial == nSerial);
         }
 
-        ssize_t Playback::offset() const
+        size_t Playback::offset() const
         {
             if (!valid())
                 return -1;
             return pPlayback->nOffset;
+        }
+
+        wsize_t Playback::timestamp() const
+        {
+            if (!valid())
+                return 0;
+            return pPlayback->nTimestamp;
         }
 
         void Playback::cancel(size_t fadeout, ssize_t delay)

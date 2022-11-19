@@ -19,8 +19,14 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp-units/sampling/SamplePlayer.h>
+#include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/dsp-units/sampling/SamplePlayer.h>
+#include <lsp-plug.in/stdlib/math.h>
+
+#define BUFFER_SIZE         0x1000u
+#define SAMPLER_ALIGN       0x40u
 
 namespace lsp
 {
@@ -28,6 +34,7 @@ namespace lsp
     {
         SamplePlayer::SamplePlayer()
         {
+            vBuffer         = NULL;
             vSamples        = NULL;
             nSamples        = 0;
             vPlayback       = NULL;
@@ -37,6 +44,7 @@ namespace lsp
             sInactive.pHead = NULL;
             sInactive.pTail = NULL;
             fGain           = 1.0f;
+            pData           = NULL;
         }
 
         SamplePlayer::~SamplePlayer()
@@ -115,16 +123,30 @@ namespace lsp
             prev->pNext         = pb;
         }
 
+        inline void SamplePlayer::clear_batch(play_batch_t *b)
+        {
+            b->nTimestamp       = 0;
+            b->nStart           = 0;
+            b->nEnd             = 0;
+            b->enType           = play_batch_t::TYPE_NONE;
+        }
+
         inline void SamplePlayer::cleanup(playback_t *pb)
         {
+            pb->nTimestamp      = 0;
             pb->pSample         = NULL;
             pb->nSerial        += 1;
             pb->nID             = -1;
             pb->nChannel        = 0;
+            pb->nOffset         = 0;
             pb->nFadeout        = -1;
             pb->nFadeOffset     = 0;
             pb->nVolume         = 0.0f;
-            pb->nOffset         = 0;
+            pb->nXFade          = 0;
+            pb->enXFadeType     = SAMPLE_CROSSFADE_CONST_POWER;
+
+            clear_batch(&pb->sBatch[0]);
+            clear_batch(&pb->sBatch[1]);
         }
 
         bool SamplePlayer::init(size_t max_samples, size_t max_playbacks)
@@ -133,21 +155,33 @@ namespace lsp
             if ((max_samples <= 0) || (max_playbacks <= 0))
                 return false;
 
-            // Allocate array of samples
-            vSamples            = new Sample *[max_samples];
-            if (vSamples == NULL)
-                return false;
+            // Estimate the amount of data to allocate
+            size_t szof_buffer      = BUFFER_SIZE*sizeof(float);
+            size_t szof_samples     = align_size(sizeof(Sample *) * max_samples, SAMPLER_ALIGN);
+            size_t szof_playback    = align_size(sizeof(play_item_t) * max_playbacks, SAMPLER_ALIGN);
+            size_t to_alloc         = szof_buffer + szof_samples + szof_playback;
 
-            // Allocate playback array
-            vPlayback           = new play_item_t[max_playbacks];
-            if (vPlayback == NULL)
-            {
-                delete [] vSamples;
-                vSamples            = NULL;
+            uint8_t *data           = NULL;
+            uint8_t *ptr            = alloc_aligned<uint8_t>(data, to_alloc, SAMPLER_ALIGN);
+            lsp_guard_assert(
+                uint8_t *end = &ptr[to_alloc];
+            );
+            if ((ptr == NULL) || (data == NULL))
                 return false;
-            }
+            lsp_finally {
+                free_aligned(data);
+            };
 
             // Update state
+            lsp::swap(pData, data);
+            vBuffer             = reinterpret_cast<float *>(ptr);
+            ptr                += szof_buffer;
+            vSamples            = reinterpret_cast<Sample **>(ptr);
+            ptr                += szof_samples;
+            vPlayback           = reinterpret_cast<play_item_t *>(ptr);
+            ptr                += szof_playback;
+            lsp_assert( ptr <= end );
+
             nSamples            = max_samples;
             nPlayback           = max_playbacks;
             for (size_t i=0; i<max_samples; ++i)
@@ -297,15 +331,330 @@ namespace lsp
 
         void SamplePlayer::do_process(float *dst, size_t samples)
         {
-            // Iterate playbacks
-            for (play_item_t *pb = sActive.pHead; pb != NULL; )
+            // Operate with not greater than BUFFER_SIZE parts
+            for (size_t offset=0; offset<samples;)
             {
-                play_item_t *next   = pb->pNext;
+                size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
 
-                process_single_playback(dst, pb, samples);
+                // Iterate over all active playbacks and apply changes to the output
+                for (play_item_t *pb = sActive.pHead; pb != NULL; )
+                {
+                    play_item_t *next   = pb->pNext;
 
-                pb                  = next;
+                    dsp::fill_zero(vBuffer, to_do);
+                    process_single_playback(vBuffer, pb, to_do);
+                    dsp::fmadd_k3(dst, vBuffer, pb->nVolume * fGain, to_do);
+
+                    pb                  = next;
+                }
+
+                // Update pointers
+                dst                += to_do;
+                offset             += to_do;
             }
+        }
+
+        /* Batch layout:
+         *                samples
+         *       |<--------------------->|
+         *       |                       |
+         *  +---------+-------------+----------+
+         *  | fade-in |    body     | fade-out |
+         *  +---------+-------------+----------+
+         *  |    |    |             |          |
+         *  0    t0   t1            t2         t3
+         */
+
+        size_t SamplePlayer::put_batch_linear_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples)
+        {
+            // Direct playback, compute batch size and position
+            size_t t3   = b->nEnd - b->nStart;          // Batch size in samples
+            size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
+            if (t0 >= t3)
+                return 0;
+
+            size_t t    = t0;                           // Current rendering position inside of the batch
+            src        += b->nStart;                    // Adjust pointer for simplification of pointer arithmetics
+
+            // Render the fade-in
+            size_t t1   = b->nFadeIn;
+            if (t < t1)
+            {
+                // Render contents
+                float k     = 1.0f / b->nFadeIn;
+                size_t n    = lsp_min(samples, t1 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[t] * (t * k);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the body
+            size_t t2   = t3 - b->nFadeOut;
+            if (t < t2)
+            {
+                // Render contents
+                size_t n    = lsp_min(samples, t2 - t);
+                dsp::add2(dst, &src[t], n);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the fade-out
+            if (t < t3)
+            {
+                // Render the contents
+                float k     = 1.0f / b->nFadeOut;
+                size_t n    = lsp_min(samples, t3 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[t] * ((t3 - t) * k);
+            }
+
+            return t - t0;
+        }
+
+        size_t SamplePlayer::put_batch_const_power_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples)
+        {
+            // Direct playback, compute batch size and position
+            size_t t3   = b->nStart - b->nEnd;          // Batch size in samples
+            size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
+            if (t0 >= t3)
+                return 0;
+
+            size_t tr   = t3 - 1;                       // Last sample
+            size_t t    = t0;                           // Current rendering position inside of the batch
+            src        += b->nEnd;                      // Adjust pointer for simplification of pointer arithmetics
+
+            // Render the fade-in
+            size_t t1   = b->nFadeIn;
+            if (t < t1)
+            {
+                // Render contents
+                float k     = 1.0f / b->nFadeIn;
+                size_t n    = lsp_min(samples, t1 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[tr - t] * sqrtf(t * k);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the body
+            size_t t2   = t3 - b->nFadeOut;
+            if (t < t2)
+            {
+                // Render contents
+                size_t n    = lsp_min(samples, t2 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]      = src[tr-t];
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the fade-out
+            if (t < t3)
+            {
+                // Render the contents
+                float k     = 1.0f / b->nFadeOut;
+                size_t n    = lsp_min(samples, t3 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[tr - t] * sqrtf((t3 - t) * k);
+            }
+
+            return t - t0;
+        }
+
+        size_t SamplePlayer::put_batch_linear_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples)
+        {
+            // Direct playback, compute batch size and position
+            size_t t3   = b->nEnd - b->nStart;          // Batch size in samples
+            size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
+            if (t0 >= t3)
+                return 0;
+
+            size_t t    = t0;                           // Current rendering position inside of the batch
+            src        += b->nStart;                    // Adjust pointer for simplification of pointer arithmetics
+
+            // Render the fade-in
+            size_t t1   = b->nFadeIn;
+            if (t < t1)
+            {
+                // Render contents
+                float k     = 1.0f / b->nFadeIn;
+                size_t n    = lsp_min(samples, t1 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[t] * (t * k);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the body
+            size_t t2   = t3 - b->nFadeOut;
+            if (t < t2)
+            {
+                // Render contents
+                size_t n    = lsp_min(samples, t2 - t);
+                dsp::add2(dst, &src[t], n);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the fade-out
+            if (t < t3)
+            {
+                // Render the contents
+                float k     = 1.0f / b->nFadeOut;
+                size_t n    = lsp_min(samples, t3 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[t] * ((t3 - t) * k);
+            }
+
+            return t - t0;
+        }
+
+        size_t SamplePlayer::put_batch_const_power_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples)
+        {
+            // Direct playback, compute batch size and position
+            size_t t3   = b->nEnd - b->nStart;          // Batch size in samples
+            size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
+            if (t0 >= t3)
+                return 0;
+
+            size_t t    = t0;                           // Current rendering position inside of the batch
+            src        += b->nStart;                    // Adjust pointer for simplification of pointer arithmetics
+
+            // Render the fade-in
+            size_t t1   = b->nFadeIn;
+            if (t < t1)
+            {
+                // Render contents
+                float k     = 1.0f / b->nFadeIn;
+                size_t n    = lsp_min(samples, t1 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[t] * sqrtf(t * k);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the body
+            size_t t2   = t3 - b->nFadeOut;
+            if (t < t2)
+            {
+                // Render contents
+                size_t n    = lsp_min(samples, t2 - t);
+                dsp::add2(dst, &src[t], n);
+
+                // Update the position
+                samples    -= n;
+                if (samples <= 0)
+                    return t - t0;
+                dst        += n;
+            }
+
+            // Render the fade-out
+            if (t < t3)
+            {
+                // Render the contents
+                float k     = 1.0f / b->nFadeOut;
+                size_t n    = lsp_min(samples, t3 - t);
+                for (size_t i=0; i<n; ++i, ++t)
+                    dst[i]     += src[t] * sqrtf((t3 - t) * k);
+            }
+
+            return t - t0;
+        }
+
+        size_t SamplePlayer::execute_batch(float *dst, const play_batch_t *b, playback_t *pb, size_t samples)
+        {
+            // Check type of batch
+            if (b->enType == play_batch_t::TYPE_NONE)
+                return 0;
+
+            // Initialize position
+            wsize_t timestamp   = pb->nTimestamp;
+            size_t offset       = 0;
+
+            // The playback has still not happened?
+            if (timestamp < b->nTimestamp)
+            {
+                // If we sill didn't reach the start of batch, just return
+                wsize_t skip        = b->nTimestamp - timestamp;
+                if (skip >= samples)
+                    return samples;
+
+                // We have reached the start of the batch, need to adjust the time
+                timestamp          += skip;
+                offset             += skip;
+            }
+
+            // Initialize parameters
+            size_t batch_offset = timestamp - b->nTimestamp;
+            size_t processed    = 0;
+            const float *src    = pb->pSample->channel(pb->nChannel);
+
+            if (b->nStart < b->nEnd)
+            {
+                // Perform processing depending on the cross-fade type
+                switch (pb->enXFadeType)
+                {
+                    case SAMPLE_CROSSFADE_CONST_POWER:
+                        processed       = put_batch_const_power_direct(&dst[offset], src, b, timestamp, samples - offset);
+                        break;
+                    case SAMPLE_CROSSFADE_LINEAR:
+                    default:
+                        processed       = put_batch_linear_direct(&dst[offset], src, b, timestamp, samples - offset);
+                        break;
+                }
+
+                // Update the offset
+                pb->nOffset         = b->nStart + batch_offset + processed;
+            }
+            else // b->nStart >= b->nEnd
+            {
+                // Perform processing depending on the cross-fade type
+                switch (pb->enXFadeType)
+                {
+                    case SAMPLE_CROSSFADE_CONST_POWER:
+                        processed       = put_batch_const_power_reverse(&dst[offset], src, b, batch_offset, samples - offset);
+                        break;
+                    case SAMPLE_CROSSFADE_LINEAR:
+                    default:
+                        processed       = put_batch_linear_reverse(&dst[offset], src, b, batch_offset, samples - offset);
+                        break;
+                }
+
+                // Update the offset
+                pb->nOffset         = b->nEnd + batch_offset + processed;
+            }
+
+            return offset + processed;
         }
 
         void SamplePlayer::process_single_playback(float *dst, play_item_t *pb, size_t samples)
@@ -475,10 +824,22 @@ namespace lsp
 
         void SamplePlayer::dump_list(IStateDumper *v, const char *name, const list_t *l)
         {
-            v->begin_object(name, l, sizeof(list_t));
+            v->begin_object(name, l, sizeof(*l));
             {
                 v->write("pHead", l->pHead);
                 v->write("pTail", l->pTail);
+            }
+            v->end_object();
+        }
+
+        void SamplePlayer::dump_batch(IStateDumper *v, const play_batch_t *b)
+        {
+            v->begin_object(b, sizeof(*b));
+            {
+                v->write("nTimestamp", b->nTimestamp);
+                v->write("nStart", b->nStart);
+                v->write("nEnd", b->nEnd);
+                v->write("enType", int(b->enType));
             }
             v->end_object();
         }

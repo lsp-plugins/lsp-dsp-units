@@ -32,16 +32,41 @@ namespace lsp
 {
     namespace dspu
     {
+        typedef struct play_batch_t
+        {
+            enum type_t
+            {
+                TYPE_NONE,          // The batch is empty, nothing to do
+                TYPE_HEAD,          // The batch is associated with the head part of the sample
+                TYPE_LOOP,          // The batch is associated with the loop part of the sample
+                TYPE_TAIL           // The batch is associated with the tail part of the sample
+            };
+
+            wsize_t             nTimestamp;     // The start of the batch in the sample timeline
+            size_t              nStart;         // Start of the sample segment to play
+            size_t              nEnd;           // End of the sample segment to play
+            size_t              nFadeIn;        // The fade-in time in samples
+            size_t              nFadeOut;       // The fade-out time in samples
+            type_t              enType;         // Type of the batch
+        } play_batch_t;
+
         typedef struct playback_t
         {
-            Sample     *pSample;    // Pointer to the sample
-            size_t      nSerial;    // Serial version of playback object
-            ssize_t     nID;        // ID of instrument
-            size_t      nChannel;   // Channel to play
-            ssize_t     nOffset;    // Current offset
-            ssize_t     nFadeout;   // Fadeout (cancelling)
-            ssize_t     nFadeOffset;// Fadeout offset
-            float       nVolume;    // The volume of the sample
+            wsize_t             nTimestamp;     // The actual playback timestamp in stamples
+            Sample             *pSample;        // Pointer to the sample
+            size_t              nSerial;        // Serial version of playback object
+            ssize_t             nID;            // ID of instrument
+            size_t              nChannel;       // Channel to play
+            ssize_t             nOffset;        // Current offset
+            ssize_t             nFadeout;       // Fadeout (cancelling)
+            ssize_t             nFadeOffset;    // Fadeout offset
+            float               nVolume;        // The volume of the sample
+            sample_loop_t       enLoopType;     // Type of the loop
+            size_t              nLoopStart;     // Start of the loop
+            size_t              nLoopEnd;       // End of the loop
+            size_t              nXFade;         // The crossfade time in stamples
+            sample_crossfade_t  enXFadeType;    // The crossfade type
+            play_batch_t        sBatch[2];      // Batch queue for execution
         } playback_t;
 
         /**
@@ -72,10 +97,16 @@ namespace lsp
                 bool        valid() const;
 
                 /**
-                 * Get current offset of the playback
-                 * @return current offset of the playback
+                 * Get current offset of the playback position relative to the sample ranges
+                 * @return current offset of the playback position in samples, negative if not possible
                  */
-                ssize_t     offset() const;
+                size_t      offset() const;
+
+                /**
+                 * Get the actual playback timestamp since the playback event triggered
+                 * @return the actual playback timestamp in samples
+                 */
+                wsize_t     timestamp() const;
 
                 /**
                  * Cancel the playback

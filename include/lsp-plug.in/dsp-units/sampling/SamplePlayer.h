@@ -51,6 +51,7 @@ namespace lsp
                 } list_t;
 
             private:
+                float          *vBuffer;    // Temporary buffer for rendering samples
                 Sample        **vSamples;
                 size_t          nSamples;
                 play_item_t    *vPlayback;
@@ -59,16 +60,29 @@ namespace lsp
                 list_t          sInactive;
                 float           fGain;
 
+                uint8_t        *pData;
+
             protected:
                 static inline void cleanup(playback_t *pb);
+                static inline void clear_batch(play_batch_t *b);
+
                 static inline void list_remove(list_t *list, play_item_t *pb);
                 static inline play_item_t *list_remove_first(list_t *list);
                 static inline void list_add_first(list_t *list, play_item_t *pb);
                 static inline void list_insert_from_tail(list_t *list, play_item_t *pb);
-                void do_process(float *dst, size_t samples);
-                void process_single_playback(float *dst, play_item_t *pb, size_t samples);
 
                 static void dump_list(IStateDumper *v, const char *name, const list_t *list);
+                static void dump_batch(IStateDumper *v, const play_batch_t *b);
+
+                static size_t put_batch_linear_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
+                static size_t put_batch_const_power_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
+                static size_t put_batch_linear_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
+                static size_t put_batch_const_power_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
+
+            protected:
+                void        do_process(float *dst, size_t samples);
+                void        process_single_playback(float *dst, play_item_t *pb, size_t samples);
+                size_t      execute_batch(float *dst, const play_batch_t *b, playback_t *pb, size_t samples);
 
             public:
                 explicit SamplePlayer();
