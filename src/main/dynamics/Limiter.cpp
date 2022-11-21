@@ -636,9 +636,8 @@ namespace lsp
             size_t buf_gap      = nMaxLookahead*8;
             while (samples > 0)
             {
-                size_t can_do   = lsp_min(buf_gap - nHead, BUF_GRANULARITY);
-                size_t to_do    = lsp_min(samples, can_do);
-                float *gbuf     = &vGainBuf[nMaxLookahead + nHead];
+                size_t to_do    = lsp_min(samples, buf_gap - nHead + BUF_GRANULARITY);
+                float *gbuf     = &vGainBuf[nHead];
 
                 // Fill gain buffer
                 dsp::fill_one(&gbuf[nMaxLookahead*3], to_do);
@@ -698,11 +697,11 @@ namespace lsp
                 }
 
                 // Copy gain value and shift gain buffer
-                dsp::copy(gain, &gbuf[-nLookahead], to_do);
+                dsp::copy(gain, &gbuf[nMaxLookahead - nLookahead], to_do);
                 nHead          += to_do;
                 if (nHead >= buf_gap)
                 {
-                    dsp::move(vGainBuf, &vGainBuf[nHead + to_do], nLookahead * 4);
+                    dsp::move(vGainBuf, &vGainBuf[nHead + to_do], nMaxLookahead*4);
                     nHead       = 0;
                 }
 
