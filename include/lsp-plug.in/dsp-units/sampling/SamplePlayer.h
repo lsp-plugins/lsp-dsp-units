@@ -81,8 +81,11 @@ namespace lsp
 
             protected:
                 void        do_process(float *dst, size_t samples);
-                void        process_single_playback(float *dst, play_item_t *pb, size_t samples);
+                size_t      process_single_playback(float *dst, play_item_t *pb, size_t samples);
                 size_t      execute_batch(float *dst, const play_batch_t *b, playback_t *pb, size_t samples);
+                void        apply_fade_out(float *dst, playback_t *pb, size_t samples);
+                void        compute_next_batch(playback_t *pb, bool loop);
+                void        complete_current_batch(playback_t *pb, bool loop);
 
             public:
                 explicit SamplePlayer();

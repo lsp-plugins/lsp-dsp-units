@@ -52,16 +52,25 @@ namespace lsp
 
         typedef struct playback_t
         {
+            enum state_t
+            {
+                STATE_NONE,                     // No active state
+                STATE_PLAY,                     // Regular play
+                STATE_STOP,                     // Playback till the end of the sample, do not loop
+                STATE_CANCEL                    // Immediately cancel the playback
+            };
+
             wsize_t             nTimestamp;     // The actual playback timestamp in stamples
+            wsize_t             nCancelTime;    // The actual cancel timestamp
             Sample             *pSample;        // Pointer to the sample
             size_t              nSerial;        // Serial version of playback object
             ssize_t             nID;            // ID of instrument
             size_t              nChannel;       // Channel to play
-            ssize_t             nOffset;        // Current offset
-            ssize_t             nFadeout;       // Fadeout (cancelling)
-            ssize_t             nFadeOffset;    // Fadeout offset
-            float               nVolume;        // The volume of the sample
-            sample_loop_t       enLoopType;     // Type of the loop
+            state_t             enState;        // State of the playback
+            float               fVolume;        // The volume of the sample
+            ssize_t             nPosition;      // Current playback position
+            size_t              nFadeout;       // Fadeout length for cancelling
+            sample_loop_t       enLoopMode;     // Loop mode
             size_t              nLoopStart;     // Start of the loop
             size_t              nLoopEnd;       // End of the loop
             size_t              nXFade;         // The crossfade time in stamples
@@ -97,10 +106,10 @@ namespace lsp
                 bool        valid() const;
 
                 /**
-                 * Get current offset of the playback position relative to the sample ranges
-                 * @return current offset of the playback position in samples, negative if not possible
+                 * Get current time position of the playback inside of the audio sample
+                 * @return current time position of the playback inside of the audio sample
                  */
-                size_t      offset() const;
+                size_t      position() const;
 
                 /**
                  * Get the actual playback timestamp since the playback event triggered
@@ -109,10 +118,14 @@ namespace lsp
                 wsize_t     timestamp() const;
 
                 /**
-                 * Cancel the playback
+                 * Stop the playback: disable any loops and let the sample sound till it ends.
+                 */
+                void        stop();
+
+                /**
+                 * Cancel the playback: set-up the delay and fade-out length before the sample stops playing
                  * @param fadeout the fadeout length in samples for sample gain fadeout
                  * @param delay the delay (in samples) of the sample relatively to the next process() call
-                 * TODO: refactor this
                  */
                 void        cancel(size_t fadeout = 0, ssize_t delay = 0);
 

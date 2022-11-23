@@ -83,11 +83,11 @@ namespace lsp
             return (pPlayback != NULL) && (pPlayback->nSerial == nSerial);
         }
 
-        size_t Playback::offset() const
+        size_t Playback::position() const
         {
             if (!valid())
                 return -1;
-            return pPlayback->nOffset;
+            return pPlayback->nPosition;
         }
 
         wsize_t Playback::timestamp() const
@@ -97,17 +97,35 @@ namespace lsp
             return pPlayback->nTimestamp;
         }
 
+        void Playback::stop()
+        {
+            if (!valid())
+                return;
+
+            // We can stop the playback only if it is active at this moment
+            if (pPlayback->enState == playback_t::STATE_PLAY)
+                pPlayback->enState = playback_t::STATE_STOP;
+        }
+
         void Playback::cancel(size_t fadeout, ssize_t delay)
         {
             if (!valid())
                 return;
 
             // Do not cancel the playback if it already has been cancelled
-            if ((pPlayback->pSample != NULL) &&
-                (pPlayback->nFadeout < 0))
+            switch (pPlayback->enState)
             {
-                pPlayback->nFadeout    = fadeout;
-                pPlayback->nFadeOffset = -delay;
+                case playback_t::STATE_PLAY:
+                case playback_t::STATE_STOP:
+                    pPlayback->enState      = playback_t::STATE_CANCEL;
+                    pPlayback->nCancelTime  = pPlayback->nTimestamp + delay;
+                    pPlayback->nFadeout     = fadeout;
+                    break;
+
+                case playback_t::STATE_NONE:
+                case playback_t::STATE_CANCEL:
+                default:
+                    break;
             }
         }
 

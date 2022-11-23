@@ -101,7 +101,7 @@ namespace lsp
             play_item_t *prev    = list->pTail;
             while (prev != NULL)
             {
-                if (pb->nOffset <= prev->nOffset)
+                if (pb->nTimestamp <= prev->nTimestamp)
                     break;
                 prev    = prev->pPrev;
             }
@@ -134,14 +134,15 @@ namespace lsp
         inline void SamplePlayer::cleanup(playback_t *pb)
         {
             pb->nTimestamp      = 0;
+            pb->nCancelTime     = 0;
             pb->pSample         = NULL;
             pb->nSerial        += 1;
             pb->nID             = -1;
             pb->nChannel        = 0;
-            pb->nOffset         = 0;
+            pb->enState         = playback_t::STATE_NONE;
+            pb->nPosition       = 0;
             pb->nFadeout        = -1;
-            pb->nFadeOffset     = 0;
-            pb->nVolume         = 0.0f;
+            pb->fVolume         = 0.0f;
             pb->nXFade          = 0;
             pb->enXFadeType     = SAMPLE_CROSSFADE_CONST_POWER;
 
@@ -327,31 +328,6 @@ namespace lsp
         {
             dsp::fill_zero(dst, samples);
             do_process(dst, samples);
-        }
-
-        void SamplePlayer::do_process(float *dst, size_t samples)
-        {
-            // Operate with not greater than BUFFER_SIZE parts
-            for (size_t offset=0; offset<samples;)
-            {
-                size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
-
-                // Iterate over all active playbacks and apply changes to the output
-                for (play_item_t *pb = sActive.pHead; pb != NULL; )
-                {
-                    play_item_t *next   = pb->pNext;
-
-                    dsp::fill_zero(vBuffer, to_do);
-                    process_single_playback(vBuffer, pb, to_do);
-                    dsp::fmadd_k3(dst, vBuffer, pb->nVolume * fGain, to_do);
-
-                    pb                  = next;
-                }
-
-                // Update pointers
-                dst                += to_do;
-                offset             += to_do;
-            }
         }
 
         /* Batch layout:
@@ -634,7 +610,7 @@ namespace lsp
                 }
 
                 // Update the offset
-                pb->nOffset         = b->nStart + batch_offset + processed;
+                pb->nPosition       = b->nStart + batch_offset + processed;
             }
             else // b->nStart >= b->nEnd
             {
@@ -651,75 +627,137 @@ namespace lsp
                 }
 
                 // Update the offset
-                pb->nOffset         = b->nEnd + batch_offset + processed;
+                pb->nPosition       = b->nEnd + batch_offset + processed;
             }
 
             return offset + processed;
         }
 
-        void SamplePlayer::process_single_playback(float *dst, play_item_t *pb, size_t samples)
+        void SamplePlayer::apply_fade_out(float *dst, playback_t *pb, size_t samples)
         {
-            // Check bounds
-            ssize_t src_head    = pb->nOffset;
-            pb->nOffset        += samples;
-            Sample *s           = pb->pSample;
-            ssize_t s_len       = s->length();
+        }
 
-            // Handle sample if active
-            if (pb->nOffset > 0)
+        void SamplePlayer::compute_next_batch(playback_t *pb, bool loop)
+        {
+        }
+
+        void SamplePlayer::complete_current_batch(playback_t *pb, bool loop)
+        {
+            pb->sBatch[0]   = pb->sBatch[1];
+            if (pb->sBatch[0].enType == play_batch_t::TYPE_NONE)
             {
-//                lsp_trace("pb->nOffset=%d, samples=%d, s_len=%d", int(pb->nOffset), int(samples), int(s_len));
+                pb->enState         = playback_t::STATE_NONE;
+                return;
+            }
 
-                ssize_t dst_off     = 0;
-                ssize_t count       = samples;
-                if (pb->nOffset < count)
+            compute_next_batch(pb, loop);
+        }
+
+
+        size_t SamplePlayer::process_single_playback(float *dst, play_item_t *pb, size_t samples)
+        {
+            size_t processed, to_do;
+            size_t offset = 0;
+
+            while (offset < samples)
+            {
+                to_do               = samples - offset;
+
+                // Switch what to do with batch depending on the state
+                switch (pb->enState)
                 {
-                    src_head    = 0;
-                    dst_off     = samples - pb->nOffset;
-                    count       = pb->nOffset;
-                }
-                if (pb->nOffset > s_len)
-                    count      += s_len - pb->nOffset;
-
-                // Add sample data to the output buffer
-                if (count > 0)
-                {
-//                    lsp_trace("add_multiplied dst_off=%d, src_head=%d, volume=%f, count=%d", int(dst_off), int(src_head), pb->nVolume, int(count));
-                    if (pb->nFadeout < 0)
-                        dsp::fmadd_k3(&dst[dst_off], s->getBuffer(pb->nChannel, src_head), pb->nVolume * fGain, count);
-                    else
-                    {
-                        ssize_t fade_head   = pb->nFadeOffset;
-                        float gain          = pb->nVolume * fGain;
-                        float *sp           = s->getBuffer(pb->nChannel, src_head);
-                        float *dp           = &dst[dst_off];
-
-                        float fgain         = gain / (pb->nFadeout + 1);
-                        for (ssize_t i=0; (i<count) && (fade_head < pb->nFadeout); ++i, ++fade_head)
+                    case playback_t::STATE_PLAY:
+                        // Play batches, allow loops
+                        processed   = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                        if (processed >= to_do)
                         {
-                            if (fade_head < 0)
-                                *(dp++)        += *(sp++) * gain;
-                            else
-                                *(dp++)        += *(sp++) * fgain * (pb->nFadeout - fade_head);
+                            execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                            offset         += processed;
+                            pb->nTimestamp += processed;
+                        }
+                        else
+                            complete_current_batch(pb, true);
+                        break;
+
+                    case playback_t::STATE_STOP:
+                        // Play batches, do not allow loops
+                        processed   = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                        if (processed >= to_do)
+                        {
+                            execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                            offset         += processed;
+                            pb->nTimestamp += processed;
+                        }
+                        else
+                            complete_current_batch(pb, false);
+                        break;
+
+                    case playback_t::STATE_CANCEL:
+                        // Ensure that we still didn't reach the end of fade-out
+                        if (pb->nTimestamp >= pb->nCancelTime + pb->nFadeout)
+                        {
+                            pb->enState     = playback_t::STATE_NONE;
+                            break;
                         }
 
-                        pb->nFadeOffset     = fade_head;
-                    }
+                        // We do not need to process more than feedback allows
+                        to_do           = lsp_min(to_do, pb->nCancelTime + pb->nFadeout - pb->nTimestamp);
+
+                        // Play batches, do not allow loops
+                        processed       = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                        if (processed >= to_do)
+                        {
+                            execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                            apply_fade_out(&dst[offset], pb, processed);
+                            offset         += processed;
+                            pb->nTimestamp += processed;
+                        }
+                        else
+                            complete_current_batch(pb, false);
+                        break;
+
+                    case playback_t::STATE_NONE:
+                    default:
+                        // Cleanup playback
+                        cleanup(pb);
+                        // Move to inactive
+                        list_remove(&sActive, pb);
+                        list_add_first(&sInactive, pb);
+                        return offset;
                 }
             }
 
-            // Check that there are no samples to process in the future
-            if ((pb->nOffset >= s_len) ||
-                ((pb->nFadeout >= 0) && (pb->nFadeOffset >= pb->nFadeout)))
+            return offset;
+        }
+
+        void SamplePlayer::do_process(float *dst, size_t samples)
+        {
+            // Operate with not greater than BUFFER_SIZE parts
+            for (size_t offset=0; offset<samples;)
             {
-                // Cleanup playback
-                cleanup(pb);
+                size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
 
-                // Move to inactive
-                list_remove(&sActive, pb);
-                list_add_first(&sInactive, pb);
+                // Iterate over all active playbacks and apply changes to the output
+                for (play_item_t *pb = sActive.pHead; pb != NULL; )
+                {
+                    // The link of the playback can be changed, so we need
+                    // to remember the pointer to the next playback in list first
+                    play_item_t *next   = pb->pNext;
 
-//                lsp_trace("freed playback %p", pb);
+                    // Prepare the buffer
+                    dsp::fill_zero(vBuffer, to_do);
+
+                    // Apply playback to the temporary buffer and deploy temporary buffer to output
+                    size_t processed    = process_single_playback(vBuffer, pb, to_do);
+                    dsp::fmadd_k3(dst, vBuffer, pb->fVolume * fGain, processed);
+
+                    // Move to the next playback
+                    pb                  = next;
+                }
+
+                // Update pointers
+                dst                += to_do;
+                offset             += to_do;
             }
         }
 
@@ -760,14 +798,19 @@ namespace lsp
             if (settings == NULL)
                 settings        = &PlaySettings::default_settings;
 
+            pb->nTimestamp  = 0;
             pb->pSample     = s;
             pb->nSerial    += 1;
             pb->nID         = id;
             pb->nChannel    = channel;
-            pb->nVolume     = settings->volume();
-            pb->nOffset     = -ssize_t(settings->delay());
-            pb->nFadeout    = -1;  // No fadeout
-            pb->nFadeOffset = -1; // No cancellation
+            pb->enState     = playback_t::STATE_PLAY;
+            pb->nPosition   = 0;
+            pb->nFadeout    = 0;
+            pb->enLoopMode  = settings->loop_mode();
+            pb->fVolume     = settings->volume();
+
+            clear_batch(&pb->sBatch[0]);
+            clear_batch(&pb->sBatch[1]);
 
             // Add the playback to the active list
             list_insert_from_tail(&sActive, pb);
@@ -791,11 +834,10 @@ namespace lsp
                     (pb->pSample != NULL) &&
                     (pb->nFadeout < 0))
                 {
+                    pb->enState     = play_item_t::STATE_CANCEL;
+                    pb->nCancelTime = pb->nTimestamp + delay;
                     pb->nFadeout    = fadeout;
-                    pb->nFadeOffset = -delay;
                     result          ++;
-
-    //                lsp_trace("marked playback %p for cancelling", pb);
                 }
             }
 
@@ -839,6 +881,8 @@ namespace lsp
                 v->write("nTimestamp", b->nTimestamp);
                 v->write("nStart", b->nStart);
                 v->write("nEnd", b->nEnd);
+                v->write("nFadeIn", b->nFadeIn);
+                v->write("nFadeOut", b->nFadeOut);
                 v->write("enType", int(b->enType));
             }
             v->end_object();
@@ -861,16 +905,30 @@ namespace lsp
                     const play_item_t *p = &vPlayback[i];
                     v->begin_object(p, sizeof(play_item_t));
                     {
+                        v->write("nTimestamp", p->nTimestamp);
+                        v->write("nCancelTime", p->nCancelTime);
                         v->write("pSample", p->pSample);
                         v->write("nSerial", p->nSerial);
                         v->write("nID", p->nID);
                         v->write("nChannel", p->nChannel);
-                        v->write("nOffset", p->nOffset);
+                        v->write("nState", int(p->enState));
+                        v->write("fVolume", p->fVolume);
+                        v->write("nPosition", p->nPosition);
                         v->write("nFadeout", p->nFadeout);
-                        v->write("nFadeOffset", p->nFadeOffset);
-                        v->write("nVolume", p->nVolume);
                         v->write("pNext", p->pNext);
                         v->write("pPrev", p->pPrev);
+                        v->write("enLoopMode", int(p->enLoopMode));
+                        v->write("nLoopStart", p->nLoopStart);
+                        v->write("nLoopEnd", p->nLoopEnd);
+                        v->write("nXFade", p->nXFade);
+                        v->write("enXFadeType", int(p->enXFadeType));
+
+                        v->begin_array("sBatch", p->sBatch, 2);
+                        {
+                            for (size_t i=0; i<2; ++i)
+                                dump_batch(v, &p->sBatch[i]);
+                        }
+                        v->end_array();
                     }
                     v->end_object();
                 }
