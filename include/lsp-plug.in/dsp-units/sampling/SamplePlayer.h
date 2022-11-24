@@ -78,14 +78,18 @@ namespace lsp
                 static size_t put_batch_const_power_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
                 static size_t put_batch_linear_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
                 static size_t put_batch_const_power_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
+                static size_t apply_fade_out(float *dst, playback_t *pb, size_t samples);
+
+                static void compute_initial_batch(playback_t *pb, const PlaySettings *settings);
+                static void compute_next_batch(playback_t *pb, bool loop);
+                static void compute_next_batch_after_head(playback_t *pb, bool loop);
+                static void compute_next_batch_inside_loop(playback_t *pb, bool loop);
+                static void complete_current_batch(playback_t *pb, bool loop);
 
             protected:
                 void        do_process(float *dst, size_t samples);
                 size_t      process_single_playback(float *dst, play_item_t *pb, size_t samples);
                 size_t      execute_batch(float *dst, const play_batch_t *b, playback_t *pb, size_t samples);
-                void        apply_fade_out(float *dst, playback_t *pb, size_t samples);
-                void        compute_next_batch(playback_t *pb, bool loop);
-                void        complete_current_batch(playback_t *pb, bool loop);
 
             public:
                 explicit SamplePlayer();
@@ -178,7 +182,7 @@ namespace lsp
 
                 /**
                  * Trigger the playback of the sample
-                 * @param id ID of the sample
+                 * @param id ID of the sample to play
                  * @param channel ID of the sample's channel
                  * @param settings playback settings
                  * @return true if parameters are valid

@@ -633,12 +633,307 @@ namespace lsp
             return offset + processed;
         }
 
-        void SamplePlayer::apply_fade_out(float *dst, playback_t *pb, size_t samples)
+        size_t SamplePlayer::apply_fade_out(float *dst, playback_t *pb, size_t samples)
         {
+            // Initialize position
+            wsize_t timestamp   = pb->nTimestamp;
+            size_t offset       = 0;
+
+            // The fade-out has still not happened?
+            if (timestamp < pb->nCancelTime)
+            {
+                // If we sill didn't reach the start of batch, just return
+                wsize_t skip        = pb->nCancelTime - timestamp;
+                if (skip >= samples)
+                    return samples;
+
+                // We have reached the start of the batch, need to adjust the time
+                timestamp          += skip;
+                offset             += skip;
+            }
+
+            // The fade-out has been fully processed?
+            if (timestamp >= (pb->nCancelTime + pb->nFadeout))
+                return offset;
+
+            // Apply fade-out part
+            size_t to_do        = lsp_min(samples - offset, pb->nCancelTime + pb->nFadeout - timestamp);
+            dst                += offset;
+            float k             = 1.0f / (pb->nFadeout + 1.0f);
+            for (size_t i=0, t=timestamp - pb->nCancelTime; i<to_do; ++i)
+                dst[i]              = dst[i] * (1.0f - t*k);
+
+            return offset + to_do;
+        }
+
+        void SamplePlayer::compute_initial_batch(playback_t *pb, const PlaySettings *settings)
+        {
+            // Check the length of the sample
+            size_t sample_len = pb->pSample->length();
+            if (sample_len <= 0)
+            {
+                pb->enState     = playback_t::STATE_CANCEL;
+                return;
+            }
+
+            // Need to check loop settings, discard loop for invalid input
+            size_t start    = lsp_min(settings->start(), sample_len - 1);
+            if ((pb->nLoopStart == pb->nLoopEnd) ||
+                (pb->nLoopStart >= sample_len) ||
+                (pb->nLoopEnd >= sample_len))
+                pb->enLoopMode      = SAMPLE_LOOP_NONE;
+
+            // Initialize the batch
+            play_batch_t *b = &pb->sBatch[0];
+            b->nTimestamp   = settings->delay();
+            b->nFadeIn      = 0;
+
+            // Simple case? Without the loop?
+            if (pb->enLoopMode == SAMPLE_LOOP_NONE)
+            {
+                b->nStart       = start;
+                b->nEnd         = sample_len;
+                b->nFadeOut     = 0;
+                b->enType       = play_batch_t::TYPE_TAIL;
+                return;
+            }
+
+            // Update the loop mode if loop bounds are reversed
+            if (pb->nLoopEnd < pb->nLoopStart)
+            {
+                lsp::swap(pb->nLoopEnd, pb->nLoopStart);
+                switch (pb->enLoopMode)
+                {
+                    case SAMPLE_LOOP_DIRECT:            pb->enLoopMode = SAMPLE_LOOP_REVERSE;           break;
+                    case SAMPLE_LOOP_REVERSE:           pb->enLoopMode = SAMPLE_LOOP_DIRECT;            break;
+                    case SAMPLE_LOOP_DIRECT_HALF_PP:    pb->enLoopMode = SAMPLE_LOOP_REVERSE_HALF_PP;   break;
+                    case SAMPLE_LOOP_REVERSE_HALF_PP:   pb->enLoopMode = SAMPLE_LOOP_DIRECT_HALF_PP;    break;
+                    case SAMPLE_LOOP_DIRECT_FULL_PP:    pb->enLoopMode = SAMPLE_LOOP_REVERSE_FULL_PP;   break;
+                    case SAMPLE_LOOP_REVERSE_FULL_PP:   pb->enLoopMode = SAMPLE_LOOP_DIRECT_FULL_PP;    break;
+                    default: break;
+                }
+            }
+
+            // Determine the start position
+            size_t loop_len     = pb->nLoopEnd - pb->nLoopStart;
+            pb->nXFade          = lsp_min(pb->nXFade, loop_len / 2);
+
+            if (start < pb->nLoopStart)
+            {
+                // Start position is before the loop
+                b->nStart       = start;
+                b->nEnd         = pb->nLoopStart + pb->nXFade;
+                b->nFadeOut     = pb->nXFade;
+                b->enType       = play_batch_t::TYPE_HEAD;
+            }
+            else if (start < pb->nLoopEnd)
+            {
+                // Start position is inside of the loop
+                switch (pb->enLoopMode)
+                {
+                    case SAMPLE_LOOP_DIRECT:
+                    case SAMPLE_LOOP_DIRECT_HALF_PP:
+                    case SAMPLE_LOOP_DIRECT_FULL_PP:
+                        // Direct loop
+                        b->nStart       = pb->nLoopStart;
+                        b->nEnd         = pb->nLoopEnd;
+                        b->nFadeOut     = pb->nXFade;
+                        b->enType       = play_batch_t::TYPE_LOOP;
+                        break;
+
+                    case SAMPLE_LOOP_REVERSE:
+                    case SAMPLE_LOOP_REVERSE_HALF_PP:
+                    case SAMPLE_LOOP_REVERSE_FULL_PP:
+                        // Reverse loop
+                        b->nStart       = pb->nLoopEnd;
+                        b->nEnd         = pb->nLoopStart;
+                        b->nFadeOut     = pb->nXFade;
+                        b->enType       = play_batch_t::TYPE_LOOP;
+                        break;
+
+                    default:
+                        // Start position is after the loop
+                        b->nStart       = start;
+                        b->nEnd         = sample_len;
+                        b->nFadeOut     = 0;
+                        b->enType       = play_batch_t::TYPE_TAIL;
+                        break;
+                }
+            }
+            else
+            {
+                // Start position is after the loop
+                b->nStart       = start;
+                b->nEnd         = sample_len;
+                b->nFadeOut     = 0;
+                b->enType       = play_batch_t::TYPE_TAIL;
+            }
+        }
+
+        void SamplePlayer::compute_next_batch_after_head(playback_t *pb, bool loop)
+        {
+            // NOTE: loop mode is always enabled for TYPE_HEAD batch
+            size_t sample_len       = pb->pSample->length();
+            const play_batch_t *s   = &pb->sBatch[0];
+            play_batch_t *b         = &pb->sBatch[1];
+
+            b->nTimestamp           = s->nTimestamp + pb->nLoopStart;
+            b->nFadeIn              = pb->nXFade;
+
+            // Playback is in STOP/CANCLE state or loop mode is not allowed?
+            if ((pb->enState != playback_t::STATE_PLAY) || (!loop))
+            {
+                b->nStart               = pb->nLoopStart;
+                b->nEnd                 = sample_len;
+                b->nFadeOut             = 0;
+                b->enType               = play_batch_t::TYPE_TAIL;
+                return;
+            }
+
+            // We need to add the loop batch, check the loop type and decide what to do
+            switch (pb->enLoopMode)
+            {
+                case SAMPLE_LOOP_DIRECT:
+                case SAMPLE_LOOP_DIRECT_HALF_PP:
+                case SAMPLE_LOOP_DIRECT_FULL_PP:
+                    // Initial direct loop
+                    b->nStart               = pb->nLoopStart;
+                    b->nEnd                 = pb->nLoopEnd;
+                    b->nFadeOut             = pb->nXFade;
+                    b->enType               = play_batch_t::TYPE_LOOP;
+                    break;
+
+                case SAMPLE_LOOP_REVERSE:
+                case SAMPLE_LOOP_REVERSE_HALF_PP:
+                case SAMPLE_LOOP_REVERSE_FULL_PP:
+                    // Initial reverse loop
+                    b->nStart               = pb->nLoopEnd;
+                    b->nEnd                 = pb->nLoopStart;
+                    b->nFadeOut             = pb->nXFade;
+                    b->enType               = play_batch_t::TYPE_LOOP;
+                    break;
+
+                default:
+                    // Unknown loop mode, actually do not loop
+                    b->nStart               = pb->nLoopStart;
+                    b->nEnd                 = sample_len;
+                    b->nFadeOut             = 0;
+                    b->enType               = play_batch_t::TYPE_TAIL;
+                    break;
+            }
+        }
+
+        void SamplePlayer::compute_next_batch_inside_loop(playback_t *pb, bool loop)
+        {
+            // NOTE: loop mode is always enabled for TYPE_LOOP batch
+            size_t sample_len       = pb->pSample->length();
+            const play_batch_t *s   = &pb->sBatch[0];
+            play_batch_t *b         = &pb->sBatch[1];
+
+            // Compute the start time of the next loop batch
+            b->nTimestamp           = s->nTimestamp + pb->nLoopEnd - pb->nLoopStart - pb->nXFade;
+            b->nFadeIn              = pb->nXFade;
+
+            // Playback is in STOP/CANCLE state or loop mode is not allowed?
+            if ((pb->enState != playback_t::STATE_PLAY) || (!loop))
+            {
+                switch (pb->enLoopMode)
+                {
+                    case SAMPLE_LOOP_DIRECT_FULL_PP:
+                        // Check the order
+                        if (s->nStart < s->nEnd)
+                            break;
+
+                        b->nStart               = pb->nLoopEnd - pb->nXFade;
+                        b->nEnd                 = sample_len;
+                        b->nFadeOut             = 0;
+                        b->enType               = play_batch_t::TYPE_TAIL;
+                        return;
+
+                    case SAMPLE_LOOP_REVERSE_FULL_PP:
+                        // Check the order
+                        if (s->nEnd < s->nStart)
+                            break;
+                        // Initial reverse loop
+                        b->nStart               = pb->nLoopEnd;
+                        b->nEnd                 = pb->nLoopStart;
+                        b->nFadeOut             = pb->nXFade;
+                        b->enType               = play_batch_t::TYPE_LOOP;
+                        break;
+
+                    case SAMPLE_LOOP_DIRECT:
+                    case SAMPLE_LOOP_REVERSE:
+                    case SAMPLE_LOOP_DIRECT_HALF_PP:
+                    case SAMPLE_LOOP_REVERSE_HALF_PP:
+                    default:
+                        // Just immediately play tail after the loop
+                        b->nStart               = pb->nLoopEnd - pb->nXFade;
+                        b->nEnd                 = sample_len;
+                        b->nFadeOut             = 0;
+                        b->enType               = play_batch_t::TYPE_TAIL;
+                        return;
+                }
+            }
+
+            // We need to add the loop batch, check the loop type and decide what to do
+            switch (pb->enLoopMode)
+            {
+                case SAMPLE_LOOP_DIRECT:
+                    // Yet another direct loop
+                    b->nStart               = pb->nLoopStart;
+                    b->nEnd                 = pb->nLoopEnd;
+                    b->nFadeOut             = pb->nXFade;
+                    b->enType               = play_batch_t::TYPE_LOOP;
+                    break;
+
+                case SAMPLE_LOOP_REVERSE:
+                    // Yet another reverse loop
+                    b->nStart               = pb->nLoopEnd;
+                    b->nEnd                 = pb->nLoopStart;
+                    b->nFadeOut             = pb->nXFade;
+                    b->enType               = play_batch_t::TYPE_LOOP;
+                    break;
+
+                case SAMPLE_LOOP_DIRECT_HALF_PP:
+                case SAMPLE_LOOP_DIRECT_FULL_PP:
+                case SAMPLE_LOOP_REVERSE_HALF_PP:
+                case SAMPLE_LOOP_REVERSE_FULL_PP:
+                    // Just reverse the order of the current loop batch and add fade-out
+                    b->nStart               = s->nEnd;
+                    b->nEnd                 = s->nStart;
+                    b->nFadeOut             = pb->nXFade;
+                    b->enType               = play_batch_t::TYPE_LOOP;
+                    break;
+
+                default:
+                    // Unknown loop mode, actually do not loop
+                    b->nStart               = pb->nLoopStart - pb->nXFade;
+                    b->nEnd                 = sample_len;
+                    b->nFadeOut             = 0;
+                    b->enType               = play_batch_t::TYPE_TAIL;
+                    break;
+            }
         }
 
         void SamplePlayer::compute_next_batch(playback_t *pb, bool loop)
         {
+            // Make decision depending on the previous type of the batch
+            switch (pb->sBatch[0].enType)
+            {
+                case play_batch_t::TYPE_HEAD:
+                    compute_next_batch_after_head(pb, loop);
+                    break;
+
+                case play_batch_t::TYPE_LOOP:
+                    compute_next_batch_inside_loop(pb, loop);
+                    break;
+
+                case play_batch_t::TYPE_TAIL:
+                case play_batch_t::TYPE_NONE:
+                default:
+                    clear_batch(&pb->sBatch[1]);
+                    break;
+            }
         }
 
         void SamplePlayer::complete_current_batch(playback_t *pb, bool loop)
@@ -708,7 +1003,7 @@ namespace lsp
                         if (processed >= to_do)
                         {
                             execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
-                            apply_fade_out(&dst[offset], pb, processed);
+                            processed       = apply_fade_out(&dst[offset], pb, processed);
                             offset         += processed;
                             pb->nTimestamp += processed;
                         }
@@ -794,23 +1089,31 @@ namespace lsp
     //        lsp_trace("acquired playback %p", pb);
 
             // Now we are ready to activate sample
-            // TODO: implement playback planning
             if (settings == NULL)
                 settings        = &PlaySettings::default_settings;
 
             pb->nTimestamp  = 0;
+            pb->nCancelTime = 0;
             pb->pSample     = s;
             pb->nSerial    += 1;
             pb->nID         = id;
             pb->nChannel    = channel;
             pb->enState     = playback_t::STATE_PLAY;
+            pb->fVolume     = settings->volume();
             pb->nPosition   = 0;
             pb->nFadeout    = 0;
             pb->enLoopMode  = settings->loop_mode();
-            pb->fVolume     = settings->volume();
+            pb->nLoopStart  = settings->loop_start();
+            pb->nLoopEnd    = settings->loop_end();
+            pb->nXFade      = settings->loop_xfade_length();
+            pb->enXFadeType = settings->loop_xfade_type();
 
             clear_batch(&pb->sBatch[0]);
             clear_batch(&pb->sBatch[1]);
+
+            // Compute the playback plan
+            compute_initial_batch(pb, settings);
+            compute_next_batch(pb, true);
 
             // Add the playback to the active list
             list_insert_from_tail(&sActive, pb);
