@@ -26,70 +26,26 @@
 
 #include <lsp-plug.in/common/types.h>
 #include <lsp-plug.in/dsp-units/sampling/types.h>
+#include <lsp-plug.in/dsp-units/sampling/helpers/batch.h>
+#include <lsp-plug.in/dsp-units/sampling/helpers/playback.h>
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
 
 namespace lsp
 {
     namespace dspu
     {
-        typedef struct play_batch_t
-        {
-            enum type_t
-            {
-                TYPE_NONE,          // The batch is empty, nothing to do
-                TYPE_HEAD,          // The batch is associated with the head part of the sample
-                TYPE_LOOP,          // The batch is associated with the loop part of the sample
-                TYPE_TAIL           // The batch is associated with the tail part of the sample
-            };
-
-            wsize_t             nTimestamp;     // The start of the batch in the sample timeline
-            size_t              nStart;         // Start of the sample segment to play
-            size_t              nEnd;           // End of the sample segment to play
-            size_t              nFadeIn;        // The fade-in time in samples
-            size_t              nFadeOut;       // The fade-out time in samples
-            type_t              enType;         // Type of the batch
-        } play_batch_t;
-
-        typedef struct playback_t
-        {
-            enum state_t
-            {
-                STATE_NONE,                     // No active state
-                STATE_PLAY,                     // Regular play
-                STATE_STOP,                     // Playback till the end of the sample, do not loop
-                STATE_CANCEL                    // Immediately cancel the playback
-            };
-
-            wsize_t             nTimestamp;     // The actual playback timestamp in stamples
-            wsize_t             nCancelTime;    // The actual cancel timestamp
-            Sample             *pSample;        // Pointer to the sample
-            size_t              nSerial;        // Serial version of playback object
-            ssize_t             nID;            // ID of instrument
-            size_t              nChannel;       // Channel to play
-            state_t             enState;        // State of the playback
-            float               fVolume;        // The volume of the sample
-            ssize_t             nPosition;      // Current playback position
-            size_t              nFadeout;       // Fadeout length for cancelling
-            sample_loop_t       enLoopMode;     // Loop mode
-            size_t              nLoopStart;     // Start of the loop
-            size_t              nLoopEnd;       // End of the loop
-            size_t              nXFade;         // The crossfade time in stamples
-            sample_crossfade_t  enXFadeType;    // The crossfade type
-            play_batch_t        sBatch[2];      // Batch queue for execution
-        } playback_t;
-
         /**
          * Playback class that allows to control the flow of the playback
          */
         class LSP_DSP_UNITS_PUBLIC Playback
         {
             protected:
-                playback_t             *pPlayback;
+                playback::playback_t   *pPlayback;
                 size_t                  nSerial;
 
             public:
                 Playback();
-                explicit Playback(playback_t *pb);
+                explicit Playback(playback::playback_t *pb);
                 explicit Playback(const Playback *src);
                 Playback(const Playback &src);
                 Playback(Playback &&src);
@@ -125,9 +81,9 @@ namespace lsp
                 /**
                  * Cancel the playback: set-up the delay and fade-out length before the sample stops playing
                  * @param fadeout the fadeout length in samples for sample gain fadeout
-                 * @param delay the delay (in samples) of the sample relatively to the next process() call
+                 * @param delay the delay (in samples) of the sample relatively to the current playback time
                  */
-                void        cancel(size_t fadeout = 0, ssize_t delay = 0);
+                void        cancel(size_t fadeout = 0, size_t delay = 0);
 
                 /**
                  * Copy from another playback

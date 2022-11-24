@@ -1,0 +1,635 @@
+/*
+ * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ *
+ * This file is part of lsp-dsp-units
+ * Created on: 24 нояб. 2022 г.
+ *
+ * lsp-dsp-units is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * lsp-dsp-units is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <lsp-plug.in/dsp-units/sampling/helpers/playback.h>
+
+namespace lsp
+{
+    namespace dspu
+    {
+        namespace playback
+        {
+            LSP_DSP_UNITS_PUBLIC
+            void compute_initial_batch(playback_t *pb, const PlaySettings *settings)
+            {
+                // Check the length of the sample
+                size_t sample_len = pb->pSample->length();
+                if (sample_len <= 0)
+                {
+                    pb->enState     = STATE_NONE;
+                    return;
+                }
+
+                // Need to check loop settings, discard loop for invalid input
+                size_t start    = lsp_min(settings->start(), sample_len - 1);
+                if ((pb->nLoopStart == pb->nLoopEnd) ||
+                    (pb->nLoopStart >= sample_len) ||
+                    (pb->nLoopEnd >= sample_len))
+                    pb->enLoopMode      = SAMPLE_LOOP_NONE;
+
+                // Initialize the batch
+                play_batch_t *b = &pb->sBatch[0];
+                b->nTimestamp   = settings->delay();
+                b->nFadeIn      = 0;
+
+                // Simple case? Without the loop?
+                if (pb->enLoopMode == SAMPLE_LOOP_NONE)
+                {
+                    b->nStart       = start;
+                    b->nEnd         = sample_len;
+                    b->nFadeOut     = 0;
+                    b->enType       = BATCH_TAIL;
+                    return;
+                }
+
+                // Update the loop mode if loop bounds are reversed
+                if (pb->nLoopEnd < pb->nLoopStart)
+                {
+                    lsp::swap(pb->nLoopEnd, pb->nLoopStart);
+                    switch (pb->enLoopMode)
+                    {
+                        case SAMPLE_LOOP_DIRECT:            pb->enLoopMode = SAMPLE_LOOP_REVERSE;           break;
+                        case SAMPLE_LOOP_REVERSE:           pb->enLoopMode = SAMPLE_LOOP_DIRECT;            break;
+                        case SAMPLE_LOOP_DIRECT_HALF_PP:    pb->enLoopMode = SAMPLE_LOOP_REVERSE_HALF_PP;   break;
+                        case SAMPLE_LOOP_REVERSE_HALF_PP:   pb->enLoopMode = SAMPLE_LOOP_DIRECT_HALF_PP;    break;
+                        case SAMPLE_LOOP_DIRECT_FULL_PP:    pb->enLoopMode = SAMPLE_LOOP_REVERSE_FULL_PP;   break;
+                        case SAMPLE_LOOP_REVERSE_FULL_PP:   pb->enLoopMode = SAMPLE_LOOP_DIRECT_FULL_PP;    break;
+                        default: break;
+                    }
+                }
+
+                // Determine the start position
+                size_t loop_len     = pb->nLoopEnd - pb->nLoopStart;
+                pb->nXFade          = lsp_min(pb->nXFade, loop_len / 2);
+
+                if (start < pb->nLoopStart)
+                {
+                    // Start position is before the loop
+                    b->nStart       = start;
+                    b->nEnd         = pb->nLoopStart + pb->nXFade;
+                    b->nFadeOut     = pb->nXFade;
+                    b->enType       = BATCH_HEAD;
+                }
+                else if (start < pb->nLoopEnd)
+                {
+                    // Start position is inside of the loop
+                    switch (pb->enLoopMode)
+                    {
+                        case SAMPLE_LOOP_DIRECT:
+                        case SAMPLE_LOOP_DIRECT_HALF_PP:
+                        case SAMPLE_LOOP_DIRECT_FULL_PP:
+                            // Direct loop
+                            b->nStart       = pb->nLoopStart;
+                            b->nEnd         = pb->nLoopEnd;
+                            b->nFadeOut     = pb->nXFade;
+                            b->enType       = BATCH_LOOP;
+                            break;
+
+                        case SAMPLE_LOOP_REVERSE:
+                        case SAMPLE_LOOP_REVERSE_HALF_PP:
+                        case SAMPLE_LOOP_REVERSE_FULL_PP:
+                            // Reverse loop
+                            b->nStart       = pb->nLoopEnd;
+                            b->nEnd         = pb->nLoopStart;
+                            b->nFadeOut     = pb->nXFade;
+                            b->enType       = BATCH_LOOP;
+                            break;
+
+                        default:
+                            // Start position is after the loop
+                            b->nStart       = start;
+                            b->nEnd         = sample_len;
+                            b->nFadeOut     = 0;
+                            b->enType       = BATCH_TAIL;
+                            break;
+                    }
+                }
+                else
+                {
+                    // Start position is after the loop
+                    b->nStart       = start;
+                    b->nEnd         = sample_len;
+                    b->nFadeOut     = 0;
+                    b->enType       = BATCH_TAIL;
+                }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void compute_next_batch_after_head(playback_t *pb, bool loop)
+            {
+                // NOTE: loop mode is always enabled for TYPE_HEAD batch
+                size_t sample_len       = pb->pSample->length();
+                const play_batch_t *s   = &pb->sBatch[0];
+                play_batch_t *b         = &pb->sBatch[1];
+
+                b->nTimestamp           = s->nTimestamp + pb->nLoopStart;
+                b->nFadeIn              = pb->nXFade;
+
+                // Playback is in STOP/CANCLE state or loop mode is not allowed?
+                if ((pb->enState != STATE_PLAY) || (!loop))
+                {
+                    b->nStart               = pb->nLoopStart;
+                    b->nEnd                 = sample_len;
+                    b->nFadeOut             = 0;
+                    b->enType               = BATCH_TAIL;
+                    return;
+                }
+
+                // We need to add the loop batch, check the loop type and decide what to do
+                switch (pb->enLoopMode)
+                {
+                    case SAMPLE_LOOP_DIRECT:
+                    case SAMPLE_LOOP_DIRECT_HALF_PP:
+                    case SAMPLE_LOOP_DIRECT_FULL_PP:
+                        // Initial direct loop
+                        b->nStart               = pb->nLoopStart;
+                        b->nEnd                 = pb->nLoopEnd;
+                        b->nFadeOut             = pb->nXFade;
+                        b->enType               = BATCH_LOOP;
+                        break;
+
+                    case SAMPLE_LOOP_REVERSE:
+                    case SAMPLE_LOOP_REVERSE_HALF_PP:
+                    case SAMPLE_LOOP_REVERSE_FULL_PP:
+                        // Initial reverse loop
+                        b->nStart               = pb->nLoopEnd;
+                        b->nEnd                 = pb->nLoopStart;
+                        b->nFadeOut             = pb->nXFade;
+                        b->enType               = BATCH_LOOP;
+                        break;
+
+                    default:
+                        // Unknown loop mode, actually do not loop
+                        b->nStart               = pb->nLoopStart;
+                        b->nEnd                 = sample_len;
+                        b->nFadeOut             = 0;
+                        b->enType               = BATCH_TAIL;
+                        break;
+                }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void compute_next_batch_inside_loop(playback_t *pb, bool loop)
+            {
+                // NOTE: loop mode is always enabled for TYPE_LOOP batch
+                size_t sample_len       = pb->pSample->length();
+                const play_batch_t *s   = &pb->sBatch[0];
+                play_batch_t *b         = &pb->sBatch[1];
+
+                // Compute the start time of the next loop batch
+                b->nTimestamp           = s->nTimestamp + pb->nLoopEnd - pb->nLoopStart - pb->nXFade;
+                b->nFadeIn              = pb->nXFade;
+
+                // Playback is in STOP/CANCLE state or loop mode is not allowed?
+                if ((pb->enState != STATE_PLAY) || (!loop))
+                {
+                    switch (pb->enLoopMode)
+                    {
+                        case SAMPLE_LOOP_DIRECT_FULL_PP:
+                            // Check the order
+                            if (s->nStart < s->nEnd)
+                                break;
+
+                            b->nStart               = pb->nLoopEnd - pb->nXFade;
+                            b->nEnd                 = sample_len;
+                            b->nFadeOut             = 0;
+                            b->enType               = BATCH_TAIL;
+                            return;
+
+                        case SAMPLE_LOOP_REVERSE_FULL_PP:
+                            // Check the order
+                            if (s->nEnd < s->nStart)
+                                break;
+                            // Initial reverse loop
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = pb->nLoopStart;
+                            b->nFadeOut             = pb->nXFade;
+                            b->enType               = BATCH_LOOP;
+                            break;
+
+                        case SAMPLE_LOOP_DIRECT:
+                        case SAMPLE_LOOP_REVERSE:
+                        case SAMPLE_LOOP_DIRECT_HALF_PP:
+                        case SAMPLE_LOOP_REVERSE_HALF_PP:
+                        default:
+                            // Just immediately play tail after the loop
+                            b->nStart               = pb->nLoopEnd - pb->nXFade;
+                            b->nEnd                 = sample_len;
+                            b->nFadeOut             = 0;
+                            b->enType               = BATCH_TAIL;
+                            return;
+                    }
+                }
+
+                // We need to add the loop batch, check the loop type and decide what to do
+                switch (pb->enLoopMode)
+                {
+                    case SAMPLE_LOOP_DIRECT:
+                        // Yet another direct loop
+                        b->nStart               = pb->nLoopStart;
+                        b->nEnd                 = pb->nLoopEnd;
+                        b->nFadeOut             = pb->nXFade;
+                        b->enType               = BATCH_LOOP;
+                        break;
+
+                    case SAMPLE_LOOP_REVERSE:
+                        // Yet another reverse loop
+                        b->nStart               = pb->nLoopEnd;
+                        b->nEnd                 = pb->nLoopStart;
+                        b->nFadeOut             = pb->nXFade;
+                        b->enType               = BATCH_LOOP;
+                        break;
+
+                    case SAMPLE_LOOP_DIRECT_HALF_PP:
+                    case SAMPLE_LOOP_DIRECT_FULL_PP:
+                    case SAMPLE_LOOP_REVERSE_HALF_PP:
+                    case SAMPLE_LOOP_REVERSE_FULL_PP:
+                        // Just reverse the order of the current loop batch and add fade-out
+                        b->nStart               = s->nEnd;
+                        b->nEnd                 = s->nStart;
+                        b->nFadeOut             = pb->nXFade;
+                        b->enType               = BATCH_LOOP;
+                        break;
+
+                    default:
+                        // Unknown loop mode, actually do not loop
+                        b->nStart               = pb->nLoopStart - pb->nXFade;
+                        b->nEnd                 = sample_len;
+                        b->nFadeOut             = 0;
+                        b->enType               = BATCH_TAIL;
+                        break;
+                }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void compute_next_batch(playback_t *pb, bool loop)
+            {
+                // Make decision depending on the previous type of the batch
+                switch (pb->sBatch[0].enType)
+                {
+                    case BATCH_HEAD:
+                        compute_next_batch_after_head(pb, loop);
+                        break;
+
+                    case BATCH_LOOP:
+                        compute_next_batch_inside_loop(pb, loop);
+                        break;
+
+                    case BATCH_TAIL:
+                    case BATCH_NONE:
+                    default:
+                        clear_batch(&pb->sBatch[1]);
+                        break;
+                }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void complete_current_batch(playback_t *pb, bool loop)
+            {
+                pb->sBatch[0]   = pb->sBatch[1];
+                if (pb->sBatch[0].enType == BATCH_NONE)
+                {
+                    pb->enState         = STATE_NONE;
+                    return;
+                }
+
+                compute_next_batch(pb, loop);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            size_t execute_batch(float *dst, const batch_t *b, playback_t *pb, size_t samples)
+            {
+                // Check type of batch
+                if (b->enType == BATCH_NONE)
+                    return 0;
+
+                // Initialize position
+                wsize_t timestamp   = pb->nTimestamp;
+                size_t offset       = 0;
+
+                // The playback has still not happened?
+                if (timestamp < b->nTimestamp)
+                {
+                    // If we sill didn't reach the start of batch, just return
+                    wsize_t skip        = b->nTimestamp - timestamp;
+                    if (skip >= samples)
+                        return samples;
+
+                    // We have reached the start of the batch, need to adjust the time
+                    timestamp          += skip;
+                    offset             += skip;
+                }
+
+                // Initialize parameters
+                size_t batch_offset = timestamp - b->nTimestamp;
+                size_t processed    = 0;
+                const float *src    = pb->pSample->channel(pb->nChannel);
+
+                if (b->nStart < b->nEnd)
+                {
+                    // Perform processing depending on the cross-fade type
+                    switch (pb->enXFadeType)
+                    {
+                        case SAMPLE_CROSSFADE_CONST_POWER:
+                            processed       = put_batch_const_power_direct(&dst[offset], src, b, timestamp, samples - offset);
+                            break;
+                        case SAMPLE_CROSSFADE_LINEAR:
+                        default:
+                            processed       = put_batch_linear_direct(&dst[offset], src, b, timestamp, samples - offset);
+                            break;
+                    }
+
+                    // Update the offset
+                    pb->nPosition       = b->nStart + batch_offset + processed;
+                }
+                else // b->nStart >= b->nEnd
+                {
+                    // Perform processing depending on the cross-fade type
+                    switch (pb->enXFadeType)
+                    {
+                        case SAMPLE_CROSSFADE_CONST_POWER:
+                            processed       = put_batch_const_power_reverse(&dst[offset], src, b, batch_offset, samples - offset);
+                            break;
+                        case SAMPLE_CROSSFADE_LINEAR:
+                        default:
+                            processed       = put_batch_linear_reverse(&dst[offset], src, b, batch_offset, samples - offset);
+                            break;
+                    }
+
+                    // Update the offset
+                    pb->nPosition       = b->nEnd + batch_offset + processed;
+                }
+
+                return offset + processed;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            size_t apply_fade_out(float *dst, playback_t *pb, size_t samples)
+            {
+                // Initialize position
+                wsize_t timestamp   = pb->nTimestamp;
+                size_t offset       = 0;
+
+                // The fade-out has still not happened?
+                if (timestamp < pb->nCancelTime)
+                {
+                    // If we sill didn't reach the start of batch, just return
+                    wsize_t skip        = pb->nCancelTime - timestamp;
+                    if (skip >= samples)
+                        return samples;
+
+                    // We have reached the start of the batch, need to adjust the time
+                    timestamp          += skip;
+                    offset             += skip;
+                }
+
+                // The fade-out has been fully processed?
+                if (timestamp >= (pb->nCancelTime + pb->nFadeout))
+                    return offset;
+
+                // Apply fade-out part
+                size_t to_do        = lsp_min(samples - offset, pb->nCancelTime + pb->nFadeout - timestamp);
+                dst                += offset;
+                float k             = 1.0f / (pb->nFadeout + 1.0f);
+                for (size_t i=0, t=timestamp - pb->nCancelTime; i<to_do; ++i)
+                    dst[i]              = dst[i] * (1.0f - t*k);
+
+                return offset + to_do;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void clear_playback(playback_t *pb)
+            {
+                pb->nTimestamp      = 0;
+                pb->nCancelTime     = 0;
+                pb->pSample         = NULL;
+                pb->nSerial         = 0;
+                pb->nID             = -1;
+                pb->nChannel        = 0;
+                pb->enState         = STATE_NONE;
+                pb->nPosition       = 0;
+                pb->nFadeout        = -1;
+                pb->fVolume         = 0.0f;
+                pb->nXFade          = 0;
+                pb->enXFadeType     = SAMPLE_CROSSFADE_CONST_POWER;
+
+                clear_batch(&pb->sBatch[0]);
+                clear_batch(&pb->sBatch[1]);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void reset_playback(playback_t *pb)
+            {
+                pb->nTimestamp      = 0;
+                pb->nCancelTime     = 0;
+                pb->pSample         = NULL;
+                pb->nSerial        += 1;
+                pb->nID             = -1;
+                pb->nChannel        = 0;
+                pb->enState         = STATE_NONE;
+                pb->nPosition       = 0;
+                pb->nFadeout        = -1;
+                pb->fVolume         = 0.0f;
+                pb->nXFade          = 0;
+                pb->enXFadeType     = SAMPLE_CROSSFADE_CONST_POWER;
+
+                clear_batch(&pb->sBatch[0]);
+                clear_batch(&pb->sBatch[1]);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void start_playback(playback_t *pb, size_t id, size_t channel, Sample *sample, const PlaySettings *settings)
+            {
+                pb->nTimestamp  = 0;
+                pb->nCancelTime = 0;
+                pb->pSample     = sample;
+                pb->nSerial    += 1;
+                pb->nID         = id;
+                pb->nChannel    = channel;
+                pb->enState     = STATE_PLAY;
+                pb->fVolume     = settings->volume();
+                pb->nPosition   = 0;
+                pb->nFadeout    = 0;
+                pb->enLoopMode  = settings->loop_mode();
+                pb->nLoopStart  = settings->loop_start();
+                pb->nLoopEnd    = settings->loop_end();
+                pb->nXFade      = settings->loop_xfade_length();
+                pb->enXFadeType = settings->loop_xfade_type();
+
+                clear_batch(&pb->sBatch[0]);
+                clear_batch(&pb->sBatch[1]);
+
+                // Compute the playback plan
+                compute_initial_batch(pb, settings);
+                compute_next_batch(pb, true);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            size_t process_playback(float *dst, playback_t *pb, size_t samples)
+            {
+                size_t processed, to_do;
+                size_t offset = 0;
+
+                while (offset < samples)
+                {
+                    to_do               = samples - offset;
+
+                    // Switch what to do with batch depending on the state
+                    switch (pb->enState)
+                    {
+                        case STATE_PLAY:
+                            // Play batches, allow loops
+                            processed   = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                            if (processed >= to_do)
+                            {
+                                execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                                offset         += processed;
+                                pb->nTimestamp += processed;
+                            }
+                            else
+                                complete_current_batch(pb, true);
+                            break;
+
+                        case STATE_STOP:
+                            // Play batches, do not allow loops
+                            processed   = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                            if (processed >= to_do)
+                            {
+                                execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                                offset         += processed;
+                                pb->nTimestamp += processed;
+                            }
+                            else
+                                complete_current_batch(pb, false);
+                            break;
+
+                        case STATE_CANCEL:
+                            // Ensure that we still didn't reach the end of fade-out
+                            if (pb->nTimestamp >= pb->nCancelTime + pb->nFadeout)
+                            {
+                                pb->enState     = STATE_NONE;
+                                break;
+                            }
+
+                            // We do not need to process more than feedback allows
+                            to_do           = lsp_min(to_do, pb->nCancelTime + pb->nFadeout - pb->nTimestamp);
+
+                            // Play batches, do not allow loops
+                            processed       = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                            if (processed >= to_do)
+                            {
+                                execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                                processed       = apply_fade_out(&dst[offset], pb, processed);
+                                offset         += processed;
+                                pb->nTimestamp += processed;
+                            }
+                            else
+                                complete_current_batch(pb, false);
+                            break;
+
+                        case STATE_NONE:
+                        default:
+                            return offset;
+                    }
+                }
+
+                return offset;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void stop_playback(playback_t *pb)
+            {
+                // We can stop the playback only if it is active at this moment
+                if (pb->enState == playback::STATE_PLAY)
+                    pb->enState = playback::STATE_STOP;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            bool cancel_playback(playback_t *pb, size_t fadeout, size_t delay)
+            {
+                // Do not cancel the playback if it already has been cancelled
+                switch (pb->enState)
+                {
+                    case playback::STATE_PLAY:
+                    case playback::STATE_STOP:
+                        pb->enState     = playback::STATE_CANCEL;
+                        pb->nCancelTime = pb->nTimestamp + delay;
+                        pb->nFadeout    = fadeout;
+                        return true;
+
+                    case playback::STATE_NONE:
+                    case playback::STATE_CANCEL:
+                    default:
+                        break;
+                }
+
+                return false;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void dump_playback_plain(IStateDumper *v, const playback_t *pb)
+            {
+                v->write("nTimestamp", pb->nTimestamp);
+                v->write("nCancelTime", pb->nCancelTime);
+                v->write("pSample", pb->pSample);
+                v->write("nSerial", pb->nSerial);
+                v->write("nID", pb->nID);
+                v->write("nChannel", pb->nChannel);
+                v->write("nState", int(pb->enState));
+                v->write("fVolume", pb->fVolume);
+                v->write("nPosition", pb->nPosition);
+                v->write("nFadeout", pb->nFadeout);
+                v->write("enLoopMode", int(pb->enLoopMode));
+                v->write("nLoopStart", pb->nLoopStart);
+                v->write("nLoopEnd", pb->nLoopEnd);
+                v->write("nXFade", pb->nXFade);
+                v->write("enXFadeType", int(pb->enXFadeType));
+
+                v->begin_array("sBatch", pb->sBatch, 2);
+                {
+                    for (size_t i=0; i<2; ++i)
+                        dump_batch(v, &pb->sBatch[i]);
+                }
+                v->end_array();
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void dump_playback(IStateDumper *v, const playback_t *pb)
+            {
+                v->begin_object(pb, sizeof(*pb));
+                dump_playback_plain(v, pb);
+                v->end_object();
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void dump_playback(IStateDumper *v, const char *name, const playback_t *pb)
+            {
+                v->begin_object(name, pb, sizeof(*pb));
+                dump_playback_plain(v, pb);
+                v->end_object();
+            }
+
+        } /* namespace playback */
+    } /* namespace dspu */
+} /* namespace lsp */
+
+
+

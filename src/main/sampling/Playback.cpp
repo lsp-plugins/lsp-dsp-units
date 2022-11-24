@@ -31,7 +31,7 @@ namespace lsp
             nSerial         = 0;
         }
 
-        Playback::Playback(playback_t *pb)
+        Playback::Playback(playback::playback_t *pb)
         {
             pPlayback       = pb;
             nSerial         = (pb != NULL) ? pb->nSerial : 0;
@@ -102,31 +102,15 @@ namespace lsp
             if (!valid())
                 return;
 
-            // We can stop the playback only if it is active at this moment
-            if (pPlayback->enState == playback_t::STATE_PLAY)
-                pPlayback->enState = playback_t::STATE_STOP;
+            playback::stop_playback(pPlayback);
         }
 
-        void Playback::cancel(size_t fadeout, ssize_t delay)
+        void Playback::cancel(size_t fadeout, size_t delay)
         {
             if (!valid())
                 return;
 
-            // Do not cancel the playback if it already has been cancelled
-            switch (pPlayback->enState)
-            {
-                case playback_t::STATE_PLAY:
-                case playback_t::STATE_STOP:
-                    pPlayback->enState      = playback_t::STATE_CANCEL;
-                    pPlayback->nCancelTime  = pPlayback->nTimestamp + delay;
-                    pPlayback->nFadeout     = fadeout;
-                    break;
-
-                case playback_t::STATE_NONE:
-                case playback_t::STATE_CANCEL:
-                default:
-                    break;
-            }
+            playback::cancel_playback(pPlayback, fadeout, delay);
         }
 
         void Playback::copy(const Playback & src)

@@ -23,6 +23,8 @@
 #define LSP_PLUG_IN_DSP_UNITS_SAMPLING_SAMPLEPLAYER_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/sampling/helpers/batch.h>
+#include <lsp-plug.in/dsp-units/sampling/helpers/playback.h>
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
 #include <lsp-plug.in/dsp-units/sampling/Playback.h>
 #include <lsp-plug.in/dsp-units/sampling/PlaySettings.h>
@@ -38,7 +40,7 @@ namespace lsp
                 SamplePlayer(const SamplePlayer &);
 
             protected:
-                typedef struct play_item_t: public playback_t
+                typedef struct play_item_t: public playback::playback_t
                 {
                     play_item_t *pNext;     // Pointer to the next playback in the list
                     play_item_t *pPrev;     // Pointer to the previous playback in the list
@@ -63,33 +65,15 @@ namespace lsp
                 uint8_t        *pData;
 
             protected:
-                static inline void cleanup(playback_t *pb);
-                static inline void clear_batch(play_batch_t *b);
-
                 static inline void list_remove(list_t *list, play_item_t *pb);
                 static inline play_item_t *list_remove_first(list_t *list);
                 static inline void list_add_first(list_t *list, play_item_t *pb);
                 static inline void list_insert_from_tail(list_t *list, play_item_t *pb);
 
                 static void dump_list(IStateDumper *v, const char *name, const list_t *list);
-                static void dump_batch(IStateDumper *v, const play_batch_t *b);
-
-                static size_t put_batch_linear_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
-                static size_t put_batch_const_power_direct(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
-                static size_t put_batch_linear_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
-                static size_t put_batch_const_power_reverse(float *dst, const float *src, const play_batch_t *b, wsize_t timestamp, size_t samples);
-                static size_t apply_fade_out(float *dst, playback_t *pb, size_t samples);
-
-                static void compute_initial_batch(playback_t *pb, const PlaySettings *settings);
-                static void compute_next_batch(playback_t *pb, bool loop);
-                static void compute_next_batch_after_head(playback_t *pb, bool loop);
-                static void compute_next_batch_inside_loop(playback_t *pb, bool loop);
-                static void complete_current_batch(playback_t *pb, bool loop);
 
             protected:
                 void        do_process(float *dst, size_t samples);
-                size_t      process_single_playback(float *dst, play_item_t *pb, size_t samples);
-                size_t      execute_batch(float *dst, const play_batch_t *b, playback_t *pb, size_t samples);
 
             public:
                 explicit SamplePlayer();
