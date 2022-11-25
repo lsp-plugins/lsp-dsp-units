@@ -366,16 +366,16 @@ namespace lsp
                     switch (pb->enXFadeType)
                     {
                         case SAMPLE_CROSSFADE_CONST_POWER:
-                            processed       = put_batch_const_power_reverse(&dst[offset], src, b, batch_offset, samples - offset);
+                            processed       = put_batch_const_power_reverse(&dst[offset], src, b, timestamp, samples - offset);
                             break;
                         case SAMPLE_CROSSFADE_LINEAR:
                         default:
-                            processed       = put_batch_linear_reverse(&dst[offset], src, b, batch_offset, samples - offset);
+                            processed       = put_batch_linear_reverse(&dst[offset], src, b, timestamp, samples - offset);
                             break;
                     }
 
                     // Update the offset
-                    pb->nPosition       = b->nEnd + batch_offset + processed;
+                    pb->nPosition       = b->nStart - batch_offset - processed;
                 }
 
                 return offset + processed;
@@ -425,7 +425,7 @@ namespace lsp
                 pb->nID             = -1;
                 pb->nChannel        = 0;
                 pb->enState         = STATE_NONE;
-                pb->nPosition       = 0;
+                pb->nPosition       = -1;
                 pb->nFadeout        = -1;
                 pb->fVolume         = 0.0f;
                 pb->nXFade          = 0;
@@ -445,7 +445,7 @@ namespace lsp
                 pb->nID             = -1;
                 pb->nChannel        = 0;
                 pb->enState         = STATE_NONE;
-                pb->nPosition       = 0;
+                pb->nPosition       = -1;
                 pb->nFadeout        = -1;
                 pb->fVolume         = 0.0f;
                 pb->nXFade          = 0;
@@ -466,7 +466,7 @@ namespace lsp
                 pb->nChannel    = channel;
                 pb->enState     = STATE_PLAY;
                 pb->fVolume     = settings->volume();
-                pb->nPosition   = 0;
+                pb->nPosition   = -1;
                 pb->nFadeout    = 0;
                 pb->enLoopMode  = settings->loop_mode();
                 pb->nLoopStart  = settings->loop_start();

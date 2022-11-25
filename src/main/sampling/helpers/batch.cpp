@@ -82,7 +82,7 @@ namespace lsp
             size_t put_batch_linear_direct(float *dst, const float *src, const batch_t *b, wsize_t timestamp, size_t samples)
             {
                 // Direct playback, compute batch size and position
-                size_t t3   = b->nEnd - b->nStart;          // Batch size in samples
+                size_t t3   = b->nEnd   - b->nStart;        // Batch size in samples
                 size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
                 if (t0 >= t3)
                     return 0;
@@ -116,6 +116,7 @@ namespace lsp
                     dsp::add2(dst, &src[t], n);
 
                     // Update the position
+                    t          += n;
                     samples    -= n;
                     if (samples <= 0)
                         return t - t0;
@@ -137,6 +138,123 @@ namespace lsp
 
             LSP_DSP_UNITS_PUBLIC
             size_t put_batch_const_power_direct(float *dst, const float *src, const batch_t *b, wsize_t timestamp, size_t samples)
+            {
+                // Direct playback, compute batch size and position
+                size_t t3   = b->nEnd   - b->nStart;        // Batch size in samples
+                size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
+                if (t0 >= t3)
+                    return 0;
+
+                size_t t    = t0;                           // Current rendering position inside of the batch
+                src        += b->nStart;                    // Adjust pointer for simplification of pointer arithmetics
+
+                // Render the fade-in
+                size_t t1   = b->nFadeIn;
+                if (t < t1)
+                {
+                    // Render contents
+                    float k     = 1.0f / b->nFadeIn;
+                    size_t n    = lsp_min(samples, t1 - t);
+                    for (size_t i=0; i<n; ++i, ++t)
+                        dst[i]     += src[t] * sqrtf(t * k);
+
+                    // Update the position
+                    samples    -= n;
+                    if (samples <= 0)
+                        return t - t0;
+                    dst        += n;
+                }
+
+                // Render the body
+                size_t t2   = t3 - b->nFadeOut;
+                if (t < t2)
+                {
+                    // Render contents
+                    size_t n    = lsp_min(samples, t2 - t);
+                    dsp::add2(dst, &src[t], n);
+
+                    // Update the position
+                    t          += n;
+                    samples    -= n;
+                    if (samples <= 0)
+                        return t - t0;
+                    dst        += n;
+                }
+
+                // Render the fade-out
+                if (t < t3)
+                {
+                    // Render the contents
+                    float k     = 1.0f / b->nFadeOut;
+                    size_t n    = lsp_min(samples, t3 - t);
+                    for (size_t i=0; i<n; ++i, ++t)
+                        dst[i]     += src[t] * sqrtf((t3 - t) * k);
+                }
+
+                return t - t0;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            size_t put_batch_linear_reverse(float *dst, const float *src, const batch_t *b, wsize_t timestamp, size_t samples)
+            {
+                // Direct playback, compute batch size and position
+                size_t t3   = b->nStart - b->nEnd;          // Batch size in samples
+                size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
+                if (t0 >= t3)
+                    return 0;
+
+                size_t tr   = t3 - 1;                       // Last sample
+                size_t t    = t0;                           // Current rendering position inside of the batch
+                src        += b->nEnd;                      // Adjust pointer for simplification of pointer arithmetics
+
+                // Render the fade-in
+                size_t t1   = b->nFadeIn;
+                if (t < t1)
+                {
+                    // Render contents
+                    float k     = 1.0f / b->nFadeIn;
+                    size_t n    = lsp_min(samples, t1 - t);
+                    for (size_t i=0; i<n; ++i, ++t)
+                        dst[i]     += src[tr - t] * (t * k);
+
+                    // Update the position
+                    samples    -= n;
+                    if (samples <= 0)
+                        return t - t0;
+                    dst        += n;
+                }
+
+                // Render the body
+                size_t t2   = t3 - b->nFadeOut;
+                if (t < t2)
+                {
+                    // Render contents
+                    size_t n    = lsp_min(samples, t2 - t);
+                    for (size_t i=0; i<n; ++i, ++t)
+                        dst[i]     += src[tr - t];
+
+                    // Update the position
+                    samples    -= n;
+                    if (samples <= 0)
+                        return t - t0;
+                    dst        += n;
+                }
+
+                // Render the fade-out
+                if (t < t3)
+                {
+                    // Render the contents
+                    float k     = 1.0f / b->nFadeOut;
+                    size_t n    = lsp_min(samples, t3 - t);
+                    for (size_t i=0; i<n; ++i, ++t)
+                        dst[i]     += src[tr - t] * ((t3 - t) * k);
+                }
+
+                return t - t0;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            size_t put_batch_const_power_reverse(float *dst, const float *src, const batch_t *b, wsize_t timestamp, size_t samples)
             {
                 // Direct playback, compute batch size and position
                 size_t t3   = b->nStart - b->nEnd;          // Batch size in samples
@@ -172,7 +290,7 @@ namespace lsp
                     // Render contents
                     size_t n    = lsp_min(samples, t2 - t);
                     for (size_t i=0; i<n; ++i, ++t)
-                        dst[i]      = src[tr-t];
+                        dst[i]     += src[tr - t];
 
                     // Update the position
                     samples    -= n;
@@ -189,120 +307,6 @@ namespace lsp
                     size_t n    = lsp_min(samples, t3 - t);
                     for (size_t i=0; i<n; ++i, ++t)
                         dst[i]     += src[tr - t] * sqrtf((t3 - t) * k);
-                }
-
-                return t - t0;
-            }
-
-            LSP_DSP_UNITS_PUBLIC
-            size_t put_batch_linear_reverse(float *dst, const float *src, const batch_t *b, wsize_t timestamp, size_t samples)
-            {
-                // Direct playback, compute batch size and position
-                size_t t3   = b->nEnd - b->nStart;          // Batch size in samples
-                size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
-                if (t0 >= t3)
-                    return 0;
-
-                size_t t    = t0;                           // Current rendering position inside of the batch
-                src        += b->nStart;                    // Adjust pointer for simplification of pointer arithmetics
-
-                // Render the fade-in
-                size_t t1   = b->nFadeIn;
-                if (t < t1)
-                {
-                    // Render contents
-                    float k     = 1.0f / b->nFadeIn;
-                    size_t n    = lsp_min(samples, t1 - t);
-                    for (size_t i=0; i<n; ++i, ++t)
-                        dst[i]     += src[t] * (t * k);
-
-                    // Update the position
-                    samples    -= n;
-                    if (samples <= 0)
-                        return t - t0;
-                    dst        += n;
-                }
-
-                // Render the body
-                size_t t2   = t3 - b->nFadeOut;
-                if (t < t2)
-                {
-                    // Render contents
-                    size_t n    = lsp_min(samples, t2 - t);
-                    dsp::add2(dst, &src[t], n);
-
-                    // Update the position
-                    samples    -= n;
-                    if (samples <= 0)
-                        return t - t0;
-                    dst        += n;
-                }
-
-                // Render the fade-out
-                if (t < t3)
-                {
-                    // Render the contents
-                    float k     = 1.0f / b->nFadeOut;
-                    size_t n    = lsp_min(samples, t3 - t);
-                    for (size_t i=0; i<n; ++i, ++t)
-                        dst[i]     += src[t] * ((t3 - t) * k);
-                }
-
-                return t - t0;
-            }
-
-            LSP_DSP_UNITS_PUBLIC
-            size_t put_batch_const_power_reverse(float *dst, const float *src, const batch_t *b, wsize_t timestamp, size_t samples)
-            {
-                // Direct playback, compute batch size and position
-                size_t t3   = b->nEnd - b->nStart;          // Batch size in samples
-                size_t t0   = timestamp - b->nTimestamp;    // Initial rendering position inside of the batch
-                if (t0 >= t3)
-                    return 0;
-
-                size_t t    = t0;                           // Current rendering position inside of the batch
-                src        += b->nStart;                    // Adjust pointer for simplification of pointer arithmetics
-
-                // Render the fade-in
-                size_t t1   = b->nFadeIn;
-                if (t < t1)
-                {
-                    // Render contents
-                    float k     = 1.0f / b->nFadeIn;
-                    size_t n    = lsp_min(samples, t1 - t);
-                    for (size_t i=0; i<n; ++i, ++t)
-                        dst[i]     += src[t] * sqrtf(t * k);
-
-                    // Update the position
-                    samples    -= n;
-                    if (samples <= 0)
-                        return t - t0;
-                    dst        += n;
-                }
-
-                // Render the body
-                size_t t2   = t3 - b->nFadeOut;
-                if (t < t2)
-                {
-                    // Render contents
-                    size_t n    = lsp_min(samples, t2 - t);
-                    dsp::add2(dst, &src[t], n);
-
-                    // Update the position
-                    samples    -= n;
-                    if (samples <= 0)
-                        return t - t0;
-                    dst        += n;
-                }
-
-                // Render the fade-out
-                if (t < t3)
-                {
-                    // Render the contents
-                    float k     = 1.0f / b->nFadeOut;
-                    size_t n    = lsp_min(samples, t3 - t);
-                    for (size_t i=0; i<n; ++i, ++t)
-                        dst[i]     += src[t] * sqrtf((t3 - t) * k);
                 }
 
                 return t - t0;
