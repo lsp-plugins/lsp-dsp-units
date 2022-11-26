@@ -28,32 +28,45 @@
 #include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/test-fw/utest.h>
 
+static constexpr float S0  = 1.0f;
+static constexpr float S1  = 2.01f;
+static constexpr float S2  = 3.13f;
+static constexpr float S3  = 4.23f;
+static constexpr float S4  = 5.47f;
+static constexpr float S5  = 6.11f;
+static constexpr float S6  = 7.97f;
+static constexpr float S7  = 8.31f;
+static constexpr float S8  = 9.03f;
+static constexpr float S9  = 10.29f;
+static constexpr float S10 = 11.79f;
+static constexpr float S11 = 12.41f;
+
 static constexpr float xfl(float a, float b, float k)
 {
     return a * (1.0f - k) + b * k;
 }
 
-static const float sample_data[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-static const float test_playback_no_delay[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-static const float test_playback_short_delay[] = { 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-static const float test_playback_with_start_position[] = { 5, 6, 7, 8, 9, 10, 11, 12 };
+static const float sample_data[] = { S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11 };
+static const float test_playback_no_delay[] = { S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11 };
+static const float test_playback_short_delay[] = { 0, 0, 0, 0, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11 };
+static const float test_playback_with_start_position[] = { S4, S5, S6, S7, S8, S9, S10, S11 };
 
 static const float test_direct_loop_simple[] =
 {
-    1, 2, 3, 4,     // 0..3:   head
-    5, 6, 7, 8,     // 4..7:   loop 1
-    5, 6, 7, 8,     // 8..11:  loop 2
-    5, 6, 7, 8,     // 11..15: loop 3
-    9, 10, 11, 12   // 16..19: tail
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 11..15: loop 3
+    S8, S9, S10, S11    // 16..19: tail
 };
 
 static const float test_direct_loop_xfade[] =  {
-    1, 2, // 0..1: head
-    xfl(3, 3, 0.0f), xfl(4, 4, 0.25f), xfl(5, 5, 0.5f), xfl(6, 6, 0.75f), // 2..5: head-loop 1: no crossfade
-    xfl(7, 3, 0.0f), xfl(8, 4, 0.25f), xfl(9, 5, 0.5f), xfl(10, 6, 0.75f), // 6..9: loop 1-2 crossfade
-    xfl(7, 3, 0.0f), xfl(8, 4, 0.25f), xfl(9, 5, 0.5f), xfl(10, 6, 0.75f), // 10..13: loop 2-3 crossfade
-    xfl(7, 3, 0.0f), xfl(8, 4, 0.25f), xfl(9, 5, 0.5f), xfl(10, 6, 0.75f), // 14..17: loop 3-tail crossfade
-    11, 12 // 18..19: tail
+    S0, S1, // 0..1: head
+    S2, S3, S4, S5,  // 2..5: loop 1 start (no crossfade between head and loop)
+    xfl(S6, S2, 0.0f), xfl(S7, S3, 0.25f), xfl(S8, S4, 0.5f), xfl(S9, S5, 0.75f),   // 6..9: loop 1-2 crossfade
+    xfl(S6, S2, 0.0f), xfl(S7, S3, 0.25f), xfl(S8, S4, 0.5f), xfl(S9, S5, 0.75f),   // 10..13: loop 2-3 crossfade
+    S6, S7, S8, S9, // 14..17: loop 3 end (no crossfade between tail and loop)
+    S10, S11 // 18..19: tail
 };
 
 
@@ -83,7 +96,7 @@ UTEST_BEGIN("dspu.sampling.helpers", playback)
                 size_t est_processed        = lsp_min(buf_size, real_buf_size);
                 dsp::add2(chk.data(), buf_data, est_processed);
 
-                if ((real_buf_size == 10) && (step == 1))
+                if ((real_buf_size == 12) && (step == 3))
                     printf("debug\n");
 
                 // Do the processing

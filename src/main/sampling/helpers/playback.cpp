@@ -27,6 +27,42 @@ namespace lsp
     {
         namespace playback
         {
+            static inline size_t compute_batch_length(const play_batch_t *b)
+            {
+                return (b->nStart < b->nEnd) ? b->nEnd - b->nStart : b->nStart - b->nEnd;
+            }
+
+            static bool check_batches_sequential(const play_batch_t *prev, const play_batch_t *next)
+            {
+                if (prev->nEnd != next->nStart)
+                    return false;
+                return (prev->nStart < prev->nEnd) ? (next->nStart < next->nEnd) : (next->nEnd < next->nStart);
+            }
+
+            static bool loop_not_allowed(const playback_t *pb)
+            {
+                switch (pb->enState)
+                {
+                    case STATE_PLAY:
+                        return false;
+                    case STATE_STOP:
+                    {
+                        // If the cancellation point is before the end of currently processed batch,
+                        // then the loop should be considered to be not allowed
+                        const play_batch_t *s   = &pb->sBatch[0];
+                        size_t batch_size       = compute_batch_length(s);
+                        return pb->nCancelTime < s->nTimestamp + batch_size;
+                    }
+
+                    case STATE_NONE:
+                    case STATE_CANCEL:
+                    default:
+                        break;
+                }
+                return true;
+            }
+
+
             LSP_DSP_UNITS_PUBLIC
             void compute_initial_batch(playback_t *pb, const PlaySettings *settings)
             {
@@ -79,13 +115,14 @@ namespace lsp
                 // Determine the start position
                 size_t loop_len     = pb->nLoopEnd - pb->nLoopStart;
                 pb->nXFade          = lsp_min(pb->nXFade, loop_len / 2);
+                b->nFadeIn          = 0;
+                b->nFadeOut         = 0;
 
                 if (start < pb->nLoopStart)
                 {
                     // Start position is before the loop
                     b->nStart       = start;
-                    b->nEnd         = pb->nLoopStart + pb->nXFade;
-                    b->nFadeOut     = pb->nXFade;
+                    b->nEnd         = pb->nLoopStart;
                     b->enType       = BATCH_HEAD;
                 }
                 else if (start < pb->nLoopEnd)
@@ -99,7 +136,6 @@ namespace lsp
                             // Direct loop
                             b->nStart       = pb->nLoopStart;
                             b->nEnd         = pb->nLoopEnd;
-                            b->nFadeOut     = pb->nXFade;
                             b->enType       = BATCH_LOOP;
                             break;
 
@@ -109,7 +145,6 @@ namespace lsp
                             // Reverse loop
                             b->nStart       = pb->nLoopEnd;
                             b->nEnd         = pb->nLoopStart;
-                            b->nFadeOut     = pb->nXFade;
                             b->enType       = BATCH_LOOP;
                             break;
 
@@ -117,7 +152,6 @@ namespace lsp
                             // Start position is after the loop
                             b->nStart       = start;
                             b->nEnd         = sample_len;
-                            b->nFadeOut     = 0;
                             b->enType       = BATCH_TAIL;
                             break;
                     }
@@ -127,50 +161,21 @@ namespace lsp
                     // Start position is after the loop
                     b->nStart       = start;
                     b->nEnd         = sample_len;
-                    b->nFadeOut     = 0;
                     b->enType       = BATCH_TAIL;
                 }
             }
 
-            static bool loop_not_allowed(const playback_t *pb)
-            {
-                switch (pb->enState)
-                {
-                    case STATE_PLAY:
-                        return false;
-                    case STATE_STOP:
-                    {
-                        // If the cancellation point is before the end of currently processed batch,
-                        // then the loop should be considered to be not allowed
-                        const play_batch_t *s   = &pb->sBatch[0];
-                        size_t batch_size       = (s->nStart < s->nEnd) ? s->nEnd - s->nStart : s->nStart - s->nEnd;
-                        return pb->nCancelTime < s->nTimestamp + batch_size;
-                    }
-
-                    case STATE_NONE:
-                    case STATE_CANCEL:
-                    default:
-                        break;
-                }
-                return true;
-            }
-
-            static void compute_next_batch_after_head(playback_t *pb)
+            static void compute_next_batch_range_after_head(playback_t *pb)
             {
                 // NOTE: loop mode is always enabled for TYPE_HEAD batch
                 size_t sample_len       = pb->pSample->length();
-                const play_batch_t *s   = &pb->sBatch[0];
                 play_batch_t *b         = &pb->sBatch[1];
 
-                b->nTimestamp           = s->nTimestamp + pb->nLoopStart;
-                b->nFadeIn              = pb->nXFade;
-
-                // Loop not allowed anymore?
+                 // Loop not allowed anymore?
                 if (loop_not_allowed(pb))
                 {
                     b->nStart               = pb->nLoopStart;
                     b->nEnd                 = sample_len;
-                    b->nFadeOut             = 0;
                     b->enType               = BATCH_TAIL;
                     return;
                 }
@@ -184,7 +189,6 @@ namespace lsp
                         // Initial direct loop
                         b->nStart               = pb->nLoopStart;
                         b->nEnd                 = pb->nLoopEnd;
-                        b->nFadeOut             = pb->nXFade;
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -194,7 +198,6 @@ namespace lsp
                         // Initial reverse loop
                         b->nStart               = pb->nLoopEnd;
                         b->nEnd                 = pb->nLoopStart;
-                        b->nFadeOut             = pb->nXFade;
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -202,22 +205,17 @@ namespace lsp
                         // Unknown loop mode, actually do not loop
                         b->nStart               = pb->nLoopStart;
                         b->nEnd                 = sample_len;
-                        b->nFadeOut             = 0;
                         b->enType               = BATCH_TAIL;
                         break;
                 }
             }
 
-            static void compute_next_batch_inside_loop(playback_t *pb)
+            static void compute_next_batch_range_inside_loop(playback_t *pb)
             {
                 // NOTE: loop mode is always enabled for TYPE_LOOP batch
                 size_t sample_len       = pb->pSample->length();
                 const play_batch_t *s   = &pb->sBatch[0];
                 play_batch_t *b         = &pb->sBatch[1];
-
-                // Compute the start time of the next loop batch
-                b->nTimestamp           = s->nTimestamp + pb->nLoopEnd - pb->nLoopStart - pb->nXFade;
-                b->nFadeIn              = pb->nXFade;
 
                 // Loop not allowed anymore?
                 if (loop_not_allowed(pb))
@@ -225,24 +223,22 @@ namespace lsp
                     switch (pb->enLoopMode)
                     {
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
-                            // Check the order
-                            if (s->nStart < s->nEnd)
+                            // Do not allow stop in reverse direction
+                            if (s->nEnd < s->nStart)
                                 break;
 
-                            b->nStart               = pb->nLoopEnd - pb->nXFade;
+                            b->nStart               = pb->nLoopEnd;
                             b->nEnd                 = sample_len;
-                            b->nFadeOut             = 0;
                             b->enType               = BATCH_TAIL;
                             return;
 
                         case SAMPLE_LOOP_REVERSE_FULL_PP:
-                            // Check the order
-                            if (s->nEnd < s->nStart)
+                            // Do not allow stop in direct direction
+                            if (s->nStart < s->nEnd)
                                 break;
                             // Initial reverse loop
                             b->nStart               = pb->nLoopEnd;
                             b->nEnd                 = pb->nLoopStart;
-                            b->nFadeOut             = pb->nXFade;
                             b->enType               = BATCH_LOOP;
                             break;
 
@@ -252,9 +248,8 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE_HALF_PP:
                         default:
                             // Just immediately play tail after the loop
-                            b->nStart               = pb->nLoopEnd - pb->nXFade;
+                            b->nStart               = pb->nLoopEnd;
                             b->nEnd                 = sample_len;
-                            b->nFadeOut             = 0;
                             b->enType               = BATCH_TAIL;
                             return;
                     }
@@ -267,7 +262,6 @@ namespace lsp
                         // Yet another direct loop
                         b->nStart               = pb->nLoopStart;
                         b->nEnd                 = pb->nLoopEnd;
-                        b->nFadeOut             = pb->nXFade;
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -275,7 +269,6 @@ namespace lsp
                         // Yet another reverse loop
                         b->nStart               = pb->nLoopEnd;
                         b->nEnd                 = pb->nLoopStart;
-                        b->nFadeOut             = pb->nXFade;
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -286,15 +279,13 @@ namespace lsp
                         // Just reverse the order of the current loop batch and add fade-out
                         b->nStart               = s->nEnd;
                         b->nEnd                 = s->nStart;
-                        b->nFadeOut             = pb->nXFade;
                         b->enType               = BATCH_LOOP;
                         break;
 
                     default:
                         // Unknown loop mode, actually do not loop
-                        b->nStart               = pb->nLoopStart - pb->nXFade;
+                        b->nStart               = pb->nLoopStart;
                         b->nEnd                 = sample_len;
-                        b->nFadeOut             = 0;
                         b->enType               = BATCH_TAIL;
                         break;
                 }
@@ -303,22 +294,47 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void compute_next_batch(playback_t *pb)
             {
-                // Make decision depending on the previous type of the batch
-                switch (pb->sBatch[0].enType)
+                play_batch_t *s     = &pb->sBatch[0];
+                play_batch_t *b     = &pb->sBatch[1];
+
+                // We can compute the next batch only after BATCH_HEAD and BATCH_LOOP batches
+                switch (s->enType)
                 {
                     case BATCH_HEAD:
-                        compute_next_batch_after_head(pb);
+                        compute_next_batch_range_after_head(pb);
                         break;
-
                     case BATCH_LOOP:
-                        compute_next_batch_inside_loop(pb);
+                        compute_next_batch_range_inside_loop(pb);
                         break;
-
                     case BATCH_TAIL:
                     case BATCH_NONE:
                     default:
-                        clear_batch(&pb->sBatch[1]);
-                        break;
+                        clear_batch(b);
+                        return;
+                }
+
+                // Set-up batch timings
+                b->nTimestamp           = s->nTimestamp + compute_batch_length(s);
+                b->nFadeIn              = 0;
+                b->nFadeOut             = 0;
+
+                // Perform the crossfade depending on the previous batch type and the new one
+                // Do not perform cross-fade if the next batch follows exactly after the previous
+                if ((pb->nXFade > 0) && (!check_batches_sequential(s, b)))
+                {
+                    // Depending on the type of the previous and next batch, perform time shifting
+                    // and apply cross-fades for batches
+                    s->nFadeOut     = pb->nXFade;
+                    b->nFadeIn      = pb->nXFade;
+
+                    if (s->enType != BATCH_HEAD)
+                    {
+                        b->nTimestamp  -= pb->nXFade;
+                        if (b->enType == BATCH_TAIL)
+                            b->nStart      -= pb->nXFade;
+                    }
+                    else
+                        s->nEnd        += pb->nXFade;
                 }
             }
 
@@ -520,9 +536,8 @@ namespace lsp
                         case STATE_STOP:
                             // Play batches as usual, loop planning depends on the state
                             processed       = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
-                            if (processed >= to_do)
-                                execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
-                            else
+                            execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                            if (processed < to_do)
                                 complete_current_batch(pb);
                             offset         += processed;
                             break;
@@ -541,12 +556,9 @@ namespace lsp
 
                             // Play batches, do not allow loops
                             processed       = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
-                            if (processed >= to_do)
-                            {
-                                execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
-                                processed       = apply_fade_out(&dst[offset], pb, processed);
-                            }
-                            else
+                            execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
+                            processed       = apply_fade_out(&dst[offset], pb, processed);
+                            if (processed < to_do)
                                 complete_current_batch(pb);
 
                             offset         += processed;
