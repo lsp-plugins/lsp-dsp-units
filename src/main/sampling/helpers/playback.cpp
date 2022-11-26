@@ -132,8 +132,30 @@ namespace lsp
                 }
             }
 
-            LSP_DSP_UNITS_PUBLIC
-            void compute_next_batch_after_head(playback_t *pb, bool loop)
+            static bool loop_not_allowed(const playback_t *pb)
+            {
+                switch (pb->enState)
+                {
+                    case STATE_PLAY:
+                        return false;
+                    case STATE_STOP:
+                    {
+                        // If the cancellation point is before the end of currently processed batch,
+                        // then the loop should be considered to be not allowed
+                        const play_batch_t *s   = &pb->sBatch[0];
+                        size_t batch_size       = (s->nStart < s->nEnd) ? s->nEnd - s->nStart : s->nStart - s->nEnd;
+                        return pb->nCancelTime < s->nTimestamp + batch_size;
+                    }
+
+                    case STATE_NONE:
+                    case STATE_CANCEL:
+                    default:
+                        break;
+                }
+                return true;
+            }
+
+            static void compute_next_batch_after_head(playback_t *pb)
             {
                 // NOTE: loop mode is always enabled for TYPE_HEAD batch
                 size_t sample_len       = pb->pSample->length();
@@ -143,8 +165,8 @@ namespace lsp
                 b->nTimestamp           = s->nTimestamp + pb->nLoopStart;
                 b->nFadeIn              = pb->nXFade;
 
-                // Playback is in STOP/CANCLE state or loop mode is not allowed?
-                if ((pb->enState != STATE_PLAY) || (!loop))
+                // Loop not allowed anymore?
+                if (loop_not_allowed(pb))
                 {
                     b->nStart               = pb->nLoopStart;
                     b->nEnd                 = sample_len;
@@ -186,8 +208,7 @@ namespace lsp
                 }
             }
 
-            LSP_DSP_UNITS_PUBLIC
-            void compute_next_batch_inside_loop(playback_t *pb, bool loop)
+            static void compute_next_batch_inside_loop(playback_t *pb)
             {
                 // NOTE: loop mode is always enabled for TYPE_LOOP batch
                 size_t sample_len       = pb->pSample->length();
@@ -198,8 +219,8 @@ namespace lsp
                 b->nTimestamp           = s->nTimestamp + pb->nLoopEnd - pb->nLoopStart - pb->nXFade;
                 b->nFadeIn              = pb->nXFade;
 
-                // Playback is in STOP/CANCLE state or loop mode is not allowed?
-                if ((pb->enState != STATE_PLAY) || (!loop))
+                // Loop not allowed anymore?
+                if (loop_not_allowed(pb))
                 {
                     switch (pb->enLoopMode)
                     {
@@ -280,17 +301,17 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            void compute_next_batch(playback_t *pb, bool loop)
+            void compute_next_batch(playback_t *pb)
             {
                 // Make decision depending on the previous type of the batch
                 switch (pb->sBatch[0].enType)
                 {
                     case BATCH_HEAD:
-                        compute_next_batch_after_head(pb, loop);
+                        compute_next_batch_after_head(pb);
                         break;
 
                     case BATCH_LOOP:
-                        compute_next_batch_inside_loop(pb, loop);
+                        compute_next_batch_inside_loop(pb);
                         break;
 
                     case BATCH_TAIL:
@@ -302,7 +323,7 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            void complete_current_batch(playback_t *pb, bool loop)
+            void complete_current_batch(playback_t *pb)
             {
                 pb->sBatch[0]   = pb->sBatch[1];
                 if (pb->sBatch[0].enType == BATCH_NONE)
@@ -311,7 +332,7 @@ namespace lsp
                     return;
                 }
 
-                compute_next_batch(pb, loop);
+                compute_next_batch(pb);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -479,7 +500,7 @@ namespace lsp
 
                 // Compute the playback plan
                 compute_initial_batch(pb, settings);
-                compute_next_batch(pb, true);
+                compute_next_batch(pb);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -496,29 +517,14 @@ namespace lsp
                     switch (pb->enState)
                     {
                         case STATE_PLAY:
-                            // Play batches, allow loops
-                            processed   = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
-                            if (processed >= to_do)
-                            {
-                                execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
-                                offset         += processed;
-                                pb->nTimestamp += processed;
-                            }
-                            else
-                                complete_current_batch(pb, true);
-                            break;
-
                         case STATE_STOP:
-                            // Play batches, do not allow loops
-                            processed   = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
+                            // Play batches as usual, loop planning depends on the state
+                            processed       = execute_batch(&dst[offset], &pb->sBatch[0], pb, to_do);
                             if (processed >= to_do)
-                            {
                                 execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
-                                offset         += processed;
-                                pb->nTimestamp += processed;
-                            }
                             else
-                                complete_current_batch(pb, false);
+                                complete_current_batch(pb);
+                            offset         += processed;
                             break;
 
                         case STATE_CANCEL:
@@ -526,6 +532,7 @@ namespace lsp
                             if (pb->nTimestamp >= pb->nCancelTime + pb->nFadeout)
                             {
                                 pb->enState     = STATE_NONE;
+                                processed       = 0;
                                 break;
                             }
 
@@ -538,28 +545,34 @@ namespace lsp
                             {
                                 execute_batch(&dst[offset], &pb->sBatch[1], pb, processed);
                                 processed       = apply_fade_out(&dst[offset], pb, processed);
-                                offset         += processed;
-                                pb->nTimestamp += processed;
                             }
                             else
-                                complete_current_batch(pb, false);
+                                complete_current_batch(pb);
+
+                            offset         += processed;
                             break;
 
                         case STATE_NONE:
                         default:
                             return offset;
                     }
+
+                    // Upate timestamp
+                    pb->nTimestamp += processed;
                 }
 
                 return offset;
             }
 
             LSP_DSP_UNITS_PUBLIC
-            void stop_playback(playback_t *pb)
+            void stop_playback(playback_t *pb, size_t delay)
             {
                 // We can stop the playback only if it is active at this moment
-                if (pb->enState == playback::STATE_PLAY)
-                    pb->enState = playback::STATE_STOP;
+                if (pb->enState != playback::STATE_PLAY)
+                    return;
+
+                pb->enState     = playback::STATE_STOP;
+                pb->nCancelTime = pb->nTimestamp + delay;
             }
 
             LSP_DSP_UNITS_PUBLIC

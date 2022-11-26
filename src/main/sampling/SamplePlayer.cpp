@@ -305,16 +305,16 @@ namespace lsp
         void SamplePlayer::do_process(float *dst, size_t samples)
         {
             // Operate with not greater than BUFFER_SIZE parts
-            for (size_t offset=0; offset<samples;)
+            // Iterate over all active playbacks and apply changes to the output
+            for (play_item_t *pb = sActive.pHead; pb != NULL; )
             {
-                size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
+                // The link of the playback can be changed, so we need
+                // to remember the pointer to the next playback in list first
+                play_item_t *next   = pb->pNext;
 
-                // Iterate over all active playbacks and apply changes to the output
-                for (play_item_t *pb = sActive.pHead; pb != NULL; )
+                for (size_t offset=0; offset<samples;)
                 {
-                    // The link of the playback can be changed, so we need
-                    // to remember the pointer to the next playback in list first
-                    play_item_t *next   = pb->pNext;
+                    size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
 
                     // Prepare the buffer
                     dsp::fill_zero(vBuffer, to_do);
@@ -329,18 +329,19 @@ namespace lsp
                         // Move to inactive
                         list_remove(&sActive, pb);
                         list_add_first(&sInactive, pb);
+                        break;
                     }
-                    else
-                        dsp::fmadd_k3(dst, vBuffer, pb->fVolume * fGain, processed);
 
-                    // Move to the next playback
-                    pb                  = next;
-                }
+                    // Deploy playback to the destination buffer
+                    dsp::fmadd_k3(&dst[offset], vBuffer, pb->fVolume * fGain, processed);
 
-                // Update pointers
-                dst                += to_do;
-                offset             += to_do;
-            }
+                    // Update pointers
+                    offset             += processed;
+                } // offset
+
+                // Move to the next playback
+                pb                  = next;
+            } // play_item_t
         }
 
         bool SamplePlayer::play(size_t id, size_t channel, float volume, ssize_t delay)

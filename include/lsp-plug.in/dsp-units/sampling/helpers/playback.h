@@ -76,10 +76,10 @@ namespace lsp
             void        compute_initial_batch(playback_t *pb, const PlaySettings *settings);
 
             LSP_DSP_UNITS_PUBLIC
-            void        compute_next_batch(playback_t *pb, bool loop);
+            void        compute_next_batch(playback_t *pb);
 
             LSP_DSP_UNITS_PUBLIC
-            void        complete_current_batch(playback_t *pb, bool loop);
+            void        complete_current_batch(playback_t *pb);
 
             LSP_DSP_UNITS_PUBLIC
             size_t      execute_batch(float *dst, const batch_t *b, playback_t *pb, size_t samples);
@@ -101,7 +101,7 @@ namespace lsp
             size_t      process_playback(float *dst, playback_t *pb, size_t samples);
 
             LSP_DSP_UNITS_PUBLIC
-            void        stop_playback(playback_t *pb);
+            void        stop_playback(playback_t *pb, size_t delay = 0);
 
             LSP_DSP_UNITS_PUBLIC
             bool        cancel_playback(playback_t *pb, size_t fadeout = 0, size_t delay = 0);

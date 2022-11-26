@@ -97,12 +97,12 @@ namespace lsp
             return pPlayback->nTimestamp;
         }
 
-        void Playback::stop()
+        void Playback::stop(size_t delay)
         {
             if (!valid())
                 return;
 
-            playback::stop_playback(pPlayback);
+            playback::stop_playback(pPlayback, delay);
         }
 
         void Playback::cancel(size_t fadeout, size_t delay)

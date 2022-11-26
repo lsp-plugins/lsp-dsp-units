@@ -76,7 +76,7 @@ namespace lsp
                 /**
                  * Stop the playback: disable any loops and let the sample sound till it ends.
                  */
-                void        stop();
+                void        stop(size_t delay = 0);
 
                 /**
                  * Cancel the playback: set-up the delay and fade-out length before the sample stops playing
