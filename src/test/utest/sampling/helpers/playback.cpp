@@ -69,6 +69,142 @@ static const float test_direct_loop_xfade[] =  {
     S10, S11 // 18..19: tail
 };
 
+static const float test_reverse_loop_simple[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 11..15: loop 3
+    S8, S9, S10, S11    // 16..19: tail
+};
+
+static const float test_reverse_loop_xfade[] =  {
+    S0, S1, // 0..1: head
+    xfl(S2, S9, 0.0f), xfl(S3, S8, 0.25f), xfl(S4, S7, 0.5f), xfl(S5, S6, 0.75f),   // 2..5: loop 1 start, crossfade to the head
+    xfl(S5, S9, 0.0f), xfl(S4, S8, 0.25f), xfl(S3, S7, 0.5f), xfl(S2, S6, 0.75f),   // 6..9: loop 1-2 crossfade
+    xfl(S5, S9, 0.0f), xfl(S4, S8, 0.25f), xfl(S3, S7, 0.5f), xfl(S2, S6, 0.75f),   // 10..13: loop 2-3 crossfade
+    xfl(S5, S6, 0.0f), xfl(S4, S7, 0.25f), xfl(S3, S8, 0.5f), xfl(S2, S9, 0.75f),   // 14..17: loop 3-tail crossfade
+    S10, S11 // 18..19: tail
+};
+
+static const float test_direct_full_pp_simple[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 12..15: loop 3
+    S7, S6, S5, S4,     // 16..19: loop 4
+    S8, S9, S10, S11    // 20..23: tail
+};
+
+static const float test_reverse_full_pp_simple[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 12..15: loop 3
+    S4, S5, S6, S7,     // 16..19: loop 4
+    S8, S9, S10, S11    // 20..23: tail
+};
+
+static const float test_direct_half_pp_simple1[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 12..15: loop 3
+    S8, S9, S10, S11    // 16..19: tail
+};
+
+static const float test_direct_half_pp_simple2[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 12..15: loop 3
+    S7, S6, S5, S4,     // 16..19: loop 4
+    S8, S9, S10, S11    // 20..23: tail
+};
+
+static const float test_reverse_half_pp_simple1[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 12..15: loop 3
+    S8, S9, S10, S11    // 16..19: tail
+};
+
+static const float test_reverse_half_pp_simple2[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 12..15: loop 3
+    S4, S5, S6, S7,     // 16..19: loop 4
+    S8, S9, S10, S11    // 20..23: tail
+};
+
+static const float test_direct_smart_pp_simple1[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 12..15: loop 3
+    S8, S9, S10, S11    // 16..19: tail
+};
+
+static const float test_direct_smart_pp_simple2[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 12..15: loop 3
+    S8, S9, S10, S11    // 16..19: tail
+};
+
+static const float test_direct_smart_pp_simple3[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S4, S5, S6, S7,     // 4..7:   loop 1
+    S7, S6, S5, S4,     // 8..11:  loop 2
+    S4, S5, S6, S7,     // 12..15: loop 3
+    S7, S6, S5, S4,     // 16..19: loop 4
+    S4, S5, S6, S7,     // 20..23: loop 5
+    S8, S9, S10, S11    // 24..27: tail
+};
+
+static const float test_reverse_smart_pp_simple1[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 12..15: loop 3
+    S4, S5, S6, S7,     // 16..19: loop 4
+    S8, S9, S10, S11    // 20..23: tail
+};
+
+static const float test_reverse_smart_pp_simple2[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 12..15: loop 3
+    S4, S5, S6, S7,     // 16..19: loop 4
+    S8, S9, S10, S11    // 20..23: tail
+};
+
+static const float test_reverse_smart_pp_simple3[] =
+{
+    S0, S1, S2, S3,     // 0..3:   head
+    S7, S6, S5, S4,     // 4..7:   loop 1
+    S4, S5, S6, S7,     // 8..11:  loop 2
+    S7, S6, S5, S4,     // 12..15: loop 3
+    S4, S5, S6, S7,     // 16..19: loop 4
+    S7, S6, S5, S4,     // 20..23: loop 5
+    S4, S5, S6, S7,     // 24..27: loop 6
+    S8, S9, S10, S11    // 28..31: tail
+};
 
 UTEST_BEGIN("dspu.sampling.helpers", playback)
 
@@ -84,7 +220,7 @@ UTEST_BEGIN("dspu.sampling.helpers", playback)
                 FloatBuffer dst(real_buf_size);
                 FloatBuffer buf(step);
                 FloatBuffer chk(real_buf_size);
-                dst.randomize(0.0f, 0.1f); // Add some noise to check that batches are applied in additive mode
+                dst.randomize(0.0f, 0.001f); // Add some noise to check that batches are applied in additive mode
                 chk.copy(dst);
 
                 // Obtain the copy of playback and validate state
@@ -96,7 +232,7 @@ UTEST_BEGIN("dspu.sampling.helpers", playback)
                 size_t est_processed        = lsp_min(buf_size, real_buf_size);
                 dsp::add2(chk.data(), buf_data, est_processed);
 
-                if ((real_buf_size == 12) && (step == 3))
+                if ((real_buf_size == 18) && (step == 1))
                     printf("debug\n");
 
                 // Do the processing
@@ -147,42 +283,42 @@ UTEST_BEGIN("dspu.sampling.helpers", playback)
         // Initial settings
         ps.set_volume(1.0f);
 
-//        // Test the simple playback
-//        printf("Testing playback of full sample without delay...\n");
-//        ps.set_delay(0);
-//        ps.set_start(0);
-//        ps.set_loop_range(dspu::SAMPLE_LOOP_NONE, 0, 0);
-//        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
-//        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
-//        test_playback(&pb, test_playback_no_delay, 12);
-//
-//        // Test the simple playback with delay
-//        printf("Testing playback of full sample with short delay...\n");
-//        ps.set_delay(4);
-//        ps.set_start(0);
-//        ps.set_loop_range(dspu::SAMPLE_LOOP_NONE, 0, 0);
-//        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
-//        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
-//        test_playback(&pb, test_playback_short_delay, 16);
-//
-//        // Test the simple playback with delay
-//        printf("Testing playback of full sample with start position...\n");
-//        ps.set_delay(0);
-//        ps.set_start(4);
-//        ps.set_loop_range(dspu::SAMPLE_LOOP_NONE, 0, 0);
-//        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
-//        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
-//        test_playback(&pb, test_playback_with_start_position, 8);
+        // Test the simple playback
+        printf("Testing playback of full sample without delay...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_NONE, 0, 0);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        test_playback(&pb, test_playback_no_delay, 12);
+
+        // Test the simple playback with delay
+        printf("Testing playback of full sample with short delay...\n");
+        ps.set_delay(4);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_NONE, 0, 0);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        test_playback(&pb, test_playback_short_delay, 16);
+
+        // Test the simple playback with delay
+        printf("Testing playback of full sample with start position...\n");
+        ps.set_delay(0);
+        ps.set_start(4);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_NONE, 0, 0);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        test_playback(&pb, test_playback_with_start_position, 8);
 
         // Test simple direct loop without crossfade
-//        printf("Testing simple direct loop...\n");
-//        ps.set_delay(0);
-//        ps.set_start(0);
-//        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT, 4, 8);
-//        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
-//        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
-//        dspu::playback::stop_playback(&pb, 14);
-//        test_playback(&pb, test_direct_loop_simple, 20);
+        printf("Testing simple direct loop...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_direct_loop_simple, 20);
 
         // Test simple direct loop with crossfade
         printf("Testing simple direct loop with crossfade...\n");
@@ -193,6 +329,146 @@ UTEST_BEGIN("dspu.sampling.helpers", playback)
         dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
         dspu::playback::stop_playback(&pb, 16);
         test_playback(&pb, test_direct_loop_xfade, 20);
+
+        // Test simple reverse loop without crossfade
+        printf("Testing simple reverse loop...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_reverse_loop_simple, 20);
+
+        // Test simple reverse loop with crossfade
+        printf("Testing simple reverse loop with crossfade...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE, 2, 10);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 4);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 16);
+        test_playback(&pb, test_reverse_loop_xfade, 20);
+
+        // Test simple direct full ping-pong loop without crossfade
+        printf("Testing simple direct full ping-pong loop...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT_FULL_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_direct_full_pp_simple, 24);
+
+        // Test simple reverse full ping-pong loop without crossfade
+        printf("Testing simple reverse full ping-pong loop...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE_FULL_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_reverse_full_pp_simple, 24);
+
+        // Test simple direct half ping-pong loop without crossfade (version 1)
+        printf("Testing simple direct half ping-pong loop (version 1)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT_HALF_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_direct_half_pp_simple1, 20);
+
+        // Test simple direct half ping-pong loop without crossfade (version 2)
+        printf("Testing simple direct half ping-pong loop (version 2)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT_HALF_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 18);
+        test_playback(&pb, test_direct_half_pp_simple2, 24);
+
+        // Test simple reverse half ping-pong loop without crossfade (version 1)
+        printf("Testing simple reverse half ping-pong loop...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE_HALF_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_reverse_half_pp_simple1, 20);
+
+        // Test simple reverse half ping-pong loop without crossfade (version 2)
+        printf("Testing simple reverse half ping-pong loop...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE_HALF_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 18);
+        test_playback(&pb, test_reverse_half_pp_simple2, 24);
+
+        // Test simple direct half ping-pong loop without crossfade (version 1)
+        printf("Testing simple direct smart ping-pong loop (version 1)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT_SMART_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 10);
+        test_playback(&pb, test_direct_smart_pp_simple1, 20);
+
+        // Test simple direct half ping-pong loop without crossfade (version 2)
+        printf("Testing simple direct smart ping-pong loop (version 2)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT_SMART_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_direct_smart_pp_simple2, 20);
+
+        // Test simple direct half ping-pong loop without crossfade (version 2)
+        printf("Testing simple direct smart ping-pong loop (version 3)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_DIRECT_SMART_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 18);
+        test_playback(&pb, test_direct_smart_pp_simple3, 28);
+
+        // Test simple direct half ping-pong loop without crossfade (version 1)
+        printf("Testing simple reverse smart ping-pong loop (version 1)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE_SMART_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 14);
+        test_playback(&pb, test_reverse_smart_pp_simple1, 24);
+
+        // Test simple direct half ping-pong loop without crossfade (version 2)
+        printf("Testing simple reverse smart ping-pong loop (version 2)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE_SMART_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 18);
+        test_playback(&pb, test_reverse_smart_pp_simple2, 24);
+
+        // Test simple direct half ping-pong loop without crossfade (version 2)
+        printf("Testing simple reverse smart ping-pong loop (version 3)...\n");
+        ps.set_delay(0);
+        ps.set_start(0);
+        ps.set_loop_range(dspu::SAMPLE_LOOP_REVERSE_SMART_PP, 4, 8);
+        ps.set_loop_xfade(dspu::SAMPLE_CROSSFADE_LINEAR, 0);
+        dspu::playback::start_playback(&pb, 0, 0, &s, &ps);
+        dspu::playback::stop_playback(&pb, 22);
+        test_playback(&pb, test_reverse_smart_pp_simple3, 32);
     }
 UTEST_END;
 

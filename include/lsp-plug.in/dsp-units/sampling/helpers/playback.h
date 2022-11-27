@@ -79,6 +79,9 @@ namespace lsp
             void        compute_next_batch(playback_t *pb);
 
             LSP_DSP_UNITS_PUBLIC
+            void        recompute_next_batch(playback_t *pb);
+
+            LSP_DSP_UNITS_PUBLIC
             void        complete_current_batch(playback_t *pb);
 
             LSP_DSP_UNITS_PUBLIC

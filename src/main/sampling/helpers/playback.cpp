@@ -51,7 +51,7 @@ namespace lsp
                         // then the loop should be considered to be not allowed
                         const play_batch_t *s   = &pb->sBatch[0];
                         size_t batch_size       = compute_batch_length(s);
-                        return pb->nCancelTime < s->nTimestamp + batch_size;
+                        return pb->nCancelTime <= s->nTimestamp + batch_size;
                     }
 
                     case STATE_NONE:
@@ -108,6 +108,8 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE_HALF_PP:   pb->enLoopMode = SAMPLE_LOOP_DIRECT_HALF_PP;    break;
                         case SAMPLE_LOOP_DIRECT_FULL_PP:    pb->enLoopMode = SAMPLE_LOOP_REVERSE_FULL_PP;   break;
                         case SAMPLE_LOOP_REVERSE_FULL_PP:   pb->enLoopMode = SAMPLE_LOOP_DIRECT_FULL_PP;    break;
+                        case SAMPLE_LOOP_DIRECT_SMART_PP:   pb->enLoopMode = SAMPLE_LOOP_REVERSE_SMART_PP;  break;
+                        case SAMPLE_LOOP_REVERSE_SMART_PP:  pb->enLoopMode = SAMPLE_LOOP_DIRECT_SMART_PP;   break;
                         default: break;
                     }
                 }
@@ -133,6 +135,7 @@ namespace lsp
                         case SAMPLE_LOOP_DIRECT:
                         case SAMPLE_LOOP_DIRECT_HALF_PP:
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
+                        case SAMPLE_LOOP_DIRECT_SMART_PP:
                             // Direct loop
                             b->nStart       = pb->nLoopStart;
                             b->nEnd         = pb->nLoopEnd;
@@ -142,6 +145,7 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE:
                         case SAMPLE_LOOP_REVERSE_HALF_PP:
                         case SAMPLE_LOOP_REVERSE_FULL_PP:
+                        case SAMPLE_LOOP_REVERSE_SMART_PP:
                             // Reverse loop
                             b->nStart       = pb->nLoopEnd;
                             b->nEnd         = pb->nLoopStart;
@@ -186,6 +190,7 @@ namespace lsp
                     case SAMPLE_LOOP_DIRECT:
                     case SAMPLE_LOOP_DIRECT_HALF_PP:
                     case SAMPLE_LOOP_DIRECT_FULL_PP:
+                    case SAMPLE_LOOP_DIRECT_SMART_PP:
                         // Initial direct loop
                         b->nStart               = pb->nLoopStart;
                         b->nEnd                 = pb->nLoopEnd;
@@ -195,6 +200,7 @@ namespace lsp
                     case SAMPLE_LOOP_REVERSE:
                     case SAMPLE_LOOP_REVERSE_HALF_PP:
                     case SAMPLE_LOOP_REVERSE_FULL_PP:
+                    case SAMPLE_LOOP_REVERSE_SMART_PP:
                         // Initial reverse loop
                         b->nStart               = pb->nLoopEnd;
                         b->nEnd                 = pb->nLoopStart;
@@ -223,8 +229,9 @@ namespace lsp
                     switch (pb->enLoopMode)
                     {
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
-                            // Do not allow stop in reverse direction
-                            if (s->nEnd < s->nStart)
+                            // If current batch is in direct direction, then we need to process
+                            // one more batch in the reverse direction
+                            if (s->nStart < s->nEnd)
                                 break;
 
                             b->nStart               = pb->nLoopEnd;
@@ -233,14 +240,27 @@ namespace lsp
                             return;
 
                         case SAMPLE_LOOP_REVERSE_FULL_PP:
-                            // Do not allow stop in direct direction
-                            if (s->nStart < s->nEnd)
+                            // If current batch is in reverse direction, then we need to process
+                            // one more batch in the direct direction
+                            if (s->nEnd < s->nStart)
                                 break;
-                            // Initial reverse loop
+
                             b->nStart               = pb->nLoopEnd;
-                            b->nEnd                 = pb->nLoopStart;
-                            b->enType               = BATCH_LOOP;
-                            break;
+                            b->nEnd                 = sample_len;
+                            b->enType               = BATCH_TAIL;
+                            return;
+
+                        case SAMPLE_LOOP_DIRECT_SMART_PP:
+                        case SAMPLE_LOOP_REVERSE_SMART_PP:
+                            // If current batch is in reverse direction, then we need to process
+                            // one more batch in the direct direction
+                            if (s->nEnd < s->nStart)
+                                break;
+
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = sample_len;
+                            b->enType               = BATCH_TAIL;
+                            return;
 
                         case SAMPLE_LOOP_DIRECT:
                         case SAMPLE_LOOP_REVERSE:
@@ -274,11 +294,21 @@ namespace lsp
 
                     case SAMPLE_LOOP_DIRECT_HALF_PP:
                     case SAMPLE_LOOP_DIRECT_FULL_PP:
+                    case SAMPLE_LOOP_DIRECT_SMART_PP:
                     case SAMPLE_LOOP_REVERSE_HALF_PP:
                     case SAMPLE_LOOP_REVERSE_FULL_PP:
-                        // Just reverse the order of the current loop batch and add fade-out
-                        b->nStart               = s->nEnd;
-                        b->nEnd                 = s->nStart;
+                    case SAMPLE_LOOP_REVERSE_SMART_PP:
+                        // Just reverse the order of the current loop batch
+                        if (s->nStart < b->nEnd)
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = pb->nLoopStart;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = pb->nLoopEnd;
+                        }
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -315,6 +345,7 @@ namespace lsp
 
                 // Set-up batch timings
                 b->nTimestamp           = s->nTimestamp + compute_batch_length(s);
+                s->nFadeOut             = 0;
                 b->nFadeIn              = 0;
                 b->nFadeOut             = 0;
 
@@ -336,6 +367,31 @@ namespace lsp
                     else
                         s->nEnd        += pb->nXFade;
                 }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void recompute_next_batch(playback_t *pb)
+            {
+                play_batch_t *s     = &pb->sBatch[0];
+                play_batch_t *b     = &pb->sBatch[1];
+
+                // Ensure that we can recompute the next batch
+                switch (b->enType)
+                {
+                    case BATCH_HEAD:
+                    case BATCH_LOOP:
+                        break;
+                    case BATCH_TAIL:
+                    case BATCH_NONE:
+                    default: // Nothing to do with batch
+                        return;
+                }
+
+                // Ensure that the right conditions have occurred:
+                //   - the cancellation time is inside of current batch
+                //   - the cancellation time has not reached the beginning of the next batch
+                if ((pb->nCancelTime >= s->nTimestamp) && (pb->nCancelTime <= b->nTimestamp))
+                    compute_next_batch(pb);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -585,6 +641,7 @@ namespace lsp
 
                 pb->enState     = playback::STATE_STOP;
                 pb->nCancelTime = pb->nTimestamp + delay;
+                recompute_next_batch(pb);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -598,6 +655,7 @@ namespace lsp
                         pb->enState     = playback::STATE_CANCEL;
                         pb->nCancelTime = pb->nTimestamp + delay;
                         pb->nFadeout    = fadeout;
+                        recompute_next_batch(pb);
                         return true;
 
                     case playback::STATE_NONE:

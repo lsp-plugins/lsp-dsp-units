@@ -114,9 +114,21 @@ namespace lsp
 
             /**
              * The loop part of sample is played in ping-pong mode, the first repeat is played from the
-             * end to the start (in reverse mode) is allowed only after the direct playback part
+             * end to the start (in reverse mode) Leaving the loop is allowed only after the direct playback part
              */
-            SAMPLE_LOOP_REVERSE_FULL_PP
+            SAMPLE_LOOP_REVERSE_FULL_PP,
+
+            /**
+             * The loop part of sample is played in ping-pong mode, the first repeat is played from the
+             * start to the end. Leaving the loop is allowed only after the direct playback part
+             */
+            SAMPLE_LOOP_DIRECT_SMART_PP,
+
+            /**
+             * The loop part of sample is played in ping-pong mode, the first repeat is played from the
+             * end to the start (in reverse mode). Leaving the loop is allowed only after the direct playback part
+             */
+            SAMPLE_LOOP_REVERSE_SMART_PP,
         };
 
     } /* namesapace dspu */
