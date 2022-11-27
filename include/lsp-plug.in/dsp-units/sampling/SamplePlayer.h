@@ -171,7 +171,7 @@ namespace lsp
                  * @param settings playback settings
                  * @return true if parameters are valid
                  */
-                Playback play(size_t id, size_t channel, const PlaySettings *settings = NULL);
+                Playback play(const PlaySettings *settings = NULL);
 
                 /** Soft cancel playback of the sample
                  *

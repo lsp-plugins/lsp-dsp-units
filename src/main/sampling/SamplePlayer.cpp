@@ -347,15 +347,18 @@ namespace lsp
         bool SamplePlayer::play(size_t id, size_t channel, float volume, ssize_t delay)
         {
             PlaySettings settings;
+            settings.set_channel(id, channel);
             settings.set_playback(0, size_t(delay), volume);
-            Playback result = play(id, channel, &settings);
+
+            Playback result = play(&settings);
             return result.valid();
         }
 
-        Playback SamplePlayer::play(size_t id, size_t channel, const PlaySettings *settings)
+        Playback SamplePlayer::play(const PlaySettings *settings)
         {
             // Check that ID of the sample is correct
-            if (id >= nSamples)
+            size_t id       = settings->sample_id();
+            if (settings->sample_id() >= nSamples)
                 return Playback();
 
             // Check that the sample is bound and valid
@@ -364,6 +367,7 @@ namespace lsp
                 return Playback();
 
             // Check that ID of channel matches
+            size_t channel  = settings->sample_channel();
             if (channel >= s->channels())
                 return Playback();
 
@@ -381,7 +385,7 @@ namespace lsp
                 settings        = &PlaySettings::default_settings;
 
             // Initialize playback state
-            playback::start_playback(pb, id, channel, s, settings);
+            playback::start_playback(pb, s, settings);
 
             // Add the playback to the active list
             list_insert_from_tail(&sActive, pb);

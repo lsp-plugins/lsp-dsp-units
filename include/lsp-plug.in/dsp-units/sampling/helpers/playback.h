@@ -98,7 +98,7 @@ namespace lsp
             void        reset_playback(playback_t *pb);
 
             LSP_DSP_UNITS_PUBLIC
-            void        start_playback(playback_t *pb, size_t id, size_t channel, Sample *sample, const PlaySettings *settings);
+            void        start_playback(playback_t *pb, Sample *sample, const PlaySettings *settings);
 
             LSP_DSP_UNITS_PUBLIC
             size_t      process_playback(float *dst, playback_t *pb, size_t samples);

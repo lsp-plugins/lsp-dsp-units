@@ -36,6 +36,8 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC PlaySettings
         {
             protected:
+                size_t              nID;                // The identifier of the sample
+                size_t              nChannel;           // The audio channel of the sample
                 float               fVolume;            // The volume of the sample
                 size_t              nDelay;             // The delay before the playback should start (samples)
                 size_t              nStart;             // The start position of the playback
@@ -57,40 +59,52 @@ namespace lsp
 
             public:
                 /**
+                 * Get sample identifier
+                 * @return sample identifier
+                 */
+                inline size_t       sample_id() const       { return nID;       }
+
+                /**
+                 * Get sample channel
+                 * @return sample channel
+                 */
+                inline size_t       sample_channel() const  { return nChannel;       }
+
+                /**
                  * Get the volume of the sample
                  * @return the volume of the sample
                  */
-                inline float        volume() const      { return fVolume; }
+                inline float        volume() const          { return fVolume;   }
 
                 /**
                  * Get the delay before the playback starts
                  * @return the delay in samples before the playback starts
                  */
-                inline size_t       delay() const       { return nDelay;  }
+                inline size_t       delay() const           { return nDelay;  }
 
                 /**
                  * Get the start point of the playback
                  * @return the start point of the playback in samples
                  */
-                inline size_t       start() const       { return nStart;  }
+                inline size_t       start() const           { return nStart;  }
 
                 /**
                  * Get the loop mode of the sample
                  * @return loop mode of the sample
                  */
-                inline sample_loop_t loop_mode() const  { return nLoopMode; }
+                inline sample_loop_t loop_mode() const      { return nLoopMode; }
 
                 /**
                  * Get the start point of the repetition loop
                  * @return the start point of the repetition loop in samples
                  */
-                inline size_t       loop_start() const  { return nLoopStart; }
+                inline size_t       loop_start() const      { return nLoopStart; }
 
                 /**
                  * Get the end point of the repetition loop
                  * @return the end point of the repetition loop in samples
                  */
-                inline size_t       loop_end() const    { return nLoopEnd; }
+                inline size_t       loop_end() const        { return nLoopEnd; }
 
                 /**
                  * Get type of the crossfade between sample segments in the loop
@@ -105,6 +119,35 @@ namespace lsp
                 inline size_t       loop_xfade_length() const       { return nLoopXFadeLength;  }
 
             public:
+                /**
+                 * Set sample identifier
+                 * @param id sample identifier
+                 */
+                inline void         set_sample_id(size_t id)
+                {
+                    nID             = id;
+                }
+
+                /**
+                 * Set sample channel
+                 * @param channel sample channel
+                 */
+                inline void         set_sample_channel(size_t channel)
+                {
+                    nChannel        = channel;
+                }
+
+                /**
+                 * Set sample to play
+                 * @param sample_id sample identifier
+                 * @param channel channel identifier
+                 */
+                inline void         set_channel(size_t sample_id, size_t channel)
+                {
+                    nID             = sample_id;
+                    nChannel        = channel;
+                }
+
                 /**
                  * Set the playback volume of the sample
                  * @param volume playback volume of the sample
@@ -134,15 +177,15 @@ namespace lsp
 
                 /**
                  * Set primary playback settings
-                 * @param position start position of the playback in samples
+                 * @param start start position of the playback in samples
                  * @param delay the delay before the playback starts in samples
                  * @param volume playback volume of the sample
                  */
-                inline void         set_playback(size_t position, size_t delay, float volume)
+                inline void         set_playback(size_t start, size_t delay, float volume)
                 {
                     fVolume         = volume;
                     nDelay          = delay;
-                    nStart          = position;
+                    nStart          = start;
                 }
 
                 /**

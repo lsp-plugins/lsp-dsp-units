@@ -46,6 +46,7 @@ namespace lsp
                     case STATE_PLAY:
                         return false;
                     case STATE_STOP:
+                    case STATE_CANCEL:
                     {
                         // If the cancellation point is before the end of currently processed batch,
                         // then the loop should be considered to be not allowed
@@ -55,7 +56,6 @@ namespace lsp
                     }
 
                     case STATE_NONE:
-                    case STATE_CANCEL:
                     default:
                         break;
                 }
@@ -117,15 +117,15 @@ namespace lsp
                 // Determine the start position
                 size_t loop_len     = pb->nLoopEnd - pb->nLoopStart;
                 pb->nXFade          = lsp_min(pb->nXFade, loop_len / 2);
+                b->nStart           = start;
                 b->nFadeIn          = 0;
                 b->nFadeOut         = 0;
 
                 if (start < pb->nLoopStart)
                 {
                     // Start position is before the loop
-                    b->nStart       = start;
-                    b->nEnd         = pb->nLoopStart;
-                    b->enType       = BATCH_HEAD;
+                    b->nEnd             = pb->nLoopStart;
+                    b->enType           = BATCH_HEAD;
                 }
                 else if (start < pb->nLoopEnd)
                 {
@@ -137,7 +137,6 @@ namespace lsp
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
                         case SAMPLE_LOOP_DIRECT_SMART_PP:
                             // Direct loop
-                            b->nStart       = pb->nLoopStart;
                             b->nEnd         = pb->nLoopEnd;
                             b->enType       = BATCH_LOOP;
                             break;
@@ -147,14 +146,12 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE_FULL_PP:
                         case SAMPLE_LOOP_REVERSE_SMART_PP:
                             // Reverse loop
-                            b->nStart       = pb->nLoopEnd;
                             b->nEnd         = pb->nLoopStart;
                             b->enType       = BATCH_LOOP;
                             break;
 
                         default:
-                            // Start position is after the loop
-                            b->nStart       = start;
+                            // Unknown loop type
                             b->nEnd         = sample_len;
                             b->enType       = BATCH_TAIL;
                             break;
@@ -163,7 +160,6 @@ namespace lsp
                 else
                 {
                     // Start position is after the loop
-                    b->nStart       = start;
                     b->nEnd         = sample_len;
                     b->enType       = BATCH_TAIL;
                 }
@@ -501,8 +497,8 @@ namespace lsp
                 // Apply fade-out part
                 size_t to_do        = lsp_min(samples - offset, pb->nCancelTime + pb->nFadeout - timestamp);
                 dst                += offset;
-                float k             = 1.0f / (pb->nFadeout + 1.0f);
-                for (size_t i=0, t=timestamp - pb->nCancelTime; i<to_do; ++i)
+                float k             = 1.0f / pb->nFadeout;
+                for (size_t i=0, t=timestamp - pb->nCancelTime; i<to_do; ++i, ++t)
                     dst[i]              = dst[i] * (1.0f - t*k);
 
                 return offset + to_do;
@@ -518,9 +514,12 @@ namespace lsp
                 pb->nID             = -1;
                 pb->nChannel        = 0;
                 pb->enState         = STATE_NONE;
+                pb->fVolume         = 0.0f;
                 pb->nPosition       = -1;
                 pb->nFadeout        = -1;
-                pb->fVolume         = 0.0f;
+                pb->enLoopMode      = SAMPLE_LOOP_NONE;
+                pb->nLoopStart      = 0;
+                pb->nLoopEnd        = 0;
                 pb->nXFade          = 0;
                 pb->enXFadeType     = SAMPLE_CROSSFADE_CONST_POWER;
 
@@ -538,9 +537,12 @@ namespace lsp
                 pb->nID             = -1;
                 pb->nChannel        = 0;
                 pb->enState         = STATE_NONE;
+                pb->fVolume         = 0.0f;
                 pb->nPosition       = -1;
                 pb->nFadeout        = -1;
-                pb->fVolume         = 0.0f;
+                pb->enLoopMode      = SAMPLE_LOOP_NONE;
+                pb->nLoopStart      = 0;
+                pb->nLoopEnd        = 0;
                 pb->nXFade          = 0;
                 pb->enXFadeType     = SAMPLE_CROSSFADE_CONST_POWER;
 
@@ -549,14 +551,14 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            void start_playback(playback_t *pb, size_t id, size_t channel, Sample *sample, const PlaySettings *settings)
+            void start_playback(playback_t *pb, Sample *sample, const PlaySettings *settings)
             {
                 pb->nTimestamp  = 0;
                 pb->nCancelTime = 0;
                 pb->pSample     = sample;
                 pb->nSerial    += 1;
-                pb->nID         = id;
-                pb->nChannel    = channel;
+                pb->nID         = settings->sample_id();
+                pb->nChannel    = settings->sample_channel();
                 pb->enState     = STATE_PLAY;
                 pb->fVolume     = settings->volume();
                 pb->nPosition   = -1;
@@ -676,7 +678,7 @@ namespace lsp
                 v->write("nSerial", pb->nSerial);
                 v->write("nID", pb->nID);
                 v->write("nChannel", pb->nChannel);
-                v->write("nState", int(pb->enState));
+                v->write("enState", int(pb->enState));
                 v->write("fVolume", pb->fVolume);
                 v->write("nPosition", pb->nPosition);
                 v->write("nFadeout", pb->nFadeout);
