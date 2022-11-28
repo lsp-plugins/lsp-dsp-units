@@ -132,6 +132,13 @@ namespace lsp
                 bool unbind(size_t id);
 
                 /**
+                 * Get currently bound sample
+                 * @param id id of the sample
+                 * @return pointer to the sample or NULL
+                 */
+                Sample *get(size_t id);
+
+                /**
                  * Unbind all previously bound samples
                  */
                 void unbind_all();

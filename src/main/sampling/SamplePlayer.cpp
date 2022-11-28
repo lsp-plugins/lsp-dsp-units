@@ -282,6 +282,11 @@ namespace lsp
             return true;
         }
 
+        Sample *SamplePlayer::get(size_t id)
+        {
+            return ((vSamples != NULL) && (id < nSamples)) ? vSamples[id] : NULL;
+        }
+
         void SamplePlayer::unbind_all()
         {
             if (vSamples == NULL)
