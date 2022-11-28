@@ -47,11 +47,13 @@ namespace lsp
                 Sample(const Sample &);
 
             private:
-                float      *vBuffer;
-                size_t      nSampleRate;
-                size_t      nLength;
-                size_t      nMaxLength;
-                size_t      nChannels;
+                float              *vBuffer;        // Sample data
+                size_t              nSampleRate;    // Sample rate
+                size_t              nLength;        // Current length
+                size_t              nMaxLength;     // Maximum possible length
+                size_t              nChannels;      // Number of channels
+                size_t              nGcRefs;        // GC stuff: Number of references
+                Sample             *pGcNext;        // GC stuff: Pointer to the next
 
             protected:
                 static void         put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
@@ -84,7 +86,40 @@ namespace lsp
                  */
                 void        destroy();
 
-            public:
+            public: // Garbage-collected stuff
+                /**
+                 * Get number of references
+                 * @return number of references
+                 */
+                inline size_t       gc_references() const   { return nGcRefs;     }
+
+                /**
+                 * Incremente reference counter
+                 * @return new number of references
+                 */
+                inline size_t       gc_acquire()            { return ++nGcRefs;   }
+
+                /**
+                 * Decrement reference counter
+                 * @return new number of references
+                 */
+                inline size_t       gc_release()            { return --nGcRefs;   }
+
+                /**
+                 * Get pointer to the next sample in the single-directional garbage list
+                 * @return next sample reference in the garbage list
+                 */
+                inline Sample      *gc_next()               { return pGcNext;     }
+
+                /**
+                 * Link sample to the next in the garbage list
+                 * @param next pointer to next sample
+                 * @return previously stored pointer to next sample
+                 */
+                Sample             *gc_link(Sample *next);
+
+
+            public: // Regular suff
                 inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
                 inline size_t       length() const                  { return nLength; }
                 inline size_t       max_length() const              { return nMaxLength; }

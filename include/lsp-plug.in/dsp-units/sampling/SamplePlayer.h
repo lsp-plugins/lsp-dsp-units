@@ -61,8 +61,8 @@ namespace lsp
                 list_t          sActive;
                 list_t          sInactive;
                 float           fGain;
-
                 uint8_t        *pData;
+                Sample         *pGcList;    // List of garbage samples not used by the sample player
 
             protected:
                 static inline void list_remove(list_t *list, play_item_t *pb);
@@ -73,7 +73,11 @@ namespace lsp
                 static void dump_list(IStateDumper *v, const char *name, const list_t *list);
 
             protected:
-                void        do_process(float *dst, size_t samples);
+                void            release_sample(Sample * &s);
+                static Sample  *acquire_sample(Sample *s);
+
+            protected:
+                void            do_process(float *dst, size_t samples);
 
             public:
                 explicit SamplePlayer();
@@ -93,9 +97,17 @@ namespace lsp
                 bool init(size_t max_samples, size_t max_playbacks);
 
                 /** Destroy player
-                 * @param cascade destroy the bound samples
+                 * @param cascade destroy the samples which have been put to the GC list
                  */
                 void destroy(bool cascade = true);
+
+                /**
+                 * Return the list of garbage-collected samples. After calling this method,
+                 * the internal list of the garbage-collected items inside of the sampler
+                 * becomes cleared.
+                 * @return pointer to the first item in the list of garbage-collected samples
+                 */
+                Sample     *gc();
 
             public:
                 /** Set output gain
@@ -104,40 +116,25 @@ namespace lsp
                  */
                 inline void set_gain(float gain) { fGain = gain; }
 
-                /** Bind sample to specified ID, cancel all active playbacks previously associated
-                 * with this sample
+                /** Bind sample to specified ID
                  *
                  * @param id id of the sample
                  * @param sample pointer to the sample
-                 * @return true on success, sample contains pointer to the replaced sample
+                 * @return true on success
                  */
-                bool bind(size_t id, Sample **sample);
-
-                /** Bind sample to specified ID, cancel all active playbacks previously associated
-                 * with this sample
-                 *
-                 * @param id id of the sample
-                 * @param sample pointer to the sample
-                 * @param destroy auto-destroy sample
-                 * @return true on success, previous sample will be automatically destroyed
-                 */
-                bool bind(size_t id, Sample *sample, bool destroy = false);
+                bool bind(size_t id, Sample *sample);
 
                 /** Unbind sample
                  *
                  * @param id id of the sample
-                 * @param sample pointer to store the unbound sample
-                 * @return true on success, pointer to the sample will be stored in sample variable
+                 * @return false if invalid index has been specified
                  */
-                bool unbind(size_t id, Sample **sample);
+                bool unbind(size_t id);
 
-                /** Unbind sample
-                 *
-                 * @param id id of the sample
-                 * @param destroy destroy the sample
-                 * @return true on success, the bound sample will be automatically destroyed
+                /**
+                 * Unbind all previously bound samples
                  */
-                bool unbind(size_t id, bool destroy = false);
+                void unbind_all();
 
                 /** Process the audio data
                  *
@@ -183,11 +180,12 @@ namespace lsp
                  */
                 ssize_t cancel_all(size_t id, size_t channel, size_t fadeout = 0, ssize_t delay = 0);
 
-                /** Reset the playback state of the player, force all playbacks to be stopped
-                 *
+                /** Reset the playback state of the player,
+                 * force all playbacks to be stopped immediately
                  */
                 void stop();
 
+            public:
                 /**
                  * Dump the state
                  * @param dumper dumper

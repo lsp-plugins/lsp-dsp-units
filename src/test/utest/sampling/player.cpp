@@ -76,7 +76,20 @@ UTEST_BEGIN("dspu.sampling", player)
         }
 
         // Destroy player
+        sp.stop();
+        sp.unbind_all();
+        dspu::Sample *gc = sp.gc();
         sp.destroy(true);
+
+        size_t num_gc = 0;
+        while (gc != NULL)
+        {
+            dspu::Sample *next = gc->gc_next();
+            delete gc;
+            gc = next;
+            ++num_gc;
+        }
+        UTEST_ASSERT(num_gc == 4);
 
         // Check state
         UTEST_ASSERT_MSG(src.valid(), "Source buffer corrupted");

@@ -13,6 +13,7 @@
 * Added dspu::Sample::load_ext and dspu::Sample::loads_ext methods for loading sample
   as a part of LSPC file when possible.
 * Added SCS_AMIN and SCS_AMAX functions for the sidechain input mode.
+* Implemented garbage collection mechanism for the dspu::SamplePlayer.
 
 === 1.0.6 ===
 * Fixed clang errors.
