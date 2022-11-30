@@ -268,8 +268,13 @@ namespace lsp
             if ((id >= nSamples) || (vSamples == NULL))
                 return false;
 
-            unbind(id);
-            vSamples[id]    = acquire_sample(sample);
+            // If the caller tries to bind the same sample, then do nothing.
+            if (vSamples[id] == sample)
+                return true;
+
+            release_sample(vSamples[id]);
+            vSamples[id] = acquire_sample(sample);
+
             return true;
         }
 
