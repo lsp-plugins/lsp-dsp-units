@@ -121,7 +121,6 @@ namespace lsp
 
             public: // Regular suff
                 inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
-                inline size_t       length() const                  { return nLength; }
                 inline size_t       max_length() const              { return nMaxLength; }
 
                 inline float       *getBuffer(size_t channel)       { return &vBuffer[nMaxLength * channel]; }
@@ -133,12 +132,42 @@ namespace lsp
                 inline float       *getBuffer(size_t channel, size_t offset) { return &vBuffer[nMaxLength * channel + offset]; }
                 inline const float *getBuffer(size_t channel, size_t offset) const { return &vBuffer[nMaxLength * channel + offset]; }
 
+                /**
+                 * Return number of audio channels
+                 * @return number of audio channels
+                 */
                 inline size_t       channels() const                { return nChannels;     }
-                inline size_t       samples() const                 { return nLength;       }
 
+                /**
+                 * Get sample length in samples
+                 * @return sample length in samples
+                 */
+                inline size_t       samples() const                 { return nLength;       }
+                inline size_t       length() const                  { return nLength;       }
+
+                /**
+                 * Return the sample duration in seconds, available only if sample rate is specified
+                 * @return sample duration in seconds
+                 */
+                inline double       duration() const                { return (nSampleRate > 0) ? double(nLength) / double(nSampleRate) : 0.0; }
+
+                /**
+                 * Get sample rate
+                 * @return actual sample rate
+                 */
                 inline size_t       sample_rate() const             { return nSampleRate;   }
+
+                /**
+                 * Set sample rate
+                 * @param srate sample rate of the sample
+                 */
                 inline void         set_sample_rate(size_t srate)   { nSampleRate = srate;  }
 
+                /**
+                 * Copy sample contents
+                 * @param s source sample to perform copy
+                 * @return status of operation
+                 */
                 status_t            copy(const Sample *s);
                 inline status_t     copy(const Sample &s)           { return copy(&s);      }
 
