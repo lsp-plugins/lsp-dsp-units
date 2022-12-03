@@ -42,23 +42,19 @@ namespace lsp
             destroy(true);
         }
 
-        void SamplePlayer::destroy(bool cascade)
+        dspu::Sample *SamplePlayer::destroy(bool cascade)
         {
             // Stop any pending playbacks
             stop();
-
             // Release all held pointers to samples
-            if (vSamples != NULL)
-            {
-                for (size_t i=0; i<nSamples; ++i)
-                    release_sample(vSamples[i]);
-            }
+            unbind_all();
 
             // Free all associated data
             if (pData != NULL)
                 free_aligned(pData);
 
             // Cascade drop all samples in the GC list
+            dspu::Sample *gc_list   = pGcList;
             if (cascade)
             {
                 for (Sample *s = pGcList; s != NULL; )
@@ -67,6 +63,7 @@ namespace lsp
                     delete s;
                     s            = next;
                 }
+                gc_list         = NULL;
             }
 
             // Clear pointers
@@ -79,6 +76,8 @@ namespace lsp
             sActive.pTail   = NULL;
             sInactive.pHead = NULL;
             sInactive.pTail = NULL;
+
+            return gc_list;
         }
 
         Sample *SamplePlayer::gc()

@@ -98,8 +98,9 @@ namespace lsp
 
                 /** Destroy player
                  * @param cascade destroy the samples which have been put to the GC list
+                 * @return garbage collection list if present
                  */
-                void destroy(bool cascade = true);
+                dspu::Sample   *destroy(bool cascade = true);
 
                 /**
                  * Return the list of garbage-collected samples. After calling this method,
@@ -107,7 +108,7 @@ namespace lsp
                  * becomes cleared.
                  * @return pointer to the first item in the list of garbage-collected samples
                  */
-                Sample     *gc();
+                Sample         *gc();
 
             public:
                 /** Set output gain
