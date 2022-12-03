@@ -14,6 +14,7 @@
   as a part of LSPC file when possible.
 * Added SCS_AMIN and SCS_AMAX functions for the sidechain input mode.
 * Updated build scripts.
+* Implemented garbage collection mechanism for the dspu::SamplePlayer.
 
 === 1.0.6 ===
 * Fixed clang errors.

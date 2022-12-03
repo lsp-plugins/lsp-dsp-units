@@ -61,11 +61,13 @@ namespace lsp
 
         void Sample::construct()
         {
-            vBuffer     = NULL;
-            nSampleRate = 0;
-            nLength     = 0;
-            nMaxLength  = 0;
-            nChannels   = 0;
+            vBuffer         = NULL;
+            nSampleRate     = 0;
+            nLength         = 0;
+            nMaxLength      = 0;
+            nChannels       = 0;
+            nGcRefs         = 0;
+            pGcNext         = NULL;
         }
 
         void Sample::destroy()
@@ -78,6 +80,8 @@ namespace lsp
             nMaxLength      = 0;
             nLength         = 0;
             nChannels       = 0;
+            nGcRefs         = 0;
+            pGcNext         = NULL;
         }
 
         bool Sample::init(size_t channels, size_t max_length, size_t length)
@@ -1148,6 +1152,13 @@ namespace lsp
 
             *is = ias;
             return STATUS_OK;
+        }
+
+        Sample *Sample::gc_link(Sample *next)
+        {
+            Sample *old = pGcNext;
+            pGcNext     = next;
+            return old;
         }
 
         void Sample::dump(IStateDumper *v) const

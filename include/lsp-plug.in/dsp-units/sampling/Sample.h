@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
+#include <lsp-plug.in/dsp-units/sampling/types.h>
 #include <lsp-plug.in/io/Path.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/mm/IOutAudioStream.h>
@@ -35,52 +36,10 @@ namespace lsp
 {
     namespace dspu
     {
-    #pragma pack(push, 1)
-        typedef struct sample_header_t
-        {
-            uint16_t    version;        // Version + endianess
-            uint16_t    channels;
-            uint32_t    sample_rate;
-            uint32_t    samples;
-        } sample_header_t;
-    #pragma pack(pop)
-
-        enum sample_normalize_t
-        {
-            /**
-             * No normalization
-             */
-            SAMPLE_NORM_NONE,
-
-            /**
-             * Normalize if maximum peak is above threshold
-             */
-            SAMPLE_NORM_ABOVE,
-
-            /**
-             * Normalize if maximum peak is below threshold
-             */
-            SAMPLE_NORM_BELOW,
-
-            /**
-             * Normalize in any case
-             */
-            SAMPLE_NORM_ALWAYS
-        };
-
-        enum sample_crossfade_t
-        {
-            /**
-             * Linear crossfade
-             */
-            SAMPLE_CROSSFADE_LINEAR,
-
-            /**
-             * Constant-power crossfade
-             */
-            SAMPLE_CROSSFADE_CONST_POWER
-        };
-
+        /**
+         * An audio sample: audio data in PCM format that stores each audio channel in
+         * a separate sequential part of the memory as 32-bit float values.
+         */
         class LSP_DSP_UNITS_PUBLIC Sample
         {
             private:
@@ -88,11 +47,13 @@ namespace lsp
                 Sample(const Sample &);
 
             private:
-                float      *vBuffer;
-                size_t      nSampleRate;
-                size_t      nLength;
-                size_t      nMaxLength;
-                size_t      nChannels;
+                float              *vBuffer;        // Sample data
+                size_t              nSampleRate;    // Sample rate
+                size_t              nLength;        // Current length
+                size_t              nMaxLength;     // Maximum possible length
+                size_t              nChannels;      // Number of channels
+                size_t              nGcRefs;        // GC stuff: Number of references
+                Sample             *pGcNext;        // GC stuff: Pointer to the next
 
             protected:
                 static void         put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
@@ -125,9 +86,41 @@ namespace lsp
                  */
                 void        destroy();
 
-            public:
+            public: // Garbage-collected stuff
+                /**
+                 * Get number of references
+                 * @return number of references
+                 */
+                inline size_t       gc_references() const   { return nGcRefs;     }
+
+                /**
+                 * Incremente reference counter
+                 * @return new number of references
+                 */
+                inline size_t       gc_acquire()            { return ++nGcRefs;   }
+
+                /**
+                 * Decrement reference counter
+                 * @return new number of references
+                 */
+                inline size_t       gc_release()            { return --nGcRefs;   }
+
+                /**
+                 * Get pointer to the next sample in the single-directional garbage list
+                 * @return next sample reference in the garbage list
+                 */
+                inline Sample      *gc_next()               { return pGcNext;     }
+
+                /**
+                 * Link sample to the next in the garbage list
+                 * @param next pointer to next sample
+                 * @return previously stored pointer to next sample
+                 */
+                Sample             *gc_link(Sample *next);
+
+
+            public: // Regular suff
                 inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
-                inline size_t       length() const                  { return nLength; }
                 inline size_t       max_length() const              { return nMaxLength; }
 
                 inline float       *getBuffer(size_t channel)       { return &vBuffer[nMaxLength * channel]; }
@@ -139,12 +132,42 @@ namespace lsp
                 inline float       *getBuffer(size_t channel, size_t offset) { return &vBuffer[nMaxLength * channel + offset]; }
                 inline const float *getBuffer(size_t channel, size_t offset) const { return &vBuffer[nMaxLength * channel + offset]; }
 
+                /**
+                 * Return number of audio channels
+                 * @return number of audio channels
+                 */
                 inline size_t       channels() const                { return nChannels;     }
-                inline size_t       samples() const                 { return nLength;       }
 
+                /**
+                 * Get sample length in samples
+                 * @return sample length in samples
+                 */
+                inline size_t       samples() const                 { return nLength;       }
+                inline size_t       length() const                  { return nLength;       }
+
+                /**
+                 * Return the sample duration in seconds, available only if sample rate is specified
+                 * @return sample duration in seconds
+                 */
+                inline double       duration() const                { return (nSampleRate > 0) ? double(nLength) / double(nSampleRate) : 0.0; }
+
+                /**
+                 * Get sample rate
+                 * @return actual sample rate
+                 */
                 inline size_t       sample_rate() const             { return nSampleRate;   }
+
+                /**
+                 * Set sample rate
+                 * @param srate sample rate of the sample
+                 */
                 inline void         set_sample_rate(size_t srate)   { nSampleRate = srate;  }
 
+                /**
+                 * Copy sample contents
+                 * @param s source sample to perform copy
+                 * @return status of operation
+                 */
                 status_t            copy(const Sample *s);
                 inline status_t     copy(const Sample &s)           { return copy(&s);      }
 
