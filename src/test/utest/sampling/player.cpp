@@ -79,12 +79,15 @@ UTEST_BEGIN("dspu.sampling", player)
         sp.stop();
         sp.unbind_all();
         dspu::Sample *gc = sp.gc();
+        UTEST_ASSERT(sp.gc() == NULL);
         sp.destroy(true);
 
         size_t num_gc = 0;
         while (gc != NULL)
         {
             dspu::Sample *next = gc->gc_next();
+            UTEST_ASSERT(gc->gc_references() == 0);
+            gc->destroy();
             delete gc;
             gc = next;
             ++num_gc;
