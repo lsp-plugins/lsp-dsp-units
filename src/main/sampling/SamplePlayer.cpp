@@ -254,13 +254,13 @@ namespace lsp
             // Release the sample
             if (s == NULL)
                 return;
-            if (s->gc_release() > 0)
-                return;
-
-            // Add sample to the GC list
-            s->gc_link(pGcList);
-            pGcList     = s;
-            s           = NULL;
+            if (s->gc_release() == 0)
+            {
+                // Add sample to the GC list
+                s->gc_link(pGcList);
+                pGcList     = s;
+            }
+            s = NULL;
         }
 
         bool SamplePlayer::bind(size_t id, Sample *sample)
