@@ -68,10 +68,10 @@ namespace lsp
             fValue      = value;
         }
 
-        void Toggle::commit(bool off)
+        bool Toggle::commit(bool off)
         {
             if (nState != TRG_PENDING)
-                return;
+                return nState == TRG_ON;
             if (off)
             {
                 if (fValue < 0.5f)
@@ -79,6 +79,7 @@ namespace lsp
             }
             else
                 nState      = (fValue >= 0.5f) ? TRG_ON : TRG_OFF;
+            return nState == TRG_ON;
         }
 
         void Toggle::dump(IStateDumper *v) const

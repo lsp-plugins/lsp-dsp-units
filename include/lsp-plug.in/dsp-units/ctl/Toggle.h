@@ -87,8 +87,9 @@ namespace lsp
 
                 /** Commit the pending request of the toggle
                  * @param off disable pending state only if toggle is in OFF state
+                 * @return true if current state of the toggle is ON
                  */
-                void        commit(bool off = false);
+                bool        commit(bool off = false);
 
                 /**
                  * Dump internal state

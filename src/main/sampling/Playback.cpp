@@ -65,10 +65,21 @@ namespace lsp
             src.nSerial     = 0;
         }
 
-        Playback::~Playback()
+        void Playback::construct()
         {
             pPlayback       = NULL;
             nSerial         = 0;
+        }
+
+        void Playback::destroy()
+        {
+            pPlayback       = NULL;
+            nSerial         = 0;
+        }
+
+        Playback::~Playback()
+        {
+            destroy();
         }
 
         Playback & Playback::operator = (const Playback & src)
@@ -83,26 +94,18 @@ namespace lsp
             return (pPlayback != NULL) && (pPlayback->nSerial == nSerial);
         }
 
-        size_t Playback::position() const
-        {
-            if (!valid())
-                return -1;
-            return pPlayback->nPosition;
-        }
-
-        wsize_t Playback::timestamp() const
-        {
-            if (!valid())
-                return 0;
-            return pPlayback->nTimestamp;
-        }
-
         void Playback::stop(size_t delay)
         {
             if (!valid())
                 return;
 
             playback::stop_playback(pPlayback, delay);
+        }
+
+        void Playback::clear()
+        {
+            pPlayback       = NULL;
+            nSerial         = 0;
         }
 
         void Playback::cancel(size_t fadeout, size_t delay)
@@ -125,6 +128,16 @@ namespace lsp
             nSerial         = src->nSerial;
         }
 
+        void Playback::set(const Playback &src)
+        {
+            copy(src);
+        }
+
+        void Playback::set(const Playback *src)
+        {
+            copy(src);
+        }
+
         void Playback::swap(Playback *src)
         {
             lsp::swap(pPlayback, src->pPlayback);
@@ -137,6 +150,77 @@ namespace lsp
             lsp::swap(nSerial, src.nSerial);
         }
 
+
+        wsize_t Playback::timestamp() const
+        {
+            return (valid()) ? pPlayback->nTimestamp : 0;
+        }
+
+        const Sample *Playback::sample() const
+        {
+            return (valid()) ? pPlayback->pSample : NULL;
+        }
+
+        size_t Playback::id() const
+        {
+            return (valid()) ? pPlayback->nID : 0;
+        }
+
+        size_t Playback::channel() const
+        {
+            return (valid()) ? pPlayback->nChannel : 0;
+        }
+
+        float Playback::volume() const
+        {
+            return (valid()) ? pPlayback->fVolume : 0.0f;
+        }
+
+        ssize_t Playback::position() const
+        {
+            return (valid()) ? pPlayback->nPosition : -1;
+        }
+
+        sample_loop_t Playback::loop_mode() const
+        {
+            return (valid()) ? pPlayback->enLoopMode : SAMPLE_LOOP_NONE;
+        }
+
+        size_t Playback::loop_start() const
+        {
+            return (valid()) ? pPlayback->nLoopStart : 0;
+        }
+
+        size_t Playback::loop_end() const
+        {
+            return (valid()) ? pPlayback->nLoopEnd : 0;
+        }
+
+        size_t Playback::crossfade_length() const
+        {
+            return (valid()) ? pPlayback->nXFade : 0;
+        }
+
+        size_t Playback::xfade_length() const
+        {
+            return crossfade_length();
+        }
+
+        sample_crossfade_t Playback::crossfade_type() const
+        {
+            return (valid()) ? pPlayback->enXFadeType : SAMPLE_CROSSFADE_LINEAR;
+        }
+
+        sample_crossfade_t Playback::xfade_type() const
+        {
+            return crossfade_type();
+        }
+
+        void Playback::dump(IStateDumper *v) const
+        {
+            v->write("pPlayback", pPlayback);
+            v->write("nSerial", nSerial);
+        }
     } /* namespace dspu */
 } /* namespace lsp */
 
