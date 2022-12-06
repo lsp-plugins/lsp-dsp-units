@@ -68,6 +68,7 @@ namespace lsp
             nChannels       = 0;
             nGcRefs         = 0;
             pGcNext         = NULL;
+            pUserData       = NULL;
         }
 
         void Sample::destroy()
@@ -82,6 +83,7 @@ namespace lsp
             nChannels       = 0;
             nGcRefs         = 0;
             pGcNext         = NULL;
+            pUserData       = NULL;
         }
 
         bool Sample::init(size_t channels, size_t max_length, size_t length)
@@ -1161,6 +1163,13 @@ namespace lsp
             return old;
         }
 
+        void *Sample::set_user_data(void *user)
+        {
+            void *result    = pUserData;
+            pUserData       = user;
+            return result;
+        }
+
         void Sample::dump(IStateDumper *v) const
         {
             v->write("vBuffer", vBuffer);
@@ -1168,6 +1177,9 @@ namespace lsp
             v->write("nLength", nLength);
             v->write("nMaxLength", nMaxLength);
             v->write("nChannels", nChannels);
+            v->write("nGcRefs", nGcRefs);
+            v->write("pGcNext", pGcNext);
+            v->write("pUserData", pUserData);
         }
     } /* namespace dspu */
 } /* namespace lsp */
