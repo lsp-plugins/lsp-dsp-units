@@ -54,7 +54,7 @@ namespace lsp
                 size_t              nChannels;      // Number of channels
                 size_t              nGcRefs;        // GC stuff: Number of references
                 Sample             *pGcNext;        // GC stuff: Pointer to the next
-                void               *pUserData;      // Some user data attached to sample
+                mutable void       *pUserData;      // Some user data attached to sample
 
             protected:
                 static void         put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
@@ -357,7 +357,7 @@ namespace lsp
                  * Get some user data linked to the sample
                  * @return user data linked to the sample
                  */
-                inline void        *user_data()             { return pUserData;     }
+                inline void        *user_data() const       { return pUserData;     }
 
                 /**
                  * Set user data. The user is fully responsible for managing the data associated with the
