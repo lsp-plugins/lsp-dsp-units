@@ -85,6 +85,24 @@ namespace lsp
                     return nState == TRG_PENDING;
                 }
 
+                /** Check that toggle is in 'ON' state
+                 *
+                 * @return true toggle is in 'ON' state
+                 */
+                inline bool on() const
+                {
+                    return nState == TRG_ON;
+                }
+
+                /** Check that toggle is in 'OFF' state
+                 *
+                 * @return true toggle is in 'OFF' state
+                 */
+                inline bool off() const
+                {
+                    return nState == TRG_OFF;
+                }
+
                 /** Commit the pending request of the toggle
                  * @param off disable pending state only if toggle is in OFF state
                  * @return true if current state of the toggle is ON
