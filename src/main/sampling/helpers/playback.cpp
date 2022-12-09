@@ -295,7 +295,7 @@ namespace lsp
                     case SAMPLE_LOOP_REVERSE_FULL_PP:
                     case SAMPLE_LOOP_REVERSE_SMART_PP:
                         // Just reverse the order of the current loop batch
-                        if (s->nStart < b->nEnd)
+                        if (s->nStart < s->nEnd)
                         {
                             b->nStart               = pb->nLoopEnd;
                             b->nEnd                 = pb->nLoopStart;

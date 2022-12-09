@@ -54,6 +54,7 @@ namespace lsp
                 size_t              nChannels;      // Number of channels
                 size_t              nGcRefs;        // GC stuff: Number of references
                 Sample             *pGcNext;        // GC stuff: Pointer to the next
+                mutable void       *pUserData;      // Some user data attached to sample
 
             protected:
                 static void         put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out);
@@ -91,25 +92,25 @@ namespace lsp
                  * Get number of references
                  * @return number of references
                  */
-                inline size_t       gc_references() const   { return nGcRefs;     }
+                inline size_t       gc_references() const   { return nGcRefs;       }
 
                 /**
                  * Incremente reference counter
                  * @return new number of references
                  */
-                inline size_t       gc_acquire()            { return ++nGcRefs;   }
+                inline size_t       gc_acquire()            { return ++nGcRefs;     }
 
                 /**
                  * Decrement reference counter
                  * @return new number of references
                  */
-                inline size_t       gc_release()            { return --nGcRefs;   }
+                inline size_t       gc_release()            { return --nGcRefs;     }
 
                 /**
                  * Get pointer to the next sample in the single-directional garbage list
                  * @return next sample reference in the garbage list
                  */
-                inline Sample      *gc_next()               { return pGcNext;     }
+                inline Sample      *gc_next()               { return pGcNext;       }
 
                 /**
                  * Link sample to the next in the garbage list
@@ -117,7 +118,6 @@ namespace lsp
                  * @return previously stored pointer to next sample
                  */
                 Sample             *gc_link(Sample *next);
-
 
             public: // Regular suff
                 inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
@@ -352,6 +352,20 @@ namespace lsp
                 status_t loads_ext(const char *path, ssize_t max_samples = -1);
                 status_t loads_ext(const LSPString *path, ssize_t max_samples = -1);
                 status_t loads_ext(const io::Path *path, ssize_t max_samples = -1);
+
+                /**
+                 * Get some user data linked to the sample
+                 * @return user data linked to the sample
+                 */
+                inline void        *user_data() const       { return pUserData;     }
+
+                /**
+                 * Set user data. The user is fully responsible for managing the data associated with the
+                 * pointer, i.e. allocation, deallocation and access.
+                 * @param user user data to set
+                 * @return previously used user data
+                 */
+                void               *set_user_data(void *user);
 
                 /**
                  * Dump the state
