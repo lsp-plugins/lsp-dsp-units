@@ -158,6 +158,13 @@ namespace lsp
                 float       volume() const;
 
                 /**
+                 * Check that the playback is working in reversive mode (playing from the tail
+                 * of the sample to the head)
+                 * @return true if playback is reversive
+                 */
+                bool        reversive() const;
+
+                /**
                  * Get current time position of the playback inside of the audio sample
                  * @return current time position of the playback inside of the audio sample
                  */

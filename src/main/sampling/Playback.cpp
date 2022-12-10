@@ -176,6 +176,11 @@ namespace lsp
             return (valid()) ? pPlayback->fVolume : 0.0f;
         }
 
+        bool Playback::reversive() const
+        {
+            return (valid()) ? pPlayback->bReverse : 0.0f;
+        }
+
         ssize_t Playback::position() const
         {
             return (valid()) ? pPlayback->nPosition : -1;

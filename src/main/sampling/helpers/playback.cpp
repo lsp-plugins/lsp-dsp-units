@@ -90,7 +90,7 @@ namespace lsp
                 if (pb->enLoopMode == SAMPLE_LOOP_NONE)
                 {
                     b->nStart       = start;
-                    b->nEnd         = sample_len;
+                    b->nEnd         = (pb->bReverse) ? 0 : sample_len;
                     b->nFadeOut     = 0;
                     b->enType       = BATCH_TAIL;
                     return;
@@ -124,8 +124,16 @@ namespace lsp
                 if (start < pb->nLoopStart)
                 {
                     // Start position is before the loop
-                    b->nEnd             = pb->nLoopStart;
-                    b->enType           = BATCH_HEAD;
+                    if (pb->bReverse)
+                    {
+                        b->nEnd             = 0;
+                        b->enType           = BATCH_TAIL;
+                    }
+                    else
+                    {
+                        b->nEnd             = pb->nLoopStart;
+                        b->enType           = BATCH_HEAD;
+                    }
                 }
                 else if (start < pb->nLoopEnd)
                 {
@@ -137,7 +145,7 @@ namespace lsp
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
                         case SAMPLE_LOOP_DIRECT_SMART_PP:
                             // Direct loop
-                            b->nEnd         = pb->nLoopEnd;
+                            b->nEnd         = (pb->bReverse) ? pb->nLoopStart : pb->nLoopEnd;
                             b->enType       = BATCH_LOOP;
                             break;
 
@@ -146,13 +154,13 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE_FULL_PP:
                         case SAMPLE_LOOP_REVERSE_SMART_PP:
                             // Reverse loop
-                            b->nEnd         = pb->nLoopStart;
+                            b->nEnd         = (pb->bReverse) ? pb->nLoopEnd : pb->nLoopStart;
                             b->enType       = BATCH_LOOP;
                             break;
 
                         default:
                             // Unknown loop type
-                            b->nEnd         = sample_len;
+                            b->nEnd         = (pb->bReverse) ? 0 : sample_len;
                             b->enType       = BATCH_TAIL;
                             break;
                     }
@@ -160,8 +168,16 @@ namespace lsp
                 else
                 {
                     // Start position is after the loop
-                    b->nEnd         = sample_len;
-                    b->enType       = BATCH_TAIL;
+                    if (pb->bReverse)
+                    {
+                        b->nEnd         = pb->nLoopEnd;
+                        b->enType       = BATCH_HEAD;
+                    }
+                    else
+                    {
+                        b->nEnd         = sample_len;
+                        b->enType       = BATCH_TAIL;
+                    }
                 }
             }
 
@@ -174,8 +190,16 @@ namespace lsp
                  // Loop not allowed anymore?
                 if (loop_not_allowed(pb))
                 {
-                    b->nStart               = pb->nLoopStart;
-                    b->nEnd                 = sample_len;
+                    if (pb->bReverse)
+                    {
+                        b->nStart               = pb->nLoopEnd;
+                        b->nEnd                 = 0;
+                    }
+                    else
+                    {
+                        b->nStart               = pb->nLoopStart;
+                        b->nEnd                 = sample_len;
+                    }
                     b->enType               = BATCH_TAIL;
                     return;
                 }
@@ -188,8 +212,16 @@ namespace lsp
                     case SAMPLE_LOOP_DIRECT_FULL_PP:
                     case SAMPLE_LOOP_DIRECT_SMART_PP:
                         // Initial direct loop
-                        b->nStart               = pb->nLoopStart;
-                        b->nEnd                 = pb->nLoopEnd;
+                        if (pb->bReverse)
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = pb->nLoopStart;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = pb->nLoopEnd;
+                        }
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -198,15 +230,31 @@ namespace lsp
                     case SAMPLE_LOOP_REVERSE_FULL_PP:
                     case SAMPLE_LOOP_REVERSE_SMART_PP:
                         // Initial reverse loop
-                        b->nStart               = pb->nLoopEnd;
-                        b->nEnd                 = pb->nLoopStart;
+                        if (pb->bReverse)
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = pb->nLoopEnd;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = pb->nLoopStart;
+                        }
                         b->enType               = BATCH_LOOP;
                         break;
 
                     default:
                         // Unknown loop mode, actually do not loop
-                        b->nStart               = pb->nLoopStart;
-                        b->nEnd                 = sample_len;
+                        if (pb->bReverse)
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = 0;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = sample_len;
+                        }
                         b->enType               = BATCH_TAIL;
                         break;
                 }
@@ -227,22 +275,40 @@ namespace lsp
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
                             // If current batch is in direct direction, then we need to process
                             // one more batch in the reverse direction
-                            if (s->nStart < s->nEnd)
-                                break;
-
-                            b->nStart               = pb->nLoopEnd;
-                            b->nEnd                 = sample_len;
+                            if (pb->bReverse)
+                            {
+                                if (s->nEnd < s->nStart)
+                                    break;
+                                b->nStart               = pb->nLoopStart;
+                                b->nEnd                 = 0;
+                            }
+                            else
+                            {
+                                if (s->nStart < s->nEnd)
+                                    break;
+                                b->nStart               = pb->nLoopEnd;
+                                b->nEnd                 = sample_len;
+                            }
                             b->enType               = BATCH_TAIL;
                             return;
 
                         case SAMPLE_LOOP_REVERSE_FULL_PP:
                             // If current batch is in reverse direction, then we need to process
                             // one more batch in the direct direction
-                            if (s->nEnd < s->nStart)
-                                break;
-
-                            b->nStart               = pb->nLoopEnd;
-                            b->nEnd                 = sample_len;
+                            if (pb->bReverse)
+                            {
+                                if (s->nStart < s->nEnd)
+                                    break;
+                                b->nStart               = pb->nLoopStart;
+                                b->nEnd                 = 0;
+                            }
+                            else
+                            {
+                                if (s->nEnd < s->nStart)
+                                    break;
+                                b->nStart               = pb->nLoopEnd;
+                                b->nEnd                 = sample_len;
+                            }
                             b->enType               = BATCH_TAIL;
                             return;
 
@@ -250,11 +316,20 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE_SMART_PP:
                             // If current batch is in reverse direction, then we need to process
                             // one more batch in the direct direction
-                            if (s->nEnd < s->nStart)
-                                break;
-
-                            b->nStart               = pb->nLoopEnd;
-                            b->nEnd                 = sample_len;
+                            if (pb->bReverse)
+                            {
+                                if (s->nStart < s->nEnd)
+                                    break;
+                                b->nStart               = pb->nLoopStart;
+                                b->nEnd                 = 0;
+                            }
+                            else
+                            {
+                                if (s->nEnd < s->nStart)
+                                    break;
+                                b->nStart               = pb->nLoopEnd;
+                                b->nEnd                 = sample_len;
+                            }
                             b->enType               = BATCH_TAIL;
                             return;
 
@@ -264,11 +339,19 @@ namespace lsp
                         case SAMPLE_LOOP_REVERSE_HALF_PP:
                         default:
                             // Just immediately play tail after the loop
-                            b->nStart               = pb->nLoopEnd;
-                            b->nEnd                 = sample_len;
+                            if (pb->bReverse)
+                            {
+                                b->nStart               = pb->nLoopStart;
+                                b->nEnd                 = 0;
+                            }
+                            else
+                            {
+                                b->nStart               = pb->nLoopEnd;
+                                b->nEnd                 = sample_len;
+                            }
                             b->enType               = BATCH_TAIL;
                             return;
-                    }
+                    } // switch
                 }
 
                 // We need to add the loop batch, check the loop type and decide what to do
@@ -276,15 +359,31 @@ namespace lsp
                 {
                     case SAMPLE_LOOP_DIRECT:
                         // Yet another direct loop
-                        b->nStart               = pb->nLoopStart;
-                        b->nEnd                 = pb->nLoopEnd;
+                        if (pb->bReverse)
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = pb->nLoopStart;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = pb->nLoopEnd;
+                        }
                         b->enType               = BATCH_LOOP;
                         break;
 
                     case SAMPLE_LOOP_REVERSE:
                         // Yet another reverse loop
-                        b->nStart               = pb->nLoopEnd;
-                        b->nEnd                 = pb->nLoopStart;
+                        if (pb->bReverse)
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = pb->nLoopEnd;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = pb->nLoopStart;
+                        }
                         b->enType               = BATCH_LOOP;
                         break;
 
@@ -310,8 +409,16 @@ namespace lsp
 
                     default:
                         // Unknown loop mode, actually do not loop
-                        b->nStart               = pb->nLoopStart;
-                        b->nEnd                 = sample_len;
+                        if (pb->bReverse)
+                        {
+                            b->nStart               = pb->nLoopEnd;
+                            b->nEnd                 = 0;
+                        }
+                        else
+                        {
+                            b->nStart               = pb->nLoopStart;
+                            b->nEnd                 = sample_len;
+                        }
                         b->enType               = BATCH_TAIL;
                         break;
                 }
