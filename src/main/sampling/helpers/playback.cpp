@@ -515,6 +515,7 @@ namespace lsp
                 pb->nChannel        = 0;
                 pb->enState         = STATE_NONE;
                 pb->fVolume         = 0.0f;
+                pb->bReverse        = false;
                 pb->nPosition       = -1;
                 pb->nFadeout        = -1;
                 pb->enLoopMode      = SAMPLE_LOOP_NONE;
@@ -538,6 +539,7 @@ namespace lsp
                 pb->nChannel        = 0;
                 pb->enState         = STATE_NONE;
                 pb->fVolume         = 0.0f;
+                pb->bReverse        = false;
                 pb->nPosition       = -1;
                 pb->nFadeout        = -1;
                 pb->enLoopMode      = SAMPLE_LOOP_NONE;
@@ -561,6 +563,7 @@ namespace lsp
                 pb->nChannel    = settings->sample_channel();
                 pb->enState     = STATE_PLAY;
                 pb->fVolume     = settings->volume();
+                pb->bReverse    = settings->reverse();
                 pb->nPosition   = -1;
                 pb->nFadeout    = 0;
                 pb->enLoopMode  = settings->loop_mode();

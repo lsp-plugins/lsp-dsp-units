@@ -62,6 +62,7 @@ namespace lsp
                 size_t              nChannel;       // Channel to play
                 playback_state_t    enState;        // State of the playback
                 float               fVolume;        // The volume of the sample
+                bool                bReverse;       // The reverse playback flag
                 ssize_t             nPosition;      // Current playback position
                 size_t              nFadeout;       // Fadeout length for cancelling
                 sample_loop_t       enLoopMode;     // Loop mode

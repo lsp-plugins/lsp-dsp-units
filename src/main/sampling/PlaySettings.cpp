@@ -39,7 +39,10 @@ namespace lsp
 
         void PlaySettings::construct()
         {
+            nID             = 0;
+            nChannel        = 0;
             fVolume         = 1.0f;
+            bReverse        = false;
             nDelay          = 0;
             nStart          = 0;
             nLoopMode       = SAMPLE_LOOP_NONE;
