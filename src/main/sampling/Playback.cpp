@@ -186,6 +186,13 @@ namespace lsp
             return (valid()) ? pPlayback->nPosition : -1;
         }
 
+        ssize_t Playback::sample_length() const
+        {
+            if (!valid())
+                return -1;
+            return (pPlayback->pSample != NULL) ? pPlayback->pSample->length() : -1;
+        }
+
         sample_loop_t Playback::loop_mode() const
         {
             return (valid()) ? pPlayback->enLoopMode : SAMPLE_LOOP_NONE;

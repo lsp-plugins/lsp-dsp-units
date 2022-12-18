@@ -171,6 +171,12 @@ namespace lsp
                 ssize_t     position() const;
 
                 /**
+                 * Get current sample length
+                 * @return current sample length
+                 */
+                ssize_t     sample_length() const;
+
+                /**
                  * Get the loop mode
                  * @return loop mode
                  */
