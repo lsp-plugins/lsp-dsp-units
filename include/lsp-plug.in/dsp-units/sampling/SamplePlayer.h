@@ -138,6 +138,7 @@ namespace lsp
                  * @return pointer to the sample or NULL
                  */
                 Sample *get(size_t id);
+                const Sample *get(size_t id) const;
 
                 /**
                  * Unbind all previously bound samples

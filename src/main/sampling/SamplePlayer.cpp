@@ -291,6 +291,11 @@ namespace lsp
             return ((vSamples != NULL) && (id < nSamples)) ? vSamples[id] : NULL;
         }
 
+        const Sample *SamplePlayer::get(size_t id) const
+        {
+            return ((vSamples != NULL) && (id < nSamples)) ? vSamples[id] : NULL;
+        }
+
         void SamplePlayer::unbind_all()
         {
             if (vSamples == NULL)
