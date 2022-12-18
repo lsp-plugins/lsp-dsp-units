@@ -1174,9 +1174,9 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Playback.o: main/sampling/Playback.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/types.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/helpers/batch.h \
- $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/iface/IStateDumper.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/helpers/playback.h \
  $(LSP_DSP_UNITS_INC)/lsp-plug.in/dsp-units/sampling/Sample.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
