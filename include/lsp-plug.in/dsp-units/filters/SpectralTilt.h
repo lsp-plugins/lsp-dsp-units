@@ -106,6 +106,8 @@ namespace lsp
                 void construct();
                 void destroy();
 
+                void init();
+
             protected:
                 float               bilinear_coefficient(float angularFrequency, float samplerate);
                 bilinear_spec_t     compute_bilinear_element(float negZero, float negPole);

@@ -25,7 +25,7 @@
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/common/alloc.h>
 
-#define BUF_GRANULARITY         8192
+#define BUF_GRANULARITY         8192U
 #define GAIN_LOWERING           0.9886 /*0.891250938134 */
 #define MIN_LIMITER_RELEASE     5.0f
 
@@ -56,6 +56,7 @@ namespace lsp
             fKnee           = GAIN_AMP_M_6_DB;
             nMaxLookahead   = 0;
             nLookahead      = 0;
+            nHead           = 0;
             nMaxSampleRate  = 0;
             nSampleRate     = 0;
             nUpdate         = UP_ALL;
@@ -88,17 +89,20 @@ namespace lsp
         bool Limiter::init(size_t max_sr, float max_lookahead)
         {
             nMaxLookahead       = millis_to_samples(max_sr, max_lookahead);
-            size_t alloc        = nMaxLookahead*4 + BUF_GRANULARITY*2;
+            nHead               = 0;
+            size_t buf_gap      = nMaxLookahead*8;
+            size_t buf_size     = buf_gap + nMaxLookahead*4 + BUF_GRANULARITY;
+            size_t alloc        = buf_size + BUF_GRANULARITY;
             float *ptr          = alloc_aligned<float>(vData, alloc, DEFAULT_ALIGN);
             if (ptr == NULL)
                 return false;
 
             vGainBuf            = ptr;
-            ptr                += nMaxLookahead*4 + BUF_GRANULARITY;
+            ptr                += buf_size;
             vTmpBuf             = ptr;
             ptr                += BUF_GRANULARITY;
 
-            dsp::fill_one(vGainBuf, nMaxLookahead*4 + BUF_GRANULARITY);
+            dsp::fill_one(vGainBuf, buf_size);
             dsp::fill_zero(vTmpBuf, BUF_GRANULARITY);
 
             if (!sDelay.init(nMaxLookahead + BUF_GRANULARITY))
@@ -376,10 +380,11 @@ namespace lsp
                 return;
 
             // Update delay settings
+            float *gbuf = &vGainBuf[nHead];
             if (nUpdate & UP_SR)
             {
                 sDelay.clear();
-                dsp::fill_one(vGainBuf, nMaxLookahead*3 + BUF_GRANULARITY);
+                dsp::fill_one(gbuf, nMaxLookahead*3 + BUF_GRANULARITY);
             }
 
             nLookahead          = millis_to_samples(nSampleRate, fLookahead);
@@ -392,7 +397,7 @@ namespace lsp
                 {
                     // Need to lower gain sinc threshold has been lowered
                     float gnorm         = fReqThreshold / fThreshold;
-                    dsp::mul_k2(vGainBuf, gnorm, nMaxLookahead);
+                    dsp::mul_k2(gbuf, gnorm, nMaxLookahead);
                 }
 
                 fThreshold          = fReqThreshold;
@@ -628,11 +633,11 @@ namespace lsp
             // Force settings update if there are any
             update_settings();
 
-            float *gbuf     = &vGainBuf[nMaxLookahead];
-
+            size_t buf_gap      = nMaxLookahead*8;
             while (samples > 0)
             {
-                size_t to_do    = (samples > BUF_GRANULARITY) ? BUF_GRANULARITY : samples;
+                size_t to_do    = lsp_min(samples, BUF_GRANULARITY);
+                float *gbuf     = &vGainBuf[nHead + nMaxLookahead];
 
                 // Fill gain buffer
                 dsp::fill_one(&gbuf[nMaxLookahead*3], to_do);
@@ -692,8 +697,13 @@ namespace lsp
                 }
 
                 // Copy gain value and shift gain buffer
-                dsp::copy(gain, &vGainBuf[nMaxLookahead - nLookahead], to_do);
-                dsp::move(vGainBuf, &vGainBuf[to_do], nMaxLookahead*4);
+                dsp::copy(gain, &gbuf[-nLookahead], to_do);
+                nHead          += to_do;
+                if (nHead > buf_gap)
+                {
+                    dsp::move(vGainBuf, &vGainBuf[nHead], nMaxLookahead*4);
+                    nHead       = 0;
+                }
 
                 // Gain will be applied to the delayed signal
                 sDelay.process(dst, src, to_do);
@@ -760,6 +770,7 @@ namespace lsp
             v->write("fKnee", fKnee);
             v->write("nMaxLookahead", nMaxLookahead);
             v->write("nLookahead", nLookahead);
+            v->write("nHead", nHead);
             v->write("nMaxSampleRate", nMaxSampleRate);
             v->write("nSampleRate", nSampleRate);
             v->write("nUpdate", nUpdate);
@@ -812,5 +823,5 @@ namespace lsp
                     break;
             }
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

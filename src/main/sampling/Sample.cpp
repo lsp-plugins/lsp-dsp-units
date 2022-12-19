@@ -19,10 +19,14 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp-units/sampling/Sample.h>
-#include <lsp-plug.in/dsp-units/filters/Filter.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/finally.h>
 #include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/dsp-units/filters/Filter.h>
+#include <lsp-plug.in/dsp-units/sampling/Sample.h>
+#include <lsp-plug.in/fmt/lspc/File.h>
+#include <lsp-plug.in/fmt/lspc/lspc.h>
+#include <lsp-plug.in/fmt/lspc/util.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
 #include <lsp-plug.in/stdlib/math.h>
@@ -57,11 +61,14 @@ namespace lsp
 
         void Sample::construct()
         {
-            vBuffer     = NULL;
-            nSampleRate = 0;
-            nLength     = 0;
-            nMaxLength  = 0;
-            nChannels   = 0;
+            vBuffer         = NULL;
+            nSampleRate     = 0;
+            nLength         = 0;
+            nMaxLength      = 0;
+            nChannels       = 0;
+            nGcRefs         = 0;
+            pGcNext         = NULL;
+            pUserData       = NULL;
         }
 
         void Sample::destroy()
@@ -74,6 +81,9 @@ namespace lsp
             nMaxLength      = 0;
             nLength         = 0;
             nChannels       = 0;
+            nGcRefs         = 0;
+            pGcNext         = NULL;
+            pUserData       = NULL;
         }
 
         bool Sample::init(size_t channels, size_t max_length, size_t length)
@@ -472,6 +482,8 @@ namespace lsp
         {
             if ((nSampleRate <= 0) || (nChannels < 0))
                 return -STATUS_BAD_STATE;
+            if ((out->channels() != nChannels) || (out->sample_rate() != nSampleRate))
+                return STATUS_INCOMPATIBLE;
 
             ssize_t avail   = lsp_max(ssize_t(nLength - offset), 0);
             count           = (count < 0) ? avail : lsp_min(count, avail);
@@ -485,6 +497,7 @@ namespace lsp
             float *buf      = alloc_aligned<float>(data, nChannels * bufsize);
             if (buf == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free_aligned(data); };
 
             // Perform writes to underlying stream
             while (count > 0)
@@ -505,7 +518,6 @@ namespace lsp
                 {
                     if (written > 0)
                         break;
-                    free_aligned(data);
                     return nframes;
                 }
 
@@ -515,7 +527,6 @@ namespace lsp
                 count          -= nframes;
             }
 
-            free_aligned(data);
             return written;
         }
 
@@ -618,6 +629,7 @@ namespace lsp
             float *buf      = alloc_aligned<float>(data, fmt.channels * bufsize);
             if (buf == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free_aligned(data); };
 
             // Perform reads from underlying stream
             while (count > 0)
@@ -643,7 +655,6 @@ namespace lsp
             }
 
             // All is OK, free temporary buffer and swap self state with the temporary sample
-            free_aligned(data);
             tmp.set_sample_rate(fmt.srate);
             tmp.swap(this);
 
@@ -745,6 +756,7 @@ namespace lsp
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
             if (k == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(k); };
 
             // Estimate resampled sample size
             size_t new_samples  = kf * nLength;
@@ -752,10 +764,7 @@ namespace lsp
 
             // Prepare new data structure to store resampled data
             if (!s->init(nChannels, b_len, b_len))
-            {
-                free(k);
                 return STATUS_NO_MEM;
-            }
             s->set_sample_rate(new_sample_rate);
 
             // Generate Lanczos kernel
@@ -786,7 +795,6 @@ namespace lsp
             }
 
             // Delete temporary buffer and decrease length of sample
-            free(k);
             s->nLength -= k_len;
 
             return STATUS_OK;
@@ -810,6 +818,7 @@ namespace lsp
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
             if (k == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(k); };
 
             // Estimate resampled sample size
             size_t new_samples  = kf * nLength;
@@ -817,10 +826,8 @@ namespace lsp
 
             // Prepare new data structure to store resampled data
             if (!s->init(nChannels, b_len, b_len))
-            {
-                free(k);
                 return STATUS_NO_MEM;
-            }
+
             s->set_sample_rate(new_sample_rate);
 
             // Iterate each channel
@@ -862,7 +869,6 @@ namespace lsp
             }
 
             // Delete temporary buffer and decrease length of sample
-            free(k);
             s->nLength -= k_len;
 
             return STATUS_OK;
@@ -886,6 +892,7 @@ namespace lsp
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
             if (k == NULL)
                 return STATUS_NO_MEM;
+            lsp_finally { free(k); };
 
             // Estimate resampled sample size
             size_t new_samples  = kf * nLength;
@@ -893,10 +900,7 @@ namespace lsp
 
             // Prepare new data structure to store resampled data
             if (!s->init(nChannels, b_len, b_len))
-            {
-                free(k);
                 return STATUS_NO_MEM;
-            }
             s->set_sample_rate(new_sample_rate);
 
             // Iterate each channel
@@ -938,7 +942,6 @@ namespace lsp
             }
 
             // Delete temporary buffer and decrease length of sample
-            free(k);
             s->nLength -= k_len;
 
             return STATUS_OK;
@@ -1007,6 +1010,166 @@ namespace lsp
             return STATUS_OK;
         }
 
+        status_t Sample::load_ext(const char *path, float max_duration)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? load_ext(&tmp, max_duration) : res;
+        }
+
+        status_t Sample::load_ext(const LSPString *path, float max_duration)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? load_ext(&tmp, max_duration) : res;
+        }
+
+        status_t Sample::load_ext(const io::Path *path, float max_duration)
+        {
+            mm::IInAudioStream *in = NULL;
+            status_t res = open_stream_ext(&in, path);
+            if (res != STATUS_OK)
+                return res;
+            res             = load(in, max_duration);
+            status_t res2   = in->close();
+            delete in;
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        status_t Sample::loads_ext(const char *path, ssize_t max_samples)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? loads_ext(&tmp, max_samples) : res;
+        }
+
+        status_t Sample::loads_ext(const LSPString *path, ssize_t max_samples)
+        {
+            io::Path tmp;
+            status_t res = tmp.set(path);
+            return (res == STATUS_OK) ? loads_ext(&tmp, max_samples) : res;
+        }
+
+        status_t Sample::loads_ext(const io::Path *path, ssize_t max_samples)
+        {
+            mm::IInAudioStream *in = NULL;
+            status_t res = open_stream_ext(&in, path);
+            if (res != STATUS_OK)
+                return res;
+
+            res             = loads(in, max_samples);
+            status_t res2   = in->close();
+            delete in;
+            return (res != STATUS_OK) ? res : res2;
+        }
+
+        status_t Sample::open_stream_ext(mm::IInAudioStream **is, const io::Path *path)
+        {
+            // Try to load regular file
+            status_t res = try_open_regular_file(is, path);
+            if (res == STATUS_OK)
+                return res;
+
+            // Now we need to walk the whole path from the end to the begin and look for archive
+            LSPString item;
+            io::Path parent, child;
+            if ((res = parent.set(path)) != STATUS_OK)
+                return res;
+            if ((res = parent.canonicalize()) != STATUS_OK)
+                return res;
+
+            while (true)
+            {
+                // Check that there is nothing to do with
+                if ((parent.is_root()) || (parent.is_empty()))
+                    return STATUS_NOT_FOUND;
+
+                // Remove child entry from parent and prepend for the child
+                if ((res = parent.get_last(&item)) != STATUS_OK)
+                    return res;
+                if ((res = parent.remove_last()) != STATUS_OK)
+                    return res;
+                if (child.is_empty())
+                {
+                    if ((res = child.set(&item)) != STATUS_OK)
+                        return res;
+                }
+                else
+                {
+                    if ((res = child.set_parent(&item)) != STATUS_OK)
+                        return res;
+                }
+
+                // Try o read as LSPC
+                if ((res = try_open_lspc(is, &parent, &child)) == STATUS_OK)
+                    return res;
+            }
+        }
+
+        status_t Sample::try_open_lspc(mm::IInAudioStream **is, const io::Path *lspc, const io::Path *item)
+        {
+            // Try to open LSPC
+            lspc::File fd;
+            status_t res = fd.open(lspc);
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally { fd.close(); };
+
+            // We have LSPC file, lookup for the audio entry
+            lspc::chunk_id_t *path_list = NULL;
+            ssize_t path_count = fd.enumerate_chunks(LSPC_CHUNK_PATH, &path_list);
+            if (path_count < 0)
+                return -path_count;
+            lsp_finally { free(path_list); };
+
+            // Now iterate over all chunks and check it for match to the item
+            io::Path path_item;
+            size_t flags = 0;
+            lspc::chunk_id_t ref_id;
+            for (ssize_t i=0; i<path_count; ++i)
+            {
+                if ((res = lspc::read_path(path_list[i], &fd, &path_item, &flags, &ref_id)) != STATUS_OK)
+                    return res;
+                if (flags & lspc::PATH_DIR)
+                    continue;
+                if (!item->equals(&path_item))
+                    continue;
+
+                return lspc::read_audio(ref_id, &fd, is);
+            }
+
+            return STATUS_NOT_FOUND;
+        }
+
+        status_t Sample::try_open_regular_file(mm::IInAudioStream **is, const io::Path *path)
+        {
+            mm::InAudioFileStream *ias = new mm::InAudioFileStream();
+            status_t res = ias->open(path);
+            if (res != STATUS_OK)
+            {
+                ias->close();
+                delete ias;
+                return res;
+            }
+
+            *is = ias;
+            return STATUS_OK;
+        }
+
+        Sample *Sample::gc_link(Sample *next)
+        {
+            Sample *old = pGcNext;
+            pGcNext     = next;
+            return old;
+        }
+
+        void *Sample::set_user_data(void *user)
+        {
+            void *result    = pUserData;
+            pUserData       = user;
+            return result;
+        }
+
         void Sample::dump(IStateDumper *v) const
         {
             v->write("vBuffer", vBuffer);
@@ -1014,6 +1177,9 @@ namespace lsp
             v->write("nLength", nLength);
             v->write("nMaxLength", nMaxLength);
             v->write("nChannels", nChannels);
+            v->write("nGcRefs", nGcRefs);
+            v->write("pGcNext", pGcNext);
+            v->write("pUserData", pUserData);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

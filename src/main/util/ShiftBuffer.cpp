@@ -266,6 +266,11 @@ namespace lsp
                 amount = can;
         }
 
+        float *ShiftBuffer::data()
+        {
+            return pData;
+        }
+
         float *ShiftBuffer::head()
         {
             return (pData != NULL) ? &pData[nHead] : NULL;

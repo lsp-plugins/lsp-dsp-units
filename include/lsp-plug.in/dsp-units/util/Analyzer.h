@@ -240,6 +240,12 @@ namespace lsp
                   */
                  inline void set_activity(bool active)   { bActive = active; }
 
+                 /**
+                  * Get analyzer activity
+                  * @return analyzer activity
+                  */
+                 inline bool activity() const            { return bActive; }
+
                  /** Freeze channel
                   *
                   * @param channel channel to freeze

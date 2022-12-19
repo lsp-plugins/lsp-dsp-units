@@ -53,6 +53,10 @@ namespace lsp
             bSync           = true;
 
             sFilter.construct();
+        }
+
+        void ButterworthFilter::init()
+        {
             sFilter.init(MAX_ORDER);
         }
 

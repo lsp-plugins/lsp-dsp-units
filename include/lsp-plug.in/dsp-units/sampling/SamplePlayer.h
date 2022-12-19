@@ -23,7 +23,11 @@
 #define LSP_PLUG_IN_DSP_UNITS_SAMPLING_SAMPLEPLAYER_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/dsp-units/sampling/helpers/batch.h>
+#include <lsp-plug.in/dsp-units/sampling/helpers/playback.h>
 #include <lsp-plug.in/dsp-units/sampling/Sample.h>
+#include <lsp-plug.in/dsp-units/sampling/Playback.h>
+#include <lsp-plug.in/dsp-units/sampling/PlaySettings.h>
 
 namespace lsp
 {
@@ -36,43 +40,44 @@ namespace lsp
                 SamplePlayer(const SamplePlayer &);
 
             protected:
-                typedef struct playback_t
+                typedef struct play_item_t: public playback::playback_t
                 {
-                    Sample     *pSample;    // Pointer to the sample
-                    ssize_t     nID;        // ID of playback
-                    size_t      nChannel;   // Channel to play
-                    ssize_t     nOffset;    // Current offset
-                    ssize_t     nFadeout;   // Fadeout (cancelling)
-                    ssize_t     nFadeOffset;// Fadeout offset
-                    float       nVolume;    // The volume of the sample
-                    playback_t *pNext;      // Pointer to the next playback in the list
-                    playback_t *pPrev;      // Pointer to the previous playback in the list
-                } playback_t;
+                    play_item_t *pNext;     // Pointer to the next playback in the list
+                    play_item_t *pPrev;     // Pointer to the previous playback in the list
+                } play_item_t;
 
                 typedef struct list_t
                 {
-                    playback_t *pHead;      // The head of the list
-                    playback_t *pTail;      // The tail of the list
+                    play_item_t *pHead;     // The head of the list
+                    play_item_t *pTail;     // The tail of the list
                 } list_t;
 
             private:
+                float          *vBuffer;    // Temporary buffer for rendering samples
                 Sample        **vSamples;
                 size_t          nSamples;
-                playback_t     *vPlayback;
+                play_item_t    *vPlayback;
                 size_t          nPlayback;
                 list_t          sActive;
                 list_t          sInactive;
                 float           fGain;
+                uint8_t        *pData;
+                Sample         *pGcList;    // List of garbage samples not used by the sample player
 
             protected:
-                static inline void cleanup(playback_t *pb);
-                static inline void list_remove(list_t *list, playback_t *pb);
-                static inline playback_t *list_remove_first(list_t *list);
-                static inline void list_add_first(list_t *list, playback_t *pb);
-                static inline void list_insert_from_tail(list_t *list, playback_t *pb);
-                void do_process(float *dst, size_t samples);
+                static inline void list_remove(list_t *list, play_item_t *pb);
+                static inline play_item_t *list_remove_first(list_t *list);
+                static inline void list_add_first(list_t *list, play_item_t *pb);
+                static inline void list_insert_from_tail(list_t *list, play_item_t *pb);
 
                 static void dump_list(IStateDumper *v, const char *name, const list_t *list);
+
+            protected:
+                void            release_sample(Sample * &s);
+                static Sample  *acquire_sample(Sample *s);
+
+            protected:
+                void            do_process(float *dst, size_t samples);
 
             public:
                 explicit SamplePlayer();
@@ -92,9 +97,18 @@ namespace lsp
                 bool init(size_t max_samples, size_t max_playbacks);
 
                 /** Destroy player
-                 * @param cascade destroy the bound samples
+                 * @param cascade destroy the samples which have been put to the GC list
+                 * @return garbage collection list if present
                  */
-                void destroy(bool cascade = true);
+                dspu::Sample   *destroy(bool cascade = true);
+
+                /**
+                 * Return the list of garbage-collected samples. After calling this method,
+                 * the internal list of the garbage-collected items inside of the sampler
+                 * becomes cleared.
+                 * @return pointer to the first item in the list of garbage-collected samples
+                 */
+                Sample         *gc();
 
             public:
                 /** Set output gain
@@ -103,40 +117,33 @@ namespace lsp
                  */
                 inline void set_gain(float gain) { fGain = gain; }
 
-                /** Bind sample to specified ID, cancel all active playbacks previously associated
-                 * with this sample
+                /** Bind sample to specified ID
                  *
                  * @param id id of the sample
                  * @param sample pointer to the sample
-                 * @return true on success, sample contains pointer to the replaced sample
+                 * @return true on success
                  */
-                bool bind(size_t id, Sample **sample);
-
-                /** Bind sample to specified ID, cancel all active playbacks previously associated
-                 * with this sample
-                 *
-                 * @param id id of the sample
-                 * @param sample pointer to the sample
-                 * @param destroy auto-destroy sample
-                 * @return true on success, previous sample will be automatically destroyed
-                 */
-                bool bind(size_t id, Sample *sample, bool destroy = false);
+                bool bind(size_t id, Sample *sample);
 
                 /** Unbind sample
                  *
                  * @param id id of the sample
-                 * @param sample pointer to store the unbound sample
-                 * @return true on success, pointer to the sample will be stored in sample variable
+                 * @return false if invalid index has been specified
                  */
-                bool unbind(size_t id, Sample **sample);
+                bool unbind(size_t id);
 
-                /** Unbind sample
-                 *
+                /**
+                 * Get currently bound sample
                  * @param id id of the sample
-                 * @param destroy destroy the sample
-                 * @return true on success, the bound sample will be automatically destroyed
+                 * @return pointer to the sample or NULL
                  */
-                bool unbind(size_t id, bool destroy = false);
+                Sample *get(size_t id);
+                const Sample *get(size_t id) const;
+
+                /**
+                 * Unbind all previously bound samples
+                 */
+                void unbind_all();
 
                 /** Process the audio data
                  *
@@ -163,7 +170,16 @@ namespace lsp
                  */
                 bool play(size_t id, size_t channel, float volume, ssize_t delay = 0);
 
-                /** Softly cancel playback of the sample
+                /**
+                 * Trigger the playback of the sample
+                 * @param id ID of the sample to play
+                 * @param channel ID of the sample's channel
+                 * @param settings playback settings
+                 * @return true if parameters are valid
+                 */
+                Playback play(const PlaySettings *settings = NULL);
+
+                /** Soft cancel playback of the sample
                  *
                  * @param id ID of the sample
                  * @param channel ID of the sample's channel
@@ -173,18 +189,19 @@ namespace lsp
                  */
                 ssize_t cancel_all(size_t id, size_t channel, size_t fadeout = 0, ssize_t delay = 0);
 
-                /** Reset the playback state of the player, force all playbacks to be stopped
-                 *
+                /** Reset the playback state of the player,
+                 * force all playbacks to be stopped immediately
                  */
                 void stop();
 
+            public:
                 /**
                  * Dump the state
                  * @param dumper dumper
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_SAMPLING_SAMPLEPLAYER_H_ */

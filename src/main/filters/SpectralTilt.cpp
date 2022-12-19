@@ -68,6 +68,10 @@ namespace lsp
             bSync           = true;
 
             sFilter.construct();
+        }
+
+        void SpectralTilt::init()
+        {
             sFilter.init(MAX_ORDER);
         }
 
@@ -506,12 +510,16 @@ namespace lsp
 
         void SpectralTilt::freq_chart(float *re, float *im, const float *f, size_t count)
         {
+            update_settings();
+
             for (size_t i = 0; i<count; ++i)
                 complex_transfer_calc(&re[i], &im[i], f[i]);
         }
 
         void SpectralTilt::freq_chart(float *c, const float *f, size_t count)
         {
+            update_settings();
+
             size_t c_idx = 0;
             for (size_t i = 0; i<count; ++i)
             {

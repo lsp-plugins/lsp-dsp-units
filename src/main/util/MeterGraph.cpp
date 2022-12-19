@@ -19,8 +19,8 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp-units/util/MeterGraph.h>
 #include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/dsp-units/util/MeterGraph.h>
 
 namespace lsp
 {
@@ -68,23 +68,19 @@ namespace lsp
         void MeterGraph::process(float sample)
         {
             // Make sample positive
-            if (sample < 0)
+            if (sample < 0.0f)
                 sample      = - sample;
 
             if (bMinimize)
             {
                 // Update current sample
-                if (nCount == 0)
-                    fCurrent    = sample;
-                else if (fCurrent < sample)
+                if ((nCount == 0) || (fCurrent < sample))
                     fCurrent    = sample;
             }
             else
             {
                 // Update current sample
-                if (nCount == 0)
-                    fCurrent    = sample;
-                else if (fCurrent > sample)
+                if ((nCount == 0) || (fCurrent > sample))
                     fCurrent    = sample;
             }
 
@@ -107,18 +103,14 @@ namespace lsp
                 while (n > 0)
                 {
                     // Determine amount of samples to process
-                    ssize_t can_do      = nPeriod - nCount;
-                    if (can_do > ssize_t(n))
-                        can_do          = n;
+                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
 
                     // Process the samples
                     if (can_do > 0)
                     {
                         // Get maximum sample
                         float sample        = dsp::abs_min(s, can_do);
-                        if (nCount == 0)
-                            fCurrent        = sample;
-                        else if (fCurrent > sample)
+                        if ((nCount == 0) || (fCurrent > sample))
                             fCurrent        = sample;
 
                         // Update counters and pointers
@@ -144,18 +136,14 @@ namespace lsp
                 while (n > 0)
                 {
                     // Determine amount of samples to process
-                    ssize_t can_do      = nPeriod - nCount;
-                    if (can_do > ssize_t(n))
-                        can_do          = n;
+                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
 
                     // Process the samples
                     if (can_do > 0)
                     {
                         // Get maximum sample
                         float sample        = dsp::abs_max(s, can_do);
-                        if (nCount == 0)
-                            fCurrent        = sample;
-                        else if (fCurrent < sample)
+                        if ((nCount == 0) || (fCurrent < sample))
                             fCurrent        = sample;
 
                         // Update counters and pointers
@@ -167,11 +155,9 @@ namespace lsp
                     // Check that need to switch to next sample
                     if (nCount >= nPeriod)
                     {
-                        // Append current sample to buffer
+                        // Append current sample to buffer and update counter
                         sBuffer.shift();
                         sBuffer.append(fCurrent);
-
-                        // Update counter
                         nCount      = 0;
                     }
                 }
