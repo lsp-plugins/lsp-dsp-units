@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.8 ===
+
+
 === 1.0.7 ===
 * Added dspu::Analyzer::activity() method to check the analyzer's activity.
 * Fixed possible memory leakage in dspu::Sample methods.
