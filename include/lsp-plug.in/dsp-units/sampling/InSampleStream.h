@@ -54,7 +54,7 @@ namespace lsp
             public:
                 InSampleStream();
                 InSampleStream(const Sample *s, bool drop = false);
-                virtual ~InSampleStream();
+                virtual ~InSampleStream() override;
 
             public:
                 status_t            wrap(const dspu::Sample *s, bool drop = false);
@@ -64,7 +64,7 @@ namespace lsp
                 virtual size_t      sample_rate() const override;
                 virtual size_t      channels() const override;
                 virtual wssize_t    length() const override;
-                virtual size_t      format() const;
+                virtual size_t      format() const override;
 
                 virtual status_t    close() override;
                 virtual wssize_t    skip(wsize_t nframes) override;
