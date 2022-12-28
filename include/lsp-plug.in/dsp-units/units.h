@@ -31,6 +31,9 @@ namespace lsp
 {
     namespace dspu
     {
+        constexpr float NEPER_PER_DB        = 0.1151277918f;
+        constexpr float DB_PER_NEPER        = 8.6860000037f;
+
         /** Convert temperature from Celsium degrees to sound speed [m/s]
          *
          * @param temp temperature [ Celsium degrees ]
@@ -134,6 +137,16 @@ namespace lsp
             return expf(db * M_LN10 * 0.1f);
         }
 
+        /** Convert decibels to nepers
+         *
+         * @param db decibels
+         * @return nepers
+         */
+        inline float db_to_neper(float db)
+        {
+            return db * NEPER_PER_DB;
+        }
+
         /** Convert gain value to decibels
          *
          * @param gain gain value
@@ -152,6 +165,56 @@ namespace lsp
         inline float power_to_db(float pwr)
         {
             return (10.0f / M_LN10) * logf(pwr);
+        }
+
+        /** Convert nepers to gain value
+         *
+         * @param neper nepers
+         * @return gain
+         */
+        inline float neper_to_gain(float neper)
+        {
+            return db_to_gain(neper * DB_PER_NEPER);
+        }
+
+        /** Convert nepers to power value
+         *
+         * @param neper nepers
+         * @return power
+         */
+        inline float neper_to_power(float neper)
+        {
+            return db_to_power(neper * DB_PER_NEPER);
+        }
+
+        /** Convert nepers to decibels
+         *
+         * @param neper nepers
+         * @return decibels
+         */
+        inline float neper_to_db(float neper)
+        {
+            return neper * DB_PER_NEPER;
+        }
+
+        /** Convert gain value to nepers
+         *
+         * @param gain gain value
+         * @return nepers
+         */
+        inline float gain_to_neper(float gain)
+        {
+            return gain_to_db(gain) * NEPER_PER_DB;
+        }
+
+        /** Convert power value to nepers
+         *
+         * @param pwr power value
+         * @return nepers
+         */
+        inline float power_to_neper(float pwr)
+        {
+            return power_to_db(pwr) * NEPER_PER_DB;
         }
 
         /**
