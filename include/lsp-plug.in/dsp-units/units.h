@@ -163,7 +163,19 @@ namespace lsp
         {
             return expf(pitch * (M_LN2 / 12.0f));
         }
-    }
-}
+
+        /**
+         * Compute the frequency of the note relying on the frequency of the A4 note
+         * @param note
+         * @param a4 the frequency of the A4 note, typically 440 Hz
+         * @return the frequency of the note
+         */
+        inline float midi_note_to_frequency(size_t note, float a4 = 440.0f)
+        {
+            float pitch = ssize_t(note) - 69; // The MIDI number of the A4 note is 69
+            return a4 * semitones_to_frequency_shift(pitch);
+        }
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UNITS_H_ */
