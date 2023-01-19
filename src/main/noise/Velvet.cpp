@@ -250,7 +250,7 @@ namespace lsp
                             if (get_random_value() > sCrushParams.fCrushProb)
                                 multiplier = -1.0f;
 
-                            dst[idx] = multiplier * abs(dst[idx]);
+                            dst[idx] = multiplier * fabs(dst[idx]);
                             ++idx;
                         }
                     }

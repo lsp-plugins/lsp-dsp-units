@@ -1743,7 +1743,7 @@ namespace lsp
                 ++i;
             }
 
-            for (size_t i=0; i<nc; ++i)
+            for (; i<nc; ++i)
             {
                 dsp::filter_transfer_apply_ri(re, im, c, freq, nf);
                 c              += (nc + 1);

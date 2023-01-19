@@ -496,7 +496,6 @@ namespace lsp
             for (size_t i=0; i<segs; ++i)
                 objs[i]             = 0;
 
-            size_t n_objs       = 0;
             size_t obj_id       = 0;
 
             // Add captures as opaque objects
@@ -537,7 +536,6 @@ namespace lsp
                 res = ctx->add_object(rt->mesh.array(), rt->plan.array(), rt->mesh.size(), rt->plan.size());
                 if (res != STATUS_OK)
                     return res;
-                ++n_objs;
             }
 
             // Update state
