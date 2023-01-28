@@ -2,6 +2,12 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.8 ===
+* Added MIDI note to frequency convertion function dspu::midi_note_to_frequency.
+* Added set of functions to convert Neper to dB and gain values.
+* Bugfixes found by Clang compiler.
+* Added Clang build for the CI.
+
 === 1.0.7 ===
 * Added dspu::Analyzer::activity() method to check the analyzer's activity.
 * Fixed possible memory leakage in dspu::Sample methods.
