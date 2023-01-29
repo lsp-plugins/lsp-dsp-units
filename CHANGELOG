@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.9 ===
-
+* Changed visibility of the dspu::InSampleStream class to public.
 
 === 1.0.8 ===
 * Added MIDI note to frequency convertion function dspu::midi_note_to_frequency.

@@ -34,7 +34,7 @@ namespace lsp
         /**
          * Input audio stream that allows to wrap a sample and perform streaming reads from it.
          */
-        class InSampleStream: public mm::IInAudioStream
+        class LSP_DSP_UNITS_PUBLIC InSampleStream: public mm::IInAudioStream
         {
             private:
                 InSampleStream(const InSampleStream &);
