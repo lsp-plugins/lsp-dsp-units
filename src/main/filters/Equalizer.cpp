@@ -187,6 +187,11 @@ namespace lsp
             }
         }
 
+        bool Equalizer::configuration_changed() const
+        {
+            return nFlags != 0;
+        }
+
         bool Equalizer::set_params(size_t id, const filter_params_t *params)
         {
             if (id >= nFilters)
@@ -509,11 +514,10 @@ namespace lsp
             }
         }
 
-        /**
-         * Reset the internal memory of filters
-         */
         void Equalizer::reset()
         {
+            nFlags &= ~EF_CLEAR;
+
             switch (nMode)
             {
                 case EQM_BYPASS:

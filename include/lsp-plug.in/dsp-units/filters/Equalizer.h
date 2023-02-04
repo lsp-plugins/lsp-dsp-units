@@ -103,6 +103,12 @@ namespace lsp
                 void                destroy();
 
             public:
+                /**
+                 * Check if the configuration of the equalizer has changed
+                 * @return true if the configuration of the equalizer has changed
+                 */
+                bool                configuration_changed() const;
+
                 /** Update filter parameters
                  * @param id ID of the filter
                  * @param params  filter parameters
