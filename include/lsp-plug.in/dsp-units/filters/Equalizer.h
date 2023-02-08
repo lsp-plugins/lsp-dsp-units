@@ -116,6 +116,13 @@ namespace lsp
                  */
                 bool                set_params(size_t id, const filter_params_t *params);
 
+                /** Apply limits to filter parameters
+                 * @param id ID of the filter
+                 * @param fp filter parameters to process
+                 * @return true on success
+                 */
+                bool                limit_params(size_t id, filter_params_t *fp);
+
                 /** Get filter parameters
                  * @param id ID of the filter
                  * @param params  filter parameters
@@ -249,7 +256,8 @@ namespace lsp
                  */
                 void                dump(IStateDumper *v) const;
         };
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_EQUALIZER_H_ */

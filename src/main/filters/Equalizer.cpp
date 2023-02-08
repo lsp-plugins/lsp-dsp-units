@@ -197,9 +197,17 @@ namespace lsp
             if (id >= nFilters)
                 return false;
 
-            Filter *f = &vFilters[id];
-            f->update(nSampleRate, params);
+            vFilters[id].update(nSampleRate, params);
             nFlags     |= EF_REBUILD;
+            return true;
+        }
+
+        bool Equalizer::limit_params(size_t id, filter_params_t *fp)
+        {
+            if (id >= nFilters)
+                return false;
+
+            vFilters[id].limit(nSampleRate, fp);
             return true;
         }
 
@@ -583,5 +591,6 @@ namespace lsp
             v->write("nFlags", nFlags);
             v->write("pData", pData);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
