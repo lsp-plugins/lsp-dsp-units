@@ -29,7 +29,7 @@
 #define FILTER_RANK_MIN             8
 #define FILTER_RANK_MAX             12
 #define FILTER_CONVOLUTION_MAX      (1 << FILTER_RANK_MAX)
-#define FILTER_CHAINS_MAX           0x20
+#define FILTER_CHAINS_MAX           0x20U
 
 namespace lsp
 {
@@ -136,7 +136,8 @@ namespace lsp
             size_t      nSlope;     // Filter slope
             float       fQuality;   // Quality factor
         } filter_params_t;
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_CORE_FILTERS_COMMON_H_ */

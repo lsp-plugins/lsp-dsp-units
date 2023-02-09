@@ -104,10 +104,17 @@ namespace lsp
 
             public:
                 /** Update filter parameters
-                 *
+                 * @param sr sample rate of the filter
                  * @param params filter parameters
                  */
                 void                update(size_t sr, const filter_params_t *params);
+
+                /**
+                 * Update passed filter parameters structure to match the filter restrictions
+                 * @param sr sample rate of the filter
+                 * @param fp filter parameter structure to process and update
+                 */
+                void                limit(size_t sr, filter_params_t *fp);
 
                 /**
                  * Update sample rate
@@ -188,8 +195,9 @@ namespace lsp
                  */
                 void                dump(IStateDumper *v) const;
         };
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_FILTER_H_ */

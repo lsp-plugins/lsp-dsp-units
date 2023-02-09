@@ -148,26 +148,18 @@ namespace lsp
 
             // Copy and limit parameters
             *fp                     = *params;
-            if (fp->nSlope < 1)
-                fp->nSlope              = 1;
-            else if (fp->nSlope > FILTER_CHAINS_MAX)
-                fp->nSlope              = FILTER_CHAINS_MAX;
-            if (fp->fFreq < LSP_DSP_UNITS_SPEC_FREQ_MIN)
-                fp->fFreq               = LSP_DSP_UNITS_SPEC_FREQ_MIN;
-            else if (fp->fFreq > LSP_DSP_UNITS_SPEC_FREQ_MAX)
-                fp->fFreq               = LSP_DSP_UNITS_SPEC_FREQ_MAX;
-            if (fp->fFreq >= (0.49f * nSampleRate))
-                fp->fFreq               = 0.49f * nSampleRate;
-            if (fp->fFreq2 < LSP_DSP_UNITS_SPEC_FREQ_MIN)
-                fp->fFreq2              = LSP_DSP_UNITS_SPEC_FREQ_MIN;
-            else if (fp->fFreq2 > LSP_DSP_UNITS_SPEC_FREQ_MAX)
-                fp->fFreq2              = LSP_DSP_UNITS_SPEC_FREQ_MAX;
-            if (fp->fFreq2 >= (0.49f * nSampleRate))
-                fp->fFreq2              = 0.49f * nSampleRate;
-
+            limit(sr, fp);
             nFlags                 |= FF_REBUILD;
             if ((type != fp->nType) || (slope != fp->nSlope))
                 nFlags                 |= FF_CLEAR;
+        }
+
+        void Filter::limit(size_t sr, filter_params_t *fp)
+        {
+            float max_freq  = lsp_min(LSP_DSP_UNITS_SPEC_FREQ_MAX, 0.49f * nSampleRate);
+            fp->nSlope      = lsp_limit(fp->nSlope, 1U, FILTER_CHAINS_MAX);
+            fp->fFreq       = lsp_limit(fp->fFreq, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
+            fp->fFreq2      = lsp_limit(fp->fFreq2, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
         }
 
         void Filter::set_sample_rate(size_t sr)
@@ -1818,7 +1810,8 @@ namespace lsp
             v->write("nFlags", nFlags);
             v->write("nLatency", nLatency);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
