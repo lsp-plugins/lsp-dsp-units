@@ -7,6 +7,8 @@
 * Added dspu::Filter::limit method for limiting frequency parameters of the filter.
 * Added dspu::Equalizer::limit_params mehod for limiting frequency parameters of
   the corresponding filter.
+* Implemented smooth mode for the FIR/IIR type of equalizer which performs the
+  cross-fade on the change of filter characteristics.
 
 === 1.0.8 ===
 * Added MIDI note to frequency convertion function dspu::midi_note_to_frequency.

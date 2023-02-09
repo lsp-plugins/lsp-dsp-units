@@ -53,8 +53,10 @@ namespace lsp
             protected:
                 enum eq_flags_t
                 {
-                    EF_REBUILD = 1 << 0,
-                    EF_CLEAR   = 1 << 1
+                    EF_REBUILD  = 1 << 0,
+                    EF_CLEAR    = 1 << 1,
+                    EF_XFADE    = 1 << 2,
+                    EF_SMOOTH   = 1 << 3
                 };
 
             protected:
@@ -70,6 +72,7 @@ namespace lsp
 
                 float              *vInBuffer;          // Input buffer data
                 float              *vOutBuffer;         // Output buffer data
+                float              *vNewConv;           // New convolution data
                 float              *vConv;              // Convolution data
                 float              *vFft;               // FFT transform data buffer (real + imaginary)
                 float              *vTemp;              // Temporary buffer for miscellaneous calculations
@@ -255,6 +258,20 @@ namespace lsp
                  * @param dumper dumper
                  */
                 void                dump(IStateDumper *v) const;
+
+                /**
+                 * Check that the smooth mode for FIR/FFT mode is enabled
+                 * @return true if the smooth mode for FIR/FFT mode is enabled
+                 */
+                bool                smooth() const;
+
+                /**
+                 * Enable smooth mode for the FIR/FFT mode which performs
+                 * soft crossfade between data convolved with the old impulse response
+                 * and data convolved with the new impulse response.
+                 * @param smooth smooth mode flag
+                 */
+                void                set_smooth(bool smooth);
         };
 
     } /* namespace dspu */
