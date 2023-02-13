@@ -33,6 +33,7 @@ namespace lsp
     {
         constexpr float NEPER_PER_DB        = 0.1151277918f;
         constexpr float DB_PER_NEPER        = 8.6860000037f;
+        constexpr float NOTE_OUT_OF_RANGE   = -1e6f;
 
         /** Convert temperature from Celsium degrees to sound speed [m/s]
          *
@@ -228,16 +229,45 @@ namespace lsp
         }
 
         /**
+         * Convert the frequency shift multiplier to relative musical shift expressed in semitones
+         * @param pitch frequency multiplication coefficient
+         * @return relative pitch expressed in semitones
+         */
+        inline float frequency_shift_to_semitones(float pitch)
+        {
+            return (12.0f / M_LN2) * logf(pitch);
+        }
+
+        /**
          * Compute the frequency of the note relying on the frequency of the A4 note
          * @param note
          * @param a4 the frequency of the A4 note, typically 440 Hz
          * @return the frequency of the note
          */
-        inline float midi_note_to_frequency(size_t note, float a4 = 440.0f)
+        inline float midi_note_to_frequency(ssize_t note, float a4 = 440.0f)
         {
             float pitch = ssize_t(note) - 69; // The MIDI number of the A4 note is 69
             return a4 * semitones_to_frequency_shift(pitch);
         }
+
+        /**
+         * Compute the note that matches the specified frequency with the cent precision detune
+         *
+         * @param f frequency to perform the computation
+         * @param a4 the frequency of the A4 note, typically 440 Hz
+         * @return the floating-point value for note or the NOTE_OUT_OF_RANGE if the note can not be decoded.
+         * @note the integer part of note matches the MIDI note range but belongs to the extended note range,
+         *   so it may come out of the possible MIDI range 0-127 (negative values are possible, too).
+         *   The fraction part defines the detune of the note.
+         */
+        inline float frequency_to_note(float f, float a4 = 440.0f)
+        {
+            if ((f < 10.0f) || (f > 24000.0f))
+                return NOTE_OUT_OF_RANGE;
+
+            return frequency_shift_to_semitones(f/a4) + 69.0f;
+        }
+
     } /* namespace dspu */
 } /* namespace lsp */
 
