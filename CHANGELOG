@@ -10,6 +10,7 @@
 * Implemented smooth mode for the FIR/IIR type of equalizer which performs the
   cross-fade on the change of filter characteristics.
 * Implemented functions for converting the frequency to a note.
+* Added possiblity to load sample built-in into SFZ file format.
 * Added test build for Windows using MSYS2.
 * Updated build scripts.
 

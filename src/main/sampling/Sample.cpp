@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/common/finally.h>
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/filters/Filter.h>
@@ -27,8 +28,12 @@
 #include <lsp-plug.in/fmt/lspc/File.h>
 #include <lsp-plug.in/fmt/lspc/lspc.h>
 #include <lsp-plug.in/fmt/lspc/util.h>
+#include <lsp-plug.in/fmt/sfz/DocumentProcessor.h>
+#include <lsp-plug.in/fmt/sfz/IDocumentHandler.h>
+#include <lsp-plug.in/io/OutFileStream.h>
 #include <lsp-plug.in/mm/InAudioFileStream.h>
 #include <lsp-plug.in/mm/OutAudioFileStream.h>
+#include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/stdlib/math.h>
 
 #define BUFFER_FRAMES           4096
@@ -38,6 +43,108 @@ namespace lsp
 {
     namespace dspu
     {
+        namespace
+        {
+            // SFZ file handler
+            class SFZHandler: public sfz::IDocumentHandler
+            {
+                private:
+                    LSPString                   sFileName;
+                    io::Path                    sBaseDir;
+                    const io::Path             *pLookup;
+                    io::Path                    sTempFile;
+
+                public:
+                    SFZHandler()
+                    {
+                        pLookup         = NULL;
+                    }
+
+                    virtual ~SFZHandler() override
+                    {
+                        // Remove temporary file if it is present
+                        if (!sTempFile.is_empty())
+                            sTempFile.remove();
+                    }
+
+                public:
+                    status_t init(const io::Path *file, const io::Path *sample)
+                    {
+                        status_t res;
+
+                        pLookup     = sample;
+
+                        if ((res = file->get_parent(&sBaseDir)) != STATUS_OK)
+                            return res;
+                        if ((res = file->get_last(&sFileName)) != STATUS_OK)
+                            return res;
+
+                        return STATUS_OK;
+                    }
+
+                public:
+                    io::Path *sample_file()
+                    {
+                        return &sTempFile;
+                    }
+
+                public:
+                    virtual status_t sample(
+                        const char *name, io::IInStream *data,
+                        const char **opcodes, const char **values) override
+                    {
+                        io::Path path, temp;
+                        LSPString last;
+                        status_t res;
+
+                        // Check that sample name matches
+                        if ((res = path.set(name)) != STATUS_OK)
+                            return res;
+                        if ((res = path.canonicalize()) != STATUS_OK)
+                            return res;
+                        if (!path.equals(pLookup))
+                            return STATUS_OK;
+
+                        // Generate temporary file name and open the file
+                        io::OutFileStream ofs;
+                        if ((res = ofs.open_temp(&sTempFile)) != STATUS_OK)
+                            return res;
+                        lsp_finally { ofs.close(); };
+
+                        // Write data to file and exit
+                        wssize_t n = data->sink(&ofs);
+                        if (n < 0)
+                            return status_t(-n);
+                        return ofs.close();
+                    }
+
+                    virtual status_t include(sfz::PullParser *parser, const char *name) override
+                    {
+                        io::Path child;
+                        status_t res = child.set(&sBaseDir, name);
+                        if (res != STATUS_OK)
+                            return res;
+
+                        lsp_trace("Processing file '%s'...", child.as_utf8());
+
+                        return parser->open(&child);
+                    }
+
+                    virtual const char *root_file_name() override
+                    {
+                        return sFileName.get_utf8();
+                    }
+            };
+
+            static void delete_temporary_file(void *ptr)
+            {
+                io::Path *path = static_cast<io::Path *>(ptr);
+                lsp_trace("Remove temporary file %s", path->as_utf8());
+                path->remove();
+                delete path;
+            }
+        } /* namespace */
+
         static size_t gcd_euclid(size_t a, size_t b)
         {
             while (b)
@@ -1100,7 +1207,10 @@ namespace lsp
                         return res;
                 }
 
-                // Try o read as LSPC
+                // Try to read as SFZ
+                if ((res = try_open_sfz(is, &parent, &child)) == STATUS_OK)
+                    return res;
+                // Try to read as LSPC
                 if ((res = try_open_lspc(is, &parent, &child)) == STATUS_OK)
                     return res;
             }
@@ -1141,9 +1251,63 @@ namespace lsp
             return STATUS_NOT_FOUND;
         }
 
+        status_t Sample::try_open_sfz(mm::IInAudioStream **is, const io::Path *sfz, const io::Path *item)
+        {
+            // Try to open SFZ
+            status_t res;
+            SFZHandler handler;
+            sfz::DocumentProcessor processor;
+
+            // Open the document
+            if ((res = processor.open(sfz)) != STATUS_OK)
+                return res;
+            lsp_finally { processor.close(); };
+
+            // Init handler
+            io::Path lookup;
+            if ((res = lookup.set(item)) != STATUS_OK)
+                return res;
+            if ((res = lookup.canonicalize()) != STATUS_OK)
+                return res;
+            if ((res = handler.init(sfz, &lookup)) != STATUS_OK)
+                return res;
+
+            // Process the document
+            if ((res = processor.process(&handler)) != STATUS_OK)
+                return res;
+            if ((res = processor.close()) != STATUS_OK)
+                return res;
+
+            // Try to read sample file if it is present
+            if (handler.sample_file()->is_empty())
+                return STATUS_NOT_FOUND;
+            io::Path *p = new io::Path;
+            if (p == NULL)
+                return STATUS_NO_MEM;
+            lsp_finally {
+                if (p != NULL)
+                    delete p;
+            };
+
+            // Try to read the file
+            mm::IInAudioStream *ias = NULL;
+            if ((res = try_open_regular_file(&ias, handler.sample_file())) != STATUS_OK)
+                return res;
+
+            // Read was successful, bind user data to the audio stream and return
+            p->swap(handler.sample_file());
+            ias->set_user_data(p, delete_temporary_file);
+            *is = ias;
+            p = NULL;
+            return STATUS_OK;
+        }
+
         status_t Sample::try_open_regular_file(mm::IInAudioStream **is, const io::Path *path)
         {
             mm::InAudioFileStream *ias = new mm::InAudioFileStream();
+            if (ias == NULL)
+                return STATUS_NO_MEM;
+
             status_t res = ias->open(path);
             if (res != STATUS_OK)
             {
