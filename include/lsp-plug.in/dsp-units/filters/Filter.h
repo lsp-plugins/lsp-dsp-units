@@ -69,8 +69,9 @@ namespace lsp
                 size_t              nLatency;       // Filter latency
 
             protected:
+                void                apo_complex_transfer_calc_ri(float *re, float *im, const float *f, size_t count);
+                void                apo_complex_transfer_calc_pc(float *ri, const float *f, size_t count);
 
-                void                apo_complex_transfer_calc(float *re, float *im, float f);
                 dsp::f_cascade_t   *add_cascade();
 
                 void                calc_rlc_filter(size_t type, const filter_params_t *fp);
