@@ -548,7 +548,7 @@ namespace lsp
                 {
                     // Calculating normalized frequency, wrapped for maximal accuracy:
                     float kf    = 2.0 * M_PI / float(nSampleRate);
-                    float lf    = nSampleRate;
+                    float lf    = nSampleRate * 0.5f;
 
                     while (count > 0)
                     {
@@ -648,7 +648,7 @@ namespace lsp
                 {
                     // Calculating normalized frequency, wrapped for maximal accuracy:
                     float kf    = 2.0 * M_PI / float(nSampleRate);
-                    float lf    = nSampleRate;
+                    float lf    = nSampleRate * 0.5f;
 
                     while (count > 0)
                     {
