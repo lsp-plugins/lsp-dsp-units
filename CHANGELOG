@@ -12,6 +12,7 @@
 * Implemented functions for converting the frequency to a note.
 * Added possiblity to load sample built-in into SFZ file format.
 * Added test build for Windows using MSYS2.
+* Raised the resampling precision for the dspu::Sample::resample().
 * Updated build scripts.
 
 === 1.0.8 ===

@@ -37,7 +37,7 @@
 #include <lsp-plug.in/stdlib/math.h>
 
 #define BUFFER_FRAMES           4096
-#define RESAMPLING_PERIODS      8
+#define RESAMPLING_PERIODS      32
 
 namespace lsp
 {

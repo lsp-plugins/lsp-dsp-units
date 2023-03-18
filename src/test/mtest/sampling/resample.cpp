@@ -29,8 +29,8 @@ MTEST_BEGIN("dspu.sampling", resample)
 
     MTEST_MAIN
     {
-        const char *src = (argc >= 1) ? SRC_FILE : argv[0];
-        const char *dst = (argc >= 2) ? DST_FILE : argv[1];
+        const char *src = (argc >= 1) ? argv[0] : SRC_FILE;
+        const char *dst = (argc >= 2) ? argv[1] : DST_FILE;
 
         dspu::Sample af;
 
@@ -39,7 +39,7 @@ MTEST_BEGIN("dspu.sampling", resample)
         printf("Resampling %d -> %d", int(af.sample_rate()), int(sr));
 
         MTEST_ASSERT(af.resample(sr) == STATUS_OK); // Resample audio file
-        MTEST_ASSERT(af.save(dst) == STATUS_OK); // Store file
+        MTEST_ASSERT(af.save(dst) == wssize_t(af.length())); // Store file
 
         // Destroy data
         af.destroy();
