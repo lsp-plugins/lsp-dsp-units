@@ -1102,6 +1102,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/types.h \
@@ -1181,8 +1182,20 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/IAudioFormatSelector.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/util/config.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/util/path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/DocumentProcessor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/IDocumentHandler.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/PullParser.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InSharedMemoryStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutFileStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/OutAudioFileStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
 $(LSP_DSP_UNITS_BIN)/main/sampling/PlaySettings.o: \
  main/sampling/PlaySettings.cpp \
