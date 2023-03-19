@@ -37,6 +37,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Trigger.o: main/util/Trigger.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -93,6 +94,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/SyncChirpProcessor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -114,6 +116,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/SyncChirpProcessor.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -181,6 +184,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/SpectralProcessor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -236,6 +240,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Sidechain.o: main/util/Sidechain.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -293,6 +298,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/ShiftBuffer.o: main/util/ShiftBuffer.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -322,6 +328,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/ResponseTaker.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -361,6 +368,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/ResponseTaker.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -388,6 +396,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Randomizer.o: main/util/Randomizer.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h
@@ -433,6 +442,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Oversampler.o: main/util/Oversampler.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -490,6 +500,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Oscillator.o: main/util/Oscillator.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -538,6 +549,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/MeterGraph.o: main/util/MeterGraph.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -602,6 +614,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/LatencyDetector.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -656,6 +669,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/DynamicDelay.o: main/util/DynamicDelay.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -708,6 +722,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Dither.o: main/util/Dither.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -764,6 +779,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Depopper.o: main/util/Depopper.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -817,6 +833,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Delay.o: main/util/Delay.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -874,6 +891,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Crossover.o: main/util/Crossover.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -931,6 +949,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Convolver.o: main/util/Convolver.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -989,6 +1008,7 @@ $(LSP_DSP_UNITS_BIN)/main/util/Analyzer.o: main/util/Analyzer.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1041,6 +1061,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/SamplePlayer.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1067,6 +1088,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/SamplePlayer.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -1080,6 +1102,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/debug.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/types.h \
@@ -1112,6 +1135,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1138,6 +1162,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -1157,8 +1182,20 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Sample.o: main/sampling/Sample.cpp \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/IAudioFormatSelector.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/util/config.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/util/path.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/DocumentProcessor.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/IDocumentHandler.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/PullParser.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInSequence.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/sfz/types.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/InSharedMemoryStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutMemoryStream.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/pphash.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutFileStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/File.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/InAudioFileStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/OutAudioFileStream.h \
+ $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/runtime/system.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
 $(LSP_DSP_UNITS_BIN)/main/sampling/PlaySettings.o: \
  main/sampling/PlaySettings.cpp \
@@ -1186,6 +1223,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/Playback.o: main/sampling/Playback.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -1208,6 +1246,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/InSampleStream.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -1230,6 +1269,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/helpers/playback.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -1276,6 +1316,7 @@ $(LSP_DSP_UNITS_BIN)/main/sampling/helpers/batch.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1331,6 +1372,7 @@ $(LSP_DSP_UNITS_BIN)/main/noise/Velvet.o: main/noise/Velvet.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1403,6 +1445,7 @@ $(LSP_DSP_UNITS_BIN)/main/noise/Generator.o: main/noise/Generator.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1473,6 +1516,7 @@ $(LSP_DSP_UNITS_BIN)/main/misc/fade.o: main/misc/fade.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1547,6 +1591,7 @@ $(LSP_DSP_UNITS_BIN)/main/filters/SpectralTilt.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1604,6 +1649,7 @@ $(LSP_DSP_UNITS_BIN)/main/filters/Filter.o: main/filters/Filter.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1661,6 +1707,7 @@ $(LSP_DSP_UNITS_BIN)/main/filters/FilterBank.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1717,6 +1764,7 @@ $(LSP_DSP_UNITS_BIN)/main/filters/Equalizer.o: main/filters/Equalizer.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1774,6 +1822,7 @@ $(LSP_DSP_UNITS_BIN)/main/filters/DynamicFilters.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1835,6 +1884,7 @@ $(LSP_DSP_UNITS_BIN)/main/filters/ButterworthFilter.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1892,6 +1942,7 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Limiter.o: main/dynamics/Limiter.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -1958,6 +2009,7 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Expander.o: main/dynamics/Expander.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2015,6 +2067,7 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/DynamicProcessor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2066,6 +2119,7 @@ $(LSP_DSP_UNITS_BIN)/main/dynamics/Compressor.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2131,6 +2185,7 @@ $(LSP_DSP_UNITS_BIN)/main/ctl/Crossfade.o: main/ctl/Crossfade.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2190,6 +2245,7 @@ $(LSP_DSP_UNITS_BIN)/main/ctl/Bypass.o: main/ctl/Bypass.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2252,6 +2308,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/Scene3D.o: main/3d/Scene3D.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2272,6 +2329,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/Scene3D.o: main/3d/Scene3D.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -2329,6 +2387,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/rt/plan.o: main/3d/rt/plan.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2351,6 +2410,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/rt/plan.o: main/3d/rt/plan.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -2395,6 +2455,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/rt/mesh.o: main/3d/rt/mesh.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2417,6 +2478,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/rt/mesh.o: main/3d/rt/mesh.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -2461,6 +2523,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/rt/context.o: main/3d/rt/context.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2484,6 +2547,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/rt/context.o: main/3d/rt/context.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -2532,6 +2596,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/raytrace.o: main/3d/raytrace.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2547,6 +2612,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/raytrace.o: main/3d/raytrace.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/darray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/math.h
 $(LSP_DSP_UNITS_BIN)/main/3d/RayTrace3D.o: main/3d/RayTrace3D.cpp \
@@ -2565,6 +2631,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/RayTrace3D.o: main/3d/RayTrace3D.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -2602,6 +2669,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/RayTrace3D.o: main/3d/RayTrace3D.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2675,6 +2743,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/Object3D.o: main/3d/Object3D.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2695,6 +2764,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/Object3D.o: main/3d/Object3D.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -2740,6 +2810,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/bsp/context.o: main/3d/bsp/context.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2760,6 +2831,7 @@ $(LSP_DSP_UNITS_BIN)/main/3d/bsp/context.o: main/3d/bsp/context.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -2776,7 +2848,8 @@ $(LSP_DSP_UNITS_BIN)/main/3d/Allocator.o: main/3d/Allocator.cpp \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/alloc.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdlib.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/bits.h \
- $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits/reverse.h \
+ $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/arch/x86/bits/int_log2.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h
 $(LSP_DSP_UNITS_BIN)/test/utest/util/spectral_proc.o: \
  test/utest/util/spectral_proc.cpp \
@@ -2829,6 +2902,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/spectral_proc.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2875,6 +2949,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/sidechain.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -2957,6 +3032,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/crossfade.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3018,6 +3094,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/counter.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3080,6 +3157,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/util/convolver.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3109,6 +3187,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/sample.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3168,6 +3247,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/player.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3206,6 +3286,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/player.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3236,6 +3317,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/helpers/playback.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3273,6 +3355,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/helpers/playback.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3314,6 +3397,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/helpers/batch.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3351,6 +3435,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/sampling/helpers/batch.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3442,6 +3527,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/filters/equalizer.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3463,6 +3549,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/filters/equalizer.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/stdlib/stdio.h
 $(LSP_DSP_UNITS_BIN)/test/utest/dynamics/limiter.o: \
@@ -3490,6 +3577,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/dynamics/limiter.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/OutSequence.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/charset.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
@@ -3532,6 +3620,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/dynamics/limiter.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3593,6 +3682,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/3d/scene_load.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3613,6 +3703,7 @@ $(LSP_DSP_UNITS_BIN)/test/utest/3d/scene_load.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/Path.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/io/IInStream.h \
@@ -3645,6 +3736,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/sync_chirp.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3686,6 +3778,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/sync_chirp.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3777,6 +3870,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/latency_detector.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3816,6 +3910,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/convolver.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3852,6 +3947,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/util/convolver.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -3888,6 +3984,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/sampling/resample.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/IOutAudioStream.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/mm/types.h \
@@ -3914,6 +4011,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/noise/MLS.o: test/mtest/noise/MLS.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReader.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkAccessor.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
@@ -4008,6 +4106,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/filters/SpectralTilt.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -4027,6 +4126,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/filters/SpectralTilt.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReader.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkAccessor.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
@@ -4089,6 +4189,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/filters/ButterworthFilter.o: \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -4108,6 +4209,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/filters/ButterworthFilter.o: \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkReader.h \
  $(LSP_RUNTIME_LIB_INC)/lsp-plug.in/fmt/lspc/ChunkAccessor.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/status.h \
@@ -4131,10 +4233,11 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/demo.o: test/mtest/demo.cpp \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/parray.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/version.h \
  $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/spec.h \
- $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/new.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/types.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/version.h \
  $(LSP_COMMON_LIB_INC)/lsp-plug.in/common/finally.h \
+ $(LSP_LLTL_LIB_INC)/lsp-plug.in/lltl/types.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/dsp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/version.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/types.h \
@@ -4167,6 +4270,7 @@ $(LSP_DSP_UNITS_BIN)/test/mtest/demo.o: test/mtest/demo.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \
@@ -4241,6 +4345,7 @@ $(LSP_DSP_UNITS_BIN)/test/init/init.o: test/init/init.cpp \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_kx.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/fmop_vv.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/log.h \
+ $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/lramp.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/minmax.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/normalize.h \
  $(LSP_DSP_LIB_INC)/lsp-plug.in/dsp/common/pmath/op_kx.h \

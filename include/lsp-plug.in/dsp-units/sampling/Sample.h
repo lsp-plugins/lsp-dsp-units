@@ -72,6 +72,7 @@ namespace lsp
                 status_t            open_stream_ext(mm::IInAudioStream **is, const io::Path *path);
                 status_t            try_open_regular_file(mm::IInAudioStream **is, const io::Path *path);
                 status_t            try_open_lspc(mm::IInAudioStream **is, const io::Path *lspc, const io::Path *item);
+                status_t            try_open_sfz(mm::IInAudioStream **is, const io::Path *sfz, const io::Path *item);
 
             public:
                 explicit Sample();

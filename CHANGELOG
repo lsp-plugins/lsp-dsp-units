@@ -2,6 +2,20 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.9 ===
+* Changed visibility of the dspu::InSampleStream class to public.
+* Added dspu::Filter::limit method for limiting frequency parameters of the filter.
+* Added dspu::Equalizer::limit_params mehod for limiting frequency parameters of
+  the corresponding filter.
+* Implemented smooth mode for the FIR/IIR type of equalizer which performs the
+  cross-fade on the change of filter characteristics.
+* Implemented functions for converting the frequency to a note.
+* Added possiblity to load sample built-in into SFZ file format.
+* Added test build for Windows using MSYS2.
+* Raised the resampling precision for the dspu::Sample::resample().
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.8 ===
 * Added MIDI note to frequency convertion function dspu::midi_note_to_frequency.
 * Added set of functions to convert Neper to dB and gain values.

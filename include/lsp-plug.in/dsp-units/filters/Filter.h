@@ -69,8 +69,9 @@ namespace lsp
                 size_t              nLatency;       // Filter latency
 
             protected:
+                void                apo_complex_transfer_calc_ri(float *re, float *im, const float *f, size_t count);
+                void                apo_complex_transfer_calc_pc(float *ri, const float *f, size_t count);
 
-                void                apo_complex_transfer_calc(float *re, float *im, float f);
                 dsp::f_cascade_t   *add_cascade();
 
                 void                calc_rlc_filter(size_t type, const filter_params_t *fp);
@@ -104,10 +105,17 @@ namespace lsp
 
             public:
                 /** Update filter parameters
-                 *
+                 * @param sr sample rate of the filter
                  * @param params filter parameters
                  */
                 void                update(size_t sr, const filter_params_t *params);
+
+                /**
+                 * Update passed filter parameters structure to match the filter restrictions
+                 * @param sr sample rate of the filter
+                 * @param fp filter parameter structure to process and update
+                 */
+                void                limit(size_t sr, filter_params_t *fp);
 
                 /**
                  * Update sample rate
@@ -188,8 +196,9 @@ namespace lsp
                  */
                 void                dump(IStateDumper *v) const;
         };
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_FILTER_H_ */

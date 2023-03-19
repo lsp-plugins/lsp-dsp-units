@@ -55,6 +55,7 @@ namespace lsp
             vInBuffer       = NULL;
             vOutBuffer      = NULL;
             vConv           = NULL;
+            vNewConv        = NULL;
             vFft            = NULL;
             vTemp           = NULL;
             pData           = NULL;
@@ -86,7 +87,7 @@ namespace lsp
                 size_t fft_size     = nFirSize << 1;
                 size_t conv_size    = nFirSize << 2;
                 size_t tmp_size     = lsp_max(conv_size, BUFFER_SIZE);
-                size_t allocate     = fft_size*2 + conv_size*2 + tmp_size + nFirSize;
+                size_t allocate     = fft_size*2 + conv_size*3 + tmp_size + nFirSize;
 
                 float *ptr          = alloc_aligned<float>(pData, allocate);
                 if (ptr == NULL)
@@ -103,6 +104,8 @@ namespace lsp
                 vOutBuffer          = ptr;
                 ptr                += fft_size;             // nFirSize * 2
                 vConv               = ptr;
+                ptr                += conv_size;            // nFirSize * 4
+                vNewConv            = ptr;
                 ptr                += conv_size;            // nFirSize * 4
                 vFft                = ptr;
                 ptr                += conv_size;            // nFirSize * 4
@@ -125,6 +128,7 @@ namespace lsp
                 vInBuffer           = NULL;
                 vOutBuffer          = NULL;
                 vConv               = NULL;
+                vNewConv            = NULL;
                 vFft                = NULL;
                 vTemp               = ptr;
             }
@@ -140,7 +144,7 @@ namespace lsp
             }
 
             // Mark equalizer for rebuild
-            nFlags              = EF_REBUILD | EF_CLEAR;
+            nFlags             |= EF_REBUILD | EF_CLEAR;
             nLatency            = 0;
             nBufSize            = 0;
 
@@ -164,6 +168,7 @@ namespace lsp
                 vInBuffer       = NULL;
                 vOutBuffer      = NULL;
                 vConv           = NULL;
+                vNewConv        = NULL;
                 vFft            = NULL;
                 vTemp           = NULL;
                 pData           = NULL;
@@ -187,14 +192,27 @@ namespace lsp
             }
         }
 
+        bool Equalizer::configuration_changed() const
+        {
+            return (nFlags & EF_REBUILD) != 0;
+        }
+
         bool Equalizer::set_params(size_t id, const filter_params_t *params)
         {
             if (id >= nFilters)
                 return false;
 
-            Filter *f = &vFilters[id];
-            f->update(nSampleRate, params);
+            vFilters[id].update(nSampleRate, params);
             nFlags     |= EF_REBUILD;
+            return true;
+        }
+
+        bool Equalizer::limit_params(size_t id, filter_params_t *fp)
+        {
+            if (id >= nFilters)
+                return false;
+
+            vFilters[id].limit(nSampleRate, fp);
             return true;
         }
 
@@ -208,13 +226,15 @@ namespace lsp
 
         size_t Equalizer::get_latency()
         {
-            if (nFlags != 0)
-                reconfigure();
+            reconfigure();
             return nLatency;
         }
 
         void Equalizer::reconfigure()
         {
+            if (!(nFlags & (EF_REBUILD | EF_CLEAR)))
+                return;
+
             if (nMode == EQM_BYPASS)
             {
                 nLatency        = 0;
@@ -230,20 +250,28 @@ namespace lsp
             // Quit if working in IIR mode
             if (nMode == EQM_IIR)
             {
-                nFlags          = 0;
+                nFlags         &= ~(EF_REBUILD | EF_CLEAR | EF_XFADE);
                 nLatency        = 0;
                 return;
             }
 
+            // Clear state of equalizer?
             size_t fft_size     = nFirSize << 1;
             size_t half_size    = nFirSize >> 1;
+
+            if (nFlags & EF_CLEAR)
+            {
+                dsp::fill_zero(vInBuffer,  fft_size);
+                dsp::fill_zero(vOutBuffer, fft_size);
+                nBufSize    = 0;
+            }
 
             // Build filter's magnitude characteristics
             if (nMode == EQM_FIR)
             {
-                windows::blackman_nuttall(vConv, fft_size);
+                windows::blackman_nuttall(vNewConv, fft_size);
                 sBank.impulse_response(vTemp, nFirSize);                        // Generate impulse response of the filter
-                dsp::mul2(vTemp, &vConv[nFirSize], nFirSize);                   // Apply window function to the impulse response
+                dsp::mul2(vTemp, &vNewConv[nFirSize], nFirSize);                // Apply window function to the impulse response
                 dsp::pcomplex_r2c(vFft, vTemp, nFirSize);                       // Prepare for FFT transform
                 dsp::packed_direct_fft(vFft, vFft, nFirRank);                   // Perform FFT
                 dsp::pcomplex_mod(vTemp, vFft, nFirSize);                       // Now we have FFT magnitude in vTemp
@@ -252,7 +280,7 @@ namespace lsp
             {
                 size_t num_filters  = 0;
                 size_t freq_size    = half_size + 1;
-                dsp::lin_inter_set(vConv, 0, 0.0f, half_size, 0.5f * nSampleRate, 0, freq_size); // Compute frequencies
+                dsp::lin_inter_set(vNewConv, 0, 0.0f, half_size, 0.5f * nSampleRate, 0, freq_size); // Compute frequencies
 
                 // Build frequency chart for all filters
                 for (size_t i=0; i<nFilters; ++i)
@@ -264,13 +292,13 @@ namespace lsp
                     // Get the frequency chart of the filter
                     if ((num_filters++) > 0)
                     {
-                        vFilters[i].freq_chart(vFft, vConv, freq_size);
+                        vFilters[i].freq_chart(vFft, vNewConv, freq_size);
                         dsp::pcomplex_mod(vFft, vFft, freq_size);
                         dsp::mul2(vTemp, vFft, freq_size);
                     }
                     else
                     {
-                        vFilters[i].freq_chart(vFft, vConv, freq_size);
+                        vFilters[i].freq_chart(vFft, vNewConv, freq_size);
                         dsp::pcomplex_mod(vTemp, vFft, freq_size);
                     }
                 }
@@ -291,13 +319,20 @@ namespace lsp
                 dsp::packed_reverse_fft(vFft, vFft, nFirRank);                      // Get the synthesized impulse response
                 dsp::pcomplex_c2r(&vTemp[half_size], vFft, nFirSize);               // Get real part of the impulse response
                 dsp::copy(vTemp, &vTemp[nFirSize], half_size);                      // Make impulse response symmetric
-                windows::blackman_nuttall(vConv, nFirSize);                         // Compute the window function
-                dsp::mul2(vTemp, vConv, nFirSize);                                  // Apply the window function
+                windows::blackman_nuttall(vNewConv, nFirSize);                      // Compute the window function
+                dsp::mul2(vTemp, vNewConv, nFirSize);                               // Apply the window function
 
                 // Get the final impulse response data
-                dsp::fastconv_parse(vConv, vTemp, nFirRank + 1);                    // Get the IR function
+                if (nFlags & EF_SMOOTH)
+                {
+                    nFlags     |= EF_XFADE;
+                    dsp::fastconv_parse(vNewConv, vTemp, nFirRank + 1);                 // Get the IR function
+                }
+                else
+                    dsp::fastconv_parse(vConv, vTemp, nFirRank + 1);                 // Get the IR function
 
                 nLatency    = nFirSize + half_size;
+                nFlags     &= ~(EF_REBUILD | EF_CLEAR);
             }
             else // EQM_SPM
             {
@@ -305,17 +340,8 @@ namespace lsp
                 windows::sqr_cosine(vFft, nFirSize);                                // Also provide window
 
                 nLatency    = nFirSize;
+                nFlags     &= ~(EF_REBUILD | EF_CLEAR | EF_XFADE);
             }
-
-            // Clear state of equalizer?
-            if (nFlags & EF_CLEAR)
-            {
-                dsp::fill_zero(vInBuffer,  fft_size);
-                dsp::fill_zero(vOutBuffer, fft_size);
-                nBufSize    = 0;
-            }
-
-            nFlags      = 0;
         }
 
         void Equalizer::set_mode(equalizer_mode_t mode)
@@ -330,8 +356,7 @@ namespace lsp
         {
             if (id >= nFilters)
                 return false;
-            if (nFlags != 0)
-                reconfigure();
+            reconfigure();
 
             vFilters[id].freq_chart(re, im, f, count);
             return true;
@@ -341,8 +366,7 @@ namespace lsp
         {
             if (id >= nFilters)
                 return false;
-            if (nFlags != 0)
-                reconfigure();
+            reconfigure();
 
             vFilters[id].freq_chart(c, f, count);
             return true;
@@ -350,8 +374,7 @@ namespace lsp
 
         void Equalizer::freq_chart(float *re, float *im, const float *f, size_t count)
         {
-            if (nFlags != 0)
-                reconfigure();
+            reconfigure();
 
             float *xre      = vTemp;
             float *xim      = &xre[BUFFER_SIZE/2];
@@ -385,8 +408,7 @@ namespace lsp
 
         void Equalizer::freq_chart(float *c, const float *f, size_t count)
         {
-            if (nFlags != 0)
-                reconfigure();
+            reconfigure();
 
             // Fill initial values
             dsp::pcomplex_fill_ri(c, 1.0f, 0.0f, count);
@@ -415,8 +437,7 @@ namespace lsp
 
         void Equalizer::process(float *out, const float *in, size_t samples)
         {
-            if (nFlags != 0)
-                reconfigure();
+            reconfigure();
 
             switch (nMode)
             {
@@ -439,6 +460,24 @@ namespace lsp
                             dsp::move(vOutBuffer, &vOutBuffer[nFirSize], nFirSize);     // Shift output buffer
                             dsp::fill_zero(&vOutBuffer[nFirSize], nFirSize);            // Empty tail of output buffer
                             dsp::fastconv_parse_apply(vOutBuffer, vTemp, vConv, vInBuffer, conv_rank); // Apply convolution
+
+                            if (nFlags & EF_XFADE)
+                            {
+                                size_t half = nFirSize >> 1;
+
+                                // Replace old convolution with new one and apply new convolution
+                                dsp::fill_zero(vFft, nFirSize*2);
+                                dsp::copy(vConv, vNewConv, nFirSize * 4);
+                                dsp::fastconv_parse_apply(vFft, vTemp, vConv, vInBuffer, conv_rank); // Apply convolution
+
+                                // Mix the result of previous convolution with new one
+                                dsp::lramp1(&vOutBuffer[half], 1.0f, 0.0f, nFirSize);
+                                dsp::lramp_add2(&vOutBuffer[half], &vFft[half], 0.0f, 1.0f, nFirSize);
+                                dsp::copy(&vOutBuffer[nFirSize + half], &vFft[nFirSize + half], half);
+
+                                nFlags     &= ~EF_XFADE;
+                            }
+
                             nBufSize    = 0; // Reset buffer size
                         }
 
@@ -509,11 +548,10 @@ namespace lsp
             }
         }
 
-        /**
-         * Reset the internal memory of filters
-         */
         void Equalizer::reset()
         {
+            nFlags &= ~EF_CLEAR;
+
             switch (nMode)
             {
                 case EQM_BYPASS:
@@ -555,6 +593,16 @@ namespace lsp
             }
         }
 
+        bool Equalizer::smooth() const
+        {
+            return nFlags & EF_SMOOTH;
+        }
+
+        void Equalizer::set_smooth(bool smooth)
+        {
+            nFlags = lsp_setflag(nFlags, EF_SMOOTH, smooth);
+        }
+
         void Equalizer::dump(IStateDumper *v) const
         {
             v->write_object("sBank", &sBank);
@@ -574,10 +622,12 @@ namespace lsp
             v->write("vInBuffer", vInBuffer);
             v->write("vOutBuffer", vOutBuffer);
             v->write("vConv", vConv);
+            v->write("vNewConv", vNewConv);
             v->write("vFft", vFft);
             v->write("vTemp", vTemp);
             v->write("nFlags", nFlags);
             v->write("pData", pData);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */

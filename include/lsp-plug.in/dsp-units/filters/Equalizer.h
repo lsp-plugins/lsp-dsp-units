@@ -53,8 +53,10 @@ namespace lsp
             protected:
                 enum eq_flags_t
                 {
-                    EF_REBUILD = 1 << 0,
-                    EF_CLEAR   = 1 << 1
+                    EF_REBUILD  = 1 << 0,
+                    EF_CLEAR    = 1 << 1,
+                    EF_XFADE    = 1 << 2,
+                    EF_SMOOTH   = 1 << 3
                 };
 
             protected:
@@ -70,6 +72,7 @@ namespace lsp
 
                 float              *vInBuffer;          // Input buffer data
                 float              *vOutBuffer;         // Output buffer data
+                float              *vNewConv;           // New convolution data
                 float              *vConv;              // Convolution data
                 float              *vFft;               // FFT transform data buffer (real + imaginary)
                 float              *vTemp;              // Temporary buffer for miscellaneous calculations
@@ -103,12 +106,25 @@ namespace lsp
                 void                destroy();
 
             public:
+                /**
+                 * Check if the configuration of the equalizer has changed
+                 * @return true if the configuration of the equalizer has changed
+                 */
+                bool                configuration_changed() const;
+
                 /** Update filter parameters
                  * @param id ID of the filter
                  * @param params  filter parameters
                  * @return true on success
                  */
                 bool                set_params(size_t id, const filter_params_t *params);
+
+                /** Apply limits to filter parameters
+                 * @param id ID of the filter
+                 * @param fp filter parameters to process
+                 * @return true on success
+                 */
+                bool                limit_params(size_t id, filter_params_t *fp);
 
                 /** Get filter parameters
                  * @param id ID of the filter
@@ -242,8 +258,23 @@ namespace lsp
                  * @param dumper dumper
                  */
                 void                dump(IStateDumper *v) const;
+
+                /**
+                 * Check that the smooth mode for FIR/FFT mode is enabled
+                 * @return true if the smooth mode for FIR/FFT mode is enabled
+                 */
+                bool                smooth() const;
+
+                /**
+                 * Enable smooth mode for the FIR/FFT mode which performs
+                 * soft crossfade between data convolved with the old impulse response
+                 * and data convolved with the new impulse response.
+                 * @param smooth smooth mode flag
+                 */
+                void                set_smooth(bool smooth);
         };
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_EQUALIZER_H_ */

@@ -148,26 +148,18 @@ namespace lsp
 
             // Copy and limit parameters
             *fp                     = *params;
-            if (fp->nSlope < 1)
-                fp->nSlope              = 1;
-            else if (fp->nSlope > FILTER_CHAINS_MAX)
-                fp->nSlope              = FILTER_CHAINS_MAX;
-            if (fp->fFreq < LSP_DSP_UNITS_SPEC_FREQ_MIN)
-                fp->fFreq               = LSP_DSP_UNITS_SPEC_FREQ_MIN;
-            else if (fp->fFreq > LSP_DSP_UNITS_SPEC_FREQ_MAX)
-                fp->fFreq               = LSP_DSP_UNITS_SPEC_FREQ_MAX;
-            if (fp->fFreq >= (0.49f * nSampleRate))
-                fp->fFreq               = 0.49f * nSampleRate;
-            if (fp->fFreq2 < LSP_DSP_UNITS_SPEC_FREQ_MIN)
-                fp->fFreq2              = LSP_DSP_UNITS_SPEC_FREQ_MIN;
-            else if (fp->fFreq2 > LSP_DSP_UNITS_SPEC_FREQ_MAX)
-                fp->fFreq2              = LSP_DSP_UNITS_SPEC_FREQ_MAX;
-            if (fp->fFreq2 >= (0.49f * nSampleRate))
-                fp->fFreq2              = 0.49f * nSampleRate;
-
+            limit(sr, fp);
             nFlags                 |= FF_REBUILD;
             if ((type != fp->nType) || (slope != fp->nSlope))
                 nFlags                 |= FF_CLEAR;
+        }
+
+        void Filter::limit(size_t sr, filter_params_t *fp)
+        {
+            float max_freq  = lsp_min(LSP_DSP_UNITS_SPEC_FREQ_MAX, 0.49f * nSampleRate);
+            fp->nSlope      = lsp_limit(fp->nSlope, 1U, FILTER_CHAINS_MAX);
+            fp->fFreq       = lsp_limit(fp->fFreq, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
+            fp->fFreq2      = lsp_limit(fp->fFreq2, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
         }
 
         void Filter::set_sample_rate(size_t sr)
@@ -396,51 +388,99 @@ namespace lsp
             nFlags     &= FF_OWN_BANK; // Clear all flags except FF_OWN_BANK
         }
 
-        void Filter::apo_complex_transfer_calc(float *re, float *im, float f)
+        void Filter::apo_complex_transfer_calc_ri(float *re, float *im, const float *f, size_t count)
         {
-            // Calculating normalized frequency, wrapped for maximal accuracy:
-            float kf    = f / float(nSampleRate);
-            float w     = 2.0 * M_PI * (kf - floor(kf));
-
-            // Auxiliary variables:
-            float cw    = cosf(w);
-            float sw    = sinf(w);
-
-            // These equations are valid since sw has valid sign
-            float c2w   = cw * cw - sw * sw;    // cos(2 * w)
-            float s2w   = 2.0 * sw * cw;        // sin(2 * w)
-
-            // Apo will be just one biquad, but let's write this to be able to calculate any digital biquads cascade.
-            float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
-            float b_re, b_im;                   // Temporary values for computing complex multiplication
-
-            for (size_t i=0; i<nItems; ++i)
+            for (size_t i=0; i<count; ++i)
             {
-                dsp::f_cascade_t *c  = &vItems[i];
+                // Auxiliary variables:
+                float cw    = f[0];
+                float sw    = f[1];
 
-                float alpha     = c->t[0] + c->t[1] * cw + c->t[2] * c2w;
-                float beta      = c->t[1] * sw + c->t[2] * s2w;
-                float gamma     = c->b[0] + c->b[1] * cw + c->b[2] * c2w;
-                float delta     = c->b[1] * sw + c->b[2] * s2w;
+                // These equations are valid since sw has valid sign
+                float c2w   = cw * cw - sw * sw;    // cos(2 * w)
+                float s2w   = 2.0 * sw * cw;        // sin(2 * w)
 
-                float mag       = 1.0 / (gamma * gamma + delta * delta);
+                // Apo will be just one biquad, but let's write this to be able to calculate any digital biquads cascade.
+                float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
+                float b_re, b_im;                   // Temporary values for computing complex multiplication
 
-                // Compute current biquad's tranfer function
-                float w_re      = mag * (alpha * gamma - beta * delta);
-                float w_im      = mag * (alpha * delta + beta * gamma);
+                for (size_t i=0; i<nItems; ++i)
+                {
+                    dsp::f_cascade_t *c  = &vItems[i];
 
-                // Compute common transfer function as a product between current biquad's
-                // transfer function and previous value
-                b_re            = r_re*w_re - r_im*w_im;
-                b_im            = r_re*w_im + r_im*w_re;
+                    float alpha     = c->t[0] + c->t[1] * cw + c->t[2] * c2w;
+                    float beta      = c->t[1] * sw + c->t[2] * s2w;
+                    float gamma     = c->b[0] + c->b[1] * cw + c->b[2] * c2w;
+                    float delta     = c->b[1] * sw + c->b[2] * s2w;
 
-                // Commit changes to the result complex number
-                r_re            = b_re;
-                r_im            = b_im;
+                    float mag       = 1.0 / (gamma * gamma + delta * delta);
+
+                    // Compute current biquad's tranfer function
+                    float w_re      = mag * (alpha * gamma - beta * delta);
+                    float w_im      = mag * (alpha * delta + beta * gamma);
+
+                    // Compute common transfer function as a product between current biquad's
+                    // transfer function and previous value
+                    b_re            = r_re*w_re - r_im*w_im;
+                    b_im            = r_re*w_im + r_im*w_re;
+
+                    // Commit changes to the result complex number
+                    r_re            = b_re;
+                    r_im            = b_im;
+                }
+
+                re[i]  = r_re;
+                im[i]  = r_im;
+                f     += 2;
             }
+        }
 
-            *re     = r_re;
-            *im     = r_im;
+        void Filter::apo_complex_transfer_calc_pc(float *ri, const float *f, size_t count)
+        {
+            for (size_t i=0; i<count; ++i)
+            {
+                // Auxiliary variables:
+                float cw    = f[0];
+                float sw    = f[1];
+
+                // These equations are valid since sw has valid sign
+                float c2w   = cw * cw - sw * sw;    // cos(2 * w)
+                float s2w   = 2.0 * sw * cw;        // sin(2 * w)
+
+                // Apo will be just one biquad, but let's write this to be able to calculate any digital biquads cascade.
+                float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
+                float b_re, b_im;                   // Temporary values for computing complex multiplication
+
+                for (size_t i=0; i<nItems; ++i)
+                {
+                    dsp::f_cascade_t *c  = &vItems[i];
+
+                    float alpha     = c->t[0] + c->t[1] * cw + c->t[2] * c2w;
+                    float beta      = c->t[1] * sw + c->t[2] * s2w;
+                    float gamma     = c->b[0] + c->b[1] * cw + c->b[2] * c2w;
+                    float delta     = c->b[1] * sw + c->b[2] * s2w;
+
+                    float mag       = 1.0 / (gamma * gamma + delta * delta);
+
+                    // Compute current biquad's tranfer function
+                    float w_re      = mag * (alpha * gamma - beta * delta);
+                    float w_im      = mag * (alpha * delta + beta * gamma);
+
+                    // Compute common transfer function as a product between current biquad's
+                    // transfer function and previous value
+                    b_re            = r_re*w_re - r_im*w_im;
+                    b_im            = r_re*w_im + r_im*w_re;
+
+                    // Commit changes to the result complex number
+                    r_re            = b_re;
+                    r_im            = b_im;
+                }
+
+                ri[0]  = r_re;
+                ri[1]  = r_im;
+                f     += 2;
+                ri    += 2;
+            }
         }
 
         void Filter::freq_chart(float *re, float *im, const float *f, size_t count)
@@ -466,7 +506,7 @@ namespace lsp
                         for (size_t i=0; i<to_do; ++i)
                         {
                             float w     = f[i];
-                            freqs[i]      = tanf((w > lf ? lf : w) * nf) * kf;
+                            freqs[i]    = tanf((w > lf ? lf : w) * nf) * kf;
                         }
                         dsp::filter_transfer_calc_ri(re, im, &vItems[0], freqs, to_do);
                         for (size_t i=1; i<nItems; ++i)
@@ -506,9 +546,31 @@ namespace lsp
 
                 case FM_APO:
                 {
-                    while (count--)
+                    // Calculating normalized frequency, wrapped for maximal accuracy:
+                    float kf    = 2.0 * M_PI / float(nSampleRate);
+                    float lf    = nSampleRate * 0.5f;
+
+                    while (count > 0)
                     {
-                        apo_complex_transfer_calc(re++, im++, *(f++));
+                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE >> 1);
+
+                        // Compute transfer function
+                        float *df       = freqs;
+                        for (size_t i=0; i<to_do; ++i, df += 2)
+                        {
+                            float w     = f[i];
+                            float f     = lsp_min(w, lf) * kf;
+                            df[0]       = cosf(f);
+                            df[1]       = sinf(f);
+                        }
+
+                        apo_complex_transfer_calc_ri(re, im, freqs, to_do);
+
+                        // Update pointers
+                        re         += to_do;
+                        im         += to_do;
+                        f          += to_do;
+                        count      -= to_do;
                     }
                     break;
                 }
@@ -584,10 +646,30 @@ namespace lsp
 
                 case FM_APO:
                 {
-                    while (count--)
+                    // Calculating normalized frequency, wrapped for maximal accuracy:
+                    float kf    = 2.0 * M_PI / float(nSampleRate);
+                    float lf    = nSampleRate * 0.5f;
+
+                    while (count > 0)
                     {
-                        apo_complex_transfer_calc(c, &c[1], *(f++));
-                        c += 2; // Don't forget to move the pointer
+                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE >> 1);
+
+                        // Compute transfer function
+                        float *df       = freqs;
+                        for (size_t i=0; i<to_do; ++i, df += 2)
+                        {
+                            float w     = f[i];
+                            float f     = lsp_min(w, lf) * kf;
+                            df[0]       = cosf(f);
+                            df[1]       = sinf(f);
+                        }
+
+                        apo_complex_transfer_calc_pc(c, freqs, to_do);
+
+                        // Update pointers
+                        c          += to_do * 2;
+                        f          += to_do;
+                        count      -= to_do;
                     }
                     break;
                 }
@@ -1818,7 +1900,8 @@ namespace lsp
             v->write("nFlags", nFlags);
             v->write("nLatency", nLatency);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
