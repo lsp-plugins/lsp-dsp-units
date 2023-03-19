@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.10 ===
+
+
 === 1.0.9 ===
 * Changed visibility of the dspu::InSampleStream class to public.
 * Added dspu::Filter::limit method for limiting frequency parameters of the filter.
