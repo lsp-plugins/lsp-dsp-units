@@ -14,6 +14,7 @@
 * Added test build for Windows using MSYS2.
 * Raised the resampling precision for the dspu::Sample::resample().
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.8 ===
 * Added MIDI note to frequency convertion function dspu::midi_note_to_frequency.
