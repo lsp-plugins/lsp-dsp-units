@@ -32,6 +32,21 @@ namespace lsp
 {
     namespace dspu
     {
+
+        static const dsp::biquad_x1_t  lufs_filter_params[] =
+        {
+            {
+                1.53512485958697, -2.69169618940638, 1.19839281085285,
+                -1.69065929318241, 0.73248077421585,
+                0.0f, 0.0f, 0.0f
+            },
+            {
+                1.0, -2.0, 1.0,
+                1.99004745483398, 0.99007225036621,
+                0.0f, 0.0f, 0.0f,
+            },
+        };
+
         Filter::Filter()
         {
             construct();
@@ -366,6 +381,13 @@ namespace lsp
                     calc_apo_filter(FLT_DR_APO_LOSHELF, &fp);
                     fp.fFreq            = sParams.fFreq2;
                     calc_apo_filter(FLT_DR_APO_HISHELF, &fp);
+                    nMode               = FM_APO;
+                    break;
+                }
+
+                case FLT_DR_APO_LUFS:
+                {
+                    calc_lufs_filter(&fp);
                     nMode               = FM_APO;
                     break;
                 }
@@ -1597,6 +1619,7 @@ namespace lsp
 
                     break;
                 }
+
                 default:
                     return;
             }
@@ -1623,6 +1646,39 @@ namespace lsp
             c->b[0] = 1.0;
             c->b[1] = -f->a1;
             c->b[2] = -f->a2;
+        }
+
+        void Filter::calc_lufs_filter(const filter_params_t *fp)
+        {
+            float kf = 1000.0f / fp->fFreq;
+            float kf2 = kf * kf;
+
+            for (size_t i=0, n = sizeof(lufs_filter_params)/sizeof(lufs_filter_params[0]); i<n; ++i)
+            {
+                dsp::biquad_x1_t *f = pBank->add_chain();
+                if (f == NULL)
+                    return;
+
+                // Storing with appropriate normalisation and sign as required by biquad_process_x1().
+                const dsp::biquad_x1_t *sf = &lufs_filter_params[i];
+                f->b0   = sf->b0;
+                f->b1   = sf->b1 * kf;
+                f->b2   = sf->b2 * kf2;
+                f->a1   = -sf->a1 * kf;
+                f->a2   = -sf->a2 * kf2;
+                f->p0   = 0.0f;
+                f->p1   = 0.0f;
+                f->p2   = 0.0f;
+
+                // Storing the coefficient for plotting
+                dsp::f_cascade_t *c  = add_cascade();
+                c->t[0] = f->b0;
+                c->t[1] = f->b1;
+                c->t[2] = f->b2;
+                c->b[0] = 1.0;
+                c->b[1] = -f->a1;
+                c->b[2] = -f->a2;
+            }
         }
 
         /*

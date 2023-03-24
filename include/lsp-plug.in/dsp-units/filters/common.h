@@ -125,6 +125,9 @@ namespace lsp
             FLT_DR_APO_HISHELF,
             FLT_DR_APO_LADDERPASS,
             FLT_DR_APO_LADDERREJ,
+
+            // ITU-R BS.1770-4 (10/2015) LUFS filter
+            FLT_DR_APO_LUFS
         };
 
         typedef struct filter_params_t
