@@ -371,10 +371,13 @@ namespace lsp
                     break;
                 }
 
-                case FLT_DR_APO_K_WEIGHTED:
+                case FLT_A_WEIGHTED:
+                case FLT_B_WEIGHTED:
+                case FLT_C_WEIGHTED:
+                case FLT_D_WEIGHTED:
+                case FLT_K_WEIGHTED:
                 {
                     calc_weighted_filter(sParams.nType, &fp);
-                    nMode               = FM_APO;
                     break;
                 }
 
@@ -1634,11 +1637,198 @@ namespace lsp
             c->b[2] = -f->a2;
         }
 
+        void Filter::normalize(dsp::biquad_x1_t *f, float frequency, float gain)
+        {
+            float xf        = 2.0 * M_PI * lsp_min(frequency, nSampleRate * 0.5f) / float(nSampleRate);
+
+            float cw        = cosf(xf);
+            float sw        = sinf(xf);
+
+            // These equations are valid since sw has valid sign
+            float c2w       = cw * cw - sw * sw;    // cos(2 * w)
+            float s2w       = 2.0 * sw * cw;        // sin(2 * w)
+
+            float alpha     = f->b0 + f->b1 * cw + f->b2 * c2w;
+            float beta      = f->b1 * sw + f->b2 * s2w;
+            float gamma     = 1.0f - f->a1 * cw - f->a2 * c2w;
+            float delta     = -f->a1 * sw - f->a2 * s2w;
+
+            float mag       = gamma * gamma + delta * delta;
+
+            // Compute current biquad's tranfer function
+            float w_re      = alpha * gamma - beta * delta;
+            float w_im      = alpha * delta + beta * gamma;
+
+            float egain     = (gain * mag) / sqrtf(w_re * w_re + w_im * w_im);
+
+            f->b0          *= egain;
+            f->b1          *= egain;
+            f->b2          *= egain;
+        }
+
         void Filter::calc_weighted_filter(size_t type, const filter_params_t *fp)
         {
+            // https://en.wikipedia.org/wiki/A-weighting
+            //
+            // The original equations give wrong frequency shift for the filters, it should be corrected.
+            // Final equations given as follows:
+            //
+            // ka=7,39705e+9*0,0251188643151 = 185805495,282; root(3, ka) = 570,627702141;
+            // Ha[p]=(ka*p^4)/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+676.7*0.15919)*(p+4636.0*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+            //
+            // kb=5.99185e+9*0.0251188643151;
+            // Hb[p]=kb*p^3/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+995.9*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+            //
+            // kc=5.91797e9*0.0251188643151;
+            // Hc[p]=kc*p^2/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+            //
+            // kd=91104.32*0.158489319246;
+            // Hd[p]=(kd*p*(p^2 +6532*p*0.15919 + 4.0975e7*0.15919*0.15919))/((p+1776.3*0.15919)*(p+7288.5*0.15919)*(p^2+21514*p*0.15919+3.8836e8*0.15919*0.15919));
+
             switch (type)
             {
-                case FLT_DR_APO_K_WEIGHTED:
+                case FLT_A_WEIGHTED:
+                {
+                    // Zeros: 0, 0
+                    // Poles: -129.4, -129.4
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        float p0            = bilinear_relative(129.4f * 0.5f / M_PI, 1.0f);
+                        float ww            = tanf(2.0f * M_PI * p0 / float(nSampleRate));
+                        float wp2           = ww + 2.0f;
+                        float wm2           = ww - 2.0f;
+                        float ka0           = 1.0f / (wp2*wp2);
+
+                        f->b0               = 4.0f * ka0;
+                        f->b1               = -8.0f * ka0;
+                        f->b2               = f->b0;
+                        f->a1               = - 2.0f * wp2 * wm2 * ka0;
+                        f->a2               = - wm2 * wm2 * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    // Zeros: 0, 0
+                    // Poles: -676.7, -4636.0
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        float p0            = bilinear_relative(676.7f * 0.5f / M_PI, 1.0f);
+                        float p1            = bilinear_relative(4636.0f * 0.5f / M_PI, 1.0f);
+
+                        float ww0           = tanf(2.0f * M_PI * p0 / float(nSampleRate));
+                        float ww1           = tanf(2.0f * M_PI * p1 / float(nSampleRate));
+                        float w0p2          = ww0 + 2.0f;
+                        float w1p2          = ww1 + 2.0f;
+                        float w0m2          = ww0 - 2.0f;
+                        float w1m2          = ww1 - 2.0f;
+
+                        float ka0           = 1.0f / (w0p2*w1p2);
+
+                        f->b0               = 4.0f * ka0;
+                        f->b1               = -8.0f * ka0;
+                        f->b2               = f->b0;
+                        f->a1               = - (w0p2 * w1m2 + w0m2 * w1p2) * ka0;
+                        f->a2               = - w0m2 * w1m2 * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    // Zeros: x
+                    // Poles: -76655.0, -76655.0
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        float p0            = bilinear_relative(76655.0f * 0.5f / M_PI, 1.0f);
+                        float ww            = tanf(2.0f * M_PI * p0 / float(nSampleRate));
+                        float wp2           = ww + 2.0f;
+                        float wm2           = ww - 2.0f;
+
+                        float ka0           = 1.0f / (wp2*wp2);
+
+                        f->b0               = ww * ka0;
+                        f->b1               = 2.0f * f->b0;
+                        f->b2               = f->b0;
+                        f->a1               = - 2.0f * wp2 * wm2 * ka0;
+                        f->a2               = - wm2 * wm2 * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+//                        // APO
+//                        float ww            = p0 / float(nSampleRate);
+//                        float ws            = sinf(ww);
+//                        float wc            = cosf(ww); // Have to use trig functions for both to have correct sign
+//
+//                        float ka0           = 1.0f / (1.0f + ws);
+//
+//                        f->b0               = 0.5f * (1.0f - wc) * ka0;
+//                        f->b1               = (1.0f - wc) * ka0;
+//                        f->b2               = f->b0;
+//                        f->a1               = -2.0 * wc * ka0;
+//                        f->a2               = (1.0 - ws) * ka0;
+//                        f->p0               = 0.0f;
+//                        f->p1               = 0.0f;
+//                        f->p2               = 0.0f;
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    nMode               = FM_APO;
+                    break;
+                }
+
+                case FLT_B_WEIGHTED:
+                    // TODO
+                    break;
+                case FLT_C_WEIGHTED:
+                    // TODO
+                    break;
+                case FLT_D_WEIGHTED:
+                    // TODO
+                    break;
+
+                case FLT_K_WEIGHTED:
 
                     // Original ITU-R BS.1770-4 (10/2015) Specifies biquad filer coefficients for 48 kHz sample rate
                     //
@@ -1659,7 +1849,7 @@ namespace lsp
                         constexpr float Vb  = 1.25872093023f; // power(Vh, 0,4996667741545416);
                         constexpr float f0  = 1681.974450955533f;
                         constexpr float Q   = 0.7071752369554196f;
-                        float K             = tanf(M_PI * f0 / nSampleRate);
+                        float K             = tanf(M_PI * f0 / float(nSampleRate));
                         float K2            = K*K;
                         float KQ            = K / Q;
 
@@ -1720,47 +1910,13 @@ namespace lsp
                         c->b[1]         = -f->a1;
                         c->b[2]         = -f->a2;
                     }
+
+                    nMode               = FM_APO;
+                    break;
+
+                default:
                     break;
             }
-
-//
-//            % HPF
-//            f0 = 38.13547087602444;
-//            Q  =  0.5003270373238773;
-//            K  = tan(pi * f0 / fs);
-//            rb0 = 1.0
-//            rb1 = -2.0
-//            rb2 = 1.0
-//            ra0 = 1.0
-//            ra1 = 2.0 * (K * K - 1.0) / (1.0 + K / Q + K * K)
-//            ra2 = (1.0 - K / Q + K * K) / (1.0 + K / Q + K * K)
-
-//            for (size_t i=0, n = sizeof(lufs_filter_params)/sizeof(lufs_filter_params[0]); i<n; ++i)
-//            {
-//                dsp::biquad_x1_t *f = pBank->add_chain();
-//                if (f == NULL)
-//                    return;
-//
-//                // Storing with appropriate normalisation and sign as required by biquad_process_x1().
-//                const dsp::biquad_x1_t *sf = &lufs_filter_params[i];
-//                f->b0   = sf->b0;
-//                f->b1   = sf->b1 * kf;
-//                f->b2   = sf->b2 * kf2;
-//                f->a1   = -sf->a1 * kf;
-//                f->a2   = -sf->a2 * kf2;
-//                f->p0   = 0.0f;
-//                f->p1   = 0.0f;
-//                f->p2   = 0.0f;
-//
-//                // Storing the coefficient for plotting
-//                dsp::f_cascade_t *c  = add_cascade();
-//                c->t[0] = f->b0;
-//                c->t[1] = f->b1;
-//                c->t[2] = f->b2;
-//                c->b[0] = 1.0;
-//                c->b[1] = -f->a1;
-//                c->b[2] = -f->a2;
-//            }
         }
 
         /*

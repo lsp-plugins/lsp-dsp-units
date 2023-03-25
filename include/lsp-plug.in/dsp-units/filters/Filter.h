@@ -72,6 +72,8 @@ namespace lsp
                 void                apo_complex_transfer_calc_ri(float *re, float *im, const float *f, size_t count);
                 void                apo_complex_transfer_calc_pc(float *ri, const float *f, size_t count);
 
+                void                normalize(dsp::biquad_x1_t *f, float frequency, float gain);
+
                 dsp::f_cascade_t   *add_cascade();
 
                 void                calc_rlc_filter(size_t type, const filter_params_t *fp);
