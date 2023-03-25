@@ -127,7 +127,7 @@ namespace lsp
             FLT_DR_APO_LADDERREJ,
 
             // ITU-R BS.1770-4 (10/2015) LUFS filter
-            FLT_DR_APO_LUFS
+            FLT_DR_APO_K_WEIGHTED
         };
 
         typedef struct filter_params_t

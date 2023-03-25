@@ -33,20 +33,6 @@ namespace lsp
     namespace dspu
     {
 
-        static const dsp::biquad_x1_t  lufs_filter_params[] =
-        {
-            {
-                1.53512485958697, -2.69169618940638, 1.19839281085285,
-                -1.69065929318241, 0.73248077421585,
-                0.0f, 0.0f, 0.0f
-            },
-            {
-                1.0, -2.0, 1.0,
-                1.99004745483398, 0.99007225036621,
-                0.0f, 0.0f, 0.0f,
-            },
-        };
-
         Filter::Filter()
         {
             construct();
@@ -385,9 +371,9 @@ namespace lsp
                     break;
                 }
 
-                case FLT_DR_APO_LUFS:
+                case FLT_DR_APO_K_WEIGHTED:
                 {
-                    calc_lufs_filter(&fp);
+                    calc_weighted_filter(sParams.nType, &fp);
                     nMode               = FM_APO;
                     break;
                 }
@@ -1648,37 +1634,133 @@ namespace lsp
             c->b[2] = -f->a2;
         }
 
-        void Filter::calc_lufs_filter(const filter_params_t *fp)
+        void Filter::calc_weighted_filter(size_t type, const filter_params_t *fp)
         {
-            float kf = 1000.0f / fp->fFreq;
-            float kf2 = kf * kf;
-
-            for (size_t i=0, n = sizeof(lufs_filter_params)/sizeof(lufs_filter_params[0]); i<n; ++i)
+            switch (type)
             {
-                dsp::biquad_x1_t *f = pBank->add_chain();
-                if (f == NULL)
-                    return;
+                case FLT_DR_APO_K_WEIGHTED:
 
-                // Storing with appropriate normalisation and sign as required by biquad_process_x1().
-                const dsp::biquad_x1_t *sf = &lufs_filter_params[i];
-                f->b0   = sf->b0;
-                f->b1   = sf->b1 * kf;
-                f->b2   = sf->b2 * kf2;
-                f->a1   = -sf->a1 * kf;
-                f->a2   = -sf->a2 * kf2;
-                f->p0   = 0.0f;
-                f->p1   = 0.0f;
-                f->p2   = 0.0f;
+                    // Original ITU-R BS.1770-4 (10/2015) Specifies biquad filer coefficients for 48 kHz sample rate
+                    //
+                    // High-shelving filter:
+                    // b0 = 1.53512485958697f, b1 = -2.69169618940638f, b2 = 1.19839281085285f,
+                    // a1 = -1.69065929318241f, a2 = 0.73248077421585f
+                    //
+                    // High-pass filter:
+                    // b0 = 1.0f, b1 = -2.0f, b2 = 1.0f,
+                    // a1 = -1.99004745483398f, a2 = 0.99007225036621f
+                    //
+                    // For another sample rates they should be recomputed, which is not trivial process.
+                    // This piece of code has been found somewhere in the internet and is used as a good approximation.
 
-                // Storing the coefficient for plotting
-                dsp::f_cascade_t *c  = add_cascade();
-                c->t[0] = f->b0;
-                c->t[1] = f->b1;
-                c->t[2] = f->b2;
-                c->b[0] = 1.0;
-                c->b[1] = -f->a1;
-                c->b[2] = -f->a2;
+                    // High-shelving filter
+                    {
+                        constexpr float Vh  = 1.58486470113f; // power(10.0, db / 20.0); db = 3.999843853973347f;
+                        constexpr float Vb  = 1.25872093023f; // power(Vh, 0,4996667741545416);
+                        constexpr float f0  = 1681.974450955533f;
+                        constexpr float Q   = 0.7071752369554196f;
+                        float K             = tanf(M_PI * f0 / nSampleRate);
+                        float K2            = K*K;
+                        float KQ            = K / Q;
+
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        // Storing with appropriate normalisation and sign as required by biquad_process_x1().
+                        float ka0       = 1.0f / (1.0f + KQ + K2);
+                        f->b0           = (Vh + Vb * KQ + K2) * ka0;
+                        f->b1           = 2.0f * (K2 -  Vh) * ka0;
+                        f->b2           = (Vh - Vb * KQ + K2) * ka0;
+                        f->a1           = -2.0f * (K2 - 1.0f) * ka0;
+                        f->a2           = - (1.0f - KQ + K2) * ka0;
+                        f->p0           = 0.0f;
+                        f->p1           = 0.0f;
+                        f->p2           = 0.0f;
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]         = f->b0;
+                        c->t[1]         = f->b1;
+                        c->t[2]         = f->b2;
+                        c->b[0]         = 1.0;
+                        c->b[1]         = -f->a1;
+                        c->b[2]         = -f->a2;
+                    }
+
+                    // Hi-pass filter
+                    {
+                        constexpr float f0  = 38.13547087602444f;
+                        constexpr float Q   = 0.5003270373238773f;
+                        float K             = tanf(M_PI * f0 / nSampleRate);
+                        float K2            = K*K;
+                        float KQ            = K / Q;
+
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        // Storing with appropriate normalisation and sign as required by biquad_process_x1().
+                        float ka0       = 1.0f / (1.0f + KQ + K2);
+                        f->b0           = 1.0f;
+                        f->b1           = -2.0f;
+                        f->b2           = 1.0f;
+                        f->a1           = - 2.0f * (K2 - 1.0f) * ka0;
+                        f->a2           = - (1.0f - KQ + K2) * ka0;
+                        f->p0           = 0.0f;
+                        f->p1           = 0.0f;
+                        f->p2           = 0.0f;
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]         = f->b0;
+                        c->t[1]         = f->b1;
+                        c->t[2]         = f->b2;
+                        c->b[0]         = 1.0;
+                        c->b[1]         = -f->a1;
+                        c->b[2]         = -f->a2;
+                    }
+                    break;
             }
+
+//
+//            % HPF
+//            f0 = 38.13547087602444;
+//            Q  =  0.5003270373238773;
+//            K  = tan(pi * f0 / fs);
+//            rb0 = 1.0
+//            rb1 = -2.0
+//            rb2 = 1.0
+//            ra0 = 1.0
+//            ra1 = 2.0 * (K * K - 1.0) / (1.0 + K / Q + K * K)
+//            ra2 = (1.0 - K / Q + K * K) / (1.0 + K / Q + K * K)
+
+//            for (size_t i=0, n = sizeof(lufs_filter_params)/sizeof(lufs_filter_params[0]); i<n; ++i)
+//            {
+//                dsp::biquad_x1_t *f = pBank->add_chain();
+//                if (f == NULL)
+//                    return;
+//
+//                // Storing with appropriate normalisation and sign as required by biquad_process_x1().
+//                const dsp::biquad_x1_t *sf = &lufs_filter_params[i];
+//                f->b0   = sf->b0;
+//                f->b1   = sf->b1 * kf;
+//                f->b2   = sf->b2 * kf2;
+//                f->a1   = -sf->a1 * kf;
+//                f->a2   = -sf->a2 * kf2;
+//                f->p0   = 0.0f;
+//                f->p1   = 0.0f;
+//                f->p2   = 0.0f;
+//
+//                // Storing the coefficient for plotting
+//                dsp::f_cascade_t *c  = add_cascade();
+//                c->t[0] = f->b0;
+//                c->t[1] = f->b1;
+//                c->t[2] = f->b2;
+//                c->b[0] = 1.0;
+//                c->b[1] = -f->a1;
+//                c->b[2] = -f->a2;
+//            }
         }
 
         /*

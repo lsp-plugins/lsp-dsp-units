@@ -78,7 +78,7 @@ namespace lsp
                 void                calc_bwc_filter(size_t type, const filter_params_t *fp);
                 void                calc_lrx_filter(size_t type, const filter_params_t *fp);
                 void                calc_apo_filter(size_t type, const filter_params_t *fp);
-                void                calc_lufs_filter(const filter_params_t *fp);
+                void                calc_weighted_filter(size_t type, const filter_params_t *fp);
                 float               bilinear_relative(float f1, float f2);
                 void                bilinear_transform();
                 void                matched_transform();
