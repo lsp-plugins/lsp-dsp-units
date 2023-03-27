@@ -1668,19 +1668,20 @@ namespace lsp
 
         void Filter::calc_weighted_filter(size_t type, const filter_params_t *fp)
         {
+            const float T       = 1.0f / float(nSampleRate);
+
             // https://en.wikipedia.org/wiki/A-weighting
+            // Final equations for non-normalized A-weighted filter given as follows:
             //
-            // The original equations give wrong frequency shift for the filters, it should be corrected.
-            // Final equations given as follows:
-            //
-            // ka=7,39705e+9*0,0251188643151 = 185805495,282; root(3, ka) = 570,627702141;
             // Ha[p]=(ka*p^4)/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+676.7*0.15919)*(p+4636.0*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+            //
+            // The final A-weighted filter should give 0 dB at 1 kHz frequency.
+
             //
             // kb=5.99185e+9*0.0251188643151;
             // Hb[p]=kb*p^3/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+995.9*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
             //
             // kc=5.91797e9*0.0251188643151;
-            // Hc[p]=kc*p^2/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
             //
             // kd=91104.32*0.158489319246;
             // Hd[p]=(kd*p*(p^2 +6532*p*0.15919 + 4.0975e7*0.15919*0.15919))/((p+1776.3*0.15919)*(p+7288.5*0.15919)*(p^2+21514*p*0.15919+3.8836e8*0.15919*0.15919));
@@ -1689,10 +1690,15 @@ namespace lsp
             {
                 case FLT_A_WEIGHTED:
                 {
+                    // https://en.wikipedia.org/wiki/A-weighting
+                    // Final equations for non-normalized A-weighted filter given as follows:
+                    //
+                    // Ha[p]=(ka*p^4)/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+676.7*0.15919)*(p+4636.0*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+                    //
+                    // The final A-weighted filter should give 0 dB at 1 kHz frequency.
+
                     // Zeros: 0, 0
                     // Poles: -129.4, -129.4
-                    float T             = 1.0f / float(nSampleRate);
-
                     {
                         dsp::biquad_x1_t *f = pBank->add_chain();
                         if (f == NULL)
@@ -1708,8 +1714,8 @@ namespace lsp
                         f->b0               = 0.5f * (1.0f + wc) * ka0;
                         f->b1               = (-1.0f - wc) * ka0;
                         f->b2               = f->b0;
-                        f->a1               = 2.0 * wc * ka0;
-                        f->a2               = (ws - 1.0) * ka0;
+                        f->a1               = 2.0f * wc * ka0;
+                        f->a2               = (ws - 1.0f) * ka0;
                         f->p0               = 0.0f;
                         f->p1               = 0.0f;
                         f->p2               = 0.0f;
@@ -1787,8 +1793,8 @@ namespace lsp
                         f->b0               = 0.5f * (1.0f - wc) * ka0;
                         f->b1               = (1.0f - wc) * ka0;
                         f->b2               = f->b0;
-                        f->a1               = -2.0 * wc * ka0;
-                        f->a2               = (1.0 - ws) * ka0;
+                        f->a1               = -2.0f * wc * ka0;
+                        f->a2               = (1.0f - ws) * ka0;
                         f->p0               = 0.0f;
                         f->p1               = 0.0f;
                         f->p2               = 0.0f;
@@ -1813,8 +1819,86 @@ namespace lsp
                     // TODO
                     break;
                 case FLT_C_WEIGHTED:
-                    // TODO
+                    // https://en.wikipedia.org/wiki/A-weighting
+                    // Final equations for non-normalized C-weighted filter given as follows:
+                    //
+                    // Hc[p]=p^2/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+                    //
+                    // The final C-weighted filter should give 0 dB at 1 kHz frequency.
+
+                    // Zeros: 0, 0
+                    // Poles: -129.4, -129.4
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 129.4f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
+
+                        float ka0           = 1.0f / (1.0f + ws);
+
+                        f->b0               = 0.5f * (1.0f + wc) * ka0;
+                        f->b1               = (-1.0f - wc) * ka0;
+                        f->b2               = f->b0;
+                        f->a1               = 2.0f * wc * ka0;
+                        f->a2               = (ws - 1.0f) * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    // Zeros: x
+                    // Poles: -76655.0, -76655.0
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 76655.0f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
+
+                        float ka0           = 1.0f / (1.0f + ws);
+
+                        f->b0               = 0.5f * (1.0f - wc) * ka0;
+                        f->b1               = (1.0f - wc) * ka0;
+                        f->b2               = f->b0;
+                        f->a1               = -2.0f * wc * ka0;
+                        f->a2               = (1.0f - ws) * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    nMode               = FM_APO;
                     break;
+
                 case FLT_D_WEIGHTED:
                     // TODO
                     break;
@@ -1840,7 +1924,7 @@ namespace lsp
                         constexpr float Vb  = 1.25872093023f; // power(Vh, 0,4996667741545416);
                         constexpr float f0  = 1681.974450955533f;
                         constexpr float Q   = 0.7071752369554196f;
-                        float K             = tanf(M_PI * f0 / float(nSampleRate));
+                        float K             = tanf(M_PI * f0 * T);
                         float K2            = K*K;
                         float KQ            = K / Q;
 
@@ -1873,7 +1957,7 @@ namespace lsp
                     {
                         constexpr float f0  = 38.13547087602444f;
                         constexpr float Q   = 0.5003270373238773f;
-                        float K             = tanf(M_PI * f0 / nSampleRate);
+                        float K             = tanf(M_PI * f0 * T);
                         float K2            = K*K;
                         float KQ            = K / Q;
 
