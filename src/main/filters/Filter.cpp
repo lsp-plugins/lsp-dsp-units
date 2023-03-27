@@ -1691,22 +1691,25 @@ namespace lsp
                 {
                     // Zeros: 0, 0
                     // Poles: -129.4, -129.4
+                    float T             = 1.0f / float(nSampleRate);
+
                     {
                         dsp::biquad_x1_t *f = pBank->add_chain();
                         if (f == NULL)
                             return;
 
-                        float p0            = bilinear_relative(129.4f * 0.5f / M_PI, 1.0f);
-                        float ww            = tanf(2.0f * M_PI * p0 / float(nSampleRate));
-                        float wp2           = ww + 2.0f;
-                        float wm2           = ww - 2.0f;
-                        float ka0           = 1.0f / (wp2*wp2);
+                        constexpr float p0  = 129.4f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
 
-                        f->b0               = 4.0f * ka0;
-                        f->b1               = -8.0f * ka0;
+                        float ka0           = 1.0f / (1.0f + ws);
+
+                        f->b0               = 0.5f * (1.0f + wc) * ka0;
+                        f->b1               = (-1.0f - wc) * ka0;
                         f->b2               = f->b0;
-                        f->a1               = - 2.0f * wp2 * wm2 * ka0;
-                        f->a2               = - wm2 * wm2 * ka0;
+                        f->a1               = 2.0 * wc * ka0;
+                        f->a2               = (ws - 1.0) * ka0;
                         f->p0               = 0.0f;
                         f->p1               = 0.0f;
                         f->p2               = 0.0f;
@@ -1730,23 +1733,27 @@ namespace lsp
                         if (f == NULL)
                             return;
 
-                        float p0            = bilinear_relative(676.7f * 0.5f / M_PI, 1.0f);
-                        float p1            = bilinear_relative(4636.0f * 0.5f / M_PI, 1.0f);
+                        constexpr float p0  = 676.7f;
+                        constexpr float p1  = 4636.0f;
 
-                        float ww0           = tanf(2.0f * M_PI * p0 / float(nSampleRate));
-                        float ww1           = tanf(2.0f * M_PI * p1 / float(nSampleRate));
-                        float w0p2          = ww0 + 2.0f;
-                        float w1p2          = ww1 + 2.0f;
-                        float w0m2          = ww0 - 2.0f;
-                        float w1m2          = ww1 - 2.0f;
+                        float ww0           = p0 * T;
+                        float ww1           = p1 * T;
+                        float ws0           = sinf(ww0);
+                        float wc0           = cosf(ww0);
+                        float ws1           = sinf(ww1);
+                        float wc1           = cosf(ww1);
 
-                        float ka0           = 1.0f / (w0p2*w1p2);
+                        float kx0           = 1.0f / (1.0f + ws0 - wc0);
+                        float kx1           = 1.0f / (1.0f + ws1 - wc1);
+                        float ka0           = kx0 * kx1;
+                        float ky0           = (1.0f - wc0 - ws0);
+                        float ky1           = (1.0f - wc1 - ws1);
 
-                        f->b0               = 4.0f * ka0;
-                        f->b1               = -8.0f * ka0;
+                        f->b0               = ws0 * ws1 * ka0;
+                        f->b1               = -2.0f * f->b0;
                         f->b2               = f->b0;
-                        f->a1               = - (w0p2 * w1m2 + w0m2 * w1p2) * ka0;
-                        f->a2               = - w0m2 * w1m2 * ka0;
+                        f->a1               = -(ky0 * kx0 + ky1 * kx1);
+                        f->a2               = - ky0 * ky1 * ka0;
                         f->p0               = 0.0f;
                         f->p1               = 0.0f;
                         f->p2               = 0.0f;
@@ -1770,39 +1777,23 @@ namespace lsp
                         if (f == NULL)
                             return;
 
-                        float p0            = bilinear_relative(76655.0f * 0.5f / M_PI, 1.0f);
-                        float ww            = tanf(2.0f * M_PI * p0 / float(nSampleRate));
-                        float wp2           = ww + 2.0f;
-                        float wm2           = ww - 2.0f;
+                        constexpr float p0  = 76655.0f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
 
-                        float ka0           = 1.0f / (wp2*wp2);
+                        float ka0           = 1.0f / (1.0f + ws);
 
-                        f->b0               = ww * ka0;
-                        f->b1               = 2.0f * f->b0;
+                        f->b0               = 0.5f * (1.0f - wc) * ka0;
+                        f->b1               = (1.0f - wc) * ka0;
                         f->b2               = f->b0;
-                        f->a1               = - 2.0f * wp2 * wm2 * ka0;
-                        f->a2               = - wm2 * wm2 * ka0;
+                        f->a1               = -2.0 * wc * ka0;
+                        f->a2               = (1.0 - ws) * ka0;
                         f->p0               = 0.0f;
                         f->p1               = 0.0f;
                         f->p2               = 0.0f;
 
                         normalize(f, 1000.0f, 1.0f);
-
-//                        // APO
-//                        float ww            = p0 / float(nSampleRate);
-//                        float ws            = sinf(ww);
-//                        float wc            = cosf(ww); // Have to use trig functions for both to have correct sign
-//
-//                        float ka0           = 1.0f / (1.0f + ws);
-//
-//                        f->b0               = 0.5f * (1.0f - wc) * ka0;
-//                        f->b1               = (1.0f - wc) * ka0;
-//                        f->b2               = f->b0;
-//                        f->a1               = -2.0 * wc * ka0;
-//                        f->a2               = (1.0 - ws) * ka0;
-//                        f->p0               = 0.0f;
-//                        f->p1               = 0.0f;
-//                        f->p2               = 0.0f;
 
                         // Storing the coefficient for plotting
                         dsp::f_cascade_t *c  = add_cascade();
