@@ -1673,27 +1673,26 @@ namespace lsp
             // https://en.wikipedia.org/wiki/A-weighting
             // Final equations for non-normalized A-weighted filter given as follows:
             //
-            // Ha[p]=(ka*p^4)/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+676.7*0.15919)*(p+4636.0*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+            // Ha[p]=(ka*p^4)/((p+129.4)*(p+129.4)*(p+676.7)*(p+4636.0)*(p+76655)*(p+76655));
             //
             // The final A-weighted filter should give 0 dB at 1 kHz frequency.
 
             //
             // kb=5.99185e+9*0.0251188643151;
-            // Hb[p]=kb*p^3/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+995.9*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+            // Hb[p]=kb*p^3/((p+129.4)*(p+129.4)*(p+995.9)*(p+76655)*(p+76655));
             //
             // kc=5.91797e9*0.0251188643151;
             //
             // kd=91104.32*0.158489319246;
-            // Hd[p]=(kd*p*(p^2 +6532*p*0.15919 + 4.0975e7*0.15919*0.15919))/((p+1776.3*0.15919)*(p+7288.5*0.15919)*(p^2+21514*p*0.15919+3.8836e8*0.15919*0.15919));
+            // Hd[p]=(kd*p*(p^2 +6532*p + 4.0975e7))/((p+1776.3)*(p+7288.5)*(p^2+21514*p+3.8836e8));
 
             switch (type)
             {
                 case FLT_A_WEIGHTED:
-                {
                     // https://en.wikipedia.org/wiki/A-weighting
                     // Final equations for non-normalized A-weighted filter given as follows:
                     //
-                    // Ha[p]=(ka*p^4)/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+676.7*0.15919)*(p+4636.0*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+                    // Ha[p]=(ka*p^4)/((p+129.4)*(p+129.4)*(p+676.7)*(p+4636.0)*(p+76655)*(p+76655));
                     //
                     // The final A-weighted filter should give 0 dB at 1 kHz frequency.
 
@@ -1813,16 +1812,128 @@ namespace lsp
 
                     nMode               = FM_APO;
                     break;
-                }
 
                 case FLT_B_WEIGHTED:
-                    // TODO
+                    // https://en.wikipedia.org/wiki/A-weighting
+                    // Final equations for non-normalized B-weighted filter given as follows:
+                    //
+                    // Hb[p]=kb*p^3/((p+129.4)*(p+129.4)*(p+995.9)*(p+76655)*(p+76655));
+                    //
+                    // The final B-weighted filter should give 0 dB at 1 kHz frequency.
+
+                    // Zeros: 0, 0
+                    // Poles: -129.4, -129.4
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 129.4f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
+
+                        float ka0           = 1.0f / (1.0f + ws);
+
+                        f->b0               = 0.5f * (1.0f + wc) * ka0;
+                        f->b1               = (-1.0f - wc) * ka0;
+                        f->b2               = f->b0;
+                        f->a1               = 2.0f * wc * ka0;
+                        f->a2               = (ws - 1.0f) * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    // Zeros: 0
+                    // Poles: -995.9
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 995.9f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
+
+                        float ka0           = 1.0f / (1.0f + ws - wc);
+
+                        f->b0               = ws * ka0;
+                        f->b1               = - f->b0;
+                        f->b2               = 0.0f;
+                        f->a1               = (ws + wc - 1.0f) * ka0;
+                        f->a2               = 0.0f;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    // Zeros: x
+                    // Poles: -76655.0, -76655.0
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 76655.0f;
+                        float ww            = p0 * T;
+                        float ws            = sinf(ww);
+                        float wc            = cosf(ww);
+
+                        float ka0           = 1.0f / (1.0f + ws);
+
+                        f->b0               = 0.5f * (1.0f - wc) * ka0;
+                        f->b1               = (1.0f - wc) * ka0;
+                        f->b2               = f->b0;
+                        f->a1               = -2.0f * wc * ka0;
+                        f->a2               = (1.0f - ws) * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    nMode               = FM_APO;
                     break;
+
                 case FLT_C_WEIGHTED:
                     // https://en.wikipedia.org/wiki/A-weighting
                     // Final equations for non-normalized C-weighted filter given as follows:
                     //
-                    // Hc[p]=p^2/((p+129.4*0.15919)*(p+129.4*0.15919)*(p+76655*0.15919)*(p+76655*0.15919));
+                    // Hc[p]=p^2/((p+129.4)*(p+129.4)*(p+76655)*(p+76655));
                     //
                     // The final C-weighted filter should give 0 dB at 1 kHz frequency.
 
