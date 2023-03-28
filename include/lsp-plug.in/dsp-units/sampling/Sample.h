@@ -297,20 +297,20 @@ namespace lsp
                  * @param count maximum number of samples to save, all available if negative
                  * @return actual number of samples written or negative error code
                  */
-                ssize_t save_range(const char *path, size_t offset, ssize_t count = -1);
-                ssize_t save_range(const LSPString *path, size_t offset, ssize_t count = -1);
-                ssize_t save_range(const io::Path *path, size_t offset, ssize_t count = -1);
-                ssize_t save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count = -1);
+                ssize_t save_range(const char *path, size_t offset, ssize_t count = -1) const;
+                ssize_t save_range(const LSPString *path, size_t offset, ssize_t count = -1) const;
+                ssize_t save_range(const io::Path *path, size_t offset, ssize_t count = -1) const;
+                ssize_t save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count = -1) const;
 
                 /**
                  * Save sample contents to file
                  * @param path path to the file
                  * @return actual number of samples written or negative error code
                  */
-                inline ssize_t save(const char *path)           { return save_range(path, 0, nLength);  }
-                inline ssize_t save(const LSPString *path)      { return save_range(path, 0, nLength);  }
-                inline ssize_t save(const io::Path *path)       { return save_range(path, 0, nLength);  }
-                ssize_t save(mm::IOutAudioStream *out)          { return save_range(out, 0, nLength);   }
+                inline ssize_t save(const char *path) const             { return save_range(path, 0, nLength);  }
+                inline ssize_t save(const LSPString *path) const        { return save_range(path, 0, nLength);  }
+                inline ssize_t save(const io::Path *path) const         { return save_range(path, 0, nLength);  }
+                ssize_t save(mm::IOutAudioStream *out) const            { return save_range(out, 0, nLength);   }
 
                 /**
                  * Load file

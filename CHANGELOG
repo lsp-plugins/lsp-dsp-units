@@ -4,6 +4,7 @@
 
 === 1.0.10 ===
 * Implemented A, B, C, D and K weightening filters.
+* Methods save and save_range of dspu::Sample are marked as const.
 
 === 1.0.9 ===
 * Changed visibility of the dspu::InSampleStream class to public.
