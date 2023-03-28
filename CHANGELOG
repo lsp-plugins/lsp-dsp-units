@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.10 ===
-
+* Implemented A, B, C, D and K weightening filters.
 
 === 1.0.9 ===
 * Changed visibility of the dspu::InSampleStream class to public.

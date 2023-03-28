@@ -1670,22 +1670,6 @@ namespace lsp
         {
             const float T       = 1.0f / float(nSampleRate);
 
-            // https://en.wikipedia.org/wiki/A-weighting
-            // Final equations for non-normalized A-weighted filter given as follows:
-            //
-            // Ha[p]=(ka*p^4)/((p+129.4)*(p+129.4)*(p+676.7)*(p+4636.0)*(p+76655)*(p+76655));
-            //
-            // The final A-weighted filter should give 0 dB at 1 kHz frequency.
-
-            //
-            // kb=5.99185e+9*0.0251188643151;
-            // Hb[p]=kb*p^3/((p+129.4)*(p+129.4)*(p+995.9)*(p+76655)*(p+76655));
-            //
-            // kc=5.91797e9*0.0251188643151;
-            //
-            // kd=91104.32*0.158489319246;
-            // Hd[p]=(kd*p*(p^2 +6532*p + 4.0975e7))/((p+1776.3)*(p+7288.5)*(p^2+21514*p+3.8836e8));
-
             switch (type)
             {
                 case FLT_A_WEIGHTED:
@@ -2011,7 +1995,98 @@ namespace lsp
                     break;
 
                 case FLT_D_WEIGHTED:
-                    // TODO
+                    // https://en.wikipedia.org/wiki/A-weighting
+                    // Final equations for non-normalized A-weighted filter given as follows:
+                    //
+                    // Hd[p]=(p*(p^2 +6532*p + 4.0975e7))/((p+1776.3)*(p+7288.5)*(p^2+21514*p+3.8836e8));
+                    //
+                    // The final D-weighted filter should give 0 dB at 1 kHz frequency.
+
+                    // Zeros: 0
+                    // Poles: -1776.3, -7288.5
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 1776.3f;
+                        constexpr float p1  = 7288.5f;
+
+                        float ww0           = p0 * T;
+                        float ww1           = p1 * T;
+                        float ws0           = sinf(ww0);
+                        float wc0           = cosf(ww0);
+                        float ws1           = sinf(ww1);
+                        float wc1           = cosf(ww1);
+
+                        float kx0           = 1.0f / (1.0f + ws0 - wc0);
+                        float kx1           = 1.0f / (1.0f + ws1 - wc1);
+                        float ka0           = kx0 * kx1;
+                        float ky0           = (1.0f - wc0 - ws0);
+                        float ky1           = (1.0f - wc1 - ws1);
+
+                        f->b0               = ws0 * (1.0f - wc1) * ka0;
+                        f->b1               = 0.0f;
+                        f->b2               = -f->b0;
+                        f->a1               = -(ky0 * kx0 + ky1 * kx1);
+                        f->a2               = - ky0 * ky1 * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    // Zeros: complex pair at frequency 6401.17, Q=0.98, R = 1/Q = 1.02
+                    // Poles: complex pair at frequency 19706.85, Q = 0,916, R = 1/Q = 1.092
+                    {
+                        dsp::biquad_x1_t *f = pBank->add_chain();
+                        if (f == NULL)
+                            return;
+
+                        constexpr float p0  = 6401.17f;
+                        constexpr float p1  = 19706.85f;
+                        constexpr float r0  = 1.02f;
+                        constexpr float r1  = 1.092f;
+
+                        float ww0           = p0 * T * 0.5f;
+                        float ww1           = p1 * T * 0.5f;
+                        float wt0           = 1.0f / tanf(ww0);
+                        float wt1           = 1.0f / tanf(ww1);
+
+                        float ka0           = 1.0f / (1.0f + wt1*(wt1 + r1));
+
+                        f->b0               = (1.0f + wt0*(wt0 + r0)) * ka0;
+                        f->b1               = 2.0f * (1.0f - wt0*wt0) * ka0;
+                        f->b2               = (1.0f + wt0*(wt0 - r0)) * ka0;
+                        f->a1               = -2.0f * (1.0f - wt1*wt1) * ka0;
+                        f->a2               = -(1.0f + wt1*(wt1 - r1)) * ka0;
+                        f->p0               = 0.0f;
+                        f->p1               = 0.0f;
+                        f->p2               = 0.0f;
+
+                        normalize(f, 1000.0f, 1.0f);
+
+                        // Storing the coefficient for plotting
+                        dsp::f_cascade_t *c  = add_cascade();
+                        c->t[0]             = f->b0;
+                        c->t[1]             = f->b1;
+                        c->t[2]             = f->b2;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = -f->a1;
+                        c->b[2]             = -f->a2;
+                    }
+
+                    nMode               = FM_APO;
                     break;
 
                 case FLT_K_WEIGHTED:
