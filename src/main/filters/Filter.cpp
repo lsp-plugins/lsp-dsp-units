@@ -702,6 +702,7 @@ namespace lsp
             {
                 case FM_BILINEAR:
                 case FM_MATCHED:
+                case FM_APO:
                 {
                     pBank->process(out, in, samples);
                     break;
