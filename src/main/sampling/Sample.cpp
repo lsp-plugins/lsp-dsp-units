@@ -219,6 +219,9 @@ namespace lsp
 
         status_t Sample::copy(const Sample *s)
         {
+            if (s == this)
+                return STATUS_OK;
+
             if ((s->nChannels <= 0) ||
                 (s->nLength > s->nMaxLength) ||
                 (s->vBuffer == NULL))
