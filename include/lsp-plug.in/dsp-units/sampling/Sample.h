@@ -124,14 +124,20 @@ namespace lsp
                 inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
                 inline size_t       max_length() const              { return nMaxLength; }
 
+                [[deprecated]]
                 inline float       *getBuffer(size_t channel)       { return &vBuffer[nMaxLength * channel]; }
+                [[deprecated]]
                 inline const float *getBuffer(size_t channel) const { return &vBuffer[nMaxLength * channel]; }
 
-                inline float       *channel(size_t channel)         { return &vBuffer[nMaxLength * channel]; }
-                inline const float *channel(size_t channel) const   { return &vBuffer[nMaxLength * channel]; }
-
+                [[deprecated]]
                 inline float       *getBuffer(size_t channel, size_t offset) { return &vBuffer[nMaxLength * channel + offset]; }
+                [[deprecated]]
                 inline const float *getBuffer(size_t channel, size_t offset) const { return &vBuffer[nMaxLength * channel + offset]; }
+
+                inline float       *channel(size_t channel)                         { return &vBuffer[nMaxLength * channel]; }
+                inline const float *channel(size_t channel) const                   { return &vBuffer[nMaxLength * channel]; }
+                inline float       *channel(size_t channel, size_t offset)          { return &vBuffer[nMaxLength * channel + offset]; }
+                inline const float *channel(size_t channel, size_t offset) const    { return &vBuffer[nMaxLength * channel + offset]; }
 
                 /**
                  * Return number of audio channels
