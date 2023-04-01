@@ -181,7 +181,7 @@ namespace lsp
                         if (to_do > count)
                             to_do = count;
 
-                        dsp::copy(pCapture->getBuffer(0, captureIdx), src, to_do);
+                        dsp::copy(pCapture->channel(0, captureIdx), src, to_do);
 
                         sInputProcessor.nAcquireTime    += to_do;
                         sInputProcessor.ig_time         += to_do;
@@ -276,7 +276,7 @@ namespace lsp
                         if (to_do > count)
                             to_do = count;
 
-                        dsp::copy(dst, pTestSig->getBuffer(0, playbackIdx), to_do);
+                        dsp::copy(dst, pTestSig->channel(0, playbackIdx), to_do);
 
                         sOutputProcessor.nTestSigTime  += to_do;
                         sOutputProcessor.og_time       += to_do;

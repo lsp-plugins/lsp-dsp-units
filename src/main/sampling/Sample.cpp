@@ -1337,6 +1337,23 @@ namespace lsp
             return result;
         }
 
+        status_t Sample::remove(size_t position, size_t count)
+        {
+            size_t tail = position + count;
+            if (tail > nLength)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Cut the part of the sample
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                float *buf = channel(i);
+                dsp::move(&buf[position], &buf[tail], nLength - tail);
+            }
+            nLength    -= count;
+
+            return STATUS_OK;
+        }
+
         void Sample::dump(IStateDumper *v) const
         {
             v->write("vBuffer", vBuffer);

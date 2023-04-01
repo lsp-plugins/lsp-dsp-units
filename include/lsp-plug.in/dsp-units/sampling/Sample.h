@@ -375,10 +375,18 @@ namespace lsp
                 void               *set_user_data(void *user);
 
                 /**
+                 * Remove (cut out) the data from the sample
+                 * @param position the position to start cutting
+                 * @param count the overall number of samples to cut
+                 * @return status of operation
+                 */
+                status_t            remove(size_t position, size_t count);
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */
-                void dump(IStateDumper *v) const;
+                void                dump(IStateDumper *v) const;
         };
     }
 } /* namespace lsp */
