@@ -219,6 +219,9 @@ namespace lsp
 
         status_t Sample::copy(const Sample *s)
         {
+            if (s == this)
+                return STATUS_OK;
+
             if ((s->nChannels <= 0) ||
                 (s->nLength > s->nMaxLength) ||
                 (s->vBuffer == NULL))
@@ -537,21 +540,21 @@ namespace lsp
             lsp::swap(nChannels, dst->nChannels);
         }
 
-        ssize_t Sample::save_range(const char *path, size_t offset, ssize_t count)
+        ssize_t Sample::save_range(const char *path, size_t offset, ssize_t count) const
         {
             io::Path p;
             status_t res = p.set(path);
             return (res == STATUS_OK) ? save_range(&p, offset, count) : res;
         }
 
-        ssize_t Sample::save_range(const LSPString *path, size_t offset, ssize_t count)
+        ssize_t Sample::save_range(const LSPString *path, size_t offset, ssize_t count) const
         {
             io::Path p;
             status_t res = p.set(path);
             return (res == STATUS_OK) ? save_range(&p, offset, count) : res;
         }
 
-        ssize_t Sample::save_range(const io::Path *path, size_t offset, ssize_t count)
+        ssize_t Sample::save_range(const io::Path *path, size_t offset, ssize_t count) const
         {
             if ((nSampleRate <= 0) || (nChannels < 0))
                 return -STATUS_BAD_STATE;
@@ -585,7 +588,7 @@ namespace lsp
             return (res == STATUS_OK) ? written : -res;
         }
 
-        ssize_t Sample::save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count)
+        ssize_t Sample::save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count) const
         {
             if ((nSampleRate <= 0) || (nChannels < 0))
                 return -STATUS_BAD_STATE;
@@ -1332,6 +1335,23 @@ namespace lsp
             void *result    = pUserData;
             pUserData       = user;
             return result;
+        }
+
+        status_t Sample::remove(size_t position, size_t count)
+        {
+            size_t tail = position + count;
+            if (tail > nLength)
+                return STATUS_BAD_ARGUMENTS;
+
+            // Cut the part of the sample
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                float *buf = channel(i);
+                dsp::move(&buf[position], &buf[tail], nLength - tail);
+            }
+            nLength    -= count;
+
+            return STATUS_OK;
         }
 
         void Sample::dump(IStateDumper *v) const

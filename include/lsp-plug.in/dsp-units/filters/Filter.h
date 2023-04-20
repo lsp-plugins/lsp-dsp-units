@@ -72,12 +72,15 @@ namespace lsp
                 void                apo_complex_transfer_calc_ri(float *re, float *im, const float *f, size_t count);
                 void                apo_complex_transfer_calc_pc(float *ri, const float *f, size_t count);
 
+                void                normalize(dsp::biquad_x1_t *f, float frequency, float gain);
+
                 dsp::f_cascade_t   *add_cascade();
 
                 void                calc_rlc_filter(size_t type, const filter_params_t *fp);
                 void                calc_bwc_filter(size_t type, const filter_params_t *fp);
                 void                calc_lrx_filter(size_t type, const filter_params_t *fp);
                 void                calc_apo_filter(size_t type, const filter_params_t *fp);
+                void                calc_weighted_filter(size_t type, const filter_params_t *fp);
                 float               bilinear_relative(float f1, float f2);
                 void                bilinear_transform();
                 void                matched_transform();

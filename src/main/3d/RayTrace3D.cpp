@@ -973,7 +973,7 @@ namespace lsp
                             }
 
                             // Deploy sample to curent channel
-                            float *buf  = s->sample->getBuffer(s->channel);
+                            float *buf  = s->sample->channel(s->channel);
                             buf[csn-1] += amplitude;
                         }
 
@@ -1252,10 +1252,9 @@ namespace lsp
                     for (size_t k=0; k<nc; ++k)
                     {
                         dsp::add2(
-                                sdst->sample->getBuffer(k),
-                                ssrc->sample->getBuffer(k),
-                                ssrc->sample->length()
-                            );
+                            sdst->sample->channel(k),
+                            ssrc->sample->channel(k),
+                            ssrc->sample->length());
                     }
                 }
             }
@@ -1729,7 +1728,7 @@ namespace lsp
                         continue;
 
                     // Estimate the maximum gain
-                    float c_gain = dsp::abs_max(s->sample->getBuffer(s->channel), s->sample->length());
+                    float c_gain = dsp::abs_max(s->sample->channel(s->channel), s->sample->length());
                     if (max_gain < c_gain)
                         max_gain = c_gain;
                 }
@@ -1751,7 +1750,7 @@ namespace lsp
                         continue;
 
                     // Apply the norming factor
-                    dsp::mul_k2(s->sample->getBuffer(s->channel), max_gain, s->sample->length());
+                    dsp::mul_k2(s->sample->channel(s->channel), max_gain, s->sample->length());
                 }
             }
         }

@@ -1133,8 +1133,8 @@ namespace lsp
 
             // Calculate all time series -------------------------------------------
 
-            float *vChirp           = pChirp->getBuffer(0);
-            float *vInverseFilter   = pInverseFilter->getBuffer(0);
+            float *vChirp           = pChirp->channel(0);
+            float *vInverseFilter   = pInverseFilter->channel(0);
 
             switch (sChirpParams.enMethod)
             {
@@ -1419,10 +1419,10 @@ namespace lsp
             dsp::fill_zero(sConvParams.vTemp, 		sConvParams.nImage);
 
             // Results
-            float *vInputData       = data->getBuffer(0, offset);
+            float *vInputData       = data->channel(0, offset);
             size_t nInputData       = data->length() - offset;
 
-            float *vInverseFilter   = pInverseFilter->getBuffer(0);
+            float *vInverseFilter   = pInverseFilter->channel(0);
 
             float *vResult 			= pConvResult->channel(channel);
             if (vResult == NULL)

@@ -124,14 +124,20 @@ namespace lsp
                 inline bool         valid() const                   { return (vBuffer != NULL) && (nChannels > 0) && (nLength > 0) && (nMaxLength > 0); }
                 inline size_t       max_length() const              { return nMaxLength; }
 
+                [[deprecated]]
                 inline float       *getBuffer(size_t channel)       { return &vBuffer[nMaxLength * channel]; }
+                [[deprecated]]
                 inline const float *getBuffer(size_t channel) const { return &vBuffer[nMaxLength * channel]; }
 
-                inline float       *channel(size_t channel)         { return &vBuffer[nMaxLength * channel]; }
-                inline const float *channel(size_t channel) const   { return &vBuffer[nMaxLength * channel]; }
-
+                [[deprecated]]
                 inline float       *getBuffer(size_t channel, size_t offset) { return &vBuffer[nMaxLength * channel + offset]; }
+                [[deprecated]]
                 inline const float *getBuffer(size_t channel, size_t offset) const { return &vBuffer[nMaxLength * channel + offset]; }
+
+                inline float       *channel(size_t channel)                         { return &vBuffer[nMaxLength * channel]; }
+                inline const float *channel(size_t channel) const                   { return &vBuffer[nMaxLength * channel]; }
+                inline float       *channel(size_t channel, size_t offset)          { return &vBuffer[nMaxLength * channel + offset]; }
+                inline const float *channel(size_t channel, size_t offset) const    { return &vBuffer[nMaxLength * channel + offset]; }
 
                 /**
                  * Return number of audio channels
@@ -297,20 +303,20 @@ namespace lsp
                  * @param count maximum number of samples to save, all available if negative
                  * @return actual number of samples written or negative error code
                  */
-                ssize_t save_range(const char *path, size_t offset, ssize_t count = -1);
-                ssize_t save_range(const LSPString *path, size_t offset, ssize_t count = -1);
-                ssize_t save_range(const io::Path *path, size_t offset, ssize_t count = -1);
-                ssize_t save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count = -1);
+                ssize_t save_range(const char *path, size_t offset, ssize_t count = -1) const;
+                ssize_t save_range(const LSPString *path, size_t offset, ssize_t count = -1) const;
+                ssize_t save_range(const io::Path *path, size_t offset, ssize_t count = -1) const;
+                ssize_t save_range(mm::IOutAudioStream *out, size_t offset, ssize_t count = -1) const;
 
                 /**
                  * Save sample contents to file
                  * @param path path to the file
                  * @return actual number of samples written or negative error code
                  */
-                inline ssize_t save(const char *path)           { return save_range(path, 0, nLength);  }
-                inline ssize_t save(const LSPString *path)      { return save_range(path, 0, nLength);  }
-                inline ssize_t save(const io::Path *path)       { return save_range(path, 0, nLength);  }
-                ssize_t save(mm::IOutAudioStream *out)          { return save_range(out, 0, nLength);   }
+                inline ssize_t save(const char *path) const             { return save_range(path, 0, nLength);  }
+                inline ssize_t save(const LSPString *path) const        { return save_range(path, 0, nLength);  }
+                inline ssize_t save(const io::Path *path) const         { return save_range(path, 0, nLength);  }
+                ssize_t save(mm::IOutAudioStream *out) const            { return save_range(out, 0, nLength);   }
 
                 /**
                  * Load file
@@ -369,10 +375,18 @@ namespace lsp
                 void               *set_user_data(void *user);
 
                 /**
+                 * Remove (cut out) the data from the sample
+                 * @param position the position to start cutting
+                 * @param count the overall number of samples to cut
+                 * @return status of operation
+                 */
+                status_t            remove(size_t position, size_t count);
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */
-                void dump(IStateDumper *v) const;
+                void                dump(IStateDumper *v) const;
         };
     }
 } /* namespace lsp */
