@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.11 ===
+
+
 === 1.0.10 ===
 * Implemented A, B, C, D and K weightening filters.
 * Methods save and save_range of dspu::Sample are marked as const.
