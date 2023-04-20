@@ -7,6 +7,7 @@
 * Methods save and save_range of dspu::Sample are marked as const.
 * Marked dspu::Sample::getBuffer as deprecated, use dspu::Sample::channel instead.
 * Added dspu::Sample::remove method to remove part of sample data.
+* Updated module versions in dependencies.
 
 === 1.0.9 ===
 * Changed visibility of the dspu::InSampleStream class to public.
