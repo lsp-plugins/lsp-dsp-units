@@ -102,12 +102,12 @@ MTEST_BEGIN("dspu.util", sync_chirp)
         dspu::Sample *data = sc.get_chirp();
         io::Path path_sc;
         MTEST_ASSERT(path_sc.fmt("%s/syncChirp-%s.csv", tempdir(), full_name()));
-        write_buffer(path_sc.as_native(), "sync chirp samples", data->getBuffer(0), data->length());
+        write_buffer(path_sc.as_native(), "sync chirp samples", data->channel(0), data->length());
 
         data = sc.get_inverse_filter();
         io::Path path_inv;
         MTEST_ASSERT(path_inv.fmt("%s/inverseFilter-%s.csv", tempdir(), full_name()));
-        write_buffer(path_inv.as_native(), "inverse filter samples", data->getBuffer(0), data->length());
+        write_buffer(path_inv.as_native(), "inverse filter samples", data->channel(0), data->length());
 
         for (size_t ch = 0; ch < nChannels; ++ch)
         {
@@ -148,7 +148,7 @@ MTEST_BEGIN("dspu.util", sync_chirp)
 
             io::Path path_cc;
             MTEST_ASSERT(path_cc.fmt("%s/chirpCapture%lu-%s.csv", tempdir(), (unsigned long)ch, full_name()));
-            write_buffer(path_cc.as_native(), "Capture", dataArray[ch]->getBuffer(0), dataArray[ch]->length());
+            write_buffer(path_cc.as_native(), "Capture", dataArray[ch]->channel(0), dataArray[ch]->length());
 
             printf("Channel %lu offset: %lu\n", (unsigned long)ch, (unsigned long)offsets[ch]);
         }

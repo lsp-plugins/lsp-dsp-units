@@ -51,7 +51,7 @@ UTEST_BEGIN("dspu.sampling", player)
         {
             dspu::Sample *s = new dspu::Sample();
             s->init(1, SAMPLE_LENGTH, SAMPLE_LENGTH);
-            dsp::copy(s->getBuffer(0), samples[i], SAMPLE_LENGTH);
+            dsp::copy(s->channel(0), samples[i], SAMPLE_LENGTH);
             UTEST_ASSERT(sp.bind(i, s));
         }
 
