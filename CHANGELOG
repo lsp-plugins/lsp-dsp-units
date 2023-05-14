@@ -4,6 +4,7 @@
 
 === 1.0.11 ===
 * Removed Makefile.d. Dependencies are now automatically generated at the build stage.
+* Updated build scripts.
 
 === 1.0.10 ===
 * Implemented A, B, C, D and K weightening filters.
