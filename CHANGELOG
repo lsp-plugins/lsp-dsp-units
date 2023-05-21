@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.12 ===
+
+
 === 1.0.11 ===
 * Removed Makefile.d. Dependencies are now automatically generated at the build stage.
 * Updated build scripts.
