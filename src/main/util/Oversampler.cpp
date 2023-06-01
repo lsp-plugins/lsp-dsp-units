@@ -52,15 +52,16 @@ namespace lsp
 
         void Oversampler::construct()
         {
-            pCallback   = NULL;
-            fUpBuffer   = NULL;
-            fDownBuffer = NULL;
-            nUpHead     = 0;
-            nMode       = OM_NONE;
-            nSampleRate = 0;
-            nUpdate     = UP_ALL;
-            bData       = NULL;
-            bFilter     = true;
+            pCallback       = NULL;
+            fUpBuffer       = NULL;
+            fDownBuffer     = NULL;
+            pFunc           = dsp::copy;
+            nUpHead         = 0;
+            nMode           = OM_NONE;
+            nSampleRate     = 0;
+            nUpdate         = UP_ALL;
+            bData           = NULL;
+            bFilter         = true;
         }
 
         bool Oversampler::init()
@@ -146,26 +147,41 @@ namespace lsp
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
                 case OM_LANCZOS_2X4:
+                case OM_LANCZOS_2X12BIT:
+                case OM_LANCZOS_2X16BIT:
+                case OM_LANCZOS_2X24BIT:
                     return 2;
 
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
                 case OM_LANCZOS_3X4:
+                case OM_LANCZOS_3X12BIT:
+                case OM_LANCZOS_3X16BIT:
+                case OM_LANCZOS_3X24BIT:
                     return 3;
 
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
                 case OM_LANCZOS_4X4:
+                case OM_LANCZOS_4X12BIT:
+                case OM_LANCZOS_4X16BIT:
+                case OM_LANCZOS_4X24BIT:
                     return 4;
 
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
                 case OM_LANCZOS_6X4:
+                case OM_LANCZOS_6X12BIT:
+                case OM_LANCZOS_6X16BIT:
+                case OM_LANCZOS_6X24BIT:
                     return 6;
 
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
                 case OM_LANCZOS_8X4:
+                case OM_LANCZOS_8X12BIT:
+                case OM_LANCZOS_8X16BIT:
+                case OM_LANCZOS_8X24BIT:
                     return 8;
 
                 default:
@@ -198,12 +214,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_2X2)
-                            dsp::lanczos_resample_2x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_2X3)
-                            dsp::lanczos_resample_2x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_2x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do << 1);
 
                         // Update pointers
@@ -234,12 +245,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_3X2)
-                            dsp::lanczos_resample_3x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_3X2)
-                            dsp::lanczos_resample_3x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_3x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do * 3);
 
                         // Update pointers
@@ -270,12 +276,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_4X2)
-                            dsp::lanczos_resample_4x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_4X3)
-                            dsp::lanczos_resample_4x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_4x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do << 2);
 
                         // Update pointers
@@ -306,12 +307,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_6X2)
-                            dsp::lanczos_resample_6x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_6X3)
-                            dsp::lanczos_resample_6x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_6x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do * 6);
 
                         // Update pointers
@@ -342,12 +338,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_8X2)
-                            dsp::lanczos_resample_8x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_8X3)
-                            dsp::lanczos_resample_8x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_8x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
                         dsp::copy(dst, &fUpBuffer[nUpHead], to_do << 3);
 
                         // Update pointers
@@ -533,12 +524,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_2X2)
-                            dsp::lanczos_resample_2x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_2X3)
-                            dsp::lanczos_resample_2x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_2x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -577,12 +563,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_3X2)
-                            dsp::lanczos_resample_3x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_3X3)
-                            dsp::lanczos_resample_3x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_3x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -621,12 +602,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_4X2)
-                            dsp::lanczos_resample_4x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_4X3)
-                            dsp::lanczos_resample_4x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_4x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -665,12 +641,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_6X2)
-                            dsp::lanczos_resample_6x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_6X3)
-                            dsp::lanczos_resample_6x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_6x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -709,12 +680,7 @@ namespace lsp
                         size_t to_do    = (samples > can_do) ? can_do : samples;
 
                         // Do oversampling
-                        if (nMode == OM_LANCZOS_8X2)
-                            dsp::lanczos_resample_8x2(&fUpBuffer[nUpHead], src, to_do);
-                        else if (nMode == OM_LANCZOS_8X3)
-                            dsp::lanczos_resample_8x3(&fUpBuffer[nUpHead], src, to_do);
-                        else
-                            dsp::lanczos_resample_8x4(&fUpBuffer[nUpHead], src, to_do);
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
 
                         // Call handler
                         if (callback != NULL)
@@ -769,6 +735,27 @@ namespace lsp
                 case OM_LANCZOS_8X4:
                     return 4;
 
+                case OM_LANCZOS_2X12BIT:
+                case OM_LANCZOS_3X12BIT:
+                case OM_LANCZOS_4X12BIT:
+                case OM_LANCZOS_6X12BIT:
+                case OM_LANCZOS_8X12BIT:
+                    return 4;
+
+                case OM_LANCZOS_2X16BIT:
+                case OM_LANCZOS_3X16BIT:
+                case OM_LANCZOS_4X16BIT:
+                case OM_LANCZOS_6X16BIT:
+                case OM_LANCZOS_8X16BIT:
+                    return 10;
+
+                case OM_LANCZOS_2X24BIT:
+                case OM_LANCZOS_3X24BIT:
+                case OM_LANCZOS_4X24BIT:
+                case OM_LANCZOS_6X24BIT:
+                case OM_LANCZOS_8X24BIT:
+                    return 62;
+
                 default:
                     break;
             }
@@ -776,11 +763,73 @@ namespace lsp
             return 0;
         }
 
+        Oversampler::resample_func_t Oversampler::get_function(size_t mode)
+        {
+            switch (mode)
+            {
+                case OM_LANCZOS_2X2:        return dsp::lanczos_resample_2x2;
+                case OM_LANCZOS_2X3:        return dsp::lanczos_resample_2x3;
+                case OM_LANCZOS_2X4:        return dsp::lanczos_resample_2x4;
+                case OM_LANCZOS_2X12BIT:    return dsp::lanczos_resample_2x12bit;
+                case OM_LANCZOS_2X16BIT:    return dsp::lanczos_resample_2x16bit;
+                case OM_LANCZOS_2X24BIT:    return dsp::lanczos_resample_2x24bit;
+
+                case OM_LANCZOS_3X2:        return dsp::lanczos_resample_3x2;
+                case OM_LANCZOS_3X3:        return dsp::lanczos_resample_3x3;
+                case OM_LANCZOS_3X4:        return dsp::lanczos_resample_3x4;
+                case OM_LANCZOS_3X12BIT:    return dsp::lanczos_resample_3x12bit;
+                case OM_LANCZOS_3X16BIT:    return dsp::lanczos_resample_3x16bit;
+                case OM_LANCZOS_3X24BIT:    return dsp::lanczos_resample_3x24bit;
+
+                case OM_LANCZOS_4X2:        return dsp::lanczos_resample_4x2;
+                case OM_LANCZOS_4X3:        return dsp::lanczos_resample_4x3;
+                case OM_LANCZOS_4X4:        return dsp::lanczos_resample_4x4;
+                case OM_LANCZOS_4X12BIT:    return dsp::lanczos_resample_4x12bit;
+                case OM_LANCZOS_4X16BIT:    return dsp::lanczos_resample_4x16bit;
+                case OM_LANCZOS_4X24BIT:    return dsp::lanczos_resample_4x24bit;
+
+                case OM_LANCZOS_6X2:        return dsp::lanczos_resample_6x2;
+                case OM_LANCZOS_6X3:        return dsp::lanczos_resample_6x3;
+                case OM_LANCZOS_6X4:        return dsp::lanczos_resample_6x4;
+                case OM_LANCZOS_6X12BIT:    return dsp::lanczos_resample_6x12bit;
+                case OM_LANCZOS_6X16BIT:    return dsp::lanczos_resample_6x16bit;
+                case OM_LANCZOS_6X24BIT:    return dsp::lanczos_resample_6x24bit;
+
+                case OM_LANCZOS_8X2:        return dsp::lanczos_resample_8x2;
+                case OM_LANCZOS_8X3:        return dsp::lanczos_resample_8x3;
+                case OM_LANCZOS_8X4:        return dsp::lanczos_resample_8x4;
+                case OM_LANCZOS_8X12BIT:    return dsp::lanczos_resample_8x12bit;
+                case OM_LANCZOS_8X16BIT:    return dsp::lanczos_resample_8x16bit;
+                case OM_LANCZOS_8X24BIT:    return dsp::lanczos_resample_8x24bit;
+
+                default:
+                    break;
+            }
+
+            return dsp::copy;
+        }
+
+
+        void Oversampler::set_mode(over_mode_t mode)
+        {
+            if (mode < OM_NONE)
+                mode = OM_NONE;
+            else if (mode > OM_LANCZOS_8X24BIT)
+                mode = OM_LANCZOS_8X24BIT;
+            if (nMode == mode)
+                return;
+            nMode       = mode;
+            pFunc       = get_function(mode);
+
+            nUpdate   |= UP_MODE;
+        }
+
         void Oversampler::dump(IStateDumper *v) const
         {
             v->write("pCallback", pCallback);
             v->write("fUpBuffer", fUpBuffer);
             v->write("fDownBuffer", fDownBuffer);
+            v->write("pFunc", pFunc);
             v->write("nUpHead", nUpHead);
             v->write("nMode", nMode);
             v->write("nSampleRate", nSampleRate);
@@ -789,5 +838,6 @@ namespace lsp
             v->write("bData", bData);
             v->write("bFilter", bFilter);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */

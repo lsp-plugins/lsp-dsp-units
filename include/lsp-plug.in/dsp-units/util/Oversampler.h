@@ -57,22 +57,37 @@ namespace lsp
             OM_LANCZOS_2X2,
             OM_LANCZOS_2X3,
             OM_LANCZOS_2X4,
+            OM_LANCZOS_2X12BIT,
+            OM_LANCZOS_2X16BIT,
+            OM_LANCZOS_2X24BIT,
 
             OM_LANCZOS_3X2,
             OM_LANCZOS_3X3,
             OM_LANCZOS_3X4,
+            OM_LANCZOS_3X12BIT,
+            OM_LANCZOS_3X16BIT,
+            OM_LANCZOS_3X24BIT,
 
             OM_LANCZOS_4X2,
             OM_LANCZOS_4X3,
             OM_LANCZOS_4X4,
+            OM_LANCZOS_4X12BIT,
+            OM_LANCZOS_4X16BIT,
+            OM_LANCZOS_4X24BIT,
 
             OM_LANCZOS_6X2,
             OM_LANCZOS_6X3,
             OM_LANCZOS_6X4,
+            OM_LANCZOS_6X12BIT,
+            OM_LANCZOS_6X16BIT,
+            OM_LANCZOS_6X24BIT,
 
             OM_LANCZOS_8X2,
             OM_LANCZOS_8X3,
-            OM_LANCZOS_8X4
+            OM_LANCZOS_8X4,
+            OM_LANCZOS_8X12BIT,
+            OM_LANCZOS_8X16BIT,
+            OM_LANCZOS_8X24BIT,
         };
 
         /** Oversampler class
@@ -83,6 +98,9 @@ namespace lsp
             private:
                 Oversampler & operator = (const Oversampler &);
                 Oversampler(const Oversampler &);
+
+            protected:
+                typedef void (*resample_func_t)(float *dst, const float *src, size_t count);
 
             protected:
                 enum update_t
@@ -98,6 +116,7 @@ namespace lsp
                 IOversamplerCallback   *pCallback;
                 float                  *fUpBuffer;
                 float                  *fDownBuffer;
+                resample_func_t         pFunc;
                 size_t                  nUpHead;
                 size_t                  nMode;
                 size_t                  nSampleRate;
@@ -105,6 +124,9 @@ namespace lsp
                 Filter                  sFilter;
                 uint8_t                *bData;
                 bool                    bFilter;
+
+            protected:
+                static resample_func_t  get_function(size_t mode);
 
             public:
                 explicit Oversampler();
@@ -142,17 +164,7 @@ namespace lsp
                  *
                  * @param mode oversampling mode
                  */
-                inline void set_mode(over_mode_t mode)
-                {
-                    if (mode < OM_NONE)
-                        mode = OM_NONE;
-                    else if (mode > OM_LANCZOS_8X3)
-                        mode = OM_LANCZOS_8X3;
-                    if (nMode == mode)
-                        return;
-                    nMode      = mode;
-                    nUpdate   |= UP_MODE;
-                }
+                void set_mode(over_mode_t mode);
 
                 /** Enable/disable low-pass filter when performing downsampling
                  *
