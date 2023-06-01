@@ -198,6 +198,9 @@ namespace lsp
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
                 case OM_LANCZOS_2X4:
+                case OM_LANCZOS_2X12BIT:
+                case OM_LANCZOS_2X16BIT:
+                case OM_LANCZOS_2X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -229,6 +232,9 @@ namespace lsp
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
                 case OM_LANCZOS_3X4:
+                case OM_LANCZOS_3X12BIT:
+                case OM_LANCZOS_3X16BIT:
+                case OM_LANCZOS_3X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -260,6 +266,9 @@ namespace lsp
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
                 case OM_LANCZOS_4X4:
+                case OM_LANCZOS_4X12BIT:
+                case OM_LANCZOS_4X16BIT:
+                case OM_LANCZOS_4X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -291,6 +300,9 @@ namespace lsp
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
                 case OM_LANCZOS_6X4:
+                case OM_LANCZOS_6X12BIT:
+                case OM_LANCZOS_6X16BIT:
+                case OM_LANCZOS_6X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -322,6 +334,9 @@ namespace lsp
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
                 case OM_LANCZOS_8X4:
+                case OM_LANCZOS_8X12BIT:
+                case OM_LANCZOS_8X16BIT:
+                case OM_LANCZOS_8X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -365,6 +380,9 @@ namespace lsp
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
                 case OM_LANCZOS_2X4:
+                case OM_LANCZOS_2X12BIT:
+                case OM_LANCZOS_2X16BIT:
+                case OM_LANCZOS_2X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -391,6 +409,9 @@ namespace lsp
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
                 case OM_LANCZOS_3X4:
+                case OM_LANCZOS_3X12BIT:
+                case OM_LANCZOS_3X16BIT:
+                case OM_LANCZOS_3X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -417,6 +438,9 @@ namespace lsp
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
                 case OM_LANCZOS_4X4:
+                case OM_LANCZOS_4X12BIT:
+                case OM_LANCZOS_4X16BIT:
+                case OM_LANCZOS_4X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -443,6 +467,9 @@ namespace lsp
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
                 case OM_LANCZOS_6X4:
+                case OM_LANCZOS_6X12BIT:
+                case OM_LANCZOS_6X16BIT:
+                case OM_LANCZOS_6X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -470,6 +497,9 @@ namespace lsp
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
                 case OM_LANCZOS_8X4:
+                case OM_LANCZOS_8X12BIT:
+                case OM_LANCZOS_8X16BIT:
+                case OM_LANCZOS_8X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -508,6 +538,9 @@ namespace lsp
                 case OM_LANCZOS_2X2:
                 case OM_LANCZOS_2X3:
                 case OM_LANCZOS_2X4:
+                case OM_LANCZOS_2X12BIT:
+                case OM_LANCZOS_2X16BIT:
+                case OM_LANCZOS_2X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -547,6 +580,9 @@ namespace lsp
                 case OM_LANCZOS_3X2:
                 case OM_LANCZOS_3X3:
                 case OM_LANCZOS_3X4:
+                case OM_LANCZOS_3X12BIT:
+                case OM_LANCZOS_3X16BIT:
+                case OM_LANCZOS_3X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -586,6 +622,9 @@ namespace lsp
                 case OM_LANCZOS_4X2:
                 case OM_LANCZOS_4X3:
                 case OM_LANCZOS_4X4:
+                case OM_LANCZOS_4X12BIT:
+                case OM_LANCZOS_4X16BIT:
+                case OM_LANCZOS_4X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -625,6 +664,9 @@ namespace lsp
                 case OM_LANCZOS_6X2:
                 case OM_LANCZOS_6X3:
                 case OM_LANCZOS_6X4:
+                case OM_LANCZOS_6X12BIT:
+                case OM_LANCZOS_6X16BIT:
+                case OM_LANCZOS_6X24BIT:
                 {
                     while (samples > 0)
                     {
@@ -664,6 +706,9 @@ namespace lsp
                 case OM_LANCZOS_8X2:
                 case OM_LANCZOS_8X3:
                 case OM_LANCZOS_8X4:
+                case OM_LANCZOS_8X12BIT:
+                case OM_LANCZOS_8X16BIT:
+                case OM_LANCZOS_8X24BIT:
                 {
                     while (samples > 0)
                     {
