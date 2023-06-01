@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.12 ===
+* Added support of high-precision oversampling routines to dspu::Oversampler module.
 * Updated build scripts.
 
 === 1.0.11 ===
