@@ -46,13 +46,9 @@ namespace lsp
 
         bool RingBuffer::init(size_t size)
         {
-            float *data     = static_cast<float *>(malloc(size * sizeof(float)));
+            float *data     = static_cast<float *>(realloc(pData, size * sizeof(float)));
             if (data == NULL)
                 return false;
-            lsp_finally {
-                if (data != NULL)
-                    free(data);
-            };
 
             lsp::swap(pData, data);
             nCapacity       = size;
