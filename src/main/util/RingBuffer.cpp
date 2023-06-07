@@ -104,7 +104,8 @@ namespace lsp
         void RingBuffer::clear()
         {
             nHead           = 0;
-            dsp::fill_zero(pData, nCapacity);
+            if (pData != NULL)
+                dsp::fill_zero(pData, nCapacity);
         }
 
         float *RingBuffer::data()
