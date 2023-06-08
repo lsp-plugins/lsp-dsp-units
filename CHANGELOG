@@ -5,6 +5,7 @@
 === 1.0.12 ===
 * Added support of high-precision oversampling routines to dspu::Oversampler module.
 * Added functions for readinng current dspu::Oversampler setup.
+* Added routines for converting music time signature to frequency/period.
 * Implemented dspu::RingBuffer class for processing the circular ring buffers.
 * Updated build scripts.
 
