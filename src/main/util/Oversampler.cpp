@@ -869,6 +869,16 @@ namespace lsp
             nUpdate   |= UP_MODE;
         }
 
+        over_mode_t Oversampler::mode() const
+        {
+            return over_mode_t(nMode);
+        }
+
+        bool Oversampler::filtering() const
+        {
+            return bFilter;
+        }
+
         void Oversampler::dump(IStateDumper *v) const
         {
             v->write("pCallback", pCallback);

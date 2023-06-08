@@ -160,11 +160,17 @@ namespace lsp
                     pCallback       = callback;
                 }
 
-                /** Set oversampling ratio
+                /** Set oversampling mode
                  *
                  * @param mode oversampling mode
                  */
                 void set_mode(over_mode_t mode);
+
+                /**
+                 * Get oversampling mode
+                 * @return current oversampling mode
+                 */
+                over_mode_t mode() const;
 
                 /** Enable/disable low-pass filter when performing downsampling
                  *
@@ -177,6 +183,12 @@ namespace lsp
                     bFilter     = filter;
                     nUpdate   |= UP_MODE;
                 }
+
+                /**
+                 * Get filtering option
+                 * @return filtering option
+                 */
+                bool filtering() const;
 
                 /** Check that module needs re-configuration
                  *
