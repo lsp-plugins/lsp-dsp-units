@@ -60,6 +60,9 @@ namespace lsp
             nMode           = OM_NONE;
             nSampleRate     = 0;
             nUpdate         = UP_ALL;
+
+            sFilter.construct();
+
             bData           = NULL;
             bFilter         = true;
         }
