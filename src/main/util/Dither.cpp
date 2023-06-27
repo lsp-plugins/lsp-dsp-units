@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 21 дек. 2016 г.
@@ -35,6 +35,7 @@ namespace lsp
 
         Dither::~Dither()
         {
+            destroy();
         }
 
         void Dither::construct()
@@ -42,6 +43,10 @@ namespace lsp
             nBits   = 0;
             fGain   = 1.0f;
             fDelta  = 0.0f;
+        }
+
+        void Dither::destroy()
+        {
         }
 
         void Dither::set_bits(size_t bits)
@@ -80,5 +85,5 @@ namespace lsp
             v->write("fDelta", fDelta);
             v->write_object("sRandom", &sRandom);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
