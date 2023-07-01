@@ -758,6 +758,230 @@ namespace lsp
             }
         }
 
+        void Oversampler::process(float *dst, const float *src, size_t samples, oversampler_callback_t *callback, void *arg)
+        {
+            switch (nMode)
+            {
+                case OM_LANCZOS_2X2:
+                case OM_LANCZOS_2X3:
+                case OM_LANCZOS_2X4:
+                case OM_LANCZOS_2X12BIT:
+                case OM_LANCZOS_2X16BIT:
+                case OM_LANCZOS_2X24BIT:
+                {
+                    while (samples > 0)
+                    {
+                        // Check that there is enough space in buffer
+                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 1;
+                        if (can_do <= 0)
+                        {
+                            dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
+                            dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
+                            nUpHead         = 0;
+                            can_do          = OS_UP_BUFFER_SIZE >> 1;
+                        }
+
+                        size_t to_do    = (samples > can_do) ? can_do : samples;
+
+                        // Do oversampling
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
+
+                        // Call handler
+                        if (callback != NULL)
+                            callback(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do << 1, arg);
+
+                        // Do downsampling
+                        if (bFilter)
+                            sFilter.process(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do << 1);
+                        dsp::downsample_2x(dst, &fUpBuffer[nUpHead], to_do);
+
+                        // Update pointers
+                        nUpHead        += to_do << 1;
+                        dst            += to_do << 1;
+                        src            += to_do;
+                        samples        -= to_do;
+                    }
+                    break;
+                }
+
+                case OM_LANCZOS_3X2:
+                case OM_LANCZOS_3X3:
+                case OM_LANCZOS_3X4:
+                case OM_LANCZOS_3X12BIT:
+                case OM_LANCZOS_3X16BIT:
+                case OM_LANCZOS_3X24BIT:
+                {
+                    while (samples > 0)
+                    {
+                        // Check that there is enough space in buffer
+                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 3;
+                        if (can_do <= 0)
+                        {
+                            dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
+                            dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
+                            nUpHead         = 0;
+                            can_do          = OS_UP_BUFFER_SIZE / 3;
+                        }
+
+                        size_t to_do    = (samples > can_do) ? can_do : samples;
+
+                        // Do oversampling
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
+
+                        // Call handler
+                        if (callback != NULL)
+                            callback(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do * 3, arg);
+
+                        // Do downsampling
+                        if (bFilter)
+                            sFilter.process(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do * 3);
+                        dsp::downsample_3x(dst, &fUpBuffer[nUpHead], to_do);
+
+                        // Update pointers
+                        nUpHead        += to_do * 3;
+                        dst            += to_do;
+                        src            += to_do;
+                        samples        -= to_do;
+                    }
+                    break;
+                }
+
+                case OM_LANCZOS_4X2:
+                case OM_LANCZOS_4X3:
+                case OM_LANCZOS_4X4:
+                case OM_LANCZOS_4X12BIT:
+                case OM_LANCZOS_4X16BIT:
+                case OM_LANCZOS_4X24BIT:
+                {
+                    while (samples > 0)
+                    {
+                        // Check that there is enough space in buffer
+                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 2;
+                        if (can_do <= 0)
+                        {
+                            dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
+                            dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
+                            nUpHead         = 0;
+                            can_do          = OS_UP_BUFFER_SIZE >> 2;
+                        }
+
+                        size_t to_do    = (samples > can_do) ? can_do : samples;
+
+                        // Do oversampling
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
+
+                        // Call handler
+                        if (callback != NULL)
+                            callback(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do << 2, arg);
+
+                        // Do downsampling
+                        if (bFilter)
+                            sFilter.process(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do << 2);
+                        dsp::downsample_4x(dst, &fUpBuffer[nUpHead], to_do);
+
+                        // Update pointers
+                        nUpHead        += to_do << 2;
+                        dst            += to_do;
+                        src            += to_do;
+                        samples        -= to_do;
+                    }
+                    break;
+                }
+
+                case OM_LANCZOS_6X2:
+                case OM_LANCZOS_6X3:
+                case OM_LANCZOS_6X4:
+                case OM_LANCZOS_6X12BIT:
+                case OM_LANCZOS_6X16BIT:
+                case OM_LANCZOS_6X24BIT:
+                {
+                    while (samples > 0)
+                    {
+                        // Check that there is enough space in buffer
+                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 6;
+                        if (can_do <= 0)
+                        {
+                            dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
+                            dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
+                            nUpHead         = 0;
+                            can_do          = OS_UP_BUFFER_SIZE / 6;
+                        }
+
+                        size_t to_do    = (samples > can_do) ? can_do : samples;
+
+                        // Do oversampling
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
+
+                        // Call handler
+                        if (callback != NULL)
+                            callback(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do * 6, arg);
+
+                        // Do downsampling
+                        if (bFilter)
+                            sFilter.process(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do * 6);
+                        dsp::downsample_6x(dst, &fUpBuffer[nUpHead], to_do);
+
+                        // Update pointers
+                        nUpHead        += to_do * 6;
+                        dst            += to_do;
+                        src            += to_do;
+                        samples        -= to_do;
+                    }
+                    break;
+                }
+
+                case OM_LANCZOS_8X2:
+                case OM_LANCZOS_8X3:
+                case OM_LANCZOS_8X4:
+                case OM_LANCZOS_8X12BIT:
+                case OM_LANCZOS_8X16BIT:
+                case OM_LANCZOS_8X24BIT:
+                {
+                    while (samples > 0)
+                    {
+                        // Check that there is enough space in buffer
+                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 3;
+                        if (can_do <= 0)
+                        {
+                            dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
+                            dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
+                            nUpHead         = 0;
+                            can_do          = OS_UP_BUFFER_SIZE >> 3;
+                        }
+
+                        size_t to_do    = (samples > can_do) ? can_do : samples;
+
+                        // Do oversampling
+                        pFunc(&fUpBuffer[nUpHead], src, to_do);
+
+                        // Call handler
+                        if (callback != NULL)
+                            callback(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do << 3, arg);
+
+                        // Do downsampling
+                        if (bFilter)
+                            sFilter.process(&fUpBuffer[nUpHead], &fUpBuffer[nUpHead], to_do << 3);
+                        dsp::downsample_8x(dst, &fUpBuffer[nUpHead], to_do);
+
+                        // Update pointers
+                        nUpHead        += to_do << 3;
+                        dst            += to_do;
+                        src            += to_do;
+                        samples        -= to_do;
+                    }
+                    break;
+                }
+
+                case OM_NONE:
+                default:
+                    if (callback != NULL)
+                        callback(dst, src, samples, arg);
+                    else
+                        dsp::copy(dst, src, samples);
+                    break;
+            }
+        }
+
         size_t Oversampler::latency() const
         {
             switch (nMode)

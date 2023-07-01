@@ -50,6 +50,15 @@ namespace lsp
                 virtual void process(float *out, const float *in, size_t samples);
         };
 
+        /**
+         * Oversampler callback routine
+         * @param out output buffer (oversampled)
+         * @param in input buffer (oversampled)
+         * @param samples number of oversampled samples in the buffer
+         * @param arg additional argument which is passed to the routine
+         */
+        typedef void (*oversampler_callback_t)(float *out, const float *in, size_t samples, void *arg);
+
         enum over_mode_t
         {
             OM_NONE,
@@ -231,9 +240,19 @@ namespace lsp
                  * @param dst destination buffer of samples size
                  * @param src source buffer of samples size
                  * @param samples number of samples to process
-                 * @param callback callback to handle buffer
+                 * @param callback callback to handle buffer (optional, can be NULL)
                  */
                 void process(float *dst, const float *src, size_t samples, IOversamplerCallback *callback);
+
+                /** Perform processing of the signal
+                 *
+                 * @param dst destination buffer of samples size
+                 * @param src source buffer of samples size
+                 * @param samples number of samples to process
+                 * @param callback callback routine that processes the oversampled data (optional, can be NULL)
+                 * @param arg additional argument passed to the callback routine (optional, can be NULL)
+                 */
+                void process(float *dst, const float *src, size_t samples, oversampler_callback_t *callback, void *arg);
 
                 /** Perform processing of the signal
                  *
@@ -264,7 +283,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_OVERSAMPLER_H_ */
