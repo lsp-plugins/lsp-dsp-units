@@ -758,7 +758,7 @@ namespace lsp
             }
         }
 
-        void Oversampler::process(float *dst, const float *src, size_t samples, oversampler_callback_t *callback, void *arg)
+        void Oversampler::process(float *dst, const float *src, size_t samples, oversampler_callback_t callback, void *arg)
         {
             switch (nMode)
             {

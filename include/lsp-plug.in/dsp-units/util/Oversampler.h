@@ -252,7 +252,7 @@ namespace lsp
                  * @param callback callback routine that processes the oversampled data (optional, can be NULL)
                  * @param arg additional argument passed to the callback routine (optional, can be NULL)
                  */
-                void process(float *dst, const float *src, size_t samples, oversampler_callback_t *callback, void *arg);
+                void process(float *dst, const float *src, size_t samples, oversampler_callback_t callback, void *arg);
 
                 /** Perform processing of the signal
                  *
