@@ -157,10 +157,10 @@ namespace lsp
 
         void Filter::limit(size_t sr, filter_params_t *fp)
         {
-            float max_freq  = lsp_min(LSP_DSP_UNITS_SPEC_FREQ_MAX, 0.49f * nSampleRate);
+            float max_freq  = 0.49f * nSampleRate;
             fp->nSlope      = lsp_limit(fp->nSlope, 1U, FILTER_CHAINS_MAX);
-            fp->fFreq       = lsp_limit(fp->fFreq, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
-            fp->fFreq2      = lsp_limit(fp->fFreq2, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
+            fp->fFreq       = lsp_limit(fp->fFreq, 0.0f, max_freq);
+            fp->fFreq2      = lsp_limit(fp->fFreq2, 0.0f, max_freq);
         }
 
         void Filter::set_sample_rate(size_t sr)
