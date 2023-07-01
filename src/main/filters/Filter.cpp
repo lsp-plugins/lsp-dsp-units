@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 июня 2016 г.
@@ -741,6 +741,7 @@ namespace lsp
                 case FLT_BT_RLC_HIPASS:
                 {
                     // Add cascade with one pole
+                    float k         = 2.0 / (1.0 + fp->fQuality);
                     size_t i        = fp->nSlope & 1;
                     if (i)
                     {
@@ -759,7 +760,7 @@ namespace lsp
                     {
                         c           = add_cascade();
                         c->b[0]     = 1.0;
-                        c->b[1]     = 2.0 / (1.0 + fp->fQuality);
+                        c->b[1]     = k;
                         c->b[2]     = 1.0;
 
                         if (type == FLT_BT_RLC_LOPASS)
@@ -867,16 +868,37 @@ namespace lsp
 
                 case FLT_BT_RLC_BANDPASS:
                 {
-                    float f2                = 1.0 / fp->fFreq2;
-                    float k                 = (1.0 + f2)/(1.0 + fp->fQuality);
-
-                    for (size_t j=0; j < fp->nSlope; j++)
+                    // Add cascade with one pole
+                    float kf        = fp->fFreq2;
+                    float kf2       = kf * kf;
+                    float k         = 2.0f / (1.0f + fp->fQuality);
+                    size_t i        = fp->nSlope & 1;
+                    if (i)
                     {
-                        c                       = add_cascade();
-                        c->t[1]                 = (j == 0) ? expf(fp->nSlope * logf(k)) * fp->fGain : 1.0;
-                        c->b[0]                 = f2;
-                        c->b[1]                 = k;
-                        c->b[2]                 = 1.0;
+                        // lo-pass + hi-pass cascades
+                        c           = add_cascade();
+                        c->t[1]     = fp->fGain * fp->fGain;
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f + kf;
+                        c->b[2]     = kf;
+                    }
+
+                    // Add additional cascades
+                    for (size_t j=i; j < fp->nSlope; j+=2)
+                    {
+                        // Lo-pass cascade
+                        c           = add_cascade();
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
+                        c->t[0]     = (j == 0) ? fp->fGain : 1.0f;
+
+                        // Hi-pass cascade
+                        c           = add_cascade();
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k * kf;
+                        c->b[2]     = kf2;
+                        c->t[2]     = (j == 0) ? fp->fGain : 1.0f;
                     }
 
                     break;

@@ -10,6 +10,7 @@
 * Implemented dspu::RingBuffer class for processing the circular ring buffers.
 * Added possibility to pass callback function do dspu::Oversamples as an alternative
   to the interface pointer.
+* Updated design of the RLC bandpass filter.
 * Updated build scripts.
 
 === 1.0.11 ===
