@@ -29,7 +29,7 @@
 #define FILTER_RANK_MIN             8
 #define FILTER_RANK_MAX             12
 #define FILTER_CONVOLUTION_MAX      (1 << FILTER_RANK_MAX)
-#define FILTER_CHAINS_MAX           0x20U
+#define FILTER_CHAINS_MAX           0x80U
 
 namespace lsp
 {
