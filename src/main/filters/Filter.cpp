@@ -616,8 +616,8 @@ namespace lsp
                         // Compute transfer function
                         for (size_t i=0; i<to_do; ++i)
                         {
-                            float w     = f[i];
-                            freqs[i]      = tanf((w > lf ? lf : w) * nf) * kf;
+                            float w         = f[i];
+                            freqs[i]        = tanf((w > lf ? lf : w) * nf) * kf;
                         }
                         dsp::filter_transfer_calc_pc(c, &vItems[0], freqs, to_do);
                         for (size_t i=1; i<nItems; ++i)
