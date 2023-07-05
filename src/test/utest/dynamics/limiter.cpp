@@ -92,6 +92,8 @@ UTEST_BEGIN("dspu.dynamics", limiter)
 
         UTEST_ASSERT(fd.close() == STATUS_OK);
 
+        printf("Saved test data to file %s\n", path.as_native());
+
         UTEST_ASSERT(dsp::max(out, BUF_SIZE) < 0.6f);
         UTEST_ASSERT(dsp::min(out, BUF_SIZE) >= 0.0f);
 
@@ -167,6 +169,8 @@ UTEST_BEGIN("dspu.dynamics", limiter)
         }
 
         UTEST_ASSERT(fd.close() == STATUS_OK);
+
+        printf("Saved test data to file %s\n", path.as_native());
 
         l.destroy();
     }
