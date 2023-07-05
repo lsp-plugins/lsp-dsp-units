@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 25 нояб. 2016 г.
@@ -142,7 +142,6 @@ namespace lsp
                 float      *vTmpBuf;                // Temporary buffer to store the actual sidechain value
                 uint8_t    *vData;
 
-                Delay       sDelay;
                 union
                 {
                     sat_t       sSat;               // Hermite mode
@@ -216,25 +215,25 @@ namespace lsp
                  *
                  * @param mode limiter working mode
                  */
-                inline void set_mode(limiter_mode_t mode)
-                {
-                    if (mode == nMode)
-                        return;
-                    nMode = mode;
-                    nUpdate |= UP_MODE;
-                }
+                void set_mode(limiter_mode_t mode);
 
                 /** Change current sample rate of processor
                  *
                  * @param sr sample rate to set
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (sr == nSampleRate)
-                        return;
-                    nSampleRate     = sr;
-                    nUpdate        |= UP_SR;
-                }
+                void set_sample_rate(size_t sr);
+
+                /**
+                 * Get actual sample rate
+                 * @return actual sample rate
+                 */
+                inline size_t       sample_rate() const                 { return nSampleRate;       }
+
+                /**
+                 * Get maximum possible sample rate
+                 * @return maximum possible sample rate
+                 */
+                inline size_t       max_sample_rate() const             { return nMaxSampleRate;    }
 
                 /** Get threshold
                  *
@@ -351,15 +350,13 @@ namespace lsp
                  */
                 bool                set_alr(bool enable);
 
-                /** Process data by limiter
+                /** Process sidechain signal by limiter
                  *
-                 * @param dst destination buffer with applied delay
                  * @param gain output gain for VCA
-                 * @param src input signal buffer
                  * @param sc sidechain input signal
                  * @param samples number of samples to process
                  */
-                void                process(float *dst, float *gain, const float *src, const float *sc, size_t samples);
+                void                process(float *gain, const float *sc, size_t samples);
     
                 /**
                  * Dump internal state
@@ -367,8 +364,8 @@ namespace lsp
                  */
                 void                dump(IStateDumper *v) const;
         };
-    }
 
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* CORE_DYNAMICS_LIMITER_H_ */
