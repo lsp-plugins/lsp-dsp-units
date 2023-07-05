@@ -223,6 +223,18 @@ namespace lsp
                  */
                 void set_sample_rate(size_t sr);
 
+                /**
+                 * Get actual sample rate
+                 * @return actual sample rate
+                 */
+                inline size_t       sample_rate() const                 { return nSampleRate;       }
+
+                /**
+                 * Get maximum possible sample rate
+                 * @return maximum possible sample rate
+                 */
+                inline size_t       max_sample_rate() const             { return nMaxSampleRate;    }
+
                 /** Get threshold
                  *
                  * @return threshold

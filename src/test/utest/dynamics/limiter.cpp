@@ -23,12 +23,14 @@
 #include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/test-fw/FloatBuffer.h>
 #include <lsp-plug.in/dsp-units/dynamics/Limiter.h>
+#include <lsp-plug.in/dsp-units/util/Delay.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 #include <lsp-plug.in/io/OutSequence.h>
 #include <lsp-plug.in/dsp/dsp.h>
 
 #define SRATE       48000
 #define BUF_SIZE    4096
+#define OVERSAMPLE  4
 
 UTEST_BEGIN("dspu.dynamics", limiter)
 
@@ -51,7 +53,11 @@ UTEST_BEGIN("dspu.dynamics", limiter)
 
         // Initialize limiter
         dspu::Limiter l;
-        UTEST_ASSERT(l.init(SRATE*4, 20.0f));
+        dspu::Delay d;
+
+        UTEST_ASSERT(l.init(SRATE * OVERSAMPLE, 20.0f));
+        UTEST_ASSERT(d.init(20.0f * SRATE * 4));
+
         l.set_sample_rate(SRATE);
         l.set_mode(dspu::LM_HERM_THIN);
         l.set_knee(1.0f);
@@ -62,10 +68,13 @@ UTEST_BEGIN("dspu.dynamics", limiter)
         UTEST_ASSERT(l.modified());
         l.update_settings();
 
-        l.process(out, gain, in, in, BUF_SIZE);
-        dsp::mul2(out, gain, BUF_SIZE);
         ssize_t latency = l.get_latency();
         UTEST_ASSERT(latency == ssize_t(5.0f * SRATE * 0.001f));
+        d.set_delay(latency);
+
+        l.process(gain, in, BUF_SIZE);
+        d.process(out, in, BUF_SIZE);
+        dsp::mul2(out, gain, BUF_SIZE);
 
         // Save output
         io::Path path;
@@ -120,7 +129,11 @@ UTEST_BEGIN("dspu.dynamics", limiter)
 
         // Initialize limiter
         dspu::Limiter l;
+        dspu::Delay d;
+
         UTEST_ASSERT(l.init(SRATE*4, 20.0f));
+        UTEST_ASSERT(d.init(20.0f * SRATE * 4));
+
         l.set_sample_rate(SRATE);
         l.set_mode(dspu::LM_HERM_THIN);
         l.set_knee(1.0f);
@@ -131,10 +144,13 @@ UTEST_BEGIN("dspu.dynamics", limiter)
         UTEST_ASSERT(l.modified());
         l.update_settings();
 
-        l.process(out, gain, in, in, BUF_SIZE);
-        dsp::mul3(reduced, out, gain, BUF_SIZE);
         ssize_t latency = l.get_latency();
         UTEST_ASSERT(latency == ssize_t(5.0f * SRATE * 0.001f));
+        d.set_delay(latency);
+
+        l.process(gain, in, BUF_SIZE);
+        d.process(out, in, BUF_SIZE);
+        dsp::mul3(reduced, out, gain, BUF_SIZE);
 
         // Save output
         io::Path path;
