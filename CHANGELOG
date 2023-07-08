@@ -13,6 +13,7 @@
 * Updated design of the RLC bandpass filter.
 * Removed the delay outside of the dspu::Limiter module. The caller should implement
   it's own delay.
+* Fixed ALR distortion issue for the dspu::Limiter module.
 * Updated build scripts.
 
 === 1.0.11 ===

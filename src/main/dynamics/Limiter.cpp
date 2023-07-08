@@ -19,6 +19,7 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/dsp-units/dynamics/Limiter.h>
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/dsp-units/misc/interpolation.h>
@@ -618,15 +619,15 @@ namespace lsp
                 float k     = (d > 0.0f) ? sALR.fTauAttack : sALR.fTauRelease;
                 float e     = (sALR.fEnvelope += k * d);
 
-                if (e <= sALR.fKS)
-                    gbuf[i]     = 1.0f;
-                else
+                if (e > sALR.fKS)
                 {
                     float dg    = (e >= sALR.fKE) ? sALR.fGain :
                                   (sALR.vHermite[0]*e + sALR.vHermite[1])*e + sALR.vHermite[2];
 
-                    gbuf[i]  = dg / e;
+                    gbuf[i]    *= dg / e;
                 }
+//                else
+//                    gbuf[i]    *= 1.0f;
             }
         }
 
@@ -662,28 +663,35 @@ namespace lsp
                         break;
 
                     // Apply patch to the gain buffer
-                    s           = (s - (fThreshold * knee - 0.000001))/ s;
+                    float k         = (s - (fThreshold * knee - 0.000001f)) / s;
+//                    lsp_trace("patch: this=%p, peak_idx=%d, s=%f (%f), thresh=%f (%f), k=%f (%f)",
+//                        this,
+//                        int(peak),
+//                        dspu::gain_to_db(s), s,
+//                        dspu::gain_to_db(fThreshold), fThreshold,
+//                        dspu::gain_to_db(k), k);
+
                     switch (nMode)
                     {
                         case LM_HERM_THIN:
                         case LM_HERM_WIDE:
                         case LM_HERM_TAIL:
                         case LM_HERM_DUCK:
-                            apply_sat_patch(&sSat, &gbuf[peak - sSat.nMiddle], s);
+                            apply_sat_patch(&sSat, &gbuf[peak - sSat.nMiddle], k);
                             break;
 
                         case LM_EXP_THIN:
                         case LM_EXP_WIDE:
                         case LM_EXP_TAIL:
                         case LM_EXP_DUCK:
-                            apply_exp_patch(&sExp, &gbuf[peak - sExp.nMiddle], s);
+                            apply_exp_patch(&sExp, &gbuf[peak - sExp.nMiddle], k);
                             break;
 
                         case LM_LINE_THIN:
                         case LM_LINE_WIDE:
                         case LM_LINE_TAIL:
                         case LM_LINE_DUCK:
-                            apply_line_patch(&sLine, &gbuf[peak - sLine.nMiddle], s);
+                            apply_line_patch(&sLine, &gbuf[peak - sLine.nMiddle], k);
                             break;
 
                         default:
@@ -701,7 +709,7 @@ namespace lsp
                 // Copy gain value and shift gain buffer
                 dsp::copy(gain, &gbuf[-nLookahead], to_do);
                 nHead          += to_do;
-                if (nHead > buf_gap)
+                if (nHead >= buf_gap)
                 {
                     dsp::move(vGainBuf, &vGainBuf[nHead], nMaxLookahead*4);
                     nHead       = 0;
