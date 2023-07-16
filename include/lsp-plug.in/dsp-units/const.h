@@ -50,6 +50,7 @@
 #define GAIN_AMP_M_12_DB                    0.25119             /* -12 dB       */
 #define GAIN_AMP_M_18_DB                    0.12589             /* -18 dB       */
 #define GAIN_AMP_M_24_DB                    0.06310             /* -24 dB       */
+#define GAIN_AMP_M_30_DB                    0.03162             /* -30 dB       */
 #define GAIN_AMP_M_36_DB                    0.01585             /* -36 dB       */
 #define GAIN_AMP_M_48_DB                    3.98107e-3          /* -48 dB       */
 #define GAIN_AMP_M_60_DB                    0.001               /* -60 dB       */
