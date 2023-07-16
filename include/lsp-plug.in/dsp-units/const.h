@@ -93,6 +93,8 @@
 #define FLOAT_SAT_N_NAN                     0.0f
 #define FLOAT_SAT_P_INF                     1e+10f
 #define FLOAT_SAT_N_INF                     -1e+10f
+#define FLOAT_SAT_M_INF                     1e-10f
+#define FLOAT_SAT_MN_INF                   -1e-10f
 #define FLOAT_SAT_P_NAN_I                   0
 #define FLOAT_SAT_N_NAN_I                   0
 #define FLOAT_SAT_P_INF_I                   0x501502f9
