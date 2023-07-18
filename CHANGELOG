@@ -16,6 +16,7 @@
 * Fixed ALR distortion issue for the dspu::Limiter module.
 * Added dspu::SurgeProtector module.
 * Fixed bug in dspu::DynamicProcessor which could produce NaNs.
+* Fixed several bugs in the dspu::Oversampler module, small optimizations.
 * Updated build scripts.
 
 === 1.0.11 ===
