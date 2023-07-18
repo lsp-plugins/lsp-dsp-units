@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 июня 2016 г.
@@ -157,10 +157,10 @@ namespace lsp
 
         void Filter::limit(size_t sr, filter_params_t *fp)
         {
-            float max_freq  = lsp_min(LSP_DSP_UNITS_SPEC_FREQ_MAX, 0.49f * nSampleRate);
+            float max_freq  = 0.49f * nSampleRate;
             fp->nSlope      = lsp_limit(fp->nSlope, 1U, FILTER_CHAINS_MAX);
-            fp->fFreq       = lsp_limit(fp->fFreq, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
-            fp->fFreq2      = lsp_limit(fp->fFreq2, LSP_DSP_UNITS_SPEC_FREQ_MIN, max_freq);
+            fp->fFreq       = lsp_limit(fp->fFreq, 0.0f, max_freq);
+            fp->fFreq2      = lsp_limit(fp->fFreq2, 0.0f, max_freq);
         }
 
         void Filter::set_sample_rate(size_t sr)
@@ -616,8 +616,8 @@ namespace lsp
                         // Compute transfer function
                         for (size_t i=0; i<to_do; ++i)
                         {
-                            float w     = f[i];
-                            freqs[i]      = tanf((w > lf ? lf : w) * nf) * kf;
+                            float w         = f[i];
+                            freqs[i]        = tanf((w > lf ? lf : w) * nf) * kf;
                         }
                         dsp::filter_transfer_calc_pc(c, &vItems[0], freqs, to_do);
                         for (size_t i=1; i<nItems; ++i)
@@ -741,6 +741,7 @@ namespace lsp
                 case FLT_BT_RLC_HIPASS:
                 {
                     // Add cascade with one pole
+                    float k         = 2.0 / (1.0 + fp->fQuality);
                     size_t i        = fp->nSlope & 1;
                     if (i)
                     {
@@ -759,7 +760,7 @@ namespace lsp
                     {
                         c           = add_cascade();
                         c->b[0]     = 1.0;
-                        c->b[1]     = 2.0 / (1.0 + fp->fQuality);
+                        c->b[1]     = k;
                         c->b[2]     = 1.0;
 
                         if (type == FLT_BT_RLC_LOPASS)
@@ -867,16 +868,37 @@ namespace lsp
 
                 case FLT_BT_RLC_BANDPASS:
                 {
-                    float f2                = 1.0 / fp->fFreq2;
-                    float k                 = (1.0 + f2)/(1.0 + fp->fQuality);
-
-                    for (size_t j=0; j < fp->nSlope; j++)
+                    // Add cascade with one pole
+                    float kf        = fp->fFreq2;
+                    float kf2       = kf * kf;
+                    float k         = 2.0f / (1.0f + fp->fQuality);
+                    size_t i        = fp->nSlope & 1;
+                    if (i)
                     {
-                        c                       = add_cascade();
-                        c->t[1]                 = (j == 0) ? expf(fp->nSlope * logf(k)) * fp->fGain : 1.0;
-                        c->b[0]                 = f2;
-                        c->b[1]                 = k;
-                        c->b[2]                 = 1.0;
+                        // lo-pass + hi-pass cascades
+                        c           = add_cascade();
+                        c->t[1]     = fp->fGain * fp->fGain;
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f + kf;
+                        c->b[2]     = kf;
+                    }
+
+                    // Add additional cascades
+                    for (size_t j=i; j < fp->nSlope; j+=2)
+                    {
+                        // Lo-pass cascade
+                        c           = add_cascade();
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
+                        c->t[0]     = (j == 0) ? fp->fGain : 1.0f;
+
+                        // Hi-pass cascade
+                        c           = add_cascade();
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k * kf;
+                        c->b[2]     = kf2;
+                        c->t[2]     = (j == 0) ? fp->fGain : 1.0f;
                     }
 
                     break;
@@ -1221,15 +1243,16 @@ namespace lsp
 
                     float fg1               = expf(logf(gain1)/(2.0*fp->nSlope));
                     float fg2               = expf(logf(gain2)/(2.0*fp->nSlope));
-                    float k1                = 1.0f / (1.0 + fp->fQuality * (1.0 - expf(2.0 - gain1 - 1.0/gain1)));
-                    float k2                = 1.0f / (1.0 + fp->fQuality * (1.0 - expf(2.0 - gain2 - 1.0/gain2)));
+                    float k1                = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain1 - 1.0f/gain1)));
+                    float k2                = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain2 - 1.0f/gain2)));
                     float xf                = fp->fFreq2;
+                    float xf2               = xf * xf;
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
                         float theta         = ((2*j + 1)*M_PI_2)/float(slope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
 
                         // First shelf cascade, lo-shelf for LADDERREJ, hi-shelf for LADDERPASS
                         float k             = (type == FLT_BT_BWC_LADDERPASS) ? k1 : k2;
@@ -1242,12 +1265,12 @@ namespace lsp
 
                         // Transfer function
                         t[0]                = kf / fg;
-                        t[1]                = 2.0 * k * tcos;
+                        t[1]                = 2.0f * k * tcos;
                         t[2]                = fg;
 
                         b[0]                = fg;
-                        b[1]                = 2.0 * k * tcos;
-                        b[2]                = kf / fg;
+                        b[1]                = t[1]; // 2.0 * k * tcos;
+                        b[2]                = t[0]; // kf / fg;
 
                         if (j == 0)
                         {
@@ -1264,12 +1287,12 @@ namespace lsp
 
                         // Transfer function
                         t[0]                = kf / fg1;
-                        t[1]                = 2.0 * k1 * xf * tcos;
-                        t[2]                = fg1 * xf * xf;
+                        t[1]                = 2.0f * k1 * xf * tcos;
+                        t[2]                = fg1 * xf2;
 
                         b[0]                = fg1;
-                        b[1]                = 2.0 * k1 * xf * tcos;
-                        b[2]                = kf * xf * xf / fg1;
+                        b[1]                = t[1]; // 2.0f * k1 * xf * tcos;
+                        b[2]                = t[0] * xf2; // kf * xf * xf / fg1;
 
                         if (j == 0)
                         {

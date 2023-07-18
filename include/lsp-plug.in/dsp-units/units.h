@@ -268,6 +268,28 @@ namespace lsp
             return frequency_shift_to_semitones(f/a4) + 69.0f;
         }
 
+        /**
+         * Convert the time signature for the specific tempo to frequency
+         * @param fraction the fration of the time signature
+         * @param tempo tempo
+         * @return frequency in Hz
+         */
+        inline float time_signature_to_frequency(float fraction, float tempo)
+        {
+            return tempo / (240.0f * fraction);
+        }
+
+        /**
+         * Convert the time signature for the specific tempo to time period
+         * @param fraction the fration of the time signature
+         * @param tempo tempo
+         * @return time period in seconds
+         */
+        inline float time_signature_to_period(float fraction, float tempo)
+        {
+            return (240.0f * fraction) / tempo;
+        }
+
     } /* namespace dspu */
 } /* namespace lsp */
 

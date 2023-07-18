@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 19 нояб. 2016 г.
@@ -50,6 +50,15 @@ namespace lsp
                 virtual void process(float *out, const float *in, size_t samples);
         };
 
+        /**
+         * Oversampler callback routine
+         * @param out output buffer (oversampled)
+         * @param in input buffer (oversampled)
+         * @param samples number of oversampled samples in the buffer
+         * @param arg additional argument which is passed to the routine
+         */
+        typedef void (*oversampler_callback_t)(float *out, const float *in, size_t samples, void *arg);
+
         enum over_mode_t
         {
             OM_NONE,
@@ -57,22 +66,37 @@ namespace lsp
             OM_LANCZOS_2X2,
             OM_LANCZOS_2X3,
             OM_LANCZOS_2X4,
+            OM_LANCZOS_2X12BIT,
+            OM_LANCZOS_2X16BIT,
+            OM_LANCZOS_2X24BIT,
 
             OM_LANCZOS_3X2,
             OM_LANCZOS_3X3,
             OM_LANCZOS_3X4,
+            OM_LANCZOS_3X12BIT,
+            OM_LANCZOS_3X16BIT,
+            OM_LANCZOS_3X24BIT,
 
             OM_LANCZOS_4X2,
             OM_LANCZOS_4X3,
             OM_LANCZOS_4X4,
+            OM_LANCZOS_4X12BIT,
+            OM_LANCZOS_4X16BIT,
+            OM_LANCZOS_4X24BIT,
 
             OM_LANCZOS_6X2,
             OM_LANCZOS_6X3,
             OM_LANCZOS_6X4,
+            OM_LANCZOS_6X12BIT,
+            OM_LANCZOS_6X16BIT,
+            OM_LANCZOS_6X24BIT,
 
             OM_LANCZOS_8X2,
             OM_LANCZOS_8X3,
-            OM_LANCZOS_8X4
+            OM_LANCZOS_8X4,
+            OM_LANCZOS_8X12BIT,
+            OM_LANCZOS_8X16BIT,
+            OM_LANCZOS_8X24BIT,
         };
 
         /** Oversampler class
@@ -83,6 +107,9 @@ namespace lsp
             private:
                 Oversampler & operator = (const Oversampler &);
                 Oversampler(const Oversampler &);
+
+            protected:
+                typedef void (*resample_func_t)(float *dst, const float *src, size_t count);
 
             protected:
                 enum update_t
@@ -98,6 +125,7 @@ namespace lsp
                 IOversamplerCallback   *pCallback;
                 float                  *fUpBuffer;
                 float                  *fDownBuffer;
+                resample_func_t         pFunc;
                 size_t                  nUpHead;
                 size_t                  nMode;
                 size_t                  nSampleRate;
@@ -105,6 +133,9 @@ namespace lsp
                 Filter                  sFilter;
                 uint8_t                *bData;
                 bool                    bFilter;
+
+            protected:
+                static resample_func_t  get_function(size_t mode);
 
             public:
                 explicit Oversampler();
@@ -138,21 +169,17 @@ namespace lsp
                     pCallback       = callback;
                 }
 
-                /** Set oversampling ratio
+                /** Set oversampling mode
                  *
                  * @param mode oversampling mode
                  */
-                inline void set_mode(over_mode_t mode)
-                {
-                    if (mode < OM_NONE)
-                        mode = OM_NONE;
-                    else if (mode > OM_LANCZOS_8X3)
-                        mode = OM_LANCZOS_8X3;
-                    if (nMode == mode)
-                        return;
-                    nMode      = mode;
-                    nUpdate   |= UP_MODE;
-                }
+                void set_mode(over_mode_t mode);
+
+                /**
+                 * Get oversampling mode
+                 * @return current oversampling mode
+                 */
+                over_mode_t mode() const;
 
                 /** Enable/disable low-pass filter when performing downsampling
                  *
@@ -165,6 +192,12 @@ namespace lsp
                     bFilter     = filter;
                     nUpdate   |= UP_MODE;
                 }
+
+                /**
+                 * Get filtering option
+                 * @return filtering option
+                 */
+                bool filtering() const;
 
                 /** Check that module needs re-configuration
                  *
@@ -207,9 +240,19 @@ namespace lsp
                  * @param dst destination buffer of samples size
                  * @param src source buffer of samples size
                  * @param samples number of samples to process
-                 * @param callback callback to handle buffer
+                 * @param callback callback to handle buffer (optional, can be NULL)
                  */
                 void process(float *dst, const float *src, size_t samples, IOversamplerCallback *callback);
+
+                /** Perform processing of the signal
+                 *
+                 * @param dst destination buffer of samples size
+                 * @param src source buffer of samples size
+                 * @param samples number of samples to process
+                 * @param callback callback routine that processes the oversampled data (optional, can be NULL)
+                 * @param arg additional argument passed to the callback routine (optional, can be NULL)
+                 */
+                void process(float *dst, const float *src, size_t samples, oversampler_callback_t callback, void *arg);
 
                 /** Perform processing of the signal
                  *
@@ -232,7 +275,7 @@ namespace lsp
                  * Get maximum possible latency
                  * @return maximum possible latency
                  */
-                inline size_t max_latency() const       { return 8; }
+                inline size_t max_latency() const       { return 62; }
     
                 /**
                  * Dump the state
@@ -240,7 +283,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_OVERSAMPLER_H_ */

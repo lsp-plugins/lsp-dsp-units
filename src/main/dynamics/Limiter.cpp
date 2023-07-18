@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 25 нояб. 2016 г.
@@ -19,6 +19,7 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/dsp-units/dynamics/Limiter.h>
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/dsp-units/misc/interpolation.h>
@@ -45,8 +46,6 @@ namespace lsp
 
         void Limiter::construct()
         {
-            sDelay.construct();
-
             fThreshold      = GAIN_AMP_0_DB;
             fReqThreshold   = GAIN_AMP_0_DB;
             fLookahead      = 0.0f;
@@ -74,8 +73,6 @@ namespace lsp
 
         void Limiter::destroy()
         {
-            sDelay.destroy();
-
             if (vData != NULL)
             {
                 free_aligned(vData);
@@ -104,9 +101,6 @@ namespace lsp
 
             dsp::fill_one(vGainBuf, buf_size);
             dsp::fill_zero(vTmpBuf, BUF_GRANULARITY);
-
-            if (!sDelay.init(nMaxLookahead + BUF_GRANULARITY))
-                return false;
 
             nMaxSampleRate      = max_sr;
             fMaxLookahead       = max_lookahead;
@@ -148,16 +142,34 @@ namespace lsp
             return old;
         }
 
+        void Limiter::set_mode(limiter_mode_t mode)
+        {
+            if (mode == nMode)
+                return;
+            nMode = mode;
+            nUpdate |= UP_MODE;
+        }
+
+        void Limiter::set_sample_rate(size_t sr)
+        {
+            if (sr == nSampleRate)
+                return;
+
+            nSampleRate     = sr;
+            nLookahead      = millis_to_samples(nSampleRate, fLookahead);
+            nUpdate        |= UP_SR;
+        }
+
         float Limiter::set_lookahead(float lk_ahead)
         {
-            float old = fLookahead;
-            if (lk_ahead > fMaxLookahead)
-                lk_ahead = fMaxLookahead;
+            float old   = fLookahead;
+            lk_ahead    = lsp_min(lk_ahead, fMaxLookahead);
             if (old == lk_ahead)
                 return old;
 
             fLookahead      = lk_ahead;
             nUpdate        |= UP_LK;
+            nLookahead      = millis_to_samples(nSampleRate, fLookahead);
 
             return old;
         }
@@ -255,14 +267,9 @@ namespace lsp
         {
             ssize_t attack      = millis_to_samples(nSampleRate, fAttack);
             ssize_t release     = millis_to_samples(nSampleRate, fRelease);
-            if (attack > ssize_t(nLookahead))
-                attack              = nLookahead;
-            else if (attack < 8)
-                attack              = 8;
-            if (release > ssize_t(nLookahead*2))
-                release             = nLookahead*2;
-            else if (release < 8)
-                release             = 8;
+
+            attack              = lsp_limit(attack, 8, ssize_t(nLookahead));
+            release             = lsp_limit(attack, 8, ssize_t(nLookahead*2));
 
             if (nMode == LM_HERM_THIN)
             {
@@ -382,13 +389,9 @@ namespace lsp
             // Update delay settings
             float *gbuf = &vGainBuf[nHead];
             if (nUpdate & UP_SR)
-            {
-                sDelay.clear();
                 dsp::fill_one(gbuf, nMaxLookahead*3 + BUF_GRANULARITY);
-            }
 
             nLookahead          = millis_to_samples(nSampleRate, fLookahead);
-            sDelay.set_delay(nLookahead);
 
             // Update threshold
             if (nUpdate & UP_THRESH)
@@ -616,19 +619,19 @@ namespace lsp
                 float k     = (d > 0.0f) ? sALR.fTauAttack : sALR.fTauRelease;
                 float e     = (sALR.fEnvelope += k * d);
 
-                if (e <= sALR.fKS)
-                    gbuf[i]     = 1.0f;
-                else
+                if (e > sALR.fKS)
                 {
                     float dg    = (e >= sALR.fKE) ? sALR.fGain :
                                   (sALR.vHermite[0]*e + sALR.vHermite[1])*e + sALR.vHermite[2];
 
-                    gbuf[i]  = dg / e;
+                    gbuf[i]    *= dg / e;
                 }
+//                else
+//                    gbuf[i]    *= 1.0f;
             }
         }
 
-        void Limiter::process(float *dst, float *gain, const float *src, const float *sc, size_t samples)
+        void Limiter::process(float *gain, const float *sc, size_t samples)
         {
             // Force settings update if there are any
             update_settings();
@@ -660,28 +663,35 @@ namespace lsp
                         break;
 
                     // Apply patch to the gain buffer
-                    s           = (s - (fThreshold * knee - 0.000001))/ s;
+                    float k         = (s - (fThreshold * knee - 0.000001f)) / s;
+//                    lsp_trace("patch: this=%p, peak_idx=%d, s=%f (%f), thresh=%f (%f), k=%f (%f)",
+//                        this,
+//                        int(peak),
+//                        dspu::gain_to_db(s), s,
+//                        dspu::gain_to_db(fThreshold), fThreshold,
+//                        dspu::gain_to_db(k), k);
+
                     switch (nMode)
                     {
                         case LM_HERM_THIN:
                         case LM_HERM_WIDE:
                         case LM_HERM_TAIL:
                         case LM_HERM_DUCK:
-                            apply_sat_patch(&sSat, &gbuf[peak - sSat.nMiddle], s);
+                            apply_sat_patch(&sSat, &gbuf[peak - sSat.nMiddle], k);
                             break;
 
                         case LM_EXP_THIN:
                         case LM_EXP_WIDE:
                         case LM_EXP_TAIL:
                         case LM_EXP_DUCK:
-                            apply_exp_patch(&sExp, &gbuf[peak - sExp.nMiddle], s);
+                            apply_exp_patch(&sExp, &gbuf[peak - sExp.nMiddle], k);
                             break;
 
                         case LM_LINE_THIN:
                         case LM_LINE_WIDE:
                         case LM_LINE_TAIL:
                         case LM_LINE_DUCK:
-                            apply_line_patch(&sLine, &gbuf[peak - sLine.nMiddle], s);
+                            apply_line_patch(&sLine, &gbuf[peak - sLine.nMiddle], k);
                             break;
 
                         default:
@@ -699,19 +709,14 @@ namespace lsp
                 // Copy gain value and shift gain buffer
                 dsp::copy(gain, &gbuf[-nLookahead], to_do);
                 nHead          += to_do;
-                if (nHead > buf_gap)
+                if (nHead >= buf_gap)
                 {
                     dsp::move(vGainBuf, &vGainBuf[nHead], nMaxLookahead*4);
                     nHead       = 0;
                 }
 
-                // Gain will be applied to the delayed signal
-                sDelay.process(dst, src, to_do);
-
                 // Decrement number of samples and update pointers
-                dst            += to_do;
                 gain           += to_do;
-                src            += to_do;
                 sc             += to_do;
                 samples        -= to_do;
             }
@@ -793,8 +798,6 @@ namespace lsp
             v->write("vGainBuf", vGainBuf);
             v->write("vTmpBuf", vTmpBuf);
             v->write("vData", vData);
-
-            v->write_object("sDelay", &sDelay);
 
             switch (nMode)
             {

@@ -39,6 +39,7 @@
 #define GAIN_AMP_P_48_DB                    251.18861           /* +48 dB       */
 #define GAIN_AMP_P_36_DB                    63.09575            /* +36 dB       */
 #define GAIN_AMP_P_24_DB                    15.84893            /* +24 dB       */
+#define GAIN_AMP_P_18_DB                    7.943282            /* +18 dB       */
 #define GAIN_AMP_P_12_DB                    3.98107             /* +12 dB       */
 #define GAIN_AMP_P_6_DB                     1.99526             /* +6 dB        */
 #define GAIN_AMP_P_3_DB                     1.412536            /* +3 dB        */
@@ -49,6 +50,7 @@
 #define GAIN_AMP_M_12_DB                    0.25119             /* -12 dB       */
 #define GAIN_AMP_M_18_DB                    0.12589             /* -18 dB       */
 #define GAIN_AMP_M_24_DB                    0.06310             /* -24 dB       */
+#define GAIN_AMP_M_30_DB                    0.03162             /* -30 dB       */
 #define GAIN_AMP_M_36_DB                    0.01585             /* -36 dB       */
 #define GAIN_AMP_M_48_DB                    3.98107e-3          /* -48 dB       */
 #define GAIN_AMP_M_60_DB                    0.001               /* -60 dB       */
@@ -91,6 +93,8 @@
 #define FLOAT_SAT_N_NAN                     0.0f
 #define FLOAT_SAT_P_INF                     1e+10f
 #define FLOAT_SAT_N_INF                     -1e+10f
+#define FLOAT_SAT_M_INF                     1e-10f
+#define FLOAT_SAT_MN_INF                   -1e-10f
 #define FLOAT_SAT_P_NAN_I                   0
 #define FLOAT_SAT_N_NAN_I                   0
 #define FLOAT_SAT_P_INF_I                   0x501502f9

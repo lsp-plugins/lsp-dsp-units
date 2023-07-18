@@ -2,6 +2,23 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.12 ===
+* Added support of high-precision oversampling routines to dspu::Oversampler module.
+* Added functions for readinng current dspu::Oversampler setup.
+* Added routines for converting music time signature to frequency/period.
+* Implemented series of normalized LFO functions.
+* Implemented dspu::RingBuffer class for processing the circular ring buffers.
+* Added possibility to pass callback function do dspu::Oversampler as an alternative
+  to the interface pointer.
+* Updated design of the RLC bandpass filter.
+* Removed the delay from the dspu::Limiter module. The caller should implement it's own delay.
+* Fixed ALR distortion issue for the dspu::Limiter module.
+* Added dspu::SurgeProtector module.
+* Fixed bug in dspu::DynamicProcessor which could produce NaNs.
+* Fixed several bugs in the dspu::Oversampler module, small optimizations.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.11 ===
 * Removed Makefile.d. Dependencies are now automatically generated at the build stage.
 * Updated build scripts.

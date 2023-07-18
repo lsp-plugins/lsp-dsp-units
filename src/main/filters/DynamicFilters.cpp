@@ -1264,7 +1264,7 @@ namespace lsp
                             {
                                 gain                = (ftype == FLT_BT_BWC_LADDERPASS) ? sqrtf(sfg[i]) : sqrtf(1.0/sfg[i]);
                                 fg                  = expf(logf(gain) * rc_slope);
-                                k                   = 1.0f / (1.0 + fp->fQuality * (1.0 - expf(2.0 - gain - 1.0/gain)));
+                                k                   = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain - 1.0f/gain)));
                                 kf                  = tsin2 + k*k * tcos2;
 
                                 t                   = c->b;
@@ -1299,7 +1299,7 @@ namespace lsp
                             for (size_t i=0; i<samples; ++i)
                             {
                                 gain            = sqrtf(sfg[i]);
-                                k               = 1.0f / (1.0 + fp->fQuality * (1.0 - expf(2.0 - gain - 1.0/gain)));
+                                k               = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain - 1.0f/gain)));
                                 fg              = expf(logf(gain) * rc_slope);
                                 kf              = tsin2 + k*k * tcos2;
 
