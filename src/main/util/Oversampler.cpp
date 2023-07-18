@@ -208,16 +208,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 1;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 1;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 1);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -242,16 +240,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 3;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE / 3;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) / 3);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -276,16 +272,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 2;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 2;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 2);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -310,16 +304,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 6;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE / 6;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) / 6);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -344,16 +336,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 3;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 3;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 3);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -391,7 +381,7 @@ namespace lsp
                     {
                         // Perform filtering
                         size_t can_do   = OS_DOWN_BUFFER_SIZE >> 1;
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, can_do);
 
                         if (bFilter)
                         {
@@ -420,7 +410,7 @@ namespace lsp
                     {
                         // Perform filtering
                         size_t can_do   = OS_DOWN_BUFFER_SIZE / 3;
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, can_do);
 
                         if (bFilter)
                         {
@@ -449,7 +439,7 @@ namespace lsp
                     {
                         // Perform filtering
                         size_t can_do   = OS_DOWN_BUFFER_SIZE >> 2;
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, can_do);
 
                         if (bFilter)
                         {
@@ -478,7 +468,7 @@ namespace lsp
                     {
                         // Perform filtering
                         size_t can_do   = OS_DOWN_BUFFER_SIZE / 6;
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, can_do);
 
                         // Pack samples to dst
                         if (bFilter)
@@ -508,7 +498,7 @@ namespace lsp
                     {
                         // Perform filtering
                         size_t can_do   = OS_DOWN_BUFFER_SIZE >> 3;
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, can_do);
 
                         // Pack samples to dst
                         if (bFilter)
@@ -548,16 +538,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 1;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 1;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 1);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -573,7 +561,7 @@ namespace lsp
 
                         // Update pointers
                         nUpHead        += to_do << 1;
-                        dst            += to_do << 1;
+                        dst            += to_do;
                         src            += to_do;
                         samples        -= to_do;
                     }
@@ -590,16 +578,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 3;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE / 3;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) / 3);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -632,16 +618,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 2;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 2;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 2);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -674,16 +658,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 6;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE / 6;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) / 6);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -716,16 +698,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 3;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 3;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 3);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -772,16 +752,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 1;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 1;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 1);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -797,7 +775,7 @@ namespace lsp
 
                         // Update pointers
                         nUpHead        += to_do << 1;
-                        dst            += to_do << 1;
+                        dst            += to_do;
                         src            += to_do;
                         samples        -= to_do;
                     }
@@ -814,16 +792,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 3;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE / 3;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) / 3);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -856,16 +832,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 2;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 2;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 2);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -898,16 +872,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) / 6;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE / 6;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) / 6);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
@@ -940,16 +912,14 @@ namespace lsp
                     while (samples > 0)
                     {
                         // Check that there is enough space in buffer
-                        size_t can_do   = (OS_UP_BUFFER_SIZE - nUpHead) >> 3;
-                        if (can_do <= 0)
+                        if (nUpHead >= OS_UP_BUFFER_SIZE)
                         {
                             dsp::move(fUpBuffer, &fUpBuffer[nUpHead], LSP_DSP_RESAMPLING_RSV_SAMPLES);
                             dsp::fill_zero(&fUpBuffer[LSP_DSP_RESAMPLING_RSV_SAMPLES], OS_UP_BUFFER_SIZE);
                             nUpHead         = 0;
-                            can_do          = OS_UP_BUFFER_SIZE >> 3;
                         }
 
-                        size_t to_do    = (samples > can_do) ? can_do : samples;
+                        size_t to_do    = lsp_min(samples, (OS_UP_BUFFER_SIZE - nUpHead) >> 3);
 
                         // Do oversampling
                         pFunc(&fUpBuffer[nUpHead], src, to_do);
