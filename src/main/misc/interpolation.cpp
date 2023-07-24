@@ -74,8 +74,7 @@ namespace lsp
                 p[0]            = (y1 - y0) / (x1 - x0);
                 p[1]            = y0 - p[0]*x0;
             }
-        }
-    }
-}
-
+        } /* namespace interpolation */
+    } /* namespace dspu */
+} /* namespace lsp */
 

@@ -33,6 +33,9 @@ namespace lsp
         {
             /** Perform quadratic Hermite interpolation
              *
+             * The resulting polynom equation is the following:
+             * y(x) = p[0]*x^2 + p[1]*x^ + p[2]
+             *
              * @param p destination (3 floats) to store the final hermite polynom
              * @param x0 x-coordinate of first point used for interpolation
              * @param y0 y-coordinate of first point used for interpolation
@@ -43,7 +46,10 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void hermite_quadratic(float *p, float x0, float y0, float k0, float x1, float k1);
 
-            /** Perform cubic Hermite interpolation
+            /** Perform cubic Hermite interpolation.
+             *
+             * The resulting polynom equation is the following:
+             * y(x) = p[0]*x^3 + p[1]*x^2 + p[2]*x + p[3]
              *
              * @param p destination (4 floats) to store the final hermite polynom
              * @param x0 x-coordinate of first point used for interpolation
@@ -78,8 +84,9 @@ namespace lsp
              */
             LSP_DSP_UNITS_PUBLIC
             void linear(float *p, float x0, float y0, float x1, float y1);
-        }
-    }
-}
+
+        } /* namespace interpolation */
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_MISC_INTERPOLATION_H_ */
