@@ -3,7 +3,8 @@
 *******************************************************************************
 
 === 1.0.13 ===
-
+* Added insert() method to dspu::Sample class that allows to insert some zeroed
+  chunks to the sample at the specified position.
 
 === 1.0.12 ===
 * Added support of high-precision oversampling routines to dspu::Oversampler module.
