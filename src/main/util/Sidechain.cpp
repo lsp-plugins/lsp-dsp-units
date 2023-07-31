@@ -55,8 +55,7 @@ namespace lsp
             nChannels           = 0;
             fMaxReactivity      = 0.0f;
             fGain               = 1.0f;
-            bUpdate             = true;
-            bMidSide            = false;
+            nFlags              = SCF_UPDATE | SCF_CLEAR;
             pPreEq              = NULL;
         }
 
@@ -81,7 +80,7 @@ namespace lsp
             nChannels           = channels;
             fMaxReactivity      = max_reactivity;
             fGain               = 1.0f;
-            bUpdate             = true;
+            nFlags              = SCF_UPDATE | SCF_CLEAR;
 
             return true;
         }
@@ -89,22 +88,56 @@ namespace lsp
         void Sidechain::set_sample_rate(size_t sr)
         {
             nSampleRate         = sr;
-            bUpdate             = true;
+            nFlags              = SCF_UPDATE | SCF_CLEAR;
             size_t gap          = millis_to_samples(sr, fMaxReactivity);
             size_t buf_size     = lsp_max(gap, MIN_GAP_ITEMS);
             sBuffer.init(buf_size * 4, gap);
         }
 
+        void Sidechain::set_reactivity(float reactivity)
+        {
+            if ((fReactivity == reactivity) ||
+                (reactivity <= 0.0) ||
+                (reactivity > fMaxReactivity))
+                return;
+            fReactivity         = reactivity;
+            nFlags             |= SCF_UPDATE;
+        }
+
+        void Sidechain::set_stereo_mode(sidechain_stereo_mode_t mode)
+        {
+            nFlags              = lsp_setflag(nFlags, SCF_MIDSIDE, mode == SCSM_MIDSIDE);
+            nFlags             |= SCF_CLEAR;
+        }
+
+        void Sidechain::clear()
+        {
+            nFlags             |= SCF_CLEAR;
+        }
+
         void Sidechain::update_settings()
         {
-            if (!bUpdate)
+            if (!(nFlags & (SCF_UPDATE | SCF_CLEAR)))
                 return;
 
-            ssize_t react       = millis_to_samples(nSampleRate, fReactivity);
-            nReactivity         = (react > 1) ? react : 1;
-            fTau                = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (nReactivity)); // Tau is based on seconds
-            nRefresh            = REFRESH_RATE; // Force the function to be refreshed
-            bUpdate             = false;
+            if (nFlags & SCF_UPDATE)
+            {
+                ssize_t react       = millis_to_samples(nSampleRate, fReactivity);
+                nReactivity         = lsp_max(react, 1);
+                fTau                = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (nReactivity)); // Tau is based on seconds
+                nRefresh            = REFRESH_RATE; // Force the function to be refreshed
+            }
+
+            if (nFlags & SCF_CLEAR)
+            {
+                fRmsValue           = 0.0f;
+                nRefresh            = 0;
+                sBuffer.fill(0.0f);
+                if (pPreEq != NULL)
+                    pPreEq->reset();
+            }
+
+            nFlags              = 0;
         }
 
         void Sidechain::refresh_processing()
@@ -155,9 +188,16 @@ namespace lsp
             float *a, *b;
             size_t max_samples;
 
+            // Special case, treat NULL as zero input
+            if (in == NULL)
+            {
+                dsp::fill_zero(out, samples);
+                return true;
+            }
+
             if (nChannels == 2)
             {
-                if (bMidSide)
+                if (nFlags & SCF_MIDSIDE)
                 {
                     switch (nSource)
                     {
@@ -334,7 +374,7 @@ namespace lsp
 
             if (nChannels == 2)
             {
-                if (bMidSide)
+                if (nFlags & SCF_MIDSIDE)
                 {
                     switch (nSource)
                     {
@@ -445,100 +485,109 @@ namespace lsp
             if (fGain != 1.0f)
                 dsp::mul_k2(out, fGain, samples);
 
-            // Update refresh counter
-            nRefresh       += samples;
-            if (nRefresh >= REFRESH_RATE)
+            for (size_t offset=0; offset < samples; )
             {
-                refresh_processing();
-                nRefresh   %= REFRESH_RATE;
-            }
-
-            // Calculate sidechain function
-            switch (nMode)
-            {
-                // Peak processing
-                case SCM_PEAK:
+                // Update refresh counter
+                if (nRefresh >= REFRESH_RATE)
                 {
-                    while (samples > 0)
-                    {
-                        size_t n    = sBuffer.append(out, samples);
-                        sBuffer.shift(n);
-                        out        += n;
-                        samples    -= n;
-                    }
-                    break;
+                    refresh_processing();
+                    nRefresh   %= REFRESH_RATE;
                 }
 
-                // Lo-pass filter processing
-                case SCM_LPF:
-                {
-                    while (samples > 0)
-                    {
-                        size_t n    = sBuffer.append(out, samples);
-                        sBuffer.shift(n);
-                        samples    -= n;
+                // Calculate sidechain function
+                const size_t to_do  = lsp_min(samples - offset, REFRESH_RATE - nRefresh);
 
-                        while (n--)
+                switch (nMode)
+                {
+                    // Peak processing
+                    case SCM_PEAK:
+                    {
+                        for (size_t processed = 0; processed < to_do; )
                         {
-                            fRmsValue      += fTau * ((*out) - fRmsValue);
-                            *(out++)        = (fRmsValue < 0.0f) ? 0.0f : fRmsValue;
+                            size_t n    = sBuffer.append(out, to_do - processed);
+                            sBuffer.shift(n);
+                            processed  += n;
+                            out        += n;
                         }
-                    }
-                    break;
-                }
-
-                // Uniform processing
-                case SCM_UNIFORM:
-                {
-                    if (nReactivity <= 0)
                         break;
-                    float interval  = nReactivity;
-
-                    while (samples > 0)
-                    {
-                        size_t n    = sBuffer.append(out, samples);
-                        float *p    = sBuffer.tail(nReactivity + n);
-                        samples    -= n;
-
-                        for (size_t i=0; i<n; ++i)
-                        {
-                            fRmsValue      += *(out) - *(p++);
-                            *(out++)        = (fRmsValue < 0.0f) ? 0.0f : fRmsValue / interval;
-                        }
-
-                        // Remove old sample
-                        sBuffer.shift(n);
                     }
-                    break;
-                }
 
-                // RMS processing
-                case SCM_RMS:
-                {
-                    if (nReactivity <= 0)
+                    // Lo-pass filter processing
+                    case SCM_LPF:
+                    {
+                        for (size_t processed = 0; processed < to_do; )
+                        {
+                            size_t n    = sBuffer.append(out, to_do - processed);
+                            sBuffer.shift(n);
+                            processed  += n;
+
+                            while (n--)
+                            {
+                                fRmsValue      += fTau * ((*out) - fRmsValue);
+                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : fRmsValue;
+                            }
+                        }
                         break;
-                    float interval  = nReactivity;
-
-                    while (samples > 0)
-                    {
-                        size_t n        = sBuffer.append(out, samples);
-                        float *p        = sBuffer.tail(nReactivity + n);
-                        samples        -= n;
-
-                        for (size_t i=0; i<n; ++i)
-                        {
-                            float sample    = *out;
-                            float last      = *(p++);
-                            fRmsValue      += sample*sample - last*last;
-                            *(out++)        = (fRmsValue < 0.0f) ? 0.0f : sqrtf(fRmsValue / interval);
-                        }
-                        sBuffer.shift(n);
                     }
-                    break;
+
+                    // Uniform processing
+                    case SCM_UNIFORM:
+                    {
+                        if (nReactivity <= 0)
+                            break;
+                        float interval  = 1.0f / nReactivity;
+
+                        for (size_t processed = 0; processed < to_do; )
+                        {
+                            size_t n    = sBuffer.append(out, to_do - processed);
+                            float *p    = sBuffer.tail(nReactivity + n);
+
+                            for (size_t i=0; i<n; ++i)
+                            {
+                                fRmsValue      += *(out) - *(p++);
+                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : fRmsValue * interval;
+                            }
+
+                            // Remove old samples
+                            sBuffer.shift(n);
+                            processed  += n;
+                        }
+                        break;
+                    }
+
+                    // RMS processing
+                    case SCM_RMS:
+                    {
+                        if (nReactivity <= 0)
+                            break;
+                        float interval  = 1.0f / nReactivity;
+
+                        for (size_t processed = 0; processed < to_do; )
+                        {
+                            size_t n        = sBuffer.append(out, to_do - processed);
+                            float *p        = sBuffer.tail(nReactivity + n);
+
+                            for (size_t i=0; i<n; ++i)
+                            {
+                                float sample    = *out;
+                                float last      = *(p++);
+                                fRmsValue      += sample*sample - last*last;
+                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : sqrtf(fRmsValue * interval);
+                            }
+
+                            sBuffer.shift(n);
+                            processed      += n;
+                        }
+                        break;
+                    }
+
+                    default:
+                        break;
                 }
 
-                default:
-                    break;
+                // Update offset
+                offset         += to_do;
+                nRefresh       += to_do;
             }
         }
 
@@ -555,8 +604,7 @@ namespace lsp
             out *= fGain;
 
             // Update refresh counter
-            nRefresh       ++;
-            if (nRefresh >= REFRESH_RATE)
+            if ((++nRefresh) >= REFRESH_RATE)
             {
                 refresh_processing();
                 nRefresh   %= REFRESH_RATE;
@@ -629,8 +677,7 @@ namespace lsp
             v->write("nChannels", nChannels);
             v->write("fMaxReactivity", fMaxReactivity);
             v->write("fGain", fGain);
-            v->write("bUpdate", bUpdate);
-            v->write("bMidSide", bMidSide);
+            v->write("nFlags", nFlags);
             v->write("pPreEq", pPreEq);
         }
     }

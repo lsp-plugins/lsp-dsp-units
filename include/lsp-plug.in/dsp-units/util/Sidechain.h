@@ -63,6 +63,14 @@ namespace lsp
                 Sidechain(const Sidechain &);
 
             protected:
+                enum flags_t
+                {
+                    SCF_MIDSIDE     = 1 << 0,
+                    SCF_UPDATE      = 1 << 1,
+                    SCF_CLEAR       = 1 << 2
+                };
+
+            protected:
                 ShiftBuffer     sBuffer;                // Shift buffer for history
                 size_t          nReactivity;            // Reactivity (in samples)
                 float           fReactivity;            // Reactivity (in time)
@@ -75,8 +83,7 @@ namespace lsp
                 size_t          nChannels;              // Number of channels
                 float           fMaxReactivity;         // Maximum reactivity
                 float           fGain;                  // Sidechain gain
-                bool            bUpdate;                // Update sidechain parameters flag
-                bool            bMidSide;               // Mid-side mode
+                size_t          nFlags;                 // Different sidechain flags
                 Equalizer      *pPreEq;                 // Pre-equalizer
 
             protected:
@@ -124,20 +131,13 @@ namespace lsp
                  *
                  * @param reactivity sidechain reactivity
                  */
-                inline void set_reactivity(float reactivity)
-                {
-                    if ((fReactivity == reactivity) ||
-                        (reactivity <= 0.0) ||
-                        (reactivity >= fMaxReactivity))
-                        return;
-                    fReactivity     = reactivity;
-                    bUpdate         = true;
-                }
+                void set_reactivity(float reactivity);
 
-                inline void set_stereo_mode(sidechain_stereo_mode_t mode)
-                {
-                    bMidSide        = mode == SCSM_MIDSIDE;
-                }
+                /**
+                 * Set stereo mode
+                 * @param mode stereo mode to set
+                 */
+                void set_stereo_mode(sidechain_stereo_mode_t mode);
 
                 /** Set sidechain source
                  *
@@ -147,6 +147,11 @@ namespace lsp
                 {
                     nSource         = source;
                 }
+
+                /**
+                 * Mark the sidechain state for clear
+                 */
+                void clear();
 
                 /** Set sidechain mode
                  *
@@ -198,8 +203,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
 
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_SIDECHAIN_H_ */
