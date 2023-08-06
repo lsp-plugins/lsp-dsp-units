@@ -44,6 +44,8 @@ namespace lsp
         {
             nRank           = 0;
             nMaxRank        = 0;
+            nUserChunkRank  = 0;
+            nChunkRank      = 0;
             fPhase          = 0.0f;
             vWnd            = NULL;
             vInBuf          = NULL;
@@ -321,18 +323,17 @@ namespace lsp
                             {
                                 dsp::move(h->vOutBuf, &h->vOutBuf[new_in_offset], frame_size);
                                 dsp::fill_zero(&h->vOutBuf[frame_size], max_in_offset);
-                                dsp::fmadd3(h->vOutBuf, vFftBuf, vWnd, frame_size * 2);  // Apply window function and add result to buffer
+                                dsp::fmadd3(h->vOutBuf, vFftTmp, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                             }
                             else
-                                dsp::fmadd3(&h->vOutBuf[new_in_offset], vFftBuf, vWnd, frame_size * 2);  // Apply window function and add result to buffer
+                                dsp::fmadd3(&h->vOutBuf[new_in_offset], vFftTmp, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                         }
                     }
 
-                    // Need to shift input buffers?
+                    // Need to shift input buffer?
                     if (new_in_offset >= max_in_offset)
                     {
-                        dsp::move(vInBuf, &vInBuf[max_buf_size - buf_size + frame_size], buf_size - frame_size);
-                        dsp::fill_zero(&vInBuf[buf_size - frame_size], max_buf_size - buf_size + frame_size);
+                        dsp::move(vInBuf, &vInBuf[new_in_offset], in_gap);
                         nInOffset       = 0;
                     }
                     else

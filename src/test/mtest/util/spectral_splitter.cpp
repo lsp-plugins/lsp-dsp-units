@@ -95,8 +95,8 @@ MTEST_BEGIN("dspu.util", spectral_splitter)
 
     float freq_to_index(float f, float sample_rate, size_t rank)
     {
-        size_t n = 1 << (rank - 1);
-        return (n * sample_rate) / (2 * M_PI * f);
+        size_t n = 1 << rank;
+        return (f * n) / sample_rate;
     }
 
     MTEST_MAIN
@@ -118,11 +118,13 @@ MTEST_BEGIN("dspu.util", spectral_splitter)
 
         for (size_t i=0; i<4; ++i)
         {
-            band_t *b = &bands[i];
+            band_t *b   = &bands[i];
 
-            b->imin = freq_to_index(flist[i], src.sample_rate(), rank);
-            b->imax = freq_to_index(flist[i+1], src.sample_rate(), rank);
+            b->imin     = freq_to_index(flist[i], src.sample_rate(), rank);
+            b->imax     = freq_to_index(flist[i+1], src.sample_rate(), rank);
+            b->offset   = 0;
             b->s.init(src.channels(), src.length() + xlength, src.length() + xlength);
+            b->s.set_sample_rate(src.sample_rate());
         }
 
         dspu::SpectralSplitter split;
