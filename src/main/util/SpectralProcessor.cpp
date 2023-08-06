@@ -170,12 +170,13 @@ namespace lsp
                     else
                         dsp::move(pFftBuf, pInBuf, buf_size);               // Copy data to FFT buffer
 
-                    // Shift input and output buffers
-                    dsp::move(pOutBuf, &pOutBuf[frame_size], buf_size + frame_size);  // Shift buffers
+                    // Apply signal to buffer
+                    dsp::move(pOutBuf, &pOutBuf[frame_size], frame_size);   // Shift output buffer
                     dsp::fill_zero(&pOutBuf[frame_size], frame_size);       // Fill tail of input buffer with zeros
+                    dsp::fmadd3(pOutBuf, pFftBuf, pWnd, buf_size);          // Apply window and add to the output buffer
 
-                    // Apply window and add to the output buffer
-                    dsp::fmadd3(pOutBuf, pFftBuf, pWnd, buf_size);          // Apply window
+                    // Shift input buffer
+                    dsp::move(pInBuf, &pInBuf[frame_size], frame_size);     // Shift input buffer
 
                     // Reset read/write offset
                     nOffset     = 0;

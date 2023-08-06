@@ -28,6 +28,8 @@ namespace lsp
 {
     namespace dspu
     {
+        static constexpr size_t BUFFER_MULTIPLIER = 4;
+
         SpectralSplitter::SpectralSplitter()
         {
             construct();
@@ -47,7 +49,7 @@ namespace lsp
             vInBuf          = NULL;
             vFftBuf         = NULL;
             vFftTmp         = NULL;
-            nFrameOffset    = 0;
+            nFrameSize      = 0;
             nInOffset       = 0;
             bUpdate         = true;
             vHandlers       = NULL;
@@ -58,7 +60,7 @@ namespace lsp
 
         status_t SpectralSplitter::init(size_t max_rank, size_t handlers)
         {
-            if (nMaxRank < 5)
+            if (max_rank < 5)
                 return STATUS_INVALID_VALUE;
 
             nRank           = max_rank;
@@ -69,9 +71,11 @@ namespace lsp
             vInBuf          = NULL;
             vFftBuf         = NULL;
             vFftTmp         = NULL;
+            nFrameSize      = 0;
             vHandlers       = NULL;
             nHandlers       = 0;
             nBindings       = 0;
+            bUpdate         = true;
 
             // Free data if it was previously allocated
             if (pData != NULL)
@@ -86,10 +90,10 @@ namespace lsp
             size_t to_alloc =
                 hdl_sz + // vHandlers
                 buf_sz + // vWindow
-                buf_sz * 2 + // vInBuf
+                buf_sz * BUFFER_MULTIPLIER + // vInBuf
                 buf_sz * 2 + // vFftBuf
                 buf_sz * 2 + // vFftTmp
-                handlers * buf_sz * 2; // vHandlers[i].pOutBuf
+                handlers * buf_sz * BUFFER_MULTIPLIER; // vHandlers[i].pOutBuf
 
             uint8_t *ptr    = alloc_aligned<uint8_t>(pData, to_alloc, DEFAULT_ALIGN);
             if (ptr == NULL)
@@ -100,7 +104,7 @@ namespace lsp
             vWnd            = reinterpret_cast<float *>(ptr);
             ptr            += buf_sz;
             vInBuf          = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * 2;
+            ptr            += buf_sz * BUFFER_MULTIPLIER;
             vFftBuf         = reinterpret_cast<float *>(ptr);
             ptr            += buf_sz * 2;
             vFftTmp         = reinterpret_cast<float *>(ptr);
@@ -116,7 +120,7 @@ namespace lsp
                 h->pFunc        = NULL;
                 h->pSink        = NULL;
                 h->vOutBuf      = reinterpret_cast<float *>(ptr);
-                ptr            += buf_sz * 2;
+                ptr            += buf_sz * BUFFER_MULTIPLIER;
             }
 
             nHandlers       = handlers;
@@ -167,7 +171,6 @@ namespace lsp
             h->pSubject     = subject;
             h->pFunc        = func;
             h->pSink        = sink;
-            h->nOutOffset   = 0;
 
             size_t buf_size = 1 << nRank;
             dsp::fill_zero(h->vOutBuf, buf_size);
@@ -194,6 +197,21 @@ namespace lsp
             return STATUS_OK;
         }
 
+        void SpectralSplitter::unbind_all()
+        {
+            for (size_t i=0; i<nHandlers; ++i)
+            {
+                handler_t *h    = &vHandlers[i];
+
+                h->pObject      = NULL;
+                h->pSubject     = NULL;
+                h->pFunc        = NULL;
+                h->pSink        = NULL;
+            }
+
+            nBindings       = 0;
+        }
+
         void SpectralSplitter::update_settings()
         {
             if (!bUpdate)
@@ -207,22 +225,18 @@ namespace lsp
             size_t frame_size   = 1 << (nChunkRank - 1);
 
             // Clear buffers and reset pointers
-            windows::sqr_cosine(vWnd, buf_size);
+            windows::sqr_cosine(vWnd, frame_size * 2);
             dsp::fill_zero(vInBuf, buf_size*2);
             dsp::fill_zero(vFftBuf, buf_size*2);
 
             for (size_t i=0; i<nHandlers; ++i)
             {
                 handler_t *h = &vHandlers[i];
-                if ((h->pFunc != NULL) &&
-                    (h->pSink != NULL))
-                {
-                    dsp::fill_zero(h->vOutBuf, buf_size);
-                    h->nOutOffset   = 0;
-                }
+                if (h->pSink != NULL)
+                    dsp::fill_zero(h->vOutBuf, buf_size * 2);
             }
 
-            nFrameOffset        = frame_size * (fPhase * 0.5f);
+            nFrameSize        = frame_size * (fPhase * 0.5f);
             nInOffset           = 0;
 
             // Mark settings applied
@@ -258,8 +272,8 @@ namespace lsp
             if (!bUpdate)
                 return 1 << nChunkRank;
 
-            size_t rank         = lsp_min(rank, nMaxRank);
-            size_t chunk_rank   = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(nRank)) : nRank;
+            size_t rank         = lsp_min(nRank, nMaxRank);
+            size_t chunk_rank   = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(rank)) : nRank;
 
             return 1 << chunk_rank;
         }
@@ -271,17 +285,22 @@ namespace lsp
             if (nBindings <= 0)
                 return;
 
-            size_t buf_size     = 1 << nRank;
-            size_t frame_size   = 1 << (nChunkRank - 1);
+            const size_t buf_size       = 1 << nRank;
+            const size_t max_buf_size   = buf_size * BUFFER_MULTIPLIER;
+            const size_t frame_size     = 1 << (nChunkRank - 1);
+            const size_t in_gap         = buf_size - frame_size;
+            const size_t max_in_offset  = max_buf_size - in_gap;
 
             while (count > 0)
             {
                 // Need to perform transformations?
-                if (nFrameOffset >= frame_size)
+                if (nFrameSize >= frame_size)
                 {
+                    const size_t new_in_offset  = nInOffset + frame_size;
+
                     // Perform FFT and processing
-                    dsp::pcomplex_r2c(vFftBuf, vInBuf, buf_size);       // Convert from real to packed complex
-                    dsp::packed_direct_fft(vFftBuf, vFftBuf, nRank);    // Perform direct FFT
+                    dsp::pcomplex_r2c(vFftBuf, &vInBuf[nInOffset], buf_size);       // Convert from real to packed complex
+                    dsp::packed_direct_fft(vFftBuf, vFftBuf, nRank);                // Perform direct FFT
 
                     for (size_t i=0; i<nHandlers; ++i)
                     {
@@ -289,54 +308,65 @@ namespace lsp
                         if (h->pFunc != NULL)
                         {
                             h->pFunc(h->pObject, h->pSubject, vFftTmp, vFftBuf, nRank);
-                            dsp::packed_reverse_fft(vFftTmp, vFftTmp, nRank);   // Perform reverse FFT
-                            dsp::pcomplex_c2r(vFftTmp, vFftTmp, buf_size);      // Unpack complex numbers
+                            dsp::packed_reverse_fft(vFftTmp, vFftTmp, nRank);                                   // Perform reverse FFT
+                            dsp::pcomplex_c2r(vFftTmp, &vFftTmp[buf_size*2 - frame_size*4], frame_size * 2);    // Unpack complex numbers
                         }
                         else
-                            dsp::copy(vFftTmp, vInBuf, buf_size);               // Copy data to FFT buffer
+                            dsp::copy(vFftTmp, &vInBuf[nInOffset], frame_size * 2);  // Copy data to FFT buffer
 
+                        // Apply window and add to the output buffer
                         if (h->pSink != NULL)
                         {
-                            // Apply window and add to the output buffer
-                            dsp::fmadd3(&h->vOutBuf[h->nOutOffset + frame_size], vFftBuf, vWnd, buf_size);  // Apply window function
-
-                            // Call sink
-                            h->pSink(h->pObject, h->pSubject, &h->vOutBuf[h->nOutOffset], frame_size);
-
-                            // Need to shift the output buffer?
-                            h->nOutOffset      += frame_size;
-                            if (h->nOutOffset > (buf_size*2 - frame_size))
+                            if (new_in_offset >= max_in_offset)
                             {
-                                dsp::move(h->vOutBuf, &h->vOutBuf[h->nOutOffset + frame_size], frame_size); // Shift buffer
-                                dsp::fill_zero(&h->vOutBuf[frame_size], buf_size*2 - frame_size);           // Clear the tail
-                                h->nOutOffset       = 0;
+                                dsp::move(h->vOutBuf, &h->vOutBuf[new_in_offset], frame_size);
+                                dsp::fill_zero(&h->vOutBuf[frame_size], max_in_offset);
+                                dsp::fmadd3(h->vOutBuf, vFftBuf, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                             }
+                            else
+                                dsp::fmadd3(&h->vOutBuf[new_in_offset], vFftBuf, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                         }
                     }
 
-                    // Need to shift input buffer?
-                    if (nInOffset >= buf_size)
+                    // Need to shift input buffers?
+                    if (new_in_offset >= max_in_offset)
                     {
-                        dsp::move(vInBuf, &vInBuf[nInOffset + frame_size], frame_size);
-                        dsp::fill_zero(&vInBuf[frame_size], buf_size*2 - frame_size);
+                        dsp::move(vInBuf, &vInBuf[max_buf_size - buf_size + frame_size], buf_size - frame_size);
+                        dsp::fill_zero(&vInBuf[buf_size - frame_size], max_buf_size - buf_size + frame_size);
                         nInOffset       = 0;
                     }
+                    else
+                        nInOffset       = new_in_offset;
 
-                    // Reset read/write offset
-                    nFrameOffset    = 0;
+                    // Reset frame size
+                    nFrameSize    = 0;
                 }
 
                 // Estimate number of samples to process
-                size_t to_process   = lsp_min(frame_size - nFrameOffset, count);
+                const size_t to_process = lsp_min(frame_size - nFrameSize, count);
 
-                // Copy data
-                dsp::copy(&vInBuf[frame_size + nInOffset], src, to_process);
+                // Copy data to input buffer
+                if (src != NULL)
+                {
+                    dsp::copy(&vInBuf[nInOffset + nFrameSize + in_gap], src, to_process);
+                    src            += to_process;
+                }
+                else
+                    dsp::fill_zero(&vInBuf[nInOffset + nFrameSize + in_gap], to_process);
+
+                // Emit data for handlers
+                for (size_t i=0; i<nHandlers; ++i)
+                {
+                    handler_t *h    = &vHandlers[i];
+
+                    // Call sink
+                    if (h->pSink != NULL)
+                        h->pSink(h->pObject, h->pSubject, &h->vOutBuf[nInOffset + nFrameSize], to_process);
+                }
 
                 // Update pointers
-                nFrameOffset   += to_process;
-                nInOffset      += to_process;
+                nFrameSize     += to_process;
                 count          -= to_process;
-                src            += to_process;
             }
         }
 
@@ -351,7 +381,7 @@ namespace lsp
             v->write("vInBuf", vInBuf);
             v->write("vFftBuf", vFftBuf);
             v->write("vFftTmp", vFftTmp);
-            v->write("nFrameOffset", nFrameOffset);
+            v->write("nFrameSize", nFrameSize);
             v->write("nInOffset", nInOffset);
 
             v->begin_array("vHandlers", vHandlers, nHandlers);
@@ -367,7 +397,6 @@ namespace lsp
                         v->write("pFunc", h->pFunc);
                         v->write("pSink", h->pSink);
                         v->write("vOutBuf", h->vOutBuf);
-                        v->write("nOutOffset", h->nOutOffset);
                     }
                     v->end_object();
                 }

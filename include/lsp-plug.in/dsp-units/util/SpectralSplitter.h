@@ -73,7 +73,6 @@ namespace lsp
                     spectral_splitter_func_t    pFunc;      // Spectral processing function
                     spectral_splitter_sink_t    pSink;      // Spectral sink function
                     float                      *vOutBuf;    // Output buffer
-                    size_t                      nOutOffset; // Offset of output buffer
                 } handler_t;
 
             protected:
@@ -86,7 +85,7 @@ namespace lsp
                 float                      *vInBuf;         // Input buffer
                 float                      *vFftBuf;        // FFT buffer
                 float                      *vFftTmp;        // Temporary FFT buffer
-                size_t                      nFrameOffset;   // Read/Write frame offset
+                size_t                      nFrameSize;     // Current frame size
                 size_t                      nInOffset;      // Offset of input buffer
                 bool                        bUpdate;        // Update flag
                 handler_t                  *vHandlers;      // Handlers
@@ -139,6 +138,11 @@ namespace lsp
                  * @param id the index of the handler
                  */
                 status_t        unbind(size_t id);
+
+                /**
+                 * Unbind all bindings
+                 */
+                void            unbind_all();
 
                 /**
                  * Check that spectral processor needs update
