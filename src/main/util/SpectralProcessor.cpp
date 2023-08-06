@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 1 июл. 2020 г.
@@ -123,7 +123,7 @@ namespace lsp
             // Clear buffers and reset pointers
             windows::sqr_cosine(pWnd, buf_size);
             dsp::fill_zero(pOutBuf, buf_size*4);     // OutBuf + InBuf + Fft(x2)
-            nOffset         = buf_size * fPhase;
+            nOffset         = buf_size * (fPhase * 0.5f);
 
             // Mark settings applied
             bUpdate         = false;
@@ -131,7 +131,7 @@ namespace lsp
 
         void SpectralProcessor::set_phase(float phase)
         {
-            fPhase          = (phase < 0.0f) ? 0.0f : (phase > 1.0f) ? 1.0f : phase;
+            fPhase          = lsp_limit(phase, 0.0f, 1.0f);
             bUpdate         = true;
         }
 
@@ -175,16 +175,14 @@ namespace lsp
                     dsp::fill_zero(&pOutBuf[frame_size], frame_size);       // Fill tail of input buffer with zeros
 
                     // Apply window and add to the output buffer
-                    dsp::fmadd3(pOutBuf, pFftBuf, pWnd, buf_size);          // Apply window and
+                    dsp::fmadd3(pOutBuf, pFftBuf, pWnd, buf_size);          // Apply window
 
                     // Reset read/write offset
                     nOffset     = 0;
                 }
 
                 // Estimate number of samples to process
-                size_t to_process   = frame_size - nOffset;
-                if (to_process > count)
-                    to_process          = count;
+                size_t to_process   = lsp_min(frame_size - nOffset, count);
 
                 // Copy data
                 dsp::copy(&pInBuf[frame_size + nOffset], src, to_process);
@@ -215,5 +213,5 @@ namespace lsp
             v->write("pObject", pObject);
             v->write("pSubject", pSubject);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
