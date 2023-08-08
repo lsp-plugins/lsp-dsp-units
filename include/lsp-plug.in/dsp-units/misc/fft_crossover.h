@@ -92,7 +92,7 @@ namespace lsp
              * @param count the overall number of frequencies in the input array of frequencies
              */
             LSP_DSP_UNITS_PUBLIC
-            void lowpass_set(float *gain, const float *f, float f0, float slope, size_t count);
+            void lopass_set(float *gain, const float *f, float f0, float slope, size_t count);
 
             /**
              * Apply characteristics of the lowpass crossover filter, usual when building bandpass filter
@@ -105,7 +105,7 @@ namespace lsp
              * @param count the overall number of frequencies in the input array of frequencies
              */
             LSP_DSP_UNITS_PUBLIC
-            void lowpass_apply(float *gain, const float *f, float f0, float slope, size_t count);
+            void lopass_apply(float *gain, const float *f, float f0, float slope, size_t count);
 
             /**
              * Generate magnitude characteristics of the hipass crossover filter for FFT processing.
@@ -139,7 +139,7 @@ namespace lsp
              * @param count the overall number of frequencies in the input array of frequencies
              */
             LSP_DSP_UNITS_PUBLIC
-            void lowpass_fft_set(float *mag, float f0, float slope, float sample_rate, size_t rank);
+            void lopass_fft_set(float *mag, float f0, float slope, float sample_rate, size_t rank);
 
             /**
              * Apply magnitude characteristics of the lowpass crossover filter for FFT processing, usual
@@ -151,7 +151,7 @@ namespace lsp
              * @param count the overall number of frequencies in the input array of frequencies
              */
             LSP_DSP_UNITS_PUBLIC
-            void lowpass_fft_apply(float *mag, float f0, float slope, float sample_rate, size_t rank);
+            void lopass_fft_apply(float *mag, float f0, float slope, float sample_rate, size_t rank);
 
         } /* namespace crossover */
     } /* namespace dspu */

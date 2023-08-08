@@ -56,12 +56,108 @@ MTEST_BEGIN("dspu.misc", fft_crossover)
         fclose(fd);
     }
 
+    void dump_filters_multiple(float f0, float slope)
+    {
+        io::Path path;
+        MTEST_ASSERT(path.fmt("%s/%s-filters-muliple-%.0f-hz-%.0f-db.csv", tempdir(), full_name(), f0, slope) > 0);
+
+        printf("Writing file %s\n", path.as_native());
+
+        float s                 = logf(fmax / fmin) / N;
+
+        float *vf               = new float[N+1];
+        MTEST_ASSERT(vf != NULL);
+        lsp_finally { delete [] vf; };
+
+        float *lp               = new float[N+1];
+        MTEST_ASSERT(lp != NULL);
+        lsp_finally { delete [] lp; };
+
+        float *hp               = new float[N+1];
+        MTEST_ASSERT(hp != NULL);
+        lsp_finally { delete [] hp; };
+
+        for (size_t i=0; i<=N; ++i)
+            vf[i]                   = fmin * expf(i * s);
+
+        dspu::crossover::hipass_set(hp, vf, f0, slope, N+1);
+        dspu::crossover::lopass_set(lp, vf, f0, slope, N+1);
+
+        FILE *fd = fopen(path.as_native(), "w");
+
+        fprintf(fd, "f;hipass(f);lowpass(f);sum;\n");
+        for (size_t i=0; i<=N; ++i)
+        {
+            float sum = hp[i] + lp[i];
+
+            fprintf(fd, "%f;%f;%f;%f;\n", vf[i], dspu::gain_to_db(hp[i]), dspu::gain_to_db(lp[i]), dspu::gain_to_db(sum));
+        }
+
+        fclose(fd);
+    }
+
+    void dump_bandpass_multiple(float f0, float slope0, float f1, float slope1)
+    {
+        io::Path path;
+        MTEST_ASSERT(path.fmt("%s/%s-bandpass-muliple-%.0f-%.0f-hz-%.0f-%.0f-db.csv",
+            tempdir(), full_name(), f0, f1, slope0, slope1) > 0);
+
+        printf("Writing file %s\n", path.as_native());
+
+        float s                 = logf(fmax / fmin) / N;
+
+        float *vf               = new float[N+1];
+        MTEST_ASSERT(vf != NULL);
+        lsp_finally { delete [] vf; };
+
+        float *lp               = new float[N+1];
+        MTEST_ASSERT(lp != NULL);
+        lsp_finally { delete [] lp; };
+
+        float *hp               = new float[N+1];
+        MTEST_ASSERT(hp != NULL);
+        lsp_finally { delete [] hp; };
+
+        float *bp               = new float[N+1];
+        MTEST_ASSERT(bp != NULL);
+        lsp_finally { delete [] bp; };
+
+        for (size_t i=0; i<=N; ++i)
+        {
+            vf[i]                   = fmin * expf(i * s);
+            bp[i]                   = 1.0f;
+        }
+
+        dspu::crossover::hipass_set(hp, vf, f0, slope0, N+1);
+        dspu::crossover::lopass_set(lp, vf, f1, slope1, N+1);
+
+        dspu::crossover::hipass_apply(bp, vf, f0, slope0, N+1);
+        dspu::crossover::lopass_apply(bp, vf, f1, slope1, N+1);
+
+        FILE *fd = fopen(path.as_native(), "w");
+
+        fprintf(fd, "f;hipass(f);lowpass(f);bandpass(f);\n");
+        for (size_t i=0; i<=N; ++i)
+            fprintf(fd, "%f;%f;%f;%f;\n", vf[i], dspu::gain_to_db(hp[i]), dspu::gain_to_db(lp[i]), dspu::gain_to_db(bp[i]));
+
+        fclose(fd);
+    }
+
     MTEST_MAIN
     {
         dump_filters_single(1000.0f, -64.0f);
         dump_filters_single(1000.0f, -32.0f);
         dump_filters_single(1000.0f, -12.0f);
         dump_filters_single(1000.0f, 0.0f);
+
+        dump_filters_multiple(100.0f, -64.0f);
+        dump_filters_multiple(100.0f, -32.0f);
+        dump_filters_multiple(100.0f, -12.0f);
+        dump_filters_multiple(100.0f, 0.0f);
+
+        dump_bandpass_multiple(100.0f, -64.0f, 1000.0f, -32.0f);
+        dump_bandpass_multiple(100.0f, -32.0f, 1000.0f, -12.0f);
+        dump_bandpass_multiple(100.0f, -12.0f, 1000.0f, -64.0f);
     }
 
 MTEST_END
