@@ -193,25 +193,204 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void hipass_fft_set(float *gain, float f0, float slope, float sample_rate, size_t rank)
             {
-                // TODO
+                const size_t fft_size   = 1 << rank;
+                const size_t fft_half   = fft_size >> 1;
+                const float kf          = sample_rate / fft_size;
+                size_t  i               = 1;
+                gain[0]                 = 0.0f;
+
+                // Special case?
+                if (slope > -3.0f)
+                {
+                    for (; i <= fft_half; ++i)
+                    {
+                        float f = i * kf;
+                        if (f <= f0)
+                            gain[i] = filter_xover_level;
+                        else if (f >= f0 * 2.0f)
+                            gain[i] = 1.0f;
+                        else
+                            gain[i] = expf(slope_scale_m6dbo * logf(f0 / f)) * filter_xover_level;
+                    }
+                    for (; i < fft_size; ++i)
+                    {
+                        float f = (fft_size - i) * kf;
+                        if (f <= f0)
+                            gain[i] = filter_xover_level;
+                        else if (f >= f0 * 2.0f)
+                            gain[i] = 1.0f;
+                        else
+                            gain[i] = expf(slope_scale_m6dbo * logf(f0 / f)) * filter_xover_level;
+                    }
+                    return;
+                }
+
+                // Usual case
+                const float k           = slope * slope_scale;   // -slope dB/oct
+                for (; i <= fft_half; ++i)
+                {
+                    float f = i * kf;
+                    gain[i] = (f >= f0) ?
+                        1.0f - expf(k * logf(f / f0)) * filter_xover_level :
+                        expf(k * logf(f0 / f)) * filter_xover_level;
+                }
+                for (; i < fft_size; ++i)
+                {
+                    float f = (fft_size - i) * kf;
+                    gain[i] = (f >= f0) ?
+                        1.0f - expf(k * logf(f / f0)) * filter_xover_level :
+                        expf(k * logf(f0 / f)) * filter_xover_level;
+                }
             }
 
             LSP_DSP_UNITS_PUBLIC
             void hipass_fft_apply(float *gain, float f0, float slope, float sample_rate, size_t rank)
             {
-                // TODO
+                const size_t fft_size   = 1 << rank;
+                const size_t fft_half   = fft_size >> 1;
+                const float kf          = sample_rate / fft_size;
+                size_t  i               = 1;
+                gain[0]                 = 0.0f;
+
+                // Special case?
+                if (slope > -3.0f)
+                {
+                    for (; i <= fft_half; ++i)
+                    {
+                        float f = i * kf;
+                        if (f <= f0)
+                            gain[i] *= filter_xover_level;
+                        else if (f < f0 * 2.0f)
+                            gain[i] *= expf(slope_scale_m6dbo * logf(f0 / f)) * filter_xover_level;
+                    }
+                    for (; i < fft_size; ++i)
+                    {
+                        float f = (fft_size - i) * kf;
+                        if (f <= f0)
+                            gain[i] *= filter_xover_level;
+                        else if (f < f0 * 2.0f)
+                            gain[i] *= expf(slope_scale_m6dbo * logf(f0 / f)) * filter_xover_level;
+                    }
+                    return;
+                }
+
+                // Usual case
+                const float k           = slope * slope_scale;   // -slope dB/oct
+                for (; i <= fft_half; ++i)
+                {
+                    float f = i * kf;
+                    gain[i] *= (f >= f0) ?
+                        1.0f - expf(k * logf(f / f0)) * filter_xover_level :
+                        expf(k * logf(f0 / f)) * filter_xover_level;
+                }
+                for (; i < fft_size; ++i)
+                {
+                    float f = (fft_size - i) * kf;
+                    gain[i] *= (f >= f0) ?
+                        1.0f - expf(k * logf(f / f0)) * filter_xover_level :
+                        expf(k * logf(f0 / f)) * filter_xover_level;
+                }
             }
 
             LSP_DSP_UNITS_PUBLIC
             void lopass_fft_set(float *gain, float f0, float slope, float sample_rate, size_t rank)
             {
-                // TODO
+                const size_t fft_size   = 1 << rank;
+                const size_t fft_half   = fft_size >> 1;
+                const float kf          = sample_rate / fft_size;
+                size_t  i               = 1;
+                gain[0]                 = 1.0f;
+
+                // Special case?
+                if (slope > -3.0f)
+                {
+                    for (; i <= fft_half; ++i)
+                    {
+                        float f = i * kf;
+                        if (f >= f0)
+                            gain[i] = filter_xover_level;
+                        else if (f <= f0 * 0.5f)
+                            gain[i] = 1.0f;
+                        else
+                            gain[i] = expf(slope_scale_m6dbo * logf(f / f0)) * filter_xover_level;
+                    }
+                    for (; i < fft_size; ++i)
+                    {
+                        float f = (fft_size - i) * kf;
+                        if (f >= f0)
+                            gain[i] = filter_xover_level;
+                        else if (f <= f0 * 0.5f)
+                            gain[i] = 1.0f;
+                        else
+                            gain[i] = expf(slope_scale_m6dbo * logf(f / f0)) * filter_xover_level;
+                    }
+                    return;
+                }
+
+                // Usual case
+                const float k           = slope * slope_scale;   // -slope dB/oct
+                for (; i <= fft_half; ++i)
+                {
+                    float f = i * kf;
+                    gain[i] = (f >= f0) ?
+                        expf(k * logf(f / f0)) * filter_xover_level :
+                        1.0f - expf(k * logf(f0 / f)) * filter_xover_level;
+                }
+                for (; i < fft_size; ++i)
+                {
+                    float f = (fft_size - i) * kf;
+                    gain[i] = (f >= f0) ?
+                        expf(k * logf(f / f0)) * filter_xover_level :
+                        1.0f - expf(k * logf(f0 / f)) * filter_xover_level;
+                }
             }
 
             LSP_DSP_UNITS_PUBLIC
             void lopass_fft_apply(float *gain, float f0, float slope, float sample_rate, size_t rank)
             {
-                // TODO
+                const size_t fft_size   = 1 << rank;
+                const size_t fft_half   = fft_size >> 1;
+                const float kf          = sample_rate / fft_size;
+                size_t  i               = 1;
+
+                // Special case?
+                if (slope > -3.0f)
+                {
+                    for (; i <= fft_half; ++i)
+                    {
+                        float f = i * kf;
+                        if (f >= f0)
+                            gain[i] *= filter_xover_level;
+                        else if (f > f0 * 0.5f)
+                            gain[i] *= expf(slope_scale_m6dbo * logf(f / f0)) * filter_xover_level;
+                    }
+                    for (; i < fft_size; ++i)
+                    {
+                        float f = (fft_size - i) * kf;
+                        if (f >= f0)
+                            gain[i] *= filter_xover_level;
+                        else if (f > f0 * 0.5f)
+                            gain[i] *= expf(slope_scale_m6dbo * logf(f / f0)) * filter_xover_level;
+                    }
+                    return;
+                }
+
+                // Usual case
+                const float k           = slope * slope_scale;   // -slope dB/oct
+                for (; i <= fft_half; ++i)
+                {
+                    float f = i * kf;
+                    gain[i] *= (f >= f0) ?
+                        expf(k * logf(f / f0)) * filter_xover_level :
+                        1.0f - expf(k * logf(f0 / f)) * filter_xover_level;
+                }
+                for (; i < fft_size; ++i)
+                {
+                    float f = (fft_size - i) * kf;
+                    gain[i] *= (f >= f0) ?
+                        expf(k * logf(f / f0)) * filter_xover_level :
+                        1.0f - expf(k * logf(f0 / f)) * filter_xover_level;
+                }
             }
 
         } /* namespace crossover */
