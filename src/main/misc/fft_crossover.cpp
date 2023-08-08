@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ *
+ * This file is part of lsp-dsp-units
+ * Created on: 8 авг. 2023 г.
+ *
+ * lsp-dsp-units is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * lsp-dsp-units is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <lsp-plug.in/dsp-units/misc/fft_crossover.h>
+#include <lsp-plug.in/stdlib/math.h>
+
+namespace lsp
+{
+    namespace dspu
+    {
+        namespace crossover
+        {
+            constexpr float filter_xover_level  = 0.501187233627f;              // -6 dB
+            constexpr float slope_scale         = (0.05f * M_LN10) / M_LN2;     // Slope scaling factor
+            constexpr float slope_scale_m6dbo   = (-0.3f * M_LN10) / M_LN2;     // Slope scaling factor for -6 dB/oct
+
+            LSP_DSP_UNITS_PUBLIC
+            float hipass(float f, float f0, float slope)
+            {
+                // Special case?
+                if (slope > -3.0f)
+                {
+                    if (f <= f0)
+                        return filter_xover_level;
+                    if (f >= f0 * 2.0f)
+                        return 1.0f;
+
+                    return expf(slope_scale_m6dbo * logf(f0 / f)) * filter_xover_level;
+                }
+
+                // Usual case
+                const float k           = slope * slope_scale;
+
+                if (f >= f0)
+                    return 1.0f - expf(k * logf(f / f0)) * filter_xover_level;
+
+                return expf(k * logf(f0 / f)) * filter_xover_level;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float lopass(float f, float f0, float slope)
+            {
+                // Special case?
+                if (slope > -3.0f)
+                {
+                    if (f >= f0)
+                        return filter_xover_level;
+                    if (f <= f0 * 0.5f)
+                        return 1.0f;
+
+                    return expf(slope_scale_m6dbo * logf(f / f0)) * filter_xover_level;
+                }
+
+                // Usual case
+                const float k           = slope * slope_scale;   // -slope dB/oct
+
+                if (f >= f0)
+                    return expf(k * logf(f / f0)) * filter_xover_level;
+
+                return 1.0f - expf(k * logf(f0 / f)) * filter_xover_level;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void hipass_set(float *gain, const float *f, float f0, float slope, size_t count)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void hipass_apply(float *gain, const float *f, float f0, float slope, size_t count)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void lowpass_set(float *gain, const float *f, float f0, float slope, size_t count)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void lowpass_apply(float *gain, const float *f, float f0, float slope, size_t count)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void hipass_fft_set(float *gain, float f0, float slope, float sample_rate, size_t rank)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void hipass_fft_apply(float *gain, float f0, float slope, float sample_rate, size_t rank)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void lowpass_fft_set(float *gain, float f0, float slope, float sample_rate, size_t rank)
+            {
+                // TODO
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void lowpass_fft_apply(float *gain, float f0, float slope, float sample_rate, size_t rank)
+            {
+                // TODO
+            }
+
+        } /* namespace crossover */
+    } /* namespace dspu */
+} /* namespace lsp */
+
+
