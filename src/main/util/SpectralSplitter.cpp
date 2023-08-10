@@ -247,7 +247,7 @@ namespace lsp
                     dsp::fill_zero(h->vOutBuf, buf_size * 2);
             }
 
-            nFrameSize        = frame_size * (fPhase * 0.5f);
+            nFrameSize          = frame_size * (fPhase * 0.5f);
             nInOffset           = 0;
 
             // Mark settings applied

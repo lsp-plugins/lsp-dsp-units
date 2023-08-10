@@ -359,6 +359,18 @@ namespace lsp
                 void            set_rank(size_t rank);
 
                 /**
+                 * Set processing phase
+                 * @param phase processing phase
+                 */
+                void            set_phase(float phase);
+
+                /**
+                 * Get processing phase
+                 * @return processing phase
+                 */
+                inline float    phase() const                       { return sSplitter.phase();     }
+
+                /**
                  * Get the FFT rank
                  * @return FFT rank
                  */

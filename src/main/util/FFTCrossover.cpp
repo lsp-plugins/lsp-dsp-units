@@ -425,6 +425,11 @@ namespace lsp
             mark_bands_for_update();
         }
 
+        void FFTCrossover::set_phase(float phase)
+        {
+            sSplitter.set_phase(phase);
+        }
+
         bool FFTCrossover::needs_update() const
         {
             for (size_t i=0, n=sSplitter.handlers(); i<n; ++i)
@@ -447,6 +452,9 @@ namespace lsp
 
         void FFTCrossover::update_band(band_t *b)
         {
+            if (!b->bUpdate)
+                return;
+
             const size_t rank   = sSplitter.rank();
             const size_t bins   = 1 << rank;
 
@@ -455,6 +463,9 @@ namespace lsp
                 crossover::hipass_fft_set(b->vFFT, b->fHpfFreq, b->fHpfSlope, nSampleRate, rank);
                 if (b->bLpf)
                     crossover::lopass_fft_apply(b->vFFT, b->fLpfFreq, b->fLpfSlope, nSampleRate, rank);
+
+                dsp::limit1(b->vFFT, 0.0f, b->fFlatten, bins);
+                dsp::mul_k2(b->vFFT, b->fGain, bins);
             }
             else if (b->bLpf)
             {
@@ -485,20 +496,24 @@ namespace lsp
                 return false;
 
             band_t *b       = &vBands[band];
-            if (b->bHpf)
+            if (!b->bEnabled)
+                dsp::fill_zero(m, count);
+            else if (b->bHpf)
             {
                 dspu::crossover::hipass_set(m, f, b->fHpfFreq, b->fHpfSlope, count);
                 if (b->bLpf)
                     dspu::crossover::lopass_apply(m, f, b->fLpfFreq, b->fLpfSlope, count);
                 dsp::limit1(m, 0.0f, b->fFlatten, count);
+                dsp::mul_k2(m, b->fGain, count);
             }
             else if (b->bLpf)
             {
                 dspu::crossover::lopass_set(m, f, b->fLpfFreq, b->fLpfSlope, count);
                 dsp::limit1(m, 0.0f, b->fFlatten, count);
+                dsp::mul_k2(m, b->fGain, count);
             }
             else
-                dsp::fill(m, b->fFlatten, count);
+                dsp::fill(m, b->fFlatten * b->fGain, count);
 
             return true;
         }

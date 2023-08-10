@@ -28,7 +28,7 @@ namespace lsp
     {
         namespace crossover
         {
-            constexpr float filter_xover_level  = 0.501187233627f;              // -6 dB
+            constexpr float filter_xover_level  = 0.5f;                         // ~ -6 dB
             constexpr float slope_scale         = (0.05f * M_LN10) / M_LN2;     // Slope scaling factor
             constexpr float slope_scale_m6dbo   = (-0.3f * M_LN10) / M_LN2;     // Slope scaling factor for -6 dB/oct
 
