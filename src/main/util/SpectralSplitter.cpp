@@ -220,7 +220,7 @@ namespace lsp
                 return false;
 
             handler_t *h = &vHandlers[id];
-            return ((h->pFunc != NULL) || (h->pSink == NULL));
+            return ((h->pFunc != NULL) || (h->pSink != NULL));
         }
 
         void SpectralSplitter::update_settings()

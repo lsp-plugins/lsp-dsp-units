@@ -84,7 +84,10 @@ namespace lsp
             // Allocate the data
             uint8_t *ptr                = alloc_aligned<uint8_t>(pData, to_alloc);
             if (ptr == NULL)
+            {
+                sSplitter.destroy();
                 return STATUS_NO_MEM;
+            }
 
             // Initialize data structures
             vBands                      = reinterpret_cast<band_t *>(ptr);
@@ -128,15 +131,10 @@ namespace lsp
 
             self->update_band(b);
 
-            // TODO: add accelerated complex multiplication of the spectrum
-            size_t bins = 1 << rank;
-            for (size_t i=0; i<bins; ++i)
-            {
-                out[0]  = in[0] * b->vFFT[i];
-                out[1]  = in[1] * b->vFFT[i];
-                out    += 2;
-                in     += 2;
-            }
+            // Copy spectrum and apply FFT envelope
+            const size_t bins = 1 << rank;
+            dsp::copy(out, in, bins * 2);
+            dsp::pcomplex_r2c_mul2(out, b->vFFT, bins);
         }
 
         void FFTCrossover::spectral_sink(
@@ -452,16 +450,15 @@ namespace lsp
             const size_t rank   = sSplitter.rank();
             const size_t bins   = 1 << rank;
 
-            if (b->bHpf || b->bLpf)
+            if (b->bHpf)
             {
-                if (b->bHpf)
-                {
-                    crossover::hipass_fft_set(b->vFFT, b->fHpfFreq, b->fHpfSlope, nSampleRate, rank);
+                crossover::hipass_fft_set(b->vFFT, b->fHpfFreq, b->fHpfSlope, nSampleRate, rank);
+                if (b->bLpf)
                     crossover::lopass_fft_apply(b->vFFT, b->fLpfFreq, b->fLpfSlope, nSampleRate, rank);
-                }
-                else
-                    crossover::lopass_fft_set(b->vFFT, b->fLpfFreq, b->fLpfSlope, nSampleRate, rank);
-
+            }
+            else if (b->bLpf)
+            {
+                crossover::lopass_fft_set(b->vFFT, b->fLpfFreq, b->fLpfSlope, nSampleRate, rank);
                 dsp::limit1(b->vFFT, 0.0f, b->fFlatten, bins);
                 dsp::mul_k2(b->vFFT, b->fGain, bins);
             }
@@ -480,6 +477,30 @@ namespace lsp
         void FFTCrossover::process(const float *in, size_t samples)
         {
             sSplitter.process(in, samples);
+        }
+
+        bool FFTCrossover::freq_chart(size_t band, float *m, const float *f, size_t count)
+        {
+            if (band >= sSplitter.handlers())
+                return false;
+
+            band_t *b       = &vBands[band];
+            if (b->bHpf)
+            {
+                dspu::crossover::hipass_set(m, f, b->fHpfFreq, b->fHpfSlope, count);
+                if (b->bLpf)
+                    dspu::crossover::lopass_apply(m, f, b->fLpfFreq, b->fLpfSlope, count);
+                dsp::limit1(m, 0.0f, b->fFlatten, count);
+            }
+            else if (b->bLpf)
+            {
+                dspu::crossover::lopass_set(m, f, b->fLpfFreq, b->fLpfSlope, count);
+                dsp::limit1(m, 0.0f, b->fFlatten, count);
+            }
+            else
+                dsp::fill(m, b->fFlatten, count);
+
+            return true;
         }
 
         void FFTCrossover::dump(IStateDumper *v) const
