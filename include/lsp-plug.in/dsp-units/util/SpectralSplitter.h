@@ -40,20 +40,27 @@ namespace lsp
          * @param rank the overall rank of the FFT transform (log2(size))
          */
         typedef void (* spectral_splitter_func_t)(
-                void *object,
-                void *subject,
-                float *out,
-                const float *in,
-                size_t rank);
+            void *object,
+            void *subject,
+            float *out,
+            const float *in,
+            size_t rank);
 
         /**
          * Spectral processor callback function
          * @param object the object that handles callback
          * @param subject the subject that is used to handle callback
-         * @param samples the
+         * @param samples the pointer to the buffer containg processed samples
+         * @param first the position of the first stample in the processed samples relative
+         *   to the first sample in the source (unprocessed) buffer passed to the process() call
          * @param rank the overall rank of the FFT transform (log2(size))
          */
-        typedef void (* spectral_splitter_sink_t)(void *object, void *subject, float *samples, size_t count);
+        typedef void (* spectral_splitter_sink_t)(
+            void *object,
+            void *subject,
+            const float *samples,
+            size_t first,
+            size_t count);
 
         /**
          * Spectral processor class, performs spectral transform of the input signal
@@ -145,6 +152,24 @@ namespace lsp
                 void            unbind_all();
 
                 /**
+                 * Check that binding is already set for the specific handler
+                 * @return true if binding is set
+                 */
+                bool            bound(size_t id) const;
+
+                /**
+                 * Return the maximum number of possible handlers
+                 * @return maximum number of possible handlers
+                 */
+                inline size_t   handlers() const            { return nHandlers;         }
+
+                /**
+                 * Return the overall number of bound bands
+                 * @return overall number of bound bands
+                 */
+                inline size_t   bindings() const            { return nBindings;         }
+
+                /**
                  * Check that spectral processor needs update
                  * @return true if spectral processor needs update
                  */
@@ -162,10 +187,16 @@ namespace lsp
                 inline size_t   rank() const                { return nRank;             }
 
                 /**
+                 * Get the maximum FFT rank
+                 * @return maximum FFT rank
+                 */
+                inline size_t   max_rank() const            { return nMaxRank;          }
+
+                /**
                  * Get the FFT chunk rank
                  * @return FFT chunk rank
                  */
-                inline ssize_t  chunk_rank() const          { return nRank;             }
+                inline ssize_t  chunk_rank() const          { return nChunkRank;        }
 
                 /**
                  * Get processing phase

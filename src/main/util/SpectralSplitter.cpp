@@ -214,6 +214,15 @@ namespace lsp
             nBindings       = 0;
         }
 
+        bool SpectralSplitter::bound(size_t id) const
+        {
+            if (id >= nHandlers)
+                return false;
+
+            handler_t *h = &vHandlers[id];
+            return ((h->pFunc != NULL) || (h->pSink != NULL));
+        }
+
         void SpectralSplitter::update_settings()
         {
             if (!bUpdate)
@@ -293,7 +302,7 @@ namespace lsp
             const size_t in_gap         = buf_size - frame_size;
             const size_t max_in_offset  = max_buf_size - in_gap;
 
-            while (count > 0)
+            for (size_t offset = 0; offset < count; )
             {
                 // Need to perform transformations?
                 if (nFrameSize >= frame_size)
@@ -344,7 +353,7 @@ namespace lsp
                 }
 
                 // Estimate number of samples to process
-                const size_t to_process = lsp_min(frame_size - nFrameSize, count);
+                const size_t to_process = lsp_min(frame_size - nFrameSize, count - offset);
 
                 // Copy data to input buffer
                 if (src != NULL)
@@ -362,12 +371,12 @@ namespace lsp
 
                     // Call sink
                     if (h->pSink != NULL)
-                        h->pSink(h->pObject, h->pSubject, &h->vOutBuf[nInOffset + nFrameSize], to_process);
+                        h->pSink(h->pObject, h->pSubject, &h->vOutBuf[nInOffset + nFrameSize], offset, to_process);
                 }
 
                 // Update pointers
                 nFrameSize     += to_process;
-                count          -= to_process;
+                offset         += to_process;
             }
         }
 

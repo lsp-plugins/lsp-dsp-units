@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 03 авг. 2016 г.
@@ -62,14 +62,16 @@ namespace lsp
     namespace dspu
     {
         /**
-         * Crossover callback function for processing band signal
+         * Crossover callback function for processing band signal. Because the internal processing buffer
+         * of crossover is limited, the function can be called multiple times. To understand the right offset
+         * relatively to the original buffer, the 'first' parameter can be used.
          *
          * @param object the object that handles callback
          * @param subject the subject that is used to handle callback
          * @param band number of the band
          * @param data the output band signal produced by crossover,
          *        is valid only until the function returns
-         * @param first index of the first sample in input buffer
+         * @param first index of the first sample in the data buffer relatively to the original input buffer
          * @param count number of processed samples in the data buffer
          */
         typedef void (* crossover_func_t)(void *object, void *subject, size_t band, const float *data, size_t first, size_t count);
@@ -353,7 +355,7 @@ namespace lsp
                  */
                 void            dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_CROSSOVER_H_ */

@@ -84,7 +84,7 @@ MTEST_BEGIN("dspu.util", spectral_splitter)
         }
     }
 
-    static void spectral_splitter_sink(void *object, void *subject, float *samples, size_t count)
+    static void spectral_splitter_sink(void *object, void *subject, const float *samples, size_t offset, size_t count)
     {
         band_t *band = static_cast<band_t *>(subject);
         float *dst = band->s.channel(0);
