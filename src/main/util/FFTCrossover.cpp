@@ -235,7 +235,7 @@ namespace lsp
             band_t *b   = &vBands[band];
 
             if (!b->bUpdate)
-                b->bUpdate = ((b->bLpf) && (b->fHpfFreq != freq));
+                b->bUpdate = ((b->bHpf) && (b->fHpfFreq != freq));
 
             b->fHpfFreq     = freq;
         }
