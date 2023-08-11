@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 14 сент. 2016 г.
@@ -97,7 +97,7 @@ namespace lsp
         void Sidechain::set_reactivity(float reactivity)
         {
             if ((fReactivity == reactivity) ||
-                (reactivity <= 0.0) ||
+                (reactivity < 0.0f) ||
                 (reactivity > fMaxReactivity))
                 return;
             fReactivity         = reactivity;
@@ -680,5 +680,5 @@ namespace lsp
             v->write("nFlags", nFlags);
             v->write("pPreEq", pPreEq);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
