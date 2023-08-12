@@ -89,7 +89,7 @@ namespace lsp
         {
             nSampleRate         = sr;
             nFlags              = SCF_UPDATE | SCF_CLEAR;
-            size_t gap          = millis_to_samples(sr, fMaxReactivity);
+            size_t gap          = lsp_max(millis_to_samples(sr, fMaxReactivity), 1);
             size_t buf_size     = lsp_max(gap, MIN_GAP_ITEMS);
             sBuffer.init(buf_size * 4, gap);
         }
