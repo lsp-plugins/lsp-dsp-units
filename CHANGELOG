@@ -7,6 +7,7 @@
   chunks to the sample at the specified position.
 * Improved sidechain algorithm related to RMS refresh.
 * Implemented linear-phase FFT crossover.
+* Updated build scripts.
 
 === 1.0.12 ===
 * Added support of high-precision oversampling routines to dspu::Oversampler module.
