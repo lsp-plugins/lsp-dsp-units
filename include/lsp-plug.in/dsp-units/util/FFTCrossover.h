@@ -292,7 +292,7 @@ namespace lsp
                 /**
                  * Set flatten threshold of the band
                  * @param band band number
-                 * @param amount the flatten amount in decibels
+                 * @param amount the flatten amount in raw gain units
                  */
                 void            set_flatten(size_t band, float amount);
 
