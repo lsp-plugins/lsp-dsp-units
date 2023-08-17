@@ -114,6 +114,8 @@ namespace lsp
 
                 b->vFFT                     = reinterpret_cast<float *>(ptr);
                 ptr                        += szof_buffer;
+
+                dsp::fill_zero(b->vFFT, bins);
             }
 
             return STATUS_OK;

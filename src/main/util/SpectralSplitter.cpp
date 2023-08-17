@@ -87,8 +87,9 @@ namespace lsp
             }
 
             // Allocate buffer
+            size_t bins     = 1 << max_rank;
             size_t hdl_sz   = align_size(sizeof(handler_t) * handlers, DEFAULT_ALIGN);
-            size_t buf_sz   = sizeof(float) << max_rank;
+            size_t buf_sz   = sizeof(float) *bins;
             size_t to_alloc =
                 hdl_sz + // vHandlers
                 buf_sz + // vWindow
@@ -237,14 +238,14 @@ namespace lsp
 
             // Clear buffers and reset pointers
             windows::sqr_cosine(vWnd, frame_size * 2);
-            dsp::fill_zero(vInBuf, buf_size*2);
+            dsp::fill_zero(vInBuf, buf_size * BUFFER_MULTIPLIER);
             dsp::fill_zero(vFftBuf, buf_size*2);
 
             for (size_t i=0; i<nHandlers; ++i)
             {
                 handler_t *h = &vHandlers[i];
                 if (h->pSink != NULL)
-                    dsp::fill_zero(h->vOutBuf, buf_size * 2);
+                    dsp::fill_zero(h->vOutBuf, buf_size * BUFFER_MULTIPLIER);
             }
 
             nFrameSize          = frame_size * (fPhase * 0.5f);
