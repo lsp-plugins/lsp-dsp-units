@@ -235,6 +235,11 @@ namespace lsp
                 void            process(const float *src, size_t count);
 
                 /**
+                 * Clear internal memory and buffers
+                 */
+                void            clear();
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */

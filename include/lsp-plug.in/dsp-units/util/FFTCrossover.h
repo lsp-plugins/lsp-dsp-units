@@ -413,6 +413,11 @@ namespace lsp
                 void            process(const float *in, size_t samples);
 
                 /**
+                 * Clear internal memory
+                 */
+                inline void     clear()                             { sSplitter.clear();            }
+
+                /**
                  * Dump the state
                  * @param dumper dumper
                  */

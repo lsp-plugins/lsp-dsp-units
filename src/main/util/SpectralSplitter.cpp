@@ -233,11 +233,22 @@ namespace lsp
             nRank               = lsp_min(nRank, nMaxRank);
             nChunkRank          = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(nRank)) : nRank;
 
-            size_t buf_size     = 1 << nRank;
             size_t frame_size   = 1 << (nChunkRank - 1);
 
             // Clear buffers and reset pointers
             windows::sqr_cosine(vWnd, frame_size * 2);
+            clear();
+
+            nFrameSize          = frame_size * (fPhase * 0.5f);
+            nInOffset           = 0;
+
+            // Mark settings applied
+            bUpdate             = false;
+        }
+
+        void SpectralSplitter::clear()
+        {
+            size_t buf_size     = 1 << nRank;
             dsp::fill_zero(vInBuf, buf_size * BUFFER_MULTIPLIER);
             dsp::fill_zero(vFftBuf, buf_size*2);
 
@@ -247,12 +258,6 @@ namespace lsp
                 if (h->pSink != NULL)
                     dsp::fill_zero(h->vOutBuf, buf_size * BUFFER_MULTIPLIER);
             }
-
-            nFrameSize          = frame_size * (fPhase * 0.5f);
-            nInOffset           = 0;
-
-            // Mark settings applied
-            bUpdate             = false;
         }
 
         void SpectralSplitter::set_phase(float phase)
