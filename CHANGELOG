@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.14 ===
+
+
 === 1.0.13 ===
 * Added insert() method to dspu::Sample class that allows to insert some zeroed
   chunks to the sample at the specified position.
