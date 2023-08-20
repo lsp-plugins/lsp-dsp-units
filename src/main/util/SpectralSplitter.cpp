@@ -176,7 +176,7 @@ namespace lsp
             h->pSink        = sink;
 
             size_t buf_size = 1 << nRank;
-            dsp::fill_zero(h->vOutBuf, buf_size);
+            dsp::fill_zero(h->vOutBuf, buf_size * BUFFER_MULTIPLIER);
 
             return STATUS_OK;
         }
