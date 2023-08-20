@@ -302,6 +302,74 @@ namespace lsp
             return true;
         }
 
+        status_t Sample::insert(size_t pos, size_t samples)
+        {
+            if (samples <= 0)
+                return STATUS_OK;
+            if (pos > nLength)
+                return STATUS_INVALID_VALUE;
+            if (vBuffer == NULL)
+                return STATUS_BAD_STATE;
+
+            if ((nLength + samples) < nMaxLength)
+            {
+                // We can do the things in-place
+                float *dptr         = vBuffer;
+
+                // Copy channels
+                for (size_t ch=0; ch < nChannels; ++ch)
+                {
+                    dsp::move(&dptr[pos + samples], &dptr[pos], nLength - pos);
+                    dsp::fill_zero(&dptr[pos], samples);
+
+                    dptr           += nMaxLength;
+                }
+            }
+            else
+            {
+                // We can not do the things in-place, need to allocate new data
+                size_t max_length   = align_size(nMaxLength + samples, DEFAULT_ALIGN);    // Make multiple of 4
+                float *buf          = reinterpret_cast<float *>(::malloc(max_length * nChannels * sizeof(float)));
+                if (buf == NULL)
+                    return STATUS_NO_MEM;
+
+                // Copy previously allocated data
+                float *dptr         = buf;
+                const float *sptr   = vBuffer;
+
+                // Copy channels
+                for (size_t ch=0; ch < nChannels; ++ch)
+                {
+                    dsp::copy(dptr, sptr, pos);
+                    dsp::fill_zero(&dptr[pos], samples);
+                    dsp::copy(&dptr[pos + samples], &sptr[pos], nLength - pos);
+                    dsp::fill_zero(&dptr[nLength + samples], max_length - nLength - samples);
+
+                    dptr           += max_length;
+                    sptr           += nMaxLength;
+                }
+
+                // Destroy previously allocated data
+                free(vBuffer);
+
+                vBuffer         = buf;
+                nMaxLength      = max_length;
+            }
+
+            nLength        += samples;
+            return true;
+        }
+
+        status_t Sample::append(size_t samples)
+        {
+            return insert(nLength, samples);
+        }
+
+        status_t Sample::prepend(size_t samples)
+        {
+            return insert(0, samples);
+        }
+
         void Sample::put_chunk_linear(float *dst, const float *src, size_t len, size_t fade_in, size_t fade_out)
         {
             // Apply the fade-in (if present)

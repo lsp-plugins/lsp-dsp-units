@@ -186,7 +186,7 @@ namespace lsp
                 /** Process sidechain signal
                  *
                  * @param out output signal gain to VCA
-                 * @param env envelope signal of expander
+                 * @param env envelope signal of gate
                  * @param in sidechain signal
                  * @param samples number of samples to process
                  */

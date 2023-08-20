@@ -25,7 +25,7 @@
 
 #define OS_UP_BUFFER_SIZE       (12 * 1024)   /* Multiple of 3 and 4 */
 #define OS_DOWN_BUFFER_SIZE     (12 * 1024)   /* Multiple of 3 and 4 */
-#define OS_CUTOFF               21000.0f
+#define OS_CUTOFF               20000.0f
 
 namespace lsp
 {
@@ -115,10 +115,10 @@ namespace lsp
 
             // Update filter parameters
             filter_params_t fp;
-            fp.fFreq        = OS_CUTOFF;        // Calculate cutoff frequency
+            fp.fFreq        = lsp_min(OS_CUTOFF, sr * 0.42f);        // Calculate cutoff frequency
             fp.fFreq2       = fp.fFreq;
             fp.fGain        = 1.0f;
-            fp.fQuality     = 0.5f;
+            fp.fQuality     = 0.1f;
             fp.nSlope       = 30;               // 30 poles = 30 * 3db/oct = 90 db/Oct
             fp.nType        = FLT_BT_BWC_LOPASS;// Chebyshev filter
 

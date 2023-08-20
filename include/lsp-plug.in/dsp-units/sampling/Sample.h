@@ -269,6 +269,28 @@ namespace lsp
                  */
                 status_t resample(size_t new_sample_rate);
 
+                /**
+                 * Insert some empty samples at specified position
+                 * @param pos position to insert data
+                 * @param samples number of samples to insert
+                 * @return status of operation
+                 */
+                status_t insert(size_t pos, size_t samples);
+
+                /**
+                 * Append the specified number of samples at the end of the sample
+                 * @param samples number of samples to append
+                 * @return status of operation
+                 */
+                status_t append(size_t samples);
+
+                /**
+                 * Prepend the specified number of samples at the beginning of the sample
+                 * @param samples number of samples to append
+                 * @return status of operation
+                 */
+                status_t prepend(size_t samples);
+
                 /** Reverse track
                  *
                  * @param channel channel to reverse
@@ -388,7 +410,7 @@ namespace lsp
                  */
                 void                dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_SAMPLING_SAMPLE_H_ */
