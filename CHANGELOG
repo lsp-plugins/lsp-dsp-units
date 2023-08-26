@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.14 ===
-
+* Fixed band characteristics report for FFTCrossover.
 
 === 1.0.13 ===
 * Added insert() method to dspu::Sample class that allows to insert some zeroed

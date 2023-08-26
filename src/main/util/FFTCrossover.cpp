@@ -498,9 +498,7 @@ namespace lsp
                 return false;
 
             band_t *b       = &vBands[band];
-            if (!b->bEnabled)
-                dsp::fill_zero(m, count);
-            else if (b->bHpf)
+            if (b->bHpf)
             {
                 dspu::crossover::hipass_set(m, f, b->fHpfFreq, b->fHpfSlope, count);
                 if (b->bLpf)
