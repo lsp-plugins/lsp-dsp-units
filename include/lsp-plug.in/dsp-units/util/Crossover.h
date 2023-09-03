@@ -91,16 +91,20 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Crossover
         {
-            private:
-                Crossover & operator = (const Crossover &);
-                Crossover(const Crossover &);
-
             protected:
                 enum xover_type_t
                 {
                     FILTER_LPF,                         // Low-pass filter
                     FILTER_HPF,                         // High-pass filter
                     FILTER_APF                          // All-pass filter
+                };
+
+                enum reconfigure_t
+                {
+                    R_GAIN          = 1 << 0,           // We can reconfigure band gain in softer mode
+                    R_SPLIT         = 1 << 1,           // Need to reconfigure filter order
+
+                    R_ALL           = R_GAIN | R_SPLIT
                 };
 
                 typedef struct split_t
@@ -129,14 +133,6 @@ namespace lsp
                     size_t              nId;            // Number of the band
                 } band_t;
 
-                enum reconfigure_t
-                {
-                    R_GAIN          = 1 << 0,           // We can reconfigure band gain in softer mode
-                    R_SPLIT         = 1 << 1,           // Need to reconfigure filter order
-
-                    R_ALL           = R_GAIN | R_SPLIT
-                } reconfigure_t;
-
             protected:
                 size_t          nReconfigure;   // Change flag
                 size_t          nSplits;        // Number of splits
@@ -157,7 +153,12 @@ namespace lsp
 
             public:
                 explicit Crossover();
+                Crossover(const Crossover &) = delete;
+                Crossover(Crossover &) = delete;
                 ~Crossover();
+
+                Crossover & operator = (const Crossover &) = delete;
+                Crossover & operator = (Crossover &&) = delete;
 
                 /** Construct crossover
                  *

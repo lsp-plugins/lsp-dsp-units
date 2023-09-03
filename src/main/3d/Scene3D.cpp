@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 авг. 2021 г.
@@ -506,14 +506,9 @@ namespace lsp
 
         status_t Scene3D::load_internal(io::IInStream *is, size_t flags, const char *charset)
         {
-            status_t res, res2;
-            res = load_scene_from_obj(this, is, charset);
+            status_t res = load_scene_from_obj(this, is, charset);
             if (flags & WRAP_CLOSE)
-            {
-                res2 = is->close();
-                if (res == STATUS_OK)
-                    res     = res2;
-            }
+                res = update_status(res, is->close());
             if (flags & WRAP_DELETE)
                 delete is;
 
@@ -522,21 +517,16 @@ namespace lsp
 
         status_t Scene3D::load_internal(io::IInSequence *is, size_t flags)
         {
-            status_t res, res2;
-            res = load_scene_from_obj(this, is);
+            status_t res = load_scene_from_obj(this, is);
             if (flags & WRAP_CLOSE)
-            {
-                res2 = is->close();
-                if (res == STATUS_OK)
-                    res     = res2;
-            }
+                res = update_status(res, is->close());
             if (flags & WRAP_DELETE)
                 delete is;
 
             return res;
         }
 
-    } // namespace dspu
-} // namespace lsp
+    } /* namespace dspu */
+} /* namespace lsp */
 
 

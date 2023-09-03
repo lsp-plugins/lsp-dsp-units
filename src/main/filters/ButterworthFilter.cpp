@@ -85,9 +85,6 @@ namespace lsp
 
         void ButterworthFilter::set_filter_type(bw_filt_type_t type)
         {
-            if ((type < BW_FLT_TYPE_LOWPASS) && (type >= BW_FLT_TYPE_MAX))
-                return;
-
             enFilterType    = type;
             bSync           = true;
         }

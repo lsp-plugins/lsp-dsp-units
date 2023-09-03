@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 12 Jul 2017
@@ -174,7 +174,6 @@ namespace lsp
             vOverBuffer2    = ptr;
             ptr            += OVER_BUF_LIMIT_SIZE;
             vEnvelopeBuffer = ptr;
-            ptr            += ENVELOPE_BUF_LIMIT_SIZE;
 
             return sOver1.init() && sOver2.init();
         }
@@ -2315,5 +2314,6 @@ namespace lsp
             v->write("pData", pData);
             v->write("bSync", bSync);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */

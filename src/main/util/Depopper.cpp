@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 4 июл. 2020 г.
@@ -50,12 +50,14 @@ namespace lsp
             nLookMin            = 0;
             nLookMax            = 0;
             nLookOff            = 0;
+            nLookCount          = 0;
 
             fRmsMax             = 0.0f;
             fRmsLength          = 0.0f;
             nRmsMin             = 0;
             nRmsMax             = 0;
             nRmsOff             = 0;
+            nRmsLen             = 0;
             fRmsNorm            = 0.0f;
 
             nCounter            = 0;
@@ -606,5 +608,6 @@ namespace lsp
 
             v->write("bReconfigure", bReconfigure);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */

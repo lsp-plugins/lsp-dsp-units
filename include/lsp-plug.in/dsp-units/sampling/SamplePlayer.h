@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 марта 2016 г.
@@ -35,10 +35,6 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC SamplePlayer
         {
-            private:
-                SamplePlayer & operator = (const SamplePlayer &);
-                SamplePlayer(const SamplePlayer &);
-
             protected:
                 typedef struct play_item_t: public playback::playback_t
                 {
@@ -81,7 +77,12 @@ namespace lsp
 
             public:
                 explicit SamplePlayer();
+                SamplePlayer(const SamplePlayer &) = delete;
+                SamplePlayer(SamplePlayer &&) = delete;
                 ~SamplePlayer();
+
+                SamplePlayer & operator = (const SamplePlayer &) = delete;
+                SamplePlayer & operator = (SamplePlayer &&) = delete;
 
                 /**
                  * Construct sample player

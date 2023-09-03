@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 10 авг. 2021 г.
@@ -53,8 +53,9 @@ namespace lsp
 
         RayTrace3D::TaskThread::TaskThread(RayTrace3D *trace)
         {
-            this->trace     = trace;
-            heavy_state     = rt::S_SCAN_OBJECTS;
+            this->trace             = trace;
+            clear_stats(&stats);
+            heavy_state             = rt::S_SCAN_OBJECTS;
         }
 
         RayTrace3D::TaskThread::~TaskThread()
@@ -1273,6 +1274,7 @@ namespace lsp
             fDetalization   = 1e-10f;
             bNormalize      = true;
             bCancelled      = false;
+            bFailed         = false;
             nQueueSize      = 0;
             nProgressPoints = 0;
             nProgressMax    = 0;
@@ -1762,16 +1764,16 @@ namespace lsp
             size_t nin, nout;
 
             // Cull each triangle of bounding box with four scissor planes
-            for (size_t i=0, m = sizeof(bbox_map)/sizeof(size_t); i < m; )
+            for (size_t i=0, m = sizeof(bbox_map)/sizeof(size_t); i < m; i += 3)
             {
                 // Initialize input
                 in          = buf1;
                 out         = buf2;
                 nin         = 1;
 
-                in->v[0]    = bbox->p[bbox_map[i++]];
-                in->v[1]    = bbox->p[bbox_map[i++]];
-                in->v[2]    = bbox->p[bbox_map[i++]];
+                in->v[0]    = bbox->p[bbox_map[i]];
+                in->v[1]    = bbox->p[bbox_map[i+1]];
+                in->v[2]    = bbox->p[bbox_map[i+2]];
                 pl          = view->pl;
 
                 // Cull triangle with planes
@@ -1801,10 +1803,6 @@ namespace lsp
             return nout;
         }
 
-    } // namespace dspu
-} // namespace lsp
-
-
-
-
+    } /* namespace dspu */
+} /* namespace lsp */
 

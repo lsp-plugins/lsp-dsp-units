@@ -47,12 +47,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC FFTCrossover
         {
-            private:
-                FFTCrossover & operator = (const FFTCrossover &);
-                FFTCrossover & operator = (FFTCrossover &&);
-                FFTCrossover(const Crossover &);
-                FFTCrossover(Crossover &&);
-
             protected:
                 typedef struct band_t
                 {
@@ -103,7 +97,12 @@ namespace lsp
 
             public:
                 explicit FFTCrossover();
+                FFTCrossover(const Crossover &) = delete;
+                FFTCrossover(Crossover &&) = delete;
                 ~FFTCrossover();
+
+                FFTCrossover & operator = (const FFTCrossover &) = delete;
+                FFTCrossover & operator = (FFTCrossover &&) = delete;
 
                 /** Construct crossover
                  *

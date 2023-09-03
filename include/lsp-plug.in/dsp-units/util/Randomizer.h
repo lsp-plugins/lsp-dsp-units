@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 23 марта 2016 г.
@@ -41,10 +41,6 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC Randomizer
         {
             private:
-                Randomizer &operator = (const Randomizer &);
-                Randomizer(const Randomizer &);
-
-            private:
                 static const uint32_t vMul1[];
                 static const uint32_t vMul2[];
                 static const uint32_t vAdders[];
@@ -65,7 +61,12 @@ namespace lsp
 
             public:
                 explicit Randomizer();
+                Randomizer(const Randomizer &) = delete;
+                Randomizer(Randomizer &&) = delete;
                 ~Randomizer();
+
+                Randomizer &operator = (const Randomizer &) = delete;
+                Randomizer &operator = (Randomizer &&) = delete;
 
                 /**
                  * Construct the randomizer

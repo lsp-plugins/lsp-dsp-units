@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 10 авг. 2021 г.
@@ -427,9 +427,9 @@ namespace lsp
                 dsp::raw_triangle_t    *in  = buf1;
                 dsp::raw_triangle_t    *out = buf2;
 
-                in->v[0]    = *(t->v[0]);
-                in->v[1]    = *(t->v[1]);
-                in->v[2]    = *(t->v[2]);
+                in[0].v[0]      = *(t->v[0]);
+                in[0].v[1]      = *(t->v[1]);
+                in[0].v[2]      = *(t->v[2]);
 
                 const dsp::vector3d_t *pl = view.pl;
 
@@ -1132,10 +1132,6 @@ namespace lsp
 
                         case 0x15:  // 1 1 1
                             // Triangle is on the plane, add and continue
-                            if (!in.alloc(t))
-                                return STATUS_NO_MEM;
-                            break;
-
                         case 0x16:  // 1 1 2
                         case 0x19:  // 1 2 1
                         case 0x1a:  // 1 2 2
@@ -1443,9 +1439,9 @@ namespace lsp
                 dsp::orient_plane_v1p1(&v, &view.s, &st->n);
                 return cullback(&v);
             }
-        } // namespace rt
-    } // namespace dspu
-} // namespace lsp
+        } /* namespace rt */
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 

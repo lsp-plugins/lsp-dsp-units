@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 20 Mar 2017
@@ -169,7 +169,6 @@ namespace lsp
             {
                 case FG_SINE:
                 case FG_COSINE:
-                case FG_MAX:
                     fReferencedDC = fDCOffset;
                     break;
                 case FG_SQUARED_SINE:
@@ -228,22 +227,13 @@ namespace lsp
                     else
                         sSawtooth.nWidthWord       = sSawtooth.fWidth * (nPhaseAccMask + 1.0f);
 
-                    sSawtooth.fCoeffs[0] = 2.0f * fAmplitude / sSawtooth.nWidthWord;
-                    sSawtooth.fCoeffs[1] = -fAmplitude;
-                    sSawtooth.fCoeffs[2] = (-2.0f * fAmplitude) / (nPhaseAccMask + 1.0f - sSawtooth.nWidthWord);
-                    sSawtooth.fCoeffs[3] = fAmplitude * (nPhaseAccMask + 1.0f + sSawtooth.nWidthWord) / (nPhaseAccMask + 1.0f - sSawtooth.nWidthWord);
-                    sSawtooth.fWaveDC    = 0.0f;
+                    sSawtooth.fCoeffs[0]    = 2.0f * fAmplitude / sSawtooth.nWidthWord;
+                    sSawtooth.fCoeffs[1]    = -fAmplitude;
+                    sSawtooth.fCoeffs[2]    = (-2.0f * fAmplitude) / (nPhaseAccMask + 1.0f - sSawtooth.nWidthWord);
+                    sSawtooth.fCoeffs[3]    = fAmplitude * (nPhaseAccMask + 1.0f + sSawtooth.nWidthWord) / (nPhaseAccMask + 1.0f - sSawtooth.nWidthWord);
+                    sSawtooth.fWaveDC       = 0.0f;
 
-                    switch (enDCReference)
-                    {
-                        case DC_ZERO:
-                            fReferencedDC = fDCOffset; //sSawtooth.fWaveDC == 0.0f
-                            break;
-                        case DC_WAVEDC:
-                        default:
-                            fReferencedDC = fDCOffset;
-                            break;
-                    }
+                    fReferencedDC           = fDCOffset; //sSawtooth.fWaveDC == 0.0f
 
                     // Gibbs starts being noticeable at 6% or 94% with, so we drop
                     // linearly the amplitude.
@@ -259,76 +249,61 @@ namespace lsp
                 case FG_TRAPEZOID:
                 case FG_BL_TRAPEZOID:
                 {
-                    sTrapezoid.nPoints[0]     = sTrapezoid.fRaiseRatio * 0.5f * (nPhaseAccMask + 1.0f);
-                    sTrapezoid.nPoints[1]     = (1.0f - sTrapezoid.fFallRatio) * 0.5f * (nPhaseAccMask + 1.0f);
+                    sTrapezoid.nPoints[0]   = sTrapezoid.fRaiseRatio * 0.5f * (nPhaseAccMask + 1.0f);
+                    sTrapezoid.nPoints[1]   = (1.0f - sTrapezoid.fFallRatio) * 0.5f * (nPhaseAccMask + 1.0f);
 
                     if (sTrapezoid.fFallRatio < 1.0f) // Prevent overflow
-                        sTrapezoid.nPoints[2]     = (1.0f + sTrapezoid.fFallRatio) * 0.5f * (nPhaseAccMask + 1.0f);
+                        sTrapezoid.nPoints[2]   = (1.0f + sTrapezoid.fFallRatio) * 0.5f * (nPhaseAccMask + 1.0f);
                     else
-                        sTrapezoid.nPoints[2]       = nPhaseAccMask;
+                        sTrapezoid.nPoints[2]   = nPhaseAccMask;
 
                     if (sTrapezoid.fRaiseRatio > 0.0f) // Prevent overflow
-                        sTrapezoid.nPoints[3] = (2.0f - sTrapezoid.fRaiseRatio) * 0.5f * (nPhaseAccMask + 1.0f);
+                        sTrapezoid.nPoints[3]   = (2.0f - sTrapezoid.fRaiseRatio) * 0.5f * (nPhaseAccMask + 1.0f);
                     else
-                        sTrapezoid.nPoints[3] = nPhaseAccMask;
+                        sTrapezoid.nPoints[3]   = nPhaseAccMask;
 
-                    sTrapezoid.fCoeffs[0]     = fAmplitude / sTrapezoid.nPoints[0];
-                    sTrapezoid.fCoeffs[1]     = -2.0f * fAmplitude / (sTrapezoid.nPoints[2] - sTrapezoid.nPoints[1]);
-                    sTrapezoid.fCoeffs[2]     = fAmplitude / sTrapezoid.fFallRatio;
-                    sTrapezoid.fCoeffs[3]     = -2.0f * fAmplitude / sTrapezoid.fRaiseRatio;
-                    sTrapezoid.fWaveDC        = 0.0f;
+                    sTrapezoid.fCoeffs[0]   = fAmplitude / sTrapezoid.nPoints[0];
+                    sTrapezoid.fCoeffs[1]   = -2.0f * fAmplitude / (sTrapezoid.nPoints[2] - sTrapezoid.nPoints[1]);
+                    sTrapezoid.fCoeffs[2]   = fAmplitude / sTrapezoid.fFallRatio;
+                    sTrapezoid.fCoeffs[3]   = -2.0f * fAmplitude / sTrapezoid.fRaiseRatio;
+                    sTrapezoid.fWaveDC      = 0.0f;
 
-                    switch (enDCReference)
-                    {
-                        case DC_ZERO:
-                            fReferencedDC = fDCOffset; //sTrapezoid.fWaveDC == 0.0f
-                            break;
-                        case DC_WAVEDC:
-                        default:
-                            fReferencedDC = fDCOffset;
-                            break;
-                    }
+                    fReferencedDC           = fDCOffset; //sSawtooth.fWaveDC == 0.0f
 
                     // Gibbs starts being noticeable at 6% or 94% with, so we drop
                     // linearly the amplitude.
                     float minRatio = (sTrapezoid.fRaiseRatio < sTrapezoid.fFallRatio) ? sTrapezoid.fRaiseRatio : sTrapezoid.fFallRatio;
 
-                    if (minRatio < 0.40f)
-                        sTrapezoid.fBLPeakAtten = minRatio + 0.6f;
-                    else
-                        sTrapezoid.fBLPeakAtten = 1.0f;
+                    sTrapezoid.fBLPeakAtten = (minRatio < 0.4f) ? minRatio + 0.6f : 1.0f;
                 }
                 break;
 
                 case FG_PULSETRAIN:
                 case FG_BL_PULSETRAIN:
                 {
-                    sPulse.nTrainPoints[0]    = sPulse.fPosWidthRatio * 0.5f * (nPhaseAccMask + 1.0f);
-                    sPulse.nTrainPoints[1]    = 0.5f * (nPhaseAccMask + 1.0f);
+                    sPulse.nTrainPoints[0]  = sPulse.fPosWidthRatio * 0.5f * (nPhaseAccMask + 1.0f);
+                    sPulse.nTrainPoints[1]  = 0.5f * (nPhaseAccMask + 1.0f);
                     if (sPulse.fNegWidthRatio == 1.0f) // Prevent overflow
                         sPulse.nTrainPoints[2]  = nPhaseAccMask;
                     else
                         sPulse.nTrainPoints[2]  = (1.0f + sPulse.fNegWidthRatio) * 0.5f * (nPhaseAccMask + 1.0f);
 
-                    sPulse.fWaveDC              = 0.5f * fAmplitude * (sPulse.fPosWidthRatio - sPulse.fNegWidthRatio);
+                    sPulse.fWaveDC          = 0.5f * fAmplitude * (sPulse.fPosWidthRatio - sPulse.fNegWidthRatio);
 
                     switch (enDCReference)
                     {
                         case DC_ZERO:
-                            fReferencedDC = fDCOffset - sPulse.fWaveDC;
+                            fReferencedDC       = fDCOffset - sPulse.fWaveDC;
                             break;
                         case DC_WAVEDC:
                         default:
-                            fReferencedDC = fDCOffset;
+                            fReferencedDC       = fDCOffset;
                             break;
                     }
 
                     float maxRatio = (sPulse.fNegWidthRatio > sPulse.fPosWidthRatio) ? sPulse.fNegWidthRatio : sPulse.fPosWidthRatio;
 
-                    if (maxRatio > 0.5f)
-                        sPulse.fBLPeakAtten = 0.6f;
-                    else
-                        sPulse.fBLPeakAtten = M_SQRT1_2;
+                    sPulse.fBLPeakAtten     = (maxRatio > 0.5f) ? 0.6f : M_SQRT1_2;
                 }
                 break;
 
@@ -797,9 +772,6 @@ namespace lsp
 
         void Oscillator::set_dc_reference(dc_reference_t dcReference)
         {
-            if ((dcReference < DC_WAVEDC) || (dcReference >= DC_MAX))
-                return;
-
             enDCReference   = dcReference;
             bSync           = true;
         }
@@ -1009,5 +981,6 @@ namespace lsp
             v->write("nFreqCtrlWord_Over", nFreqCtrlWord_Over);
             v->write("bSync", bSync);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */

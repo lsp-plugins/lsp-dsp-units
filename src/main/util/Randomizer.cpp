@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 23 марта 2016 г.
@@ -87,7 +87,7 @@ namespace lsp
         {
             for (size_t i=0; i<4; ++i)
             {
-                uint32_t reseed     = (seed << (i * 8)) | (seed >> ((sizeof(uint32_t) - i) * 8));
+                uint32_t reseed     = (i > 0) ? (seed << (i * 8)) | (seed >> ((sizeof(uint32_t) - i) * 8)) : seed;
 
                 vRandom[i].vAdd     = vAdders[reseed & 0x0f];
                 vRandom[i].vMul1    = vMul1[(reseed >> 4) & 0x0f];
@@ -161,5 +161,5 @@ namespace lsp
 
             v->write("nBufID", nBufID);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

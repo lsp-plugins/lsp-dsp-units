@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 12 Jul 2017
@@ -39,15 +39,13 @@ namespace lsp
         {
             SCP_SYNTH_SIMPLE,                           // Pure math chirp and inverse filter
             SCP_SYNTH_CHIRPBANDLIMITED,                 // Band limited chirp, pure math inverse filter
-            SCP_SYNTH_BANDLIMITED,                      // Band limited chirp and inverse filter
-            SCP_SYNTH_MAX
+            SCP_SYNTH_BANDLIMITED                       // Band limited chirp and inverse filter
         };
 
         enum scp_fade_t
         {
             SCP_FADE_NONE,                              // No fade in - fade out
-            SCP_FADE_RAISED_COSINES,                    // Raised cosine like shapes for fade in and fade out
-            SCP_FADE_MAX
+            SCP_FADE_RAISED_COSINES                     // Raised cosine like shapes for fade in and fade out
         };
 
         enum scp_rtcalc_t
@@ -57,17 +55,12 @@ namespace lsp
             SCP_RT_T_10,                                // T 19
             SCP_RT_T_20,                                // T 20
             SCP_RT_T_30,                                // T 30
-            SCP_RT_MAX,
 
             SCP_RT_DEFAULT          = SCP_RT_EDT_0
         };
 
         class LSP_DSP_UNITS_PUBLIC SyncChirpProcessor
         {
-            private:
-                SyncChirpProcessor & operator = (const SyncChirpProcessor &);
-                SyncChirpProcessor(const SyncChirpProcessor &);
-
             protected:
 
                 // Chirp parameters:
@@ -204,9 +197,13 @@ namespace lsp
                 bool                bSync;
 
             public:
-
                 explicit SyncChirpProcessor();
+                SyncChirpProcessor(const SyncChirpProcessor &) = delete;
+                SyncChirpProcessor(SyncChirpProcessor &&) = delete;
                 ~SyncChirpProcessor();
+
+                SyncChirpProcessor & operator = (const SyncChirpProcessor &) = delete;
+                SyncChirpProcessor & operator = (SyncChirpProcessor &&) = delete;
 
                 void                construct();
 
@@ -530,9 +527,6 @@ namespace lsp
                  */
                 inline void set_chirp_synthesis_method(scp_method_t method)
                 {
-                    if ((method < SCP_SYNTH_SIMPLE) || (method >= SCP_SYNTH_MAX))
-                        return;
-
                     sChirpParams.enMethod           = method;
                     sChirpParams.bReconfigure       = true;
                 }
@@ -602,9 +596,6 @@ namespace lsp
                  */
                 inline void set_fader_fading_method(scp_fade_t method)
                 {
-                    if ((method < SCP_FADE_NONE) || (method >= SCP_FADE_MAX))
-                        return;
-
                     sFader.enMethod                 = method;
                     sChirpParams.bReconfigure       = true;
                 }
@@ -876,7 +867,8 @@ namespace lsp
                  */
                 void            dump(IStateDumper *v) const;
         };
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_SYNCCHIRPPROCESSOR_H_ */

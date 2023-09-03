@@ -50,7 +50,7 @@ namespace lsp
             if (data == NULL)
                 return false;
 
-            lsp::swap(pData, data);
+            pData           = data;
             nCapacity       = size;
             nHead           = 0;
 

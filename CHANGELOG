@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.14 ===
+* Fixed several issues reported by PVS Studio static analyzer.
 * Fixed band characteristics report for FFTCrossover.
 
 === 1.0.13 ===

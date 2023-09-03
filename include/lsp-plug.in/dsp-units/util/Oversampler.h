@@ -104,10 +104,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Oversampler
         {
-            private:
-                Oversampler & operator = (const Oversampler &);
-                Oversampler(const Oversampler &);
-
             protected:
                 typedef void (*resample_func_t)(float *dst, const float *src, size_t count);
 
@@ -139,7 +135,12 @@ namespace lsp
 
             public:
                 explicit Oversampler();
+                Oversampler(const Oversampler &) = delete;
+                Oversampler(Oversampler &&) = delete;
                 ~Oversampler();
+
+                Oversampler & operator = (const Oversampler &) = delete;
+                Oversampler & operator = (Oversampler &&) = delete;
 
                 void construct();
 

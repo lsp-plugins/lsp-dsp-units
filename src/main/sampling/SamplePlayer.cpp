@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 13 марта 2016 г.
@@ -400,10 +400,6 @@ namespace lsp
 
     //        lsp_trace("acquired playback %p", pb);
 
-            // Now we are ready to activate sample
-            if (settings == NULL)
-                settings        = &PlaySettings::default_settings;
-
             // Initialize playback state
             playback::start_playback(pb, acquire_sample(s), settings);
 
@@ -519,5 +515,5 @@ namespace lsp
             }
             v->end_array();
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

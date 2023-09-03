@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 29 янв. 2016 г.
@@ -49,8 +49,8 @@ namespace lsp
             vFrame              = NULL;
             vConvBuffer         = NULL;
             vTaskData           = NULL;
-            vDirectData         = NULL;
             vConvData           = NULL;
+            vDirectData         = NULL;
 
             nDataBufferSize     = 0;
             nDirectSize         = 0;
@@ -61,6 +61,9 @@ namespace lsp
             nBlocks             = 0;
             nBlocksDone         = 0;
             nRank               = 0;
+
+            nBlkInit            = 0;
+            fBlkCoef            = 0.0f;
 
             vData               = NULL;
         }
@@ -163,7 +166,7 @@ namespace lsp
             nLevels                 = 0;
             for (; (count > 0) && (brank < rank); ++brank)
             {
-                size_t n                = lsp_min(count, size_t(1 << (brank - 1)));
+                size_t n                = lsp_min(count, size_t(1) << (brank - 1));
 
                 // Prepare raising convolution
                 dsp::fill_zero(vConvBuffer, fft_buf_size);
@@ -332,5 +335,6 @@ namespace lsp
 
             v->write("vData", vData);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
