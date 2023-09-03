@@ -272,10 +272,9 @@ namespace lsp
                 {
                     switch (pb->enLoopMode)
                     {
-                        case SAMPLE_LOOP_REVERSE_FULL_PP:
                         case SAMPLE_LOOP_DIRECT_FULL_PP:
-                            // If current batch is in direct/reverse direction, then we need to process
-                            // one more batch in the reverse/direct direction
+                            // If current batch is in direct direction, then we need to process
+                            // one more batch in the reverse direction
                             if (pb->bReverse)
                             {
                                 if (s->nEnd < s->nStart)
@@ -286,6 +285,26 @@ namespace lsp
                             else
                             {
                                 if (s->nStart < s->nEnd)
+                                    break;
+                                b->nStart               = pb->nLoopEnd;
+                                b->nEnd                 = sample_len;
+                            }
+                            b->enType               = BATCH_TAIL;
+                            return;
+
+                        case SAMPLE_LOOP_REVERSE_FULL_PP:
+                            // If current batch is in reverse direction, then we need to process
+                            // one more batch in the direct direction
+                            if (pb->bReverse)
+                            {
+                                if (s->nStart < s->nEnd)
+                                    break;
+                                b->nStart               = pb->nLoopStart;
+                                b->nEnd                 = 0;
+                            }
+                            else
+                            {
+                                if (s->nEnd < s->nStart)
                                     break;
                                 b->nStart               = pb->nLoopEnd;
                                 b->nEnd                 = sample_len;
