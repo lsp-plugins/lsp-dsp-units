@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 18 нояб. 2022 г.
@@ -86,6 +86,15 @@ namespace lsp
         {
             pPlayback       = src.pPlayback;
             nSerial         = src.nSerial;
+            return *this;
+        }
+
+        Playback & Playback::operator = (Playback && src)
+        {
+            pPlayback       = src.pPlayback;
+            nSerial         = src.nSerial;
+            src.pPlayback   = NULL;
+            src.nSerial     = 0;
             return *this;
         }
 

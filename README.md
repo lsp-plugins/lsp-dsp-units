@@ -48,8 +48,7 @@ Set of modules provided:
     * Spectrum analyzer
 
 
-Supported platforms
-======
+## Supported platforms
 
 The build and correct unit test execution has been confirmed for following platforms:
 * FreeBSD
@@ -57,16 +56,14 @@ The build and correct unit test execution has been confirmed for following platf
 * Windows 32-bit
 * Windows 64-bit
 
-Requirements
-======
+## Requirements
 
 The following packages need to be installed for building:
 
 * gcc >= 4.9
 * GNU make >= 4.0
 
-Building
-======
+## Building
 
 To build the library, perform the following commands:
 
@@ -114,8 +111,7 @@ To build source code archive with all possible dependencies, run:
 make distsrc
 ```
 
-Usage
-======
+## Usage
 
 Here's the code snippet of how the library can be initialized and used in C++:
 
@@ -200,3 +196,7 @@ int main(int argc, const char **argv)
     return res;
 }
 ```
+
+## SAST Tools
+
+* [PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source) - static analyzer for C, C++, C#, and Java code.

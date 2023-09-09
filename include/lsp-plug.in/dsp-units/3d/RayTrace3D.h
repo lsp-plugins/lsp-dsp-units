@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 10 авг. 2021 г.
@@ -90,10 +90,10 @@ namespace lsp
                     private:
                         RayTrace3D                     *trace;
                         stats_t                         stats;
+                        ssize_t                         heavy_state;
                         lltl::parray<rt::context_t>     tasks;
                         lltl::parray<rt_binding_t>      bindings;       // Bindings
                         lltl::parray<rt_object_t>       objects;
-                        ssize_t                         heavy_state;
 
                     protected:
                         status_t    main_loop();
@@ -173,15 +173,13 @@ namespace lsp
                 status_t    do_process(size_t threads, float initial);
 
             public:
-                /** Default constructor
-                 *
-                 */
                 explicit RayTrace3D();
-
-                /** Destructor
-                 *
-                 */
+                RayTrace3D(const RayTrace3D &) = delete;
+                RayTrace3D(RayTrace3D &&) = delete;
                 ~RayTrace3D();
+
+                RayTrace3D & operator = (const RayTrace3D &) = delete;
+                RayTrace3D & operator = (RayTrace3D &&) = delete;
 
             public:
                 /**
@@ -320,8 +318,8 @@ namespace lsp
                 status_t            process(size_t threads, float initial);
         };
 
-    } // namespace dspu
-} // namespace lsp
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 

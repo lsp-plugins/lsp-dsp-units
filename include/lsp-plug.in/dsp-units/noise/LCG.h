@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 Jun 2021
@@ -34,8 +34,7 @@ namespace lsp
             LCG_UNIFORM,        // Uniform over [-1, 1), X fAmplitude + fOffset
             LCG_EXPONENTIAL,    // Double sided exponential over [-1, 1], X fAmplitude + fOffset
             LCG_TRIANGULAR,     // Triangular over [-1, 1], X fAmplitude + fOffset
-            LCG_GAUSSIAN,       // Gaussian of mean 0 and standard deviation 1, X fAmplitude + fOffset
-            LCG_MAX
+            LCG_GAUSSIAN        // Gaussian of mean 0 and standard deviation 1, X fAmplitude + fOffset
         };
 
         /** LCG stands for Linear Congruential Generator.
@@ -48,10 +47,6 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC LCG
         {
             private:
-                LCG & operator = (const LCG &);
-                LCG(const LCG &);
-
-            private:
                 lcg_dist_t  enDistribution;
 
                 float       fAmplitude;
@@ -61,7 +56,12 @@ namespace lsp
 
             public:
                 explicit LCG();
+                LCG(const LCG &) = delete;
+                LCG(LCG &&) = delete;
                 ~LCG();
+
+                LCG & operator = (const LCG &) = delete;
+                LCG & operator = (LCG &) = delete;
 
                 void construct();
                 void destroy();
@@ -84,9 +84,6 @@ namespace lsp
                  */
                 inline void set_distribution(lcg_dist_t dist)
                 {
-                    if ((dist < LCG_UNIFORM) || (dist >= LCG_MAX))
-                        return;
-
                     enDistribution = dist;
                 }
 
@@ -150,7 +147,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_NOISE_LCG_H_ */

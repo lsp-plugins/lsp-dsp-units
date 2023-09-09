@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 27 Jun 2021
@@ -33,8 +33,7 @@ namespace lsp
         enum vn_core_t
         {
             VN_CORE_MLS, // Only compatible with OVN, OVNA and ARN (not crushed)
-            VN_CORE_LCG,
-            VN_CORE_MAX
+            VN_CORE_LCG
         };
 
         enum vn_velvet_type_t
@@ -42,8 +41,7 @@ namespace lsp
             VN_VELVET_OVN,
             VN_VELVET_OVNA,
             VN_VELVET_ARN,
-            VN_VELVET_TRN,
-            VN_VELVET_MAX
+            VN_VELVET_TRN
         };
 
         /** As in GENERALIZATIONS OF VELVET NOISE AND THEIR USE IN 1-BIT MUSIC by Kurt James Werner
@@ -199,7 +197,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_NOISE_VELVET_H_ */

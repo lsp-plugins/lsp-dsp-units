@@ -68,7 +68,6 @@ namespace lsp
             nRank           = max_rank;
             nMaxRank        = max_rank;
             fPhase          = 0.0f;
-            bUpdate         = true;
             vWnd            = NULL;
             vInBuf          = NULL;
             vFftBuf         = NULL;

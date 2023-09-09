@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 27 Jun 2021
@@ -70,17 +70,11 @@ namespace lsp
 
         void Velvet::set_core_type(vn_core_t core)
         {
-            if ((core < VN_CORE_MLS) || (core >= VN_CORE_MAX))
-                return;
-
             enCore = core;
         }
 
         void Velvet::set_velvet_type(vn_velvet_type_t type)
         {
-            if ((type < VN_VELVET_OVN) || (type >= VN_VELVET_MAX))
-                return;
-
             enVelvetType = type;
         }
 
@@ -258,7 +252,6 @@ namespace lsp
                 break;
 
                 default:
-                case VN_VELVET_MAX:
                     dsp::fill_zero(dst, count);
                     break;
             }
@@ -345,5 +338,5 @@ namespace lsp
             v->write("fAmplitude", fAmplitude);
             v->write("fOffset", fOffset);
         }
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */

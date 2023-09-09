@@ -40,7 +40,7 @@ namespace lsp
 
         void Crossover::construct()
         {
-            nReconfigure    = 0;
+            nReconfigure    = R_ALL;
             nSplits         = 0;
             nBufSize        = 0;
             nSampleRate     = LSP_DSP_UNITS_DEFAULT_SAMPLE_RATE;
@@ -52,7 +52,6 @@ namespace lsp
 
             vLpfBuf         = NULL;
             vHpfBuf         = NULL;
-
             pData           = NULL;
         }
 

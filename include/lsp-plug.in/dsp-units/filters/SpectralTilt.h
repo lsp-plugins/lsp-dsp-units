@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 Sept 2021
@@ -66,10 +66,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC SpectralTilt
         {
-            private:
-                SpectralTilt & operator = (const SpectralTilt &);
-                SpectralTilt(const SpectralTilt &);
-
             protected:
 
                 typedef struct bilinear_spec_t
@@ -101,7 +97,12 @@ namespace lsp
 
             public:
                 explicit SpectralTilt();
+                SpectralTilt(const SpectralTilt &) = delete;
+                SpectralTilt(SpectralTilt &&) = delete;
                 ~SpectralTilt();
+
+                SpectralTilt & operator = (const SpectralTilt &) = delete;
+                SpectralTilt & operator = (SpectralTilt &&) = delete;
 
                 void construct();
                 void destroy();
@@ -209,7 +210,7 @@ namespace lsp
                 void dump(IStateDumper *v) const;
         };
 
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_SPECTRALTILT_H_ */

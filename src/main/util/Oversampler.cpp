@@ -1054,10 +1054,6 @@ namespace lsp
 
         void Oversampler::set_mode(over_mode_t mode)
         {
-            if (mode < OM_NONE)
-                mode = OM_NONE;
-            else if (mode > OM_LANCZOS_8X24BIT)
-                mode = OM_LANCZOS_8X24BIT;
             if (nMode == mode)
                 return;
             nMode       = mode;

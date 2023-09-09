@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 30 Jul 2017
@@ -33,10 +33,6 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC ResponseTaker
         {
-            private:
-                ResponseTaker & operator = (const ResponseTaker &);
-                ResponseTaker(const ResponseTaker &);
-
             protected:
                 // Input processor state enumerator
                 enum ip_state_t
@@ -114,9 +110,13 @@ namespace lsp
                 bool        bSync;
 
             public:
-
                 explicit ResponseTaker();
+                ResponseTaker(const ResponseTaker &) = delete;
+                ResponseTaker(ResponseTaker &&) = delete;
                 ~ResponseTaker();
+
+                ResponseTaker & operator = (const ResponseTaker &) = delete;
+                ResponseTaker & operator = (ResponseTaker &&) = delete;
 
                 /** Construct the ResponseTaker
                  *

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 29 янв. 2016 г.
@@ -35,10 +35,6 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC Convolver
         {
             private:
-                Convolver & operator = (const Convolver &);
-                Convolver(const Convolver &);
-
-            private:
                 float          *vDataBuffer;            // Buffer for storing convolution tail data
                 float          *vFrame;                 // Pointer to the beginning of the input data frame
                 float          *vConvBuffer;            // Convolution buffer to perform convolution
@@ -62,7 +58,12 @@ namespace lsp
 
             public:
                 explicit Convolver();
+                Convolver(const Convolver &) = delete;
+                Convolver(Convolver &&) = delete;
                 ~Convolver();
+
+                Convolver & operator = (const Convolver &) = delete;
+                Convolver & operator = (Convolver &&) = delete;
 
                 /** Construct the convolver
                  *
@@ -111,7 +112,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_CONVOLVER_H_ */

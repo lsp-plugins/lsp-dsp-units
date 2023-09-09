@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 Mar 2017
@@ -45,15 +45,13 @@ namespace lsp
             FG_BL_SAWTOOTH,                                 //10
             FG_BL_TRAPEZOID,                                //11
             FG_BL_PULSETRAIN,                               //12
-            FG_BL_PARABOLIC,                                //13
-            FG_MAX
+            FG_BL_PARABOLIC                                 //13
         };
 
         enum dc_reference_t
         {
             DC_WAVEDC,                                      // DC Offset with respect wave's natural DC (0 fDCOffset <=> Wave DC)
-            DC_ZERO,                                        // DC Offset with respect 0 DC (0 fDCOffset <=> 0 Overall DC)
-            DC_MAX
+            DC_ZERO                                         // DC Offset with respect 0 DC (0 fDCOffset <=> 0 Overall DC)
         };
 
         class LSP_DSP_UNITS_PUBLIC Oscillator
@@ -240,9 +238,6 @@ namespace lsp
                  */
                 inline void set_function(fg_function_t function)
                 {
-                    if ((function < FG_SINE) || (function >= FG_MAX))
-                        return;
-
                     enFunction  = function;
                     bSync       = true;
                 }
@@ -384,7 +379,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_OSCILLATOR_H_ */

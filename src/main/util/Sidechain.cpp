@@ -106,6 +106,9 @@ namespace lsp
 
         void Sidechain::set_stereo_mode(sidechain_stereo_mode_t mode)
         {
+            sidechain_stereo_mode_t old = (nFlags & SCF_MIDSIDE) ? SCSM_MIDSIDE : SCSM_STEREO;
+            if (old == mode)
+                return;
             nFlags              = lsp_setflag(nFlags, SCF_MIDSIDE, mode == SCSM_MIDSIDE);
             nFlags             |= SCF_CLEAR;
         }

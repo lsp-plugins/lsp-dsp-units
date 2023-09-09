@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 Sept 2021
@@ -122,9 +122,6 @@ namespace lsp
 
         void SpectralTilt::set_norm(stlt_norm_t norm)
         {
-            if ((norm < STLT_NORM_AT_DC) || (norm >= STLT_NORM_MAX))
-                return;
-
             enNorm = norm;
             bSync = true;
         }
@@ -132,9 +129,6 @@ namespace lsp
         void SpectralTilt::set_slope(float slope, stlt_slope_unit_t slopeType)
         {
             if ((slope == fSlopeVal) && (slopeType == enSlopeUnit))
-                return;
-
-            if ((slopeType < STLT_SLOPE_UNIT_NEPER_PER_NEPER) || (slopeType >= STLT_SLOPE_UNIT_MAX))
                 return;
 
             fSlopeVal   = slope;
@@ -547,5 +541,5 @@ namespace lsp
             v->write("bBypass", bBypass);
             v->write("bSync", bSync);
         }
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */

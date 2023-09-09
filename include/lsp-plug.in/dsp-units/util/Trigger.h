@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 авг. 2021 г.
@@ -33,8 +33,7 @@ namespace lsp
         {
             TRG_MODE_SINGLE,
             TRG_MODE_MANUAL,
-            TRG_MODE_REPEAT,
-            TRG_MODE_MAX
+            TRG_MODE_REPEAT
         };
 
         enum trg_type_t
@@ -43,16 +42,14 @@ namespace lsp
             TRG_TYPE_SIMPLE_RISING_EDGE,
             TRG_TYPE_SIMPLE_FALLING_EDGE,
             TRG_TYPE_ADVANCED_RISING_EDGE,
-            TRG_TYPE_ADVANCED_FALLING_EDGE,
-            TRG_TYPE_MAX
+            TRG_TYPE_ADVANCED_FALLING_EDGE
         };
 
         enum trg_state_t
         {
             TRG_STATE_WAITING,
             TRG_STATE_ARMED,
-            TRG_STATE_FIRED,
-            TRG_STATE_MAX
+            TRG_STATE_FIRED
         };
 
         class LSP_DSP_UNITS_PUBLIC Trigger
@@ -160,7 +157,7 @@ namespace lsp
                  */
                 inline void set_trigger_mode(trg_mode_t mode)
                 {
-                    if ((mode < TRG_MODE_SINGLE) || (mode >= TRG_MODE_MAX) || (enTriggerMode == mode))
+                    if (enTriggerMode == mode)
                         return;
 
                     enTriggerMode = mode;
@@ -205,7 +202,7 @@ namespace lsp
                  */
                 inline void set_trigger_type(trg_type_t type)
                 {
-                    if ((type < TRG_TYPE_NONE) || (type >= TRG_TYPE_MAX) || (enTriggerType == type))
+                    if (enTriggerType == type)
                         return;
 
                     enTriggerType = type;
@@ -253,10 +250,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
-
-
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_TRIGGER_H_ */

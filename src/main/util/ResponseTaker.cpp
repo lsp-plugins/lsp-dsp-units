@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 30 Jul 2017
@@ -114,16 +114,21 @@ namespace lsp
 
             if (bReAllocate)
             {
-                delete pCapture;
-                pCapture                    = NULL;
+                if (pCapture != NULL)
+                {
+                    delete pCapture;
+                    pCapture                    = NULL;
+                }
 
                 Sample *s                   = new Sample();
-
                 if (s == NULL)
                     return STATUS_NO_MEM;
 
                 if (!s->init(nChannels, nCaptureLength, nCaptureLength))
+                {
+                    delete s;
                     return STATUS_NO_MEM;
+                }
 
                 pCapture                    = s;
             }
@@ -419,5 +424,6 @@ namespace lsp
             v->write("bCycleComplete", bCycleComplete);
             v->write("bSync", bSync);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */

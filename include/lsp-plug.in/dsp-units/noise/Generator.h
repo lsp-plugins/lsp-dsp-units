@@ -36,8 +36,7 @@ namespace lsp
         {
             NG_GEN_MLS,
             NG_GEN_LCG,
-            NG_GEN_VELVET,
-            NG_GEN_MAX
+            NG_GEN_VELVET
         };
 
         enum ng_color_t
@@ -48,7 +47,7 @@ namespace lsp
             NG_COLOR_BLUE,
             NG_COLOR_VIOLET,
             NG_COLOR_ARBITRARY,
-            NG_COLOR_MAX,
+
             NG_COLOR_BROWN = NG_COLOR_RED,
             NG_COLOR_BROWNIAN = NG_COLOR_RED
         };

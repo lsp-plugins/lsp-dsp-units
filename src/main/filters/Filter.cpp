@@ -1160,11 +1160,6 @@ namespace lsp
                         c->b[0]     = 1.0;
                         c->b[1]     = 1.0;
                         c->b[2]     = 0.0;
-
-                        if (type == FLT_BT_BWC_LOPASS)
-                            c->t[0]     = fp->fGain;
-                        else
-                            c->t[1]     = fp->fGain;
                     }
 
                     for (size_t j=i; j < fp->nSlope; j += 2)
@@ -2321,14 +2316,14 @@ namespace lsp
                     float *p    = (i) ? c->b : c->t;
                     float *P    = (i) ? B : T;
 
-                    if (p[2] == 0.0) // Test polynom for second-order
+                    if (p[2] == 0.0f) // Test polynom for second-order
                     {
-                        P[2]    = 0.0;
-                        if (p[1] == 0.0) // Test polynom for first order
+                        P[2]    = 0.0f;
+                        if (p[1] == 0.0f) // Test polynom for first order
                         {
                             // Zero-order polynom
                             P[0]    = p[0];
-                            P[1]    = 0.0;
+                            P[1]    = 0.0f;
                         }
                         else
                         {
@@ -2350,10 +2345,10 @@ namespace lsp
                         //
                         // Calculate the roots of the second-order polynom equation a*x^2 + b*x + c = 0
                         float k     = p[2];
-                        float a     = 1.0/(f*f);
+                        float a     = 1.0f/(f*f);
                         float b     = p[1]/(f*p[2]);
                         float c     = p[0]/p[2];
-                        float D     = b*b - 4.0*a*c;
+                        float D     = b*b - 4.0f*a*c;
 
                         if (D >= 0)
                         {
@@ -2361,8 +2356,8 @@ namespace lsp
                             // Transformed form is:
                             //   P[z] = k*(1 - (exp(R0*T) + exp(R1*T))*z^-1 + exp((R0+R1)*T)*z^-2)
                             D           = sqrtf(D);
-                            float R0    = (-b - D)/(2.0*a);
-                            float R1    = (-b + D)/(2.0*a);
+                            float R0    = (-b - D)/(2.0f*a);
+                            float R1    = (-b + D)/(2.0f*a);
                             P[0]        = k;
                             P[1]        = -k * (expf(R0*TD) + expf(R1*TD));
                             P[2]        = k * expf((R0+R1)*TD);
@@ -2373,11 +2368,11 @@ namespace lsp
                             // Transformed form is:
                             //   P[z] = k*(1 - 2*exp(R*T)*cos(K*T)*z^-1 + exp(2*R*T)*z^-2)
                             D           = sqrtf(-D);
-                            float R     = -b / (2.0*a);
-                            float K     = D / (2.0*a);
+                            float R     = -b / (2.0f*a);
+                            float K     = D / (2.0f*a);
                             P[0]        = k;
-                            P[1]        = -2.0 * k * expf(R*TD) * cosf(K*TD);
-                            P[2]        = k * expf(2.0*R*TD);
+                            P[1]        = -2.0f * k * expf(R*TD) * cosf(K*TD);
+                            P[2]        = k * expf(2.0f*R*TD);
                         }
                     }
 
@@ -2390,9 +2385,9 @@ namespace lsp
                     // For the normalized continuous transfer function it will be always 0.1
 
                     // Calculate the discrete transfer function part at specified frequency
-                    double w    = M_PI * 0.2 * sParams.fFreq / nSampleRate;
-                    double re   = P[0]*cos(2*w) + P[1]*cos(w) + P[2];
-                    double im   = P[0]*sin(2*w) + P[1]*sin(w);
+                    double w    = M_PI * 0.2f * sParams.fFreq / nSampleRate;
+                    double re   = P[0]*cos(2.0*w) + P[1]*cos(w) + P[2];
+                    double im   = P[0]*sin(2.0*w) + P[1]*sin(w);
                     A[i]        = sqrt(re*re + im*im);
 
                     // Calculate the continuous transfer function part at 1 Hz

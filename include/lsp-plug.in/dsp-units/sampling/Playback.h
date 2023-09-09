@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 18 нояб. 2022 г.
@@ -52,11 +52,11 @@ namespace lsp
                 Playback(Playback &&src);
                 ~Playback();
 
+                Playback & operator = (const Playback & src);
+                Playback & operator = (Playback && src);
+
                 void        construct();
                 void        destroy();
-
-            public:
-                Playback & operator = (const Playback & src);
 
             public:
                 /**

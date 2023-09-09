@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 31 May 2021
@@ -204,9 +204,6 @@ namespace lsp
 
         void NoiseGenerator::set_generator(ng_generator_t core)
         {
-            if ((core < NG_GEN_MLS) || (core >= NG_GEN_MAX))
-                return;
-
             if (core == enGenerator)
                 return;
 
@@ -215,9 +212,6 @@ namespace lsp
 
         void NoiseGenerator::set_noise_color(ng_color_t color)
         {
-            if ((color < NG_COLOR_WHITE) || (color >= NG_COLOR_MAX))
-                return;
-
             if (color == sColorParams.enColor)
                 return;
 
@@ -532,6 +526,6 @@ namespace lsp
             v->write("fAmplitude", fAmplitude);
             v->write("fOffset", fOffset);
         }
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
