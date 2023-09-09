@@ -6,6 +6,7 @@
 * Fixed several issues reported by PVS Studio static analyzer.
 * Fixed band characteristics report for FFTCrossover.
 * Fixed sidechain buffer cleanup issue when setting the same to the previous stereo mode.
+* Updated module versions in dependencies.
 
 === 1.0.13 ===
 * Added insert() method to dspu::Sample class that allows to insert some zeroed
