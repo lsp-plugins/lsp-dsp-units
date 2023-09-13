@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.16 ===
-
+* Fixed band binding algorithm for dspu::FFTCrossover.
 
 === 1.0.15 ===
 * Updated module versions in dependencies.
