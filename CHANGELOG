@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.16 ===
+* Added broadcasting-related constants according to BS.1770-4 and BS.2051-3 specificaitons.
 * Fixed band binding algorithm for dspu::FFTCrossover.
 
 === 1.0.15 ===
