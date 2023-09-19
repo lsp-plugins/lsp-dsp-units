@@ -23,6 +23,7 @@
 #define LSP_PLUG_IN_DSP_UNITS_MISC_BROADCAST_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+#include <lsp-plug.in/common/types.h>
 
 /*
  * This header contains different constants related to such broadcasting service
