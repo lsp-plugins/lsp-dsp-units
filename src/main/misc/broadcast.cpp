@@ -39,8 +39,8 @@ namespace lsp
                     case CHANNEL_RIGHT_SIDE: // BS.2051-3 M-090
                     case CHANNEL_LEFT_SURROUND: // BS.2051-3 M+110
                     case CHANNEL_RIGHT_SURROUND: // BS.2051-3 M-110
-                        // +1.5 dB
-                        return 1.41253754462f;
+                        // ~ +1.5 dB
+                        return 1.41f;
 
                     case CHANNEL_LFE1:
                     case CHANNEL_LFE2:

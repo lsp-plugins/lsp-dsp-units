@@ -18,34 +18,51 @@ Set of modules provided:
     * Expander
     * Gate
     * Limiter
+    * Surge protector
   * Filters and equalization
+    * Butterworth filter
     * Dynamic filters
     * Equalizer
     * Filter
+    * Spectral tilt
+  * Metering
+    * Loudness meter
   * Miscellaneous functions
+    * Broadcasting related functions and constants
     * Signal envelope functions
     * Interpolation functions
     * FFT windows
+    * Fading functions
+    * LFO functions
+  * Noise generators
+    * LGC generator
+    * MLS generator
+    * Velvet generator
   * Sampling
     * Sample
     * Sample player
+    * Sample playbakc control
   * Utilities
     * Chirp Processor
     * Convolver
     * Crossover
     * Delay
+    * Dynamic Delay
     * De-popper
     * Dither
-	* Impulse response taker
+    * FFT crossover
+    * Impulse response taker
     * Latency detector
     * Meter history
     * Oscillator
     * Oversampler
     * Randomizer
+    * Ring buffer
     * Shift buffer
     * Sidechain control
     * Spectral processor
     * Spectrum analyzer
+    * Trigger
 
 
 ## Supported platforms

@@ -108,11 +108,6 @@ namespace lsp
                 dsp::fill_zero(pData, nCapacity);
         }
 
-        float *RingBuffer::data()
-        {
-            return pData;
-        }
-
         float RingBuffer::get(size_t offset)
         {
             if (offset >= nCapacity)
@@ -120,6 +115,13 @@ namespace lsp
 
             size_t index    = (nHead + nCapacity - offset - 1) % nCapacity;
             return pData[index];
+        }
+
+        size_t RingBuffer::tail_offset(size_t offset) const
+        {
+            return (offset < nCapacity) ?
+                (nHead + nCapacity - offset - 1) % nCapacity :
+                nHead;
         }
 
         size_t RingBuffer::get(float *dst, size_t offset, size_t count)

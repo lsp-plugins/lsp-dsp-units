@@ -34,10 +34,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC RingBuffer
         {
-            private:
-                RingBuffer & operator = (const RingBuffer &);
-                RingBuffer(const RingBuffer &);
-
             protected:
                 float      *pData;
                 size_t      nCapacity;
@@ -45,7 +41,12 @@ namespace lsp
 
             public:
                 explicit RingBuffer();
+                RingBuffer(const RingBuffer &) = delete;
+                RingBuffer(RingBuffer &&) = delete;
                 ~RingBuffer();
+
+                RingBuffer & operator = (const RingBuffer &) = delete;
+                RingBuffer & operator = (RingBuffer &&) = delete;
 
                 /**
                  * Construct the buffer
@@ -72,14 +73,14 @@ namespace lsp
                  * @param count number of samples
                  * @return actual number of samples appended
                  */
-                size_t append(const float *data, size_t count);
+                size_t      append(const float *data, size_t count);
 
                 /** Place the single sample to the ring buffer
                  *
                  * @param data sample to append
                  * @return number of samples appended
                  */
-                void append(float data);
+                void        append(float data);
 
                 /** Return the number of items in the buffer
                  *
@@ -90,19 +91,32 @@ namespace lsp
                 /** Clear buffer contents, fill all data with zero
                  *
                  */
-                void clear();
+                void        clear();
 
                 /** Get the pointer to the beginning of the entire buffer
                  *
                  * @return data pointer at the head of buffer
                  */
-                float *data();
+                inline float    *data()                 { return pData; }
 
                 /** Get the data pointer at the head of buffer
                  * @param offset offset behind the head
                  * @return data pointer at the head of buffer
                  */
-                float get(size_t offset);
+                float       get(size_t offset);
+
+                /**
+                 * Get offset of the head relative to the position
+                 * @return position of the head relative to the beginning of the buffer
+                 */
+                inline      size_t head_offset() const  { return nHead; }
+
+                /**
+                 * Compute the tail offset in the buffer
+                 * @param offset the offset of the tail relative to the head
+                 * @return position of the tail relative to the beginning of the buffer
+                 */
+                size_t      tail_offset(size_t offset) const;
 
                 /**
                  * Read the data from the buffer
@@ -111,13 +125,13 @@ namespace lsp
                  * @param count number of samples to read
                  * @return actual number of samples read
                  */
-                size_t get(float *dst, size_t offset, size_t count);
+                size_t      get(float *dst, size_t offset, size_t count);
 
                 /**
                  * Dump data to the shift buffer
                  * @param v dumper
                  */
-                void dump(IStateDumper *v) const;
+                void        dump(IStateDumper *v) const;
         };
     } /* namespace dspu */
 } /* namespace lsp */

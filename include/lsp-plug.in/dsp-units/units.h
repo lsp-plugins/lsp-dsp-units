@@ -168,6 +168,46 @@ namespace lsp
             return (10.0f / M_LN10) * logf(pwr);
         }
 
+        /**
+         * Convert gain value to LKFS/LUFS
+         * @param gain gain value to convert
+         * @return LUFS value
+         */
+        inline float gain_to_lufs(float gain)
+        {
+            return (20.0f / M_LN10) * logf(gain) - 0.691f;
+        }
+
+        /**
+         * Convert the LKFS/LUFS value to gain value
+         * @param lufs LUFS value to convert
+         * @return gain value
+         */
+        inline float lufs_to_gain(float lufs)
+        {
+            return expf((lufs + 0.691f) * M_LN10 * 0.05f);
+        }
+
+        /**
+         * Convert gain value to loudness units
+         * @param gain gain value to convert
+         * @return LUFS value
+         */
+        inline float gain_to_lu(float gain)
+        {
+            return (20.0f / M_LN10) * logf(gain) + 22.309f;
+        }
+
+        /**
+         * Convert the loudness units value to gain value
+         * @param lu LU value to convert
+         * @return gain value
+         */
+        inline float lu_to_gain(float lu)
+        {
+            return expf((lu - 22.309f) * M_LN10 * 0.05f);
+        }
+
         /** Convert nepers to gain value
          *
          * @param neper nepers

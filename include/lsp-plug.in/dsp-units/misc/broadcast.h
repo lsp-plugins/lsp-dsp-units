@@ -93,6 +93,20 @@ namespace lsp
                 CHANNEL_LFE2                    // BS.2051-3 LFE2
             };
 
+            constexpr float DBFS_TO_LUFS_SHIFT_DB   = -0.691f;
+            constexpr float LUFS_TO_DBFS_SHIFT_DB   =  0.691f;
+            constexpr float LUFS_TO_LU_SHIFT_DB     = 23.0f;
+            constexpr float LO_TO_LUFS_SHIFT_DB     = -23.0f;
+            constexpr float DB_TO_LU_SHIFT_DB       = 22.309f;
+            constexpr float LU_TO_DB_SHIFT          = -22.309f;
+
+            constexpr float DBFS_TO_LUFS_SHIFT_GAIN = 0.923527857225f;
+            constexpr float LUFS_TO_DBFS_SHIFT_GAIN = 1.08280437041f;
+            constexpr float LUFS_TO_LU_SHIFT_GAIN   = 14.1253754462f;
+            constexpr float LO_TO_LUFS_SHIFT_GAIN   = 0.0707945784385f;
+            constexpr float DB_TO_LU_SHIFT_GAIN     = 13.0451777184f;
+            constexpr float LU_TO_DB_SHIFT_GAIN     = 0.0766566789345f;
+
             /**
              * Return the channel weighting coefficient accoding to BS.1770-4 recommendation
              * @param designation channel designation
