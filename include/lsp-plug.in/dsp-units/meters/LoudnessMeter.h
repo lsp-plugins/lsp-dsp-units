@@ -66,7 +66,7 @@ namespace lsp
                     float              *vData;          // Ring Buffer for measuring mean square
                     float              *vMS;            // Temporary buffer for measured mean square
 
-                    float               fRMS;           // Current RMS value
+                    float               fMS;            // Current Mean square value
                     float               fWeight;        // Weighting coefficient
                     float               fLink;          // Channel linking
                     bs::channel_t       enDesignation;  // Channel designation
@@ -86,7 +86,7 @@ namespace lsp
 
                 size_t                  nSampleRate;    // Sample rate
                 size_t                  nPeriod;        // Measuring period
-                size_t                  nRmsRefresh;    // RMS refresh counter
+                size_t                  nMSRefresh;    // RMS refresh counter
                 size_t                  nChannels;      // Number of channels
                 size_t                  nFlags;         // Update flags
                 size_t                  nDataHead;      // Position in the data buffer
@@ -98,6 +98,7 @@ namespace lsp
 
             protected:
                 void                    refresh_rms();
+                size_t                  process_channels(size_t offset, size_t samples);
 
             public:
                 explicit LoudnessMeter();
@@ -235,6 +236,14 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void            process(float *out, size_t count);
+
+                /**
+                 * Process signal from channels and form the gain control signal
+                 * @param out buffer to store the overall loudness (optional)
+                 * @param count number of samples to process
+                 * @param gain output gain correction
+                 */
+                void            process(float *out, size_t count, float gain);
 
                 /**
                  * Check that crossover needs to call reconfigure() before processing
