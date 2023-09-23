@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 июня 2016 г.
@@ -37,10 +37,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Filter
         {
-            private:
-                Filter & operator = (const Filter &);
-                Filter(const Filter &);
-
             protected:
                 enum filter_mode_t
                 {
@@ -87,7 +83,12 @@ namespace lsp
 
             public:
                 explicit Filter();
+                Filter(const Filter &) = delete;
+                Filter(Filter &&) = delete;
                 ~Filter();
+
+                Filter & operator = (const Filter &) = delete;
+                Filter & operator = (Filter &&) = delete;
 
                 /**
                  * Construct the object being the chunk of memory

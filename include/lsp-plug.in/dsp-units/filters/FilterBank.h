@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 сент. 2016 г.
@@ -33,10 +33,6 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC FilterBank
         {
-            private:
-                FilterBank & operator = (const FilterBank &);
-                FilterBank(const FilterBank &);
-
             protected:
                 dsp::biquad_t      *vFilters;   // Optimized list of filters
                 dsp::biquad_x1_t   *vChains;    // List of biquad banks
@@ -51,7 +47,12 @@ namespace lsp
 
             public:
                 explicit FilterBank();
+                FilterBank(const FilterBank &) = delete;
+                FilterBank(FilterBank &&) = delete;
                 ~FilterBank();
+
+                FilterBank & operator = (const FilterBank &) = delete;
+                FilterBank & operator = (FilterBank &&) = delete;
 
                 /**
                  * Construct the filter bank being a chunk of memory
@@ -79,6 +80,12 @@ namespace lsp
                     nLastItems      = nItems;
                     nItems          = 0;
                 }
+
+                /**
+                 * Return the maximum possible number of chains
+                 * @return the maximum possible number of chains
+                 */
+                inline size_t       max_chains() const  { return nMaxItems; }
 
                 /** Add cascade to biquad filter
                  *
@@ -130,7 +137,8 @@ namespace lsp
                  */
                 void                dump(IStateDumper *v) const;
         };
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_FILTERBANK_H_ */

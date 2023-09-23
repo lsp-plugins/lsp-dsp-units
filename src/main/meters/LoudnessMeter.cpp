@@ -338,6 +338,7 @@ namespace lsp
                 {
                     channel_t *c            = &vChannels[i];
 
+                    c->sBank.begin();
                     switch (enWeight)
                     {
                         case bs::WEIGHT_A:  fp.nType    = dspu::FLT_A_WEIGHTED; break;
@@ -351,6 +352,8 @@ namespace lsp
                     }
 
                     c->sFilter.update(nSampleRate, &fp);
+                    c->sFilter.rebuild();
+                    c->sBank.end(true);
                 }
             }
 
@@ -401,17 +404,19 @@ namespace lsp
                 if (!(c->nFlags & C_ENABLED))
                     continue;
 
+                // Apply the weighting filter
+                c->sFilter.process(c->vMS, &c->vIn[offset], samples);
+
                 // Put the squared input data to the buffer
-                const float *in     = &c->vIn[offset];
                 size_t head         = nDataHead;
                 size_t head_adv     = (nDataHead + samples) & mask;
                 if (head_adv <= head)
                 {
-                    dsp::sqr2(&c->vData[head], &in[0], nDataSize - head);
-                    dsp::sqr2(&c->vData[0], &in[nDataSize - head], head_adv);
+                    dsp::sqr2(&c->vData[head], c->vMS, nDataSize - head);
+                    dsp::sqr2(&c->vData[0], &c->vMS[nDataSize - head], head_adv);
                 }
                 else
-                    dsp::sqr2(&c->vData[head], &in[0], samples);
+                    dsp::sqr2(&c->vData[head], c->vMS, samples);
 
                 // Compute the Mean Square value for each sample and store into mean square buffer
                 size_t tail         = (nDataHead + nDataSize - nPeriod) & mask;
