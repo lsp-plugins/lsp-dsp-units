@@ -435,7 +435,7 @@ namespace lsp
                 if (mixed++ > 0)
                     dsp::fmadd_k3(vBuffer, c->vMS, c->fWeight, samples);
                 else
-                    dsp::fmmul_k3(vBuffer, c->vMS, c->fWeight, samples);
+                    dsp::mul_k3(vBuffer, c->vMS, c->fWeight, samples);
             }
 
             return mixed;
