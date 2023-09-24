@@ -127,15 +127,10 @@ namespace lsp
             if (!bUpdate)
                 return;
 
-            constexpr float t_const = -4.60517018599f; // log(0.01)
-
-            float min_time      = 1.0f / nSampleRate;
-            float ktime         = t_const * 2000.0f / nSampleRate;
-
-            sShort.fKAttack     = expf(ktime / lsp_max(min_time, sShort.fAttack * 1000.0f));
-            sShort.fKRelease    = expf(ktime / lsp_max(min_time, sShort.fRelease * 1000.0f));
-            sLong.fKAttack      = expf(ktime / lsp_max(min_time, sLong.fAttack * 1000.0f));
-            sLong.fKRelease     = expf(ktime / lsp_max(min_time, sLong.fRelease * 1000.0f));
+            sShort.fKAttack     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sShort.fAttack)));
+            sShort.fKRelease    = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sShort.fRelease)));
+            sLong.fKAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sLong.fAttack)));
+            sLong.fKRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sLong.fRelease)));
 
             bUpdate             = false;
         }
@@ -143,43 +138,35 @@ namespace lsp
         float AutoGain::process_sample(float sl, float ss, float le)
         {
             // Do not perform any gain adjustment if we are in silence
-            float gain;
+            float gain, r_time;
             if (ss <= fSilence)
                 return fCurrGain    = lsp_limit(fCurrGain, fMinGain, fMaxGain);
 
-            // Short-time changes
-            float nss           = ss * fCurrGain;
-            if (nss >= fDeviation * le)
+            if ((ss >= fDeviation * sl) || (ss <= fRevDeviation * sl))
             {
-                gain                = fCurrGain * sShort.fKAttack + (nss / le) * (1.0f - sShort.fKAttack);
-                return fCurrGain    = lsp_limit(gain, fMinGain, fMaxGain);
-            }
-            else if (nss <= fRevDeviation * le)
-            {
-                gain                = fCurrGain * sShort.fKRelease + (le / nss) * (1.0f - sShort.fKRelease);
+                r_time              = (ss >= le) ? sShort.fKAttack : sShort.fKRelease;
+                gain                = fCurrGain + (le/ss - fCurrGain) * r_time;
                 return fCurrGain    = lsp_limit(gain, fMinGain, fMaxGain);
             }
 
             // Long-time changes
-            float nsl           = sl * fCurrGain;
-            if (nsl >= le)
-            {
-                gain                = fCurrGain * sLong.fKAttack + (nsl / le) * (1.0f - sLong.fKAttack);
-                return fCurrGain    = lsp_limit(gain, fMinGain, fMaxGain);
-            }
-
-            gain                = fCurrGain * sLong.fKRelease + (le / nsl) * (1.0f - sLong.fKRelease);
+            r_time              = (sl >= le) ? sLong.fKAttack : sLong.fKRelease;
+            gain                = fCurrGain + (le/sl - fCurrGain) * r_time;
             return fCurrGain    = lsp_limit(gain, fMinGain, fMaxGain);
         }
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, const float *lexp, size_t count)
         {
+            update();
+
             for (size_t i=0; i<count; ++i)
                 vca[i]  = process_sample(llong[i], lshort[i], lexp[i]);
         }
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, float lexp, size_t count)
         {
+            update();
+
             for (size_t i=0; i<count; ++i)
                 vca[i]  = process_sample(llong[i], lshort[i], lexp);
         }
