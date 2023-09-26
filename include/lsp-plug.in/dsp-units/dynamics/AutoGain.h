@@ -24,6 +24,7 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 
+#include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 #include <lsp-plug.in/dsp-units/misc/broadcast.h>
 
@@ -49,22 +50,42 @@ namespace lsp
                     float           fKRelease;
                 } timing_t;
 
+                typedef struct
+                {
+                    float       x1, x2;
+                    float       a, b, c, d;
+                } compressor_t;
+
+                enum flags_t
+                {
+                    F_UPDATE        = 1 << 0,
+                    F_SURGE         = 1 << 1
+                };
+
             protected:
-                size_t          nSampleRate;
+                size_t          nSampleRate;    // Current sample rate
+                size_t          nFlags;         // Different flags
+                size_t          nLookHead;      // Look-back buffer write position
+                size_t          nLookSize;      // Look-back buffer size
+                size_t          nLookOffset;    // Look-back buffer offset
+                float          *vLookBack;      // Look-back buffer
 
                 timing_t        sShort;         // Stort timings
                 timing_t        sLong;          // Long timings
+                compressor_t    sComp;          // Compressor settings
                 float           fSilence;       // Silence threshold
-                float           fDeviation;     // Level deviation
-                float           fRevDeviation;  // Reverse deviation
+//                float           fDeviation;     // Level deviation
+//                float           fRevDeviation;  // Reverse deviation
                 float           fCurrGain;      // Current gain value
+                float           fCurrEnv;       // Current short envelope
                 float           fMinGain;       // Minimum possible gain value
                 float           fMaxGain;       // Maximum possible gain value
-
-                bool            bUpdate;        // Update settings flag
+                float           fLookBack;      // Look-back time
+                float           fMaxLookBack;   // Maximum look-back time
 
             protected:
                 void            set_timing(float *ptr, float value);
+                void            calc_compressor();
                 inline float    process_sample(float sl, float ss, float le);
 
             public:
@@ -86,13 +107,20 @@ namespace lsp
                  */
                 void            destroy();
 
+                /**
+                 * Initialize look-back buffer
+                 * @param max_lookback maximum look-back time
+                 * @return status of operation
+                 */
+                status_t        init(float max_lookback);
+
             public:
                 /**
                  * Set sample rate
                  * @param sample_rate sample rate to set
                  * @return status of operation
                  */
-                void            set_sample_rate(size_t sample_rate);
+                status_t        set_sample_rate(size_t sample_rate);
 
                 /**
                  * Get the sample rate
@@ -124,7 +152,7 @@ namespace lsp
                  * Get the deviation multiplier
                  * @return deviatio multiplier
                  */
-                inline float    deviation() const               { return fDeviation;    }
+                inline float    deviation() const               { return sComp.x2;      }
 
                 /**
                  * Set the minimum gain value in the output gain control signal
@@ -219,11 +247,17 @@ namespace lsp
                  */
                 void            set_long_timing(float attack, float release);
 
+                void            set_lookback(float value);
+
+                inline float    get_lookback() const            { return fLookBack;     }
+
+                size_t          latency() const;
+
                 /**
                  * Check that the module needs settings update
                  * @return
                  */
-                inline bool     needs_update() const            { return bUpdate;       }
+                inline bool     needs_update() const            { return nFlags & F_UPDATE; }
 
                 /**
                  * Force settings to update
