@@ -44,10 +44,10 @@ namespace lsp
             protected:
                 typedef struct timing_t
                 {
-                    float           fAttack;
-                    float           fRelease;
-                    float           fKAttack;
-                    float           fKRelease;
+                    float           fGrow;
+                    float           fFall;
+                    float           fKGrow;
+                    float           fKFall;
                 } timing_t;
 
                 typedef struct
@@ -186,66 +186,66 @@ namespace lsp
                 void            set_gain(float min, float max);
 
                 /**
-                 * Set the short attack value
-                 * @param value value of the short attack
+                 * Set the short gain grow speed
+                 * @param value short gain grow speed in dB/s
                  */
-                inline void     set_short_attack(float value)   { set_timing(&sShort.fAttack, value);   }
+                inline void     set_short_grow(float value)     { set_timing(&sShort.fGrow, value);     }
 
                 /**
-                 * Get the short attack value
-                 * @return short attack value
+                 * Get the short gain grow speed
+                 * @return short gain grow speed in dB/s
                  */
-                inline float    short_attack() const            { return sShort.fAttack;                }
+                inline float    short_grow() const              { return sShort.fGrow;                  }
 
                 /**
-                 * Set the short attack release
-                 * @param value value of the short release
+                 * Set the short gain fall-off speed
+                 * @param value short gain fall-off speed in dB/s
                  */
-                inline void     set_short_release(float value)  { set_timing(&sShort.fRelease, value);  }
+                inline void     set_short_fall(float value)     { set_timing(&sShort.fFall, value);     }
 
                 /**
-                 * Get the short release value
-                 * @return short releaes value
+                 * Get the short gain fall-off speed
+                 * @return short gain fall-off speed in dB/s
                  */
-                inline float    short_release() const           { return sShort.fRelease;               }
+                inline float    short_fall() const              { return sShort.fFall;                  }
 
                 /**
-                 * Set timings for short-time loudness signal
-                 * @param attack attack
-                 * @param release release
+                 * Set reaction speed for short-time loudness signal
+                 * @param grow the gain grow speed in dB/s
+                 * @param fall the gain fall-off speed in dB/s
                  */
-                void            set_short_timing(float attack, float release);
+                void            set_short_speed(float grow, float fall);
 
                 /**
-                 * Set the long attack value
-                 * @param value value of the long attack
+                 * Set the long gain grow speed
+                 * @param value long gain grow speed in dB/s
                  */
-                inline void     set_long_attack(float value)   { set_timing(&sLong.fAttack, value);     }
+                inline void     set_long_grow(float value)      { set_timing(&sLong.fGrow, value);      }
 
                 /**
-                 * Get the long attack value
-                 * @return long attack value
+                 * Get the long gain grow speed
+                 * @return long gain grow speed in dB/s
                  */
-                inline float    long_attack() const            { return sLong.fAttack;                  }
+                inline float    long_grow() const               { return sLong.fGrow;                   }
 
                 /**
-                 * Set the long attack release
-                 * @param value value of the long release
+                 * Set the long gain fall-off speed
+                 * @param value long gain fall-off speed in dB/s
                  */
-                inline void     set_long_release(float value)  { set_timing(&sLong.fRelease, value);    }
+                inline void     set_long_fall(float value)      { set_timing(&sLong.fFall, value);      }
 
                 /**
-                 * Get the long release value
-                 * @return long releaes value
+                 * Get the long gain fall-off speed
+                 * @return long gain fall-off speed in dB/s
                  */
-                inline float    long_release() const           { return sLong.fRelease;                 }
+                inline float    long_fall() const               { return sLong.fFall;                   }
 
                 /**
-                 * Set timings for long-time loudness signal
-                 * @param attack attack
-                 * @param release release
+                 * Set reaction speed for long-time loudness signal
+                 * @param grow the gain grow speed in dB/s
+                 * @param fall the gain fall-off speed in dB/s
                  */
-                void            set_long_timing(float attack, float release);
+                void            set_long_speed(float grow, float fall);
 
                 void            set_lookback(float value);
 

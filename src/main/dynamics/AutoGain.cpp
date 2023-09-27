@@ -47,14 +47,14 @@ namespace lsp
             nLookOffset     = 0;
             vLookBack       = NULL;
 
-            sShort.fAttack  = 0.0f;
-            sShort.fRelease = 0.0f;
-            sShort.fKAttack = 0.0f;
-            sShort.fKRelease= 0.0f;
-            sLong.fAttack   = 0.0f;
-            sLong.fRelease  = 0.0f;
-            sLong.fKAttack  = 0.0f;
-            sLong.fKRelease = 0.0f;
+            sShort.fGrow    = 0.0f;
+            sShort.fFall    = 0.0f;
+            sShort.fKGrow   = 0.0f;
+            sShort.fKFall   = 0.0f;
+            sLong.fGrow     = 0.0f;
+            sLong.fFall     = 0.0f;
+            sLong.fKGrow    = 0.0f;
+            sLong.fKFall    = 0.0f;
 
             sComp.x1        = GAIN_AMP_M_6_DB;
             sComp.x2        = GAIN_AMP_P_6_DB;
@@ -156,16 +156,16 @@ namespace lsp
             fMaxGain        = lsp_max(1.0f, max);
         }
 
-        void AutoGain::set_short_timing(float attack, float release)
+        void AutoGain::set_short_speed(float grow, float fall)
         {
-            set_timing(&sShort.fAttack, attack);
-            set_timing(&sShort.fRelease, release);
+            set_timing(&sShort.fGrow, grow);
+            set_timing(&sShort.fFall, fall);
         }
 
-        void AutoGain::set_long_timing(float attack, float release)
+        void AutoGain::set_long_speed(float grow, float fall)
         {
-            set_timing(&sLong.fAttack, attack);
-            set_timing(&sLong.fRelease, release);
+            set_timing(&sLong.fGrow, grow);
+            set_timing(&sLong.fFall, fall);
         }
 
         void AutoGain::set_lookback(float value)
@@ -188,10 +188,12 @@ namespace lsp
             if (!(nFlags & F_UPDATE))
                 return;
 
-            sShort.fKAttack     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sShort.fAttack)));
-            sShort.fKRelease    = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sShort.fRelease)));
-            sLong.fKAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sLong.fAttack)));
-            sLong.fKRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, sLong.fRelease)));
+            float ksr           = (M_LN10 / 20.0f) / nSampleRate;
+
+            sShort.fKGrow       = expf(sShort.fGrow * ksr);
+            sShort.fKFall       = expf(-sShort.fFall * ksr);
+            sLong.fKGrow        = expf(sLong.fGrow * ksr);
+            sLong.fKFall        = expf(-sLong.fFall * ksr);
 
             float look_back     = lsp_limit(fLookBack, 0.0f, fMaxLookBack);
             nLookOffset         = millis_to_samples(nSampleRate, look_back);
@@ -221,45 +223,57 @@ namespace lsp
             if (ss <= fSilence)
                 return fCurrGain;
 
-            vLookBack[nLookHead]    = sl;
-            float prev_sl           = vLookBack[(nLookHead + nLookSize - nLookOffset) & (nLookSize - 1)];
-            nLookHead               = (nLookHead + 1) & (nLookSize - 1);
-
             float nl    = sl * fCurrGain;
-            float xl    = sl / le;
-            float xs    = ss / le;
 
-            if (xl < sComp.x1)
-            {
-                if ((ss >= sl * sComp.x2) && (sl >= GAIN_AMP_P_3_DB * prev_sl))
-                {
-                    if (xs <= sComp.x1)
-                        gain    = fCurrGain + (le/ss - fCurrGain) * sShort.fKRelease;
-                    else if (xs >= sComp.x2)
-                        gain    = sComp.x2 / xs;
-                    else
-                    {
-                        float v     = xs - sComp.x1;
-                        gain        = (((sComp.a*v + sComp.b)*v + sComp.c)*v + sComp.d) / xl;
-                    }
-                }
-                else
-                {
-                    float rt    = (nl >= le) ? sLong.fKAttack : sLong.fKRelease;
-                    gain        = fCurrGain + (le/sl - fCurrGain) * rt;
-                }
-            }
-            else if (xl <= sComp.x2)
-            {
-                // Long-time changes
-                float rt    = (nl >= le) ? sLong.fKAttack : sLong.fKRelease;
-                gain        = fCurrGain + (le/sl - fCurrGain) * rt;
-//                gain        = lsp_limit(gain, fMinGain, fMaxGain);
-            }
-            else // xl > sComp.x2
-            {
-                gain        = sComp.x2 / lsp_max(xl, xs);
-            }
+            if (nl > le)
+                gain    = fCurrGain * sLong.fKFall;
+            else if (nl < le)
+                gain    = fCurrGain * sLong.fKGrow;
+            else
+                gain    = fCurrGain;
+
+//            float rt    = (nl >= le) ? sLong.fKRelease : sLong.fKAttack;
+//            gain        = fCurrGain + (le/fCurrGain) * rt;
+
+//            vLookBack[nLookHead]    = sl;
+//            float prev_sl           = vLookBack[(nLookHead + nLookSize - nLookOffset) & (nLookSize - 1)];
+//            nLookHead               = (nLookHead + 1) & (nLookSize - 1);
+//
+//            float nl    = sl * fCurrGain;
+//            float xl    = sl / le;
+//            float xs    = ss / le;
+//
+//            if (xl < sComp.x1)
+//            {
+//                if ((ss >= sl * sComp.x2) && (sl >= GAIN_AMP_P_3_DB * prev_sl))
+//                {
+//                    if (xs <= sComp.x1)
+//                        gain    = fCurrGain + (le/ss - fCurrGain) * sShort.fKRelease;
+//                    else if (xs >= sComp.x2)
+//                        gain    = sComp.x2 / xs;
+//                    else
+//                    {
+//                        float v     = xs - sComp.x1;
+//                        gain        = (((sComp.a*v + sComp.b)*v + sComp.c)*v + sComp.d) / xl;
+//                    }
+//                }
+//                else
+//                {
+//                    float rt    = (nl >= le) ? sLong.fKAttack : sLong.fKRelease;
+//                    gain        = fCurrGain + (le/sl - fCurrGain) * rt;
+//                }
+//            }
+//            else if (xl <= sComp.x2)
+//            {
+//                // Long-time changes
+//                float rt    = (nl >= le) ? sLong.fKAttack : sLong.fKRelease;
+//                gain        = fCurrGain + (le/sl - fCurrGain) * rt;
+////                gain        = lsp_limit(gain, fMinGain, fMaxGain);
+//            }
+//            else // xl > sComp.x2
+//            {
+//                gain        = sComp.x2 / lsp_max(xl, xs);
+//            }
 
 //            // Get the previous sample from look-back buffer
 //            vLookBack[nLookHead]    = ss;
