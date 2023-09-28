@@ -74,7 +74,7 @@ namespace lsp
                 timing_t        sLong;          // Long timings
                 compressor_t    sComp;          // Compressor settings
                 float           fSilence;       // Silence threshold
-//                float           fDeviation;     // Level deviation
+                float           fDeviation;     // Level deviation
 //                float           fRevDeviation;  // Reverse deviation
                 float           fCurrGain;      // Current gain value
                 float           fCurrEnv;       // Current short envelope
@@ -87,6 +87,8 @@ namespace lsp
                 void            set_timing(float *ptr, float value);
                 void            calc_compressor();
                 inline float    process_sample(float sl, float ss, float le);
+                inline float    eval_curve(float x);
+                inline float    eval_gain(float x);
 
             public:
                 explicit AutoGain();
@@ -152,7 +154,7 @@ namespace lsp
                  * Get the deviation multiplier
                  * @return deviatio multiplier
                  */
-                inline float    deviation() const               { return sComp.x2;      }
+                inline float    deviation() const               { return fDeviation;    }
 
                 /**
                  * Set the minimum gain value in the output gain control signal

@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/bits.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/dynamics/AutoGain.h>
 #include <lsp-plug.in/dsp-units/units.h>
@@ -135,8 +136,11 @@ namespace lsp
 
         void AutoGain::set_deviation(float deviation)
         {
-            sComp.x2        = lsp_max(1.0f, deviation);
-            sComp.x1        = 1.0f / sComp.x1;
+            deviation       = lsp_max(1.0f, deviation);
+            if (deviation == fDeviation)
+                return;
+
+            fDeviation      = deviation;
             nFlags         |= F_UPDATE;
         }
 
@@ -205,144 +209,86 @@ namespace lsp
 
         void AutoGain::calc_compressor()
         {
-            float dy    = 1.0f - sComp.x1;
-            float dx1   = 1.0f/(sComp.x2 - sComp.x1);
+        /* non-optimized
+            c.x1        = th / deviation;
+            c.x2        = th * deviation;
+
+            float y1    = c.x1;
+            float y2    = th;
+            float dy    = y2 - y1;
+            float dx    = c.x2 - c.x1;
+            float dx1   = 1.0f/dx;
             float dx2   = dx1*dx1;
+
+            c.d         = y1;
+            c.c         = 1.0f;
+            c.b         = 3.0f*dy*dx2 - 2.0f*dx1;
+            c.a         = (1.0f - 2.0*dy*dx1)*dx2;
+        */
+
+            sComp.x1    = 1.0f / fDeviation;
+            sComp.x2    = fDeviation;
+
+            float dy    = 1.0f - sComp.x1;
+            float dx    = sComp.x2 - sComp.x1;
+            float dx1   = 1.0f / dx;
+            float dx2   = dx1 * dx1;
 
             sComp.d     = sComp.x1;
             sComp.c     = 1.0f;
-            sComp.b     = (3.0f * dy)*dx2 - 2.0f *dx1;
-            sComp.a     = (1.0f - (2.0f*dy)*dx1)*dx2;
+            sComp.b     = 3.0f*dy*dx2 - 2.0f*dx1;
+            sComp.a     = (1.0f - 2.0*dy*dx1)*dx2;
+
+            lsp_trace("comp a=%f, b=%f, c=%f, d=%f",
+                sComp.a, sComp.b, sComp.c, sComp.d);
+        }
+
+        float AutoGain::eval_curve(float x)
+        {
+            if (x >= sComp.x2)
+                return 1.0f;
+            if (x <= sComp.x1)
+                return x;
+
+            float v    = x - sComp.x1;
+            return ((sComp.a*v + sComp.b)*v + sComp.c*v) + sComp.d;
+        }
+
+        float AutoGain::eval_gain(float x)
+        {
+            return eval_curve(x)/x;
         }
 
         float AutoGain::process_sample(float sl, float ss, float le)
         {
             // Do not perform any gain adjustment if we are in silence
-            float gain;
-
             if (ss <= fSilence)
                 return fCurrGain;
 
             float nl    = sl * fCurrGain;
+            float ns    = ss * fCurrGain;
 
-            if (nl > le)
-                gain    = fCurrGain * sLong.fKFall;
+            // Reset surge flag if possible
+            if (nFlags & F_SURGE)
+            {
+                if (fCurrGain * ss <= le * fDeviation)
+                    nFlags     &= ~size_t(F_SURGE);
+            }
+
+            // Compute the short gain reduction, trigger surge if it grows rapidly
+            float red   = eval_gain(ns/le);
+            if (red * fDeviation < 1.0f)
+                nFlags     |= F_SURGE;
+
+            // Compute the final gain
+            if (nFlags & F_SURGE)
+                fCurrGain  *= sShort.fKFall;
+            else if (nl > le)
+                fCurrGain  *= sLong.fKFall;
             else if (nl < le)
-                gain    = fCurrGain * sLong.fKGrow;
-            else
-                gain    = fCurrGain;
+                fCurrGain  *= sLong.fKGrow;
 
-//            float rt    = (nl >= le) ? sLong.fKRelease : sLong.fKAttack;
-//            gain        = fCurrGain + (le/fCurrGain) * rt;
-
-//            vLookBack[nLookHead]    = sl;
-//            float prev_sl           = vLookBack[(nLookHead + nLookSize - nLookOffset) & (nLookSize - 1)];
-//            nLookHead               = (nLookHead + 1) & (nLookSize - 1);
-//
-//            float nl    = sl * fCurrGain;
-//            float xl    = sl / le;
-//            float xs    = ss / le;
-//
-//            if (xl < sComp.x1)
-//            {
-//                if ((ss >= sl * sComp.x2) && (sl >= GAIN_AMP_P_3_DB * prev_sl))
-//                {
-//                    if (xs <= sComp.x1)
-//                        gain    = fCurrGain + (le/ss - fCurrGain) * sShort.fKRelease;
-//                    else if (xs >= sComp.x2)
-//                        gain    = sComp.x2 / xs;
-//                    else
-//                    {
-//                        float v     = xs - sComp.x1;
-//                        gain        = (((sComp.a*v + sComp.b)*v + sComp.c)*v + sComp.d) / xl;
-//                    }
-//                }
-//                else
-//                {
-//                    float rt    = (nl >= le) ? sLong.fKAttack : sLong.fKRelease;
-//                    gain        = fCurrGain + (le/sl - fCurrGain) * rt;
-//                }
-//            }
-//            else if (xl <= sComp.x2)
-//            {
-//                // Long-time changes
-//                float rt    = (nl >= le) ? sLong.fKAttack : sLong.fKRelease;
-//                gain        = fCurrGain + (le/sl - fCurrGain) * rt;
-////                gain        = lsp_limit(gain, fMinGain, fMaxGain);
-//            }
-//            else // xl > sComp.x2
-//            {
-//                gain        = sComp.x2 / lsp_max(xl, xs);
-//            }
-
-//            // Get the previous sample from look-back buffer
-//            vLookBack[nLookHead]    = ss;
-//            float prev_ss           = vLookBack[(nLookHead + nLookSize - nLookOffset) & (nLookSize - 1)];
-//            nLookHead               = (nLookHead + 1) & (nLookSize - 1);
-//
-//            float diff              = ss/lsp_max(prev_ss, fSilence);
-//            if (diff >= dspu::db_to_gain(9.0f))
-//                nFlags                 |= F_SURGE;
-//
-//            if (nFlags & F_SURGE)
-//            {
-//                // Sync gain rapidly
-//                if (ss <= le * fDeviation)
-//                {
-//                    // Reset surge state if levels became almost equal
-//                    gain            = fCurrGain + (ss - fCurrGain) * sShort.fKRelease;
-//                    if ((diff <= 1.0f) && (ss <= sl))
-//                        nFlags &= ~F_SURGE;
-//                }
-//                else
-//                    gain            = (le * fDeviation) / ss;
-//            }
-//            else
-//            {
-//                // Long-time changes
-//                if (sl < le * fDeviation)
-//                {
-//                    r_time              = (sl >= le) ? sLong.fKAttack : sLong.fKRelease;
-//                    gain                = fCurrGain + (le/sl - fCurrGain) * r_time;
-//                }
-//                else
-//                    gain                = le / sl;
-//
-//                gain                = lsp_limit(gain, fMinGain, fMaxGain);
-//            }
-
-            return fCurrGain = gain;
-
-//
-//            fCurrEnv            = (ss >= fCurrEnv) ? ss : fCurrEnv + (ss - fCurrEnv) * sShort.fKRelease;
-//            float xsl           = fCurrEnv * fCurrGain;
-//            float up_th         = le * fDeviation;
-//            float down_th       = le * fRevDeviation;
-//            if (xsl >= up_th)
-//                gain                = up_th / xsl;
-//            else if ((sl <= up_th) && (sl >= down_th))
-//            {
-//                // Long-time changes
-//                r_time              = (sl >= le) ? sLong.fKAttack : sLong.fKRelease;
-//                gain                = fCurrGain + (le/sl - fCurrGain) * r_time;
-//            }
-//            else
-//                gain                = fCurrGain + (le / fCurrEnv - fCurrEnv) * sShort.fKAttack;
-
-
-//            // Detemine how to deal with short-time loudness
-//            if ((sl >= le * fDeviation) || (sl <= le * fRevDeviation))
-//            {
-//                // Short-time changes
-//                r_time              = (ss >= le) ? sShort.fAttack : sShort.fKRelease;
-//                gain                = fCurrGain + (le/ss - fCurrGain) * r_time;
-//                return fCurrGain    = lsp_limit(gain, fMinGain, fMaxGain);
-//            }
-//
-//            // Long-time changes
-//            r_time              = (sl >= le) ? sLong.fKAttack : sLong.fKRelease;
-//            gain                = fCurrGain + (le/sl - fCurrGain) * r_time;
-//            return fCurrGain    = lsp_limit(gain, fMinGain, fMaxGain);
+            return fCurrGain; // = gain;
         }
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, const float *lexp, size_t count)
