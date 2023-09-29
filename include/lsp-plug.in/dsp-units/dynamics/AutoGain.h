@@ -53,42 +53,42 @@ namespace lsp
                 typedef struct
                 {
                     float       x1, x2;
+                    float       t;
                     float       a, b, c, d;
                 } compressor_t;
 
                 enum flags_t
                 {
                     F_UPDATE        = 1 << 0,
-                    F_SURGE         = 1 << 1
+                    F_QUICK_AMP = 1 << 1,
+                    F_SURGE_UP      = 1 << 2,
+                    F_SURGE_DOWN    = 1 << 3
                 };
 
             protected:
                 size_t          nSampleRate;    // Current sample rate
                 size_t          nFlags;         // Different flags
-                size_t          nLookHead;      // Look-back buffer write position
-                size_t          nLookSize;      // Look-back buffer size
-                size_t          nLookOffset;    // Look-back buffer offset
-                float          *vLookBack;      // Look-back buffer
 
                 timing_t        sShort;         // Stort timings
                 timing_t        sLong;          // Long timings
-                compressor_t    sComp;          // Compressor settings
+                compressor_t    sShortComp;     // Compressor settings
+                compressor_t    sOutComp;       // Output compressor
                 float           fSilence;       // Silence threshold
                 float           fDeviation;     // Level deviation
-//                float           fRevDeviation;  // Reverse deviation
                 float           fCurrGain;      // Current gain value
-                float           fCurrEnv;       // Current short envelope
-                float           fMinGain;       // Minimum possible gain value
-                float           fMaxGain;       // Maximum possible gain value
-                float           fLookBack;      // Look-back time
-                float           fMaxLookBack;   // Maximum look-back time
 
             protected:
-                void            set_timing(float *ptr, float value);
-                void            calc_compressor();
-                inline float    process_sample(float sl, float ss, float le);
-                inline float    eval_curve(float x);
-                inline float    eval_gain(float x);
+                static void             init_compressor(compressor_t &c);
+                static void             calc_compressor(compressor_t &c, float x1, float x2, float y2);
+                static inline float     eval_curve(const compressor_t &c, float x);
+                static inline float     eval_gain(const compressor_t &c, float x);
+
+                static void             dump(const char *id, const timing_t *t, IStateDumper *v);
+                static void             dump(const char *id, const compressor_t *c, IStateDumper *v);
+
+            protected:
+                void                    set_timing(float *ptr, float value);
+                inline float            process_sample(float sl, float ss, float le);
 
             public:
                 explicit AutoGain();
@@ -111,10 +111,9 @@ namespace lsp
 
                 /**
                  * Initialize look-back buffer
-                 * @param max_lookback maximum look-back time
                  * @return status of operation
                  */
-                status_t        init(float max_lookback);
+                status_t        init();
 
             public:
                 /**
@@ -155,37 +154,6 @@ namespace lsp
                  * @return deviatio multiplier
                  */
                 inline float    deviation() const               { return fDeviation;    }
-
-                /**
-                 * Set the minimum gain value in the output gain control signal
-                 * @param value minimum gain value
-                 */
-                void            set_min_gain(float value);
-
-                /**
-                 * Get the minimum gain value in the output gain control signal
-                 * @return minimum gain value in the output gain control signal
-                 */
-                inline float    min_gain() const                { return fMinGain;      }
-
-                /**
-                 * Set the maximum gain value in the output gain control signal
-                 * @param value maximum gain value
-                 */
-                void            set_max_gain(float value);
-
-                /**
-                 * Get the maximum gain value in the output gain control signal
-                 * @return maximum gain value in the output gain control signal
-                 */
-                inline float    max_gain() const                { return fMaxGain;      }
-
-                /**
-                 * Set the minimum and maximum possible value of the gain control signal
-                 * @param min minimum value
-                 * @param max maximum value
-                 */
-                void            set_gain(float min, float max);
 
                 /**
                  * Set the short gain grow speed
@@ -249,11 +217,17 @@ namespace lsp
                  */
                 void            set_long_speed(float grow, float fall);
 
-                void            set_lookback(float value);
+                /**
+                 * Enable/disable quick gain restoration for quick level surge
+                 * @param enable enable/disable flag
+                 */
+                void            enable_quick_amplifier(bool enable);
 
-                inline float    get_lookback() const            { return fLookBack;     }
-
-                size_t          latency() const;
+                /**
+                 * Check that guick gain restoration is enabled
+                 * @return true if quick gain restoation is enabled
+                 */
+                inline bool     quick_amplifier() const         { return nFlags & F_QUICK_AMP; }
 
                 /**
                  * Check that the module needs settings update
