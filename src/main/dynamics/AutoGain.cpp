@@ -65,7 +65,7 @@ namespace lsp
             sComp.d         = 0.0f;
 
             fSilence        = GAIN_AMP_M_72_DB;
-//            fDeviation      = GAIN_AMP_P_6_DB;
+            fDeviation      = GAIN_AMP_P_6_DB;
 //            fRevDeviation   = GAIN_AMP_M_6_DB;
             fCurrEnv        = 0.0f;
             fCurrGain       = 1.0f;
