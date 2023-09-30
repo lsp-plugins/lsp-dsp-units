@@ -134,6 +134,22 @@ namespace lsp
             set_timing(&sLong.fFall, fall);
         }
 
+        void AutoGain::set_max_gain(float value, bool enable)
+        {
+            fMaxGain        = lsp_max(0.0f, value);
+            nFlags          = lsp_setflag(nFlags, F_MAX_GAIN, enable);
+        }
+
+        void AutoGain::set_max_gain(float value)
+        {
+            fMaxGain        = lsp_max(0.0f, value);
+        }
+
+        void AutoGain::enable_max_gain(bool enable)
+        {
+            nFlags          = lsp_setflag(nFlags, F_MAX_GAIN, enable);
+        }
+
         void AutoGain::update()
         {
             if (!(nFlags & F_UPDATE))
@@ -156,11 +172,7 @@ namespace lsp
 
         void AutoGain::enable_quick_amplifier(bool enable)
         {
-            size_t flags        = lsp_setflag(nFlags, F_QUICK_AMP, enable);
-            if (flags != nFlags)
-                return;
-
-            nFlags              = flags | F_UPDATE;
+            nFlags              = lsp_setflag(nFlags, F_QUICK_AMP, enable);
         }
 
         void AutoGain::calc_compressor(compressor_t &c, float x1, float x2, float y2)
@@ -207,11 +219,19 @@ namespace lsp
             float ns    = ss * fCurrGain;
 
             // Reset surge flag if possible
-            if (nFlags & F_SURGE_UP)
+            size_t srg  = nFlags & (F_SURGE_UP | F_SURGE_DOWN);
+            if (srg == F_SURGE_UP)
             {
-                if (fCurrGain * ss <= le * fDeviation)
+                if (ns <= le * fDeviation)
                     nFlags     &= ~size_t(F_SURGE_UP);
             }
+            else if ((nFlags & F_QUICK_AMP) && (srg == F_SURGE_DOWN))
+            {
+                if (ns * fDeviation > le)
+                    nFlags     &= ~size_t(F_SURGE_DOWN);
+            }
+            else
+                nFlags     &= ~size_t(F_SURGE_UP | F_SURGE_DOWN);
 
             // Compute the short gain reduction, trigger surge if it grows rapidly
             float red   = eval_gain(sShortComp, ns/le);
@@ -244,18 +264,30 @@ namespace lsp
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, const float *lexp, size_t count)
         {
+            // Update settings if needed
             update();
 
+            // Process the samples
             for (size_t i=0; i<count; ++i)
                 vca[i]  = process_sample(llong[i], lshort[i], lexp[i]);
+
+            // Apply gain limitation at the output
+            if (nFlags & F_MAX_GAIN)
+                dsp::limit1(vca, 0.0f, fMaxGain, count);
         }
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, float lexp, size_t count)
         {
+            // Update settings if needed
             update();
 
+            // Process the samples
             for (size_t i=0; i<count; ++i)
                 vca[i]  = process_sample(llong[i], lshort[i], lexp);
+
+            // Apply gain limitation at the output
+            if (nFlags & F_MAX_GAIN)
+                dsp::limit1(vca, 0.0f, fMaxGain, count);
         }
 
         void AutoGain::dump(const char *id, const timing_t *t, IStateDumper *v)

@@ -60,9 +60,10 @@ namespace lsp
                 enum flags_t
                 {
                     F_UPDATE        = 1 << 0,
-                    F_QUICK_AMP = 1 << 1,
-                    F_SURGE_UP      = 1 << 2,
-                    F_SURGE_DOWN    = 1 << 3
+                    F_QUICK_AMP     = 1 << 1,
+                    F_MAX_GAIN      = 1 << 2,
+                    F_SURGE_UP      = 1 << 3,
+                    F_SURGE_DOWN    = 1 << 4
                 };
 
             protected:
@@ -76,6 +77,7 @@ namespace lsp
                 float           fSilence;       // Silence threshold
                 float           fDeviation;     // Level deviation
                 float           fCurrGain;      // Current gain value
+                float           fMaxGain;       // Maximum possible amplification
 
             protected:
                 static void             init_compressor(compressor_t &c);
@@ -209,6 +211,37 @@ namespace lsp
                  * @return long gain fall-off speed in dB/s
                  */
                 inline float    long_fall() const               { return sLong.fFall;                   }
+
+                /**
+                 * Set the maximum possible amplification gain nad gain limitation control
+                 * @param value maximum possible amplification gain
+                 * @param enable true if need to enable the maximum gain limitation control
+                 */
+                void            set_max_gain(float value, bool enable);
+
+                /**
+                 * Set the maximum possible amplification gain
+                 * @param value maximum possible amplification gain
+                 */
+                void            set_max_gain(float value);
+
+                /**
+                 * Enable the maximum gain limitation control
+                 * @param enable true if need to enable the maximum gain limitation control
+                 */
+                void            enable_max_gain(bool enable);
+
+                /**
+                 * Get the maximum possible gain amplification value
+                 * @return maximum possible gain amplification value
+                 */
+                inline bool     max_gain() const                { return fMaxGain;                      }
+
+                /**
+                 * Get the maximum gain limitation contol enabled state
+                 * @return the maximum gain limitation contol enabled state
+                 */
+                inline bool     max_gain_enabled() const        { return nFlags & F_MAX_GAIN;           }
 
                 /**
                  * Set reaction speed for long-time loudness signal
