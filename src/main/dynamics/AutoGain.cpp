@@ -59,6 +59,7 @@ namespace lsp
             fSilence        = GAIN_AMP_M_72_DB;
             fDeviation      = GAIN_AMP_P_6_DB;
             fCurrGain       = 1.0f;
+            fOutGain        = 1.0f;
 
             nFlags          = F_UPDATE;
         }
@@ -208,11 +209,21 @@ namespace lsp
             return eval_curve(c, x)/x;
         }
 
+        float AutoGain::apply_gain_limiting(float gain)
+        {
+            if (nFlags & F_MAX_GAIN)
+                fOutGain    = (gain >= fMaxGain) ? fMaxGain / gain : 1.0f;
+            else
+                fOutGain    = lsp_min(fOutGain * sLong.fKGrow, 1.0f);   // Do not grow the gain rapidly, do it smoothly
+
+            return gain * fOutGain;
+        }
+
         float AutoGain::process_sample(float sl, float ss, float le)
         {
             // Do not perform any gain adjustment if we are in silence
             if (ss <= fSilence)
-                return fCurrGain;
+                return apply_gain_limiting(fCurrGain);
 
             // STAGE 1: perform gain adjustment
             float nl    = sl * fCurrGain;
@@ -259,7 +270,8 @@ namespace lsp
             red         = eval_gain(sOutComp, (ss * gain) / le);
             gain       *= red;
 
-            return fCurrGain = gain;
+            fCurrGain   = gain;
+            return apply_gain_limiting(fCurrGain);
         }
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, const float *lexp, size_t count)
@@ -270,10 +282,6 @@ namespace lsp
             // Process the samples
             for (size_t i=0; i<count; ++i)
                 vca[i]  = process_sample(llong[i], lshort[i], lexp[i]);
-
-            // Apply gain limitation at the output
-            if (nFlags & F_MAX_GAIN)
-                dsp::limit1(vca, 0.0f, fMaxGain, count);
         }
 
         void AutoGain::process(float *vca, const float *llong, const float *lshort, float lexp, size_t count)
@@ -284,10 +292,6 @@ namespace lsp
             // Process the samples
             for (size_t i=0; i<count; ++i)
                 vca[i]  = process_sample(llong[i], lshort[i], lexp);
-
-            // Apply gain limitation at the output
-            if (nFlags & F_MAX_GAIN)
-                dsp::limit1(vca, 0.0f, fMaxGain, count);
         }
 
         void AutoGain::dump(const char *id, const timing_t *t, IStateDumper *v)
@@ -330,6 +334,7 @@ namespace lsp
             v->write("fSilence", fSilence);
             v->write("fDeviation", fDeviation);
             v->write("fCurrGain", fCurrGain);
+            v->write("fOutGain", fOutGain);
         }
 
     } /* namespace dspu */

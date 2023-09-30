@@ -78,6 +78,7 @@ namespace lsp
                 float           fDeviation;     // Level deviation
                 float           fCurrGain;      // Current gain value
                 float           fMaxGain;       // Maximum possible amplification
+                float           fOutGain;       // Output gain reduction for maximum gain limitation
 
             protected:
                 static void             init_compressor(compressor_t &c);
@@ -90,7 +91,8 @@ namespace lsp
 
             protected:
                 void                    set_timing(float *ptr, float value);
-                inline float            process_sample(float sl, float ss, float le);
+                float                   process_sample(float sl, float ss, float le);
+                float                   apply_gain_limiting(float gain);
 
             public:
                 explicit AutoGain();
