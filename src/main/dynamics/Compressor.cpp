@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 сент. 2016 г.
@@ -61,15 +61,15 @@ namespace lsp
 
             for (size_t i=0; i<2; ++i)
             {
-                knee_t *k       = &vKnees[i];
-                k->fKS          = 0.0f;
-                k->fKE          = 0.0f;
-                k->fGain        = 1.0f;
-                k->vKnee[0]     = 0.0f;
-                k->vKnee[1]     = 0.0f;
-                k->vKnee[2]     = 0.0f;
-                k->vTilt[0]     = 0.0f;
-                k->vTilt[1]     = 0.0f;
+                dsp::compressor_knee_t *k   = &sComp.k[i];
+                k->start        = 0.0f;
+                k->end          = 0.0f;
+                k->gain         = 1.0f;
+                k->herm[0]      = 0.0f;
+                k->herm[1]      = 0.0f;
+                k->herm[2]      = 0.0f;
+                k->herm[0]      = 0.0f;
+                k->herm[1]      = 0.0f;
             }
 
             // Additional parameters
@@ -101,26 +101,26 @@ namespace lsp
                     float th2           = logf(fBoostThresh);
                     float b             = (rr - 1.0f) * (th2 - th1);
 
-                    vKnees[0].fKS       = fAttackThresh * fKnee;
-                    vKnees[0].fKE       = fAttackThresh / fKnee;
-                    vKnees[0].fGain     = 1.0f;
-                    vKnees[0].vTilt[0]  = 1.0f - rr;
-                    vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
+                    sComp.k[0].start       = fAttackThresh * fKnee;
+                    sComp.k[0].end       = fAttackThresh / fKnee;
+                    sComp.k[0].gain     = 1.0f;
+                    sComp.k[0].tilt[0]  = 1.0f - rr;
+                    sComp.k[0].tilt[1]  = (rr - 1.0f) * th1;
 
-                    vKnees[1].fKS       = fBoostThresh * fKnee;
-                    vKnees[1].fKE       = fBoostThresh / fKnee;
-                    vKnees[1].fGain     = expf(b);
-                    vKnees[1].vTilt[0]  = rr - 1.0f;
-                    vKnees[1].vTilt[1]  = (1.0f - rr) * th1;
+                    sComp.k[1].start       = fBoostThresh * fKnee;
+                    sComp.k[1].end       = fBoostThresh / fKnee;
+                    sComp.k[1].gain     = expf(b);
+                    sComp.k[1].tilt[0]  = rr - 1.0f;
+                    sComp.k[1].tilt[1]  = (1.0f - rr) * th1;
 
                     interpolation::hermite_quadratic(
-                        vKnees[0].vKnee,
-                        logf(vKnees[0].fKS), 0.0f, 0.0f,
-                        logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
+                        sComp.k[0].herm,
+                        logf(sComp.k[0].start), 0.0f, 0.0f,
+                        logf(sComp.k[0].end), sComp.k[0].tilt[0]);
                     interpolation::hermite_quadratic(
-                        vKnees[1].vKnee,
-                        logf(vKnees[1].fKS), b, 0.0f,
-                        logf(vKnees[1].fKE), vKnees[1].vTilt[0]);
+                        sComp.k[1].herm,
+                        logf(sComp.k[1].start), b, 0.0f,
+                        logf(sComp.k[1].end), sComp.k[1].tilt[0]);
 
                     break;
                 }
@@ -135,49 +135,49 @@ namespace lsp
 
                     if (fBoostThresh >= 1.0f)
                     {
-                        vKnees[0].fKS       = fAttackThresh * fKnee;
-                        vKnees[0].fKE       = fAttackThresh / fKnee;
-                        vKnees[0].fGain     = 1.0f;
-                        vKnees[0].vTilt[0]  = 1.0f - rr;
-                        vKnees[0].vTilt[1]  = (rr - 1.0f) * th1;
+                        sComp.k[0].start       = fAttackThresh * fKnee;
+                        sComp.k[0].end       = fAttackThresh / fKnee;
+                        sComp.k[0].gain     = 1.0f;
+                        sComp.k[0].tilt[0]  = 1.0f - rr;
+                        sComp.k[0].tilt[1]  = (rr - 1.0f) * th1;
 
-                        vKnees[1].fKS       = eth2 * fKnee;
-                        vKnees[1].fKE       = eth2 / fKnee;
-                        vKnees[1].fGain     = fBoostThresh;
-                        vKnees[1].vTilt[0]  = rr - 1.0f;
-                        vKnees[1].vTilt[1]  = (1.0f - rr) * th1;
+                        sComp.k[1].start       = eth2 * fKnee;
+                        sComp.k[1].end       = eth2 / fKnee;
+                        sComp.k[1].gain     = fBoostThresh;
+                        sComp.k[1].tilt[0]  = rr - 1.0f;
+                        sComp.k[1].tilt[1]  = (1.0f - rr) * th1;
 
                         interpolation::hermite_quadratic(
-                            vKnees[0].vKnee,
-                            logf(vKnees[0].fKS), 0.0f, 0.0f,
-                            logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
+                            sComp.k[0].herm,
+                            logf(sComp.k[0].start), 0.0f, 0.0f,
+                            logf(sComp.k[0].end), sComp.k[0].tilt[0]);
                         interpolation::hermite_quadratic(
-                            vKnees[1].vKnee,
-                            logf(vKnees[1].fKS), b, 0.0f,
-                            logf(vKnees[1].fKE), vKnees[1].vTilt[0]);
+                            sComp.k[1].herm,
+                            logf(sComp.k[1].start), b, 0.0f,
+                            logf(sComp.k[1].end), sComp.k[1].tilt[0]);
                     }
                     else
                     {
-                        vKnees[0].fKS       = fAttackThresh * fKnee;
-                        vKnees[0].fKE       = fAttackThresh / fKnee;
-                        vKnees[0].fGain     = 1.0f;
-                        vKnees[0].vTilt[0]  = rr - 1.0f;
-                        vKnees[0].vTilt[1]  = (1.0f - rr) * th1;
+                        sComp.k[0].start       = fAttackThresh * fKnee;
+                        sComp.k[0].end       = fAttackThresh / fKnee;
+                        sComp.k[0].gain     = 1.0f;
+                        sComp.k[0].tilt[0]  = rr - 1.0f;
+                        sComp.k[0].tilt[1]  = (1.0f - rr) * th1;
 
-                        vKnees[1].fKS       = eth2 * fKnee;
-                        vKnees[1].fKE       = eth2 / fKnee;
-                        vKnees[1].fGain     = 1.0f;
-                        vKnees[1].vTilt[0]  = 1.0f - rr;
-                        vKnees[1].vTilt[1]  = (rr - 1.0f) * th2;
+                        sComp.k[1].start       = eth2 * fKnee;
+                        sComp.k[1].end       = eth2 / fKnee;
+                        sComp.k[1].gain     = 1.0f;
+                        sComp.k[1].tilt[0]  = 1.0f - rr;
+                        sComp.k[1].tilt[1]  = (rr - 1.0f) * th2;
 
                         interpolation::hermite_quadratic(
-                            vKnees[0].vKnee,
-                            logf(vKnees[0].fKS), 0.0f, 0.0f,
-                            logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
+                            sComp.k[0].herm,
+                            logf(sComp.k[0].start), 0.0f, 0.0f,
+                            logf(sComp.k[0].end), sComp.k[0].tilt[0]);
                         interpolation::hermite_quadratic(
-                            vKnees[1].vKnee,
-                            logf(vKnees[1].fKS), 0.0f, 0.0f,
-                            logf(vKnees[1].fKE), vKnees[1].vTilt[0]);
+                            sComp.k[1].herm,
+                            logf(sComp.k[1].start), 0.0f, 0.0f,
+                            logf(sComp.k[1].end), sComp.k[1].tilt[0]);
                     }
 
                     break;
@@ -189,22 +189,22 @@ namespace lsp
                     float rr            = 1.0f / fRatio;
                     float th1           = logf(fAttackThresh);
 
-                    vKnees[0].fKS       = fAttackThresh * fKnee;
-                    vKnees[0].fKE       = fAttackThresh / fKnee;
-                    vKnees[0].fGain     = 1.0f;
-                    vKnees[0].vTilt[0]  = rr - 1.0f;
-                    vKnees[0].vTilt[1]  = (1.0f - rr) * th1;
+                    sComp.k[0].start       = fAttackThresh * fKnee;
+                    sComp.k[0].end       = fAttackThresh / fKnee;
+                    sComp.k[0].gain     = 1.0f;
+                    sComp.k[0].tilt[0]  = rr - 1.0f;
+                    sComp.k[0].tilt[1]  = (1.0f - rr) * th1;
 
-                    vKnees[1].fKS       = 0.0f;
-                    vKnees[1].fKE       = 0.0f;
-                    vKnees[1].fGain     = 1.0f;
-                    vKnees[1].vTilt[0]  = 0.0f;
-                    vKnees[1].vTilt[1]  = 0.0f;
+                    sComp.k[1].start       = 0.0f;
+                    sComp.k[1].end       = 0.0f;
+                    sComp.k[1].gain     = 1.0f;
+                    sComp.k[1].tilt[0]  = 0.0f;
+                    sComp.k[1].tilt[1]  = 0.0f;
 
                     interpolation::hermite_quadratic(
-                        vKnees[0].vKnee,
-                        logf(vKnees[0].fKS), 0.0f, 0.0f,
-                        logf(vKnees[0].fKE), vKnees[0].vTilt[0]);
+                        sComp.k[0].herm,
+                        logf(sComp.k[0].start), 0.0f, 0.0f,
+                        logf(sComp.k[0].end), sComp.k[0].tilt[0]);
 
                     break;
                 }
@@ -236,20 +236,7 @@ namespace lsp
                 dsp::copy(env, out, samples);
 
             // Now calculate compressor's curve
-            for (size_t i=0; i<samples; ++i)
-            {
-                float x     = fabs(out[i]);
-                float lx    = logf(x);
-
-                float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
-                              (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
-                              expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
-                float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
-                              (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
-                              expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
-
-                out[i]      = g1 * g2;
-            }
+            dsp::compressor_x2_gain(out, out, &sComp, samples);
         }
 
         float Compressor::process(float *env, float s)
@@ -264,15 +251,15 @@ namespace lsp
             if (env != NULL)
                 *env    = fEnvelope;
 
-            float x     = fabs(fEnvelope);
+            float x     = fabsf(fEnvelope);
             float lx    = logf(x);
 
-            float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
-                          (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
-                          expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
-            float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
-                          (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
-                          expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
+            float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
+                          (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
+                          expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
+            float g2    = (x <= sComp.k[1].start) ? sComp.k[1].gain :
+                          (x >= sComp.k[1].end) ? expf(lx * sComp.k[1].tilt[0] + sComp.k[1].tilt[1]) :
+                          expf((sComp.k[1].herm[0]*lx + sComp.k[1].herm[1])*lx + sComp.k[1].herm[2]);
 
             x           = g1 * g2;
             return x;
@@ -281,36 +268,22 @@ namespace lsp
         void Compressor::curve(float *out, const float *in, size_t dots)
         {
             update_settings();
-
-            for (size_t i=0; i<dots; ++i)
-            {
-                float x     = fabs(in[i]);
-                float lx    = logf(x);
-
-                float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
-                              (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
-                              expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
-                float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
-                              (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
-                              expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
-
-                out[i]      = g1 * g2 * x;
-            }
+            dsp::compressor_x2_curve(out, in, &sComp, dots);
         }
 
         float Compressor::curve(float in)
         {
             update_settings();
 
-            float x     = fabs(in);
+            float x     = fabsf(in);
             float lx    = logf(x);
 
-            float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
-                          (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
-                          expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
-            float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
-                          (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
-                          expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
+            float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
+                          (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
+                          expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
+            float g2    = (x <= sComp.k[1].start) ? sComp.k[1].gain :
+                          (x >= sComp.k[1].end) ? expf(lx * sComp.k[1].tilt[0] + sComp.k[1].tilt[1]) :
+                          expf((sComp.k[1].herm[0]*lx + sComp.k[1].herm[1])*lx + sComp.k[1].herm[2]);
 
             x           = g1 * g2 * x;
             return x;
@@ -319,36 +292,22 @@ namespace lsp
         void Compressor::reduction(float *out, const float *in, size_t dots)
         {
             update_settings();
-
-            for (size_t i=0; i<dots; ++i)
-            {
-                float x     = fabs(in[i]);
-                float lx    = logf(x);
-
-                float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
-                              (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
-                              expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
-                float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
-                              (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
-                              expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
-
-                out[i]      = g1 * g2;
-            }
+            dsp::compressor_x2_curve(out, in, &sComp, dots);
         }
 
         float Compressor::reduction(float in)
         {
             update_settings();
 
-            float x     = fabs(in);
+            float x     = fabsf(in);
             float lx    = logf(x);
 
-            float g1    = (x <= vKnees[0].fKS) ? vKnees[0].fGain :
-                          (x >= vKnees[0].fKE) ? expf(lx * vKnees[0].vTilt[0] + vKnees[0].vTilt[1]) :
-                          expf((vKnees[0].vKnee[0]*lx + vKnees[0].vKnee[1])*lx + vKnees[0].vKnee[2]);
-            float g2    = (x <= vKnees[1].fKS) ? vKnees[1].fGain :
-                          (x >= vKnees[1].fKE) ? expf(lx * vKnees[1].vTilt[0] + vKnees[1].vTilt[1]) :
-                          expf((vKnees[1].vKnee[0]*lx + vKnees[1].vKnee[1])*lx + vKnees[1].vKnee[2]);
+            float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
+                          (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
+                          expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
+            float g2    = (x <= sComp.k[1].start) ? sComp.k[1].gain :
+                          (x >= sComp.k[1].end) ? expf(lx * sComp.k[1].tilt[0] + sComp.k[1].tilt[1]) :
+                          expf((sComp.k[1].herm[0]*lx + sComp.k[1].herm[1])*lx + sComp.k[1].herm[2]);
 
             x           = g1 * g2;
             return x;
@@ -442,22 +401,31 @@ namespace lsp
             v->write("fEnvelope", fEnvelope);
             v->write("fTauAttack", fTauAttack);
             v->write("fTauRelease", fTauRelease);
-            v->begin_array("vKnees", vKnees, 2);
+            v->begin_object("sComp", &sComp, sizeof(sComp));
             {
-                for (size_t i=0; i<2; ++i)
+                v->begin_array("k", sComp.k, 2);
                 {
-                    const knee_t *k = &vKnees[i];
-                    v->write("fKS", k->fKS);
-                    v->write("fKE", k->fKE);
-                    v->write("fGain", k->fGain);
-                    v->writev("vKnee", k->vKnee, 3);
-                    v->writev("vTilt", k->vTilt, 2);
+                    for (size_t i=0; i<2; ++i)
+                    {
+                        const dsp::compressor_knee_t *k = &sComp.k[i];
+                        v->begin_object(k, sizeof(dsp::compressor_knee_t));
+                        {
+                            v->write("start", k->start);
+                            v->write("end", k->end);
+                            v->write("gain", k->gain);
+                            v->writev("herm", k->herm, 3);
+                            v->writev("tilt", k->tilt, 2);
+                        }
+                        v->end_object();
+                    }
                 }
+                v->end_array();
             }
             v->end_array();
             v->write("nSampleRate", nSampleRate);
             v->write("nMode", nMode);
             v->write("bUpdate", bUpdate);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
