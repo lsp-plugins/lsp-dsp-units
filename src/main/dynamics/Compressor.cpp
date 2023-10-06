@@ -101,14 +101,14 @@ namespace lsp
                     float th2           = logf(fBoostThresh);
                     float b             = (rr - 1.0f) * (th2 - th1);
 
-                    sComp.k[0].start       = fAttackThresh * fKnee;
-                    sComp.k[0].end       = fAttackThresh / fKnee;
+                    sComp.k[0].start    = fAttackThresh * fKnee;
+                    sComp.k[0].end      = fAttackThresh / fKnee;
                     sComp.k[0].gain     = 1.0f;
                     sComp.k[0].tilt[0]  = 1.0f - rr;
                     sComp.k[0].tilt[1]  = (rr - 1.0f) * th1;
 
-                    sComp.k[1].start       = fBoostThresh * fKnee;
-                    sComp.k[1].end       = fBoostThresh / fKnee;
+                    sComp.k[1].start    = fBoostThresh * fKnee;
+                    sComp.k[1].end      = fBoostThresh / fKnee;
                     sComp.k[1].gain     = expf(b);
                     sComp.k[1].tilt[0]  = rr - 1.0f;
                     sComp.k[1].tilt[1]  = (1.0f - rr) * th1;
@@ -135,14 +135,14 @@ namespace lsp
 
                     if (fBoostThresh >= 1.0f)
                     {
-                        sComp.k[0].start       = fAttackThresh * fKnee;
-                        sComp.k[0].end       = fAttackThresh / fKnee;
+                        sComp.k[0].start    = fAttackThresh * fKnee;
+                        sComp.k[0].end      = fAttackThresh / fKnee;
                         sComp.k[0].gain     = 1.0f;
                         sComp.k[0].tilt[0]  = 1.0f - rr;
                         sComp.k[0].tilt[1]  = (rr - 1.0f) * th1;
 
-                        sComp.k[1].start       = eth2 * fKnee;
-                        sComp.k[1].end       = eth2 / fKnee;
+                        sComp.k[1].start    = eth2 * fKnee;
+                        sComp.k[1].end      = eth2 / fKnee;
                         sComp.k[1].gain     = fBoostThresh;
                         sComp.k[1].tilt[0]  = rr - 1.0f;
                         sComp.k[1].tilt[1]  = (1.0f - rr) * th1;
@@ -158,14 +158,14 @@ namespace lsp
                     }
                     else
                     {
-                        sComp.k[0].start       = fAttackThresh * fKnee;
-                        sComp.k[0].end       = fAttackThresh / fKnee;
+                        sComp.k[0].start    = fAttackThresh * fKnee;
+                        sComp.k[0].end      = fAttackThresh / fKnee;
                         sComp.k[0].gain     = 1.0f;
                         sComp.k[0].tilt[0]  = rr - 1.0f;
                         sComp.k[0].tilt[1]  = (1.0f - rr) * th1;
 
-                        sComp.k[1].start       = eth2 * fKnee;
-                        sComp.k[1].end       = eth2 / fKnee;
+                        sComp.k[1].start    = eth2 * fKnee;
+                        sComp.k[1].end      = eth2 / fKnee;
                         sComp.k[1].gain     = 1.0f;
                         sComp.k[1].tilt[0]  = 1.0f - rr;
                         sComp.k[1].tilt[1]  = (rr - 1.0f) * th2;
@@ -189,14 +189,14 @@ namespace lsp
                     float rr            = 1.0f / fRatio;
                     float th1           = logf(fAttackThresh);
 
-                    sComp.k[0].start       = fAttackThresh * fKnee;
-                    sComp.k[0].end       = fAttackThresh / fKnee;
+                    sComp.k[0].start    = fAttackThresh * fKnee;
+                    sComp.k[0].end      = fAttackThresh / fKnee;
                     sComp.k[0].gain     = 1.0f;
                     sComp.k[0].tilt[0]  = rr - 1.0f;
                     sComp.k[0].tilt[1]  = (1.0f - rr) * th1;
 
-                    sComp.k[1].start       = 0.0f;
-                    sComp.k[1].end       = 0.0f;
+                    sComp.k[1].start    = FLOAT_SAT_P_INF;
+                    sComp.k[1].end      = FLOAT_SAT_P_INF;
                     sComp.k[1].gain     = 1.0f;
                     sComp.k[1].tilt[0]  = 0.0f;
                     sComp.k[1].tilt[1]  = 0.0f;
