@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 19 нояб. 2020 г.
@@ -148,6 +148,16 @@ namespace lsp
             return db * NEPER_PER_DB;
         }
 
+        /** Convert decibels to LUFS
+         *
+         * @param db decibels
+         * @return LUFS
+         */
+        inline float db_to_lufs(float db)
+        {
+            return db - 0.691;
+        }
+
         /** Convert gain value to decibels
          *
          * @param gain gain value
@@ -166,6 +176,76 @@ namespace lsp
         inline float power_to_db(float pwr)
         {
             return (10.0f / M_LN10) * logf(pwr);
+        }
+
+        /**
+         * Convert gain value to LKFS/LUFS
+         * @param gain gain value to convert
+         * @return LUFS value
+         */
+        inline float gain_to_lufs(float gain)
+        {
+            return (20.0f / M_LN10) * logf(gain) - 0.691f;
+        }
+
+        /**
+         * Convert the LKFS/LUFS value to gain value
+         * @param lufs LUFS value to convert
+         * @return gain value
+         */
+        inline float lufs_to_gain(float lufs)
+        {
+            return expf((lufs + 0.691f) * M_LN10 * 0.05f);
+        }
+
+        /** Convert LKFS/LUFS to power value
+         *
+         * @param lufs LUFS value to convert
+         * @return power
+         */
+        inline float lufs_to_power(float lufs)
+        {
+            return expf((lufs + 0.691f) * M_LN10 * 0.1f);
+        }
+
+        /** Convert LKFS/LUFS to nepers
+         *
+         * @param lufs LUFS value to convert
+         * @return nepers
+         */
+        inline float lufs_to_neper(float lufs)
+        {
+            return (lufs + 0.691f) * NEPER_PER_DB;
+        }
+
+        /** Convert LUFS to decibels
+         *
+         * @param lufs LUFS value
+         * @return decibel value
+         */
+        inline float lufs_to_db(float lufs)
+        {
+            return lufs + 0.691;
+        }
+
+        /**
+         * Convert gain value to loudness units
+         * @param gain gain value to convert
+         * @return LUFS value
+         */
+        inline float gain_to_lu(float gain)
+        {
+            return (20.0f / M_LN10) * logf(gain) + 22.309f;
+        }
+
+        /**
+         * Convert the loudness units value to gain value
+         * @param lu LU value to convert
+         * @return gain value
+         */
+        inline float lu_to_gain(float lu)
+        {
+            return expf((lu - 22.309f) * M_LN10 * 0.05f);
         }
 
         /** Convert nepers to gain value
@@ -196,6 +276,16 @@ namespace lsp
         inline float neper_to_db(float neper)
         {
             return neper * DB_PER_NEPER;
+        }
+
+        /** Convert nepers to LUFS value
+         *
+         * @param neper nepers
+         * @return LUFS value
+         */
+        inline float neper_to_lufs(float neper)
+        {
+            return neper * DB_PER_NEPER - 0.691f;
         }
 
         /** Convert gain value to nepers

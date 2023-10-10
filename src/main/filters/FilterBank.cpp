@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 сент. 2016 г.
@@ -422,5 +422,6 @@ namespace lsp
             v->write("vBackup", vBackup);
             v->write("vData", vData);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */

@@ -32,6 +32,8 @@
 #define LSP_DSP_UNITS_SOUND_SPEED_M_S               340.29f             /* The default sound speed [ m / s ]                */
 
 // Gain levels in decibels
+#define GAIN_AMP_P_120_DB                   1e+6                /* +120 dB      */
+#define GAIN_AMP_P_108_DB                   2.51189e+5          /* +108 dB      */
 #define GAIN_AMP_P_96_DB                    3.98107e+4          /* +96 dB       */
 #define GAIN_AMP_P_84_DB                    1.5849e+4           /* +84 dB       */
 #define GAIN_AMP_P_72_DB                    3981.073            /* +72 dB       */

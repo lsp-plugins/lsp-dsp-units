@@ -137,10 +137,10 @@ namespace lsp
         typedef struct filter_params_t
         {
             size_t      nType;      // Filter class
+            size_t      nSlope;     // Filter slope
             float       fFreq;      // Frequency
             float       fFreq2;     // Second frequency (for bandpass/allpass2 filter)
             float       fGain;      // Gain
-            size_t      nSlope;     // Filter slope
             float       fQuality;   // Quality factor
         } filter_params_t;
 

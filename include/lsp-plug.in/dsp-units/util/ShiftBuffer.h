@@ -37,10 +37,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC ShiftBuffer
         {
-            private:
-                ShiftBuffer & operator = (const ShiftBuffer &);
-                ShiftBuffer(const ShiftBuffer &);
-
             protected:
                 float      *pData;
                 size_t      nCapacity;
@@ -49,7 +45,12 @@ namespace lsp
 
             public:
                 explicit ShiftBuffer();
+                ShiftBuffer(const ShiftBuffer &) = delete;
+                ShiftBuffer(ShiftBuffer &&) = delete;
                 ~ShiftBuffer();
+
+                ShiftBuffer & operator = (const ShiftBuffer &) = delete;
+                ShiftBuffer & operator = (ShiftBuffer &&) = delete;
 
                 /**
                  * Construct the buffer

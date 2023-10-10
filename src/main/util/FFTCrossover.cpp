@@ -365,8 +365,11 @@ namespace lsp
         void FFTCrossover::sync_binding(size_t band, band_t *b)
         {
             bool bound = sSplitter.bound(band);
-            if ((!bound) && (b->bEnabled) && (b->pFunc != NULL))
-                sSplitter.bind(band, this, b, spectral_func, spectral_sink);
+            if ((b->bEnabled) && (b->pFunc != NULL))
+            {
+                if (!bound)
+                    sSplitter.bind(band, this, b, spectral_func, spectral_sink);
+            }
             else if (bound)
                 sSplitter.unbind(band);
         }
