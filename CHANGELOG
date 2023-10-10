@@ -8,6 +8,7 @@
 * Added LoudnessMeter module.
 * Added broadcasting-related constants according to BS.1770-4 and BS.2051-3 specificaitons.
 * Fixed band binding algorithm for dspu::FFTCrossover.
+* Updated module versions in dependencies.
 
 === 1.0.15 ===
 * Updated module versions in dependencies.
