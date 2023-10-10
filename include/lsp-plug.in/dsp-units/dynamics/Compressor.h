@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 сент. 2016 г.
@@ -23,6 +23,8 @@
 #define LSP_PLUG_IN_DSP_UNITS_DYNAMICS_COMPRESSOR_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+
+#include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
@@ -41,19 +43,8 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Compressor
         {
-            private:
-                Compressor & operator = (const Compressor &);
-                Compressor(const Compressor &);
-
             protected:
-                typedef struct knee_t
-                {
-                    float       fKS;            // Knee start
-                    float       fKE;            // Knee end
-                    float       fGain;          // Pre-amplification gain
-                    float       vKnee[3];       // Hermite interpolation of the knee
-                    float       vTilt[2];       // Tilt parameters after the knee
-                } knee_t;
+                typedef dsp::compressor_x2_t comp_t;
 
             protected:
                 // Basic parameters
@@ -69,7 +60,7 @@ namespace lsp
                 // Pre-calculated parameters
                 float       fTauAttack;
                 float       fTauRelease;
-                knee_t      vKnees[2];      // Two compressor knees
+                comp_t      sComp;          // Two compressor knees
 
                 // Additional parameters
                 size_t      nSampleRate;
@@ -78,7 +69,12 @@ namespace lsp
 
             public:
                 explicit Compressor();
+                Compressor(const Compressor &) = delete;
+                Compressor(Compressor &&) = delete;
                 ~Compressor();
+
+                Compressor & operator = (const Compressor &) = delete;
+                Compressor & operator = (Compressor &&) = delete;
 
                 /**
                  * Construct object
@@ -213,7 +209,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_DYNAMICS_COMPRESSOR_H_ */
