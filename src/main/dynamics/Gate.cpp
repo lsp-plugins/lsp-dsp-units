@@ -161,23 +161,54 @@ namespace lsp
 
         void Gate::process(float *out, float *env, const float *in, size_t samples)
         {
-            // Calculate envelope of gate
-            for (size_t i=0; i<samples; ++i)
-            {
-                float s         = in[i];
+            size_t curr_i = 0, prev_i = 0;
 
-                // Change state
+            while (prev_i < samples)
+            {
+                // Process envelope, split the input stream into bulk parts of usage of the same curve.
                 curve_t *c      = &sCurves[nCurve];
-                fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-                if (fEnvelope < c->sKnee.start)
-                    nCurve          = 0;
-                else if (fEnvelope > c->sKnee.end)
-                    nCurve          = 1;
+                if (nCurve == 0)
+                {
+                    // Calculate envelope of the gate
+                    for (; curr_i < samples; ++curr_i)
+                    {
+                        float s         = in[curr_i];
+
+                        // Change state
+                        fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+                        out[curr_i]     = fEnvelope;
+                        if (fEnvelope > c->sKnee.end)
+                        {
+                            nCurve          = 1;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // Calculate envelope of the gate
+                    for (; curr_i < samples; ++curr_i)
+                    {
+                        float s         = in[curr_i];
+
+                        // Change state
+                        fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+                        out[curr_i]     = fEnvelope;
+                        if (fEnvelope < c->sKnee.start)
+                        {
+                            nCurve          = 0;
+                            break;
+                        }
+                    }
+                }
 
                 // Update result
                 if (env != NULL)
-                    env[i]          = fEnvelope;
-                out[i]          = amplification(fEnvelope);
+                    dsp::copy(&env[prev_i], &out[prev_i], curr_i - prev_i);
+                dsp::gate_x1_gain(&out[prev_i], &out[prev_i], &c->sKnee, curr_i - prev_i);
+
+                // Update position
+                prev_i  = curr_i;
             }
         }
 
