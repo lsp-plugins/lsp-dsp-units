@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 нояб. 2016 г.
@@ -132,9 +132,7 @@ namespace lsp
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = *(in++);
-                    if (x < 0.0f)
-                        x       = -x;
+                    float x     = fabsf(*(in++));
                     if (x > FLOAT_SAT_P_INF)
                         x       = FLOAT_SAT_P_INF;
 
@@ -155,10 +153,7 @@ namespace lsp
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = *(in++);
-                    if (x < 0.0f)
-                        x       = -x;
-
+                    float x     = fabsf(*(in++));
                     float lx    = logf(x);
                     if (lx < fLogKE)
                     {
@@ -176,8 +171,7 @@ namespace lsp
 
         float Expander::curve(float in)
         {
-            if (in < 0.0f)
-                in      = -in;
+            in      = fabsf(in);
 
             if (bUpward)
             {
@@ -208,9 +202,7 @@ namespace lsp
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = *(in++);
-                    if (x < 0.0f)
-                        x       = -x;
+                    float x     = fabsf(*(in++));
                     if (x > FLOAT_SAT_P_INF)
                         x       = FLOAT_SAT_P_INF;
 
@@ -230,10 +222,7 @@ namespace lsp
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = *(in++);
-                    if (x < 0.0f)
-                        x       = -x;
-
+                    float x     = fabsf(*(in++));
                     float lx    = logf(x);
                     if (lx < fLogKE)
                     {
@@ -250,8 +239,7 @@ namespace lsp
 
         float Expander::amplification(float in)
         {
-            if (in < 0.0f)
-                in      = -in;
+            in      = fabsf(in);
 
             if (bUpward)
             {
@@ -296,5 +284,5 @@ namespace lsp
             v->write("bUpdate", bUpdate);
             v->write("bUpward", bUpward);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

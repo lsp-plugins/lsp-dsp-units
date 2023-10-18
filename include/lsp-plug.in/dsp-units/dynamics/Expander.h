@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 нояб. 2016 г.
@@ -37,10 +37,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC Expander
         {
-            private:
-                Expander & operator = (const Expander &);
-                Expander(const Expander &);
-
             protected:
                 // Basic parameters
                 float       fAttackThresh;
@@ -66,7 +62,12 @@ namespace lsp
 
             public:
                 explicit Expander();
+                Expander(const Expander &) = delete;
+                Expander(Expander &&) = delete;
                 ~Expander();
+
+                Expander & operator = (const Expander &) = delete;
+                Expander & operator = (Expander &&) = delete;
 
                 /**
                  * Construct object
@@ -257,8 +258,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
 
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_DYNAMICS_EXPANDER_H_ */

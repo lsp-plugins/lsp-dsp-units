@@ -252,8 +252,10 @@ namespace lsp
                 *env    = fEnvelope;
 
             float x     = fabsf(fEnvelope);
-            float lx    = logf(x);
+            if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
+                return sComp.k[0].gain * sComp.k[1].gain;
 
+            float lx    = logf(x);
             float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
                           (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
                           expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
@@ -276,8 +278,10 @@ namespace lsp
             update_settings();
 
             float x     = fabsf(in);
-            float lx    = logf(x);
+            if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
+                return sComp.k[0].gain * sComp.k[1].gain * x;
 
+            float lx    = logf(x);
             float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
                           (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
                           expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
@@ -300,8 +304,10 @@ namespace lsp
             update_settings();
 
             float x     = fabsf(in);
-            float lx    = logf(x);
+            if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
+                return sComp.k[0].gain * sComp.k[1].gain;
 
+            float lx    = logf(x);
             float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
                           (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
                           expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);

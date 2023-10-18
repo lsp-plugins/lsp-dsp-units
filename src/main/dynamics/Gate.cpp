@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 7 нояб. 2016 г.
@@ -103,14 +103,16 @@ namespace lsp
 
             for (size_t i=0; i<dots; ++i)
             {
-                float x     = lsp_abs(in[i]);
-                float lx    = logf(lsp_limit(x, c->fZS, c->fZE));
+                float x     = fabsf(in[i]);
                 if (x <= c->fZS)
                     x          *= c->fZSGain;
                 else if (x >= c->fZE)
                     x          *= c->fZEGain;
                 else
+                {
+                    float lx    = logf(x);
                     x          *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+                }
                 out[i]      = x;
             }
         }
@@ -118,14 +120,16 @@ namespace lsp
         float Gate::curve(float in, bool hyst) const
         {
             const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
-            float x             = lsp_abs(in);
-            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
+            float x             = fabsf(in);
             if (x <= c->fZS)
                 x          *= c->fZSGain;
             else if (x >= c->fZE)
                 x          *= c->fZEGain;
             else
-                x          *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            {
+                float lx        = logf(x);
+                x              *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            }
             return x;
         }
 
@@ -135,14 +139,16 @@ namespace lsp
 
             for (size_t i=0; i<dots; ++i)
             {
-                float x     = lsp_abs(in[i]);
-                float lx    = logf(lsp_limit(x, c->fZS, c->fZE));
+                float x     = fabsf(in[i]);
                 if (x <= c->fZS)
                     x           = c->fZSGain;
                 else if (x >= c->fZE)
                     x           = c->fZEGain;
                 else
+                {
+                    float lx    = logf(x);
                     x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+                }
                 out[i]      = x;
             }
         }
@@ -150,14 +156,16 @@ namespace lsp
         float Gate::amplification(float in, bool hyst) const
         {
             const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
-            float x             = lsp_abs(in);
-            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
+            float x             = fabsf(in);
             if (x <= c->fZS)
                 x           = c->fZSGain;
             else if (x >= c->fZE)
                 x           = c->fZEGain;
             else
+            {
+                float lx    = logf(x);
                 x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            }
 
             return x;
         }
@@ -165,14 +173,16 @@ namespace lsp
         float Gate::amplification(float in) const
         {
             const curve_t *c    = &sCurves[nCurve];
-            float x             = lsp_abs(in);
-            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
+            float x             = fabsf(in);
             if (x <= c->fZS)
                 x           = c->fZSGain;
             else if (x >= c->fZE)
                 x           = c->fZEGain;
             else
+            {
+                float lx    = logf(x);
                 x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            }
 
             return x;
         }
@@ -250,5 +260,5 @@ namespace lsp
             v->write("nCurve", nCurve);
             v->write("bUpdate", bUpdate);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

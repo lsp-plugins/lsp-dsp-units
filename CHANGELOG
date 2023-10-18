@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.18 ===
-
+* Optimizations of compressor, expander and gate modules.
 
 === 1.0.17 ===
 * Updated module versions in dependencies.
