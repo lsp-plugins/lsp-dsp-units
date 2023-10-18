@@ -23,6 +23,8 @@
 #define LSP_PLUG_IN_DSP_UNITS_DYNAMICS_GATE_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+
+#include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
@@ -34,13 +36,9 @@ namespace lsp
             protected:
                 typedef struct curve_t
                 {
-                    float       fThreshold;
-                    float       fZone;
-                    float       fZS;
-                    float       fZE;
-                    float       fZSGain;
-                    float       fZEGain;
-                    float       vHermite[4];
+                    float               fThreshold;
+                    float               fZone;
+                    dsp::gate_knee_t    sKnee;
                 } curve_t;
 
             protected:
