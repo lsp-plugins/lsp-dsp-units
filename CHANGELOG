@@ -4,6 +4,7 @@
 
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.
+* Gate module now uses lsp-dsp-lib for low-level gain and curve optimizations.
 
 === 1.0.17 ===
 * Updated module versions in dependencies.
