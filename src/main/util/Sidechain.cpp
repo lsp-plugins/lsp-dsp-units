@@ -579,8 +579,8 @@ namespace lsp
                                 out[i]          = rms * interval;
                             }
 
-                            sBuffer.shift(n);
                             dsp::ssqrt1(out, n);
+                            sBuffer.shift(n);
 
                             fRmsValue       = rms;
                             out            += n;
