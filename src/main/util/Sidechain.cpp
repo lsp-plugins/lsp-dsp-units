@@ -569,16 +569,21 @@ namespace lsp
                         {
                             size_t n        = sBuffer.append(out, to_do - processed);
                             float *p        = sBuffer.tail(nReactivity + n);
+                            float rms       = fRmsValue;
 
                             for (size_t i=0; i<n; ++i)
                             {
-                                float sample    = *out;
-                                float last      = *(p++);
-                                fRmsValue      += sample*sample - last*last;
-                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : sqrtf(fRmsValue * interval);
+                                float sample    = out[i];
+                                float last      = p[i];
+                                rms            += sample*sample - last*last;
+                                out[i]          = rms * interval;
                             }
 
                             sBuffer.shift(n);
+                            dsp::ssqrt1(out, n);
+
+                            fRmsValue       = rms;
+                            out            += n;
                             processed      += n;
                         }
                         break;
