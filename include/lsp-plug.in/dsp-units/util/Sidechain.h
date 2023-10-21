@@ -58,10 +58,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC Sidechain
         {
-            private:
-                Sidechain & operator = (const Sidechain &);
-                Sidechain(const Sidechain &);
-
             protected:
                 enum flags_t
                 {
@@ -73,18 +69,18 @@ namespace lsp
             protected:
                 ShiftBuffer     sBuffer;                // Shift buffer for history
                 size_t          nReactivity;            // Reactivity (in samples)
+                size_t          nSampleRate;            // Sample rate
+                Equalizer      *pPreEq;                 // Pre-equalizer
                 float           fReactivity;            // Reactivity (in time)
                 float           fTau;                   // Tau for RMS
                 float           fRmsValue;              // RMS value
-                size_t          nSource;                // Sidechain source
-                size_t          nMode;                  // Sidechain mode
-                size_t          nSampleRate;            // Sample rate
-                size_t          nRefresh;               // Sidechain refresh
-                size_t          nChannels;              // Number of channels
                 float           fMaxReactivity;         // Maximum reactivity
                 float           fGain;                  // Sidechain gain
-                size_t          nFlags;                 // Different sidechain flags
-                Equalizer      *pPreEq;                 // Pre-equalizer
+                uint32_t        nRefresh;               // Sidechain refresh
+                uint8_t         nSource;                // Sidechain source
+                uint8_t         nMode;                  // Sidechain mode
+                uint8_t         nChannels;              // Number of channels
+                uint8_t         nFlags;                 // Different sidechain flags
 
             protected:
                 void            update_settings();
@@ -95,7 +91,12 @@ namespace lsp
 
             public:
                 explicit Sidechain();
+                Sidechain(const Sidechain &) = delete;
+                Sidechain(Sidechain &&) = delete;
                 ~Sidechain();
+
+                Sidechain & operator = (const Sidechain &) = delete;
+                Sidechain & operator = (Sidechain &&) = delete;
 
                 /**
                  * Construct the object

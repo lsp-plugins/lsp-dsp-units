@@ -23,7 +23,7 @@
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define REFRESH_RATE        0x1000
+#define REFRESH_RATE        0x2000
 #define MIN_GAP_ITEMS       0x200U
 
 namespace lsp
@@ -670,18 +670,18 @@ namespace lsp
         {
             v->write_object("sBuffer", &sBuffer);
             v->write("nReactivity", nReactivity);
+            v->write("nSampleRate", nSampleRate);
+            v->write("pPreEq", pPreEq);
             v->write("fReactivity", fReactivity);
             v->write("fTau", fTau);
             v->write("fRmsValue", fRmsValue);
-            v->write("nSource", nSource);
-            v->write("nMode", nMode);
-            v->write("nSampleRate", nSampleRate);
-            v->write("nRefresh", nRefresh);
-            v->write("nChannels", nChannels);
             v->write("fMaxReactivity", fMaxReactivity);
             v->write("fGain", fGain);
+            v->write("nRefresh", nRefresh);
+            v->write("nSource", nSource);
+            v->write("nMode", nMode);
+            v->write("nChannels", nChannels);
             v->write("nFlags", nFlags);
-            v->write("pPreEq", pPreEq);
         }
     } /* namespace dspu */
 } /* namespace lsp */
