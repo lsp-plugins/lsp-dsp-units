@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 29 янв. 2016 г.
@@ -190,6 +190,43 @@ namespace lsp
             return count;
         }
 
+        size_t ShiftBuffer::append(float **data, size_t count)
+        {
+            // Check state
+            if (pData == NULL)
+                return 0;
+
+            // Check free space in buffer
+            size_t can_append       = nCapacity - nTail;
+            if (can_append <= 0)
+            {
+                if (nHead <= 0)
+                    return 0;
+                dsp::move(pData, &pData[nHead], nTail - nHead);
+                can_append  = nHead;
+                nTail      -= nHead;
+                nHead       = 0;
+            }
+            else if ((can_append < count) && (nHead > 0))
+            {
+                dsp::move(pData, &pData[nHead], nTail - nHead);
+                can_append += nHead;
+                nTail      -= nHead;
+                nHead       = 0;
+            }
+
+            // Determine the amount of samples to copy
+            if (count > can_append)
+                count               = can_append;
+
+            // Fill the buffer
+            if (data != NULL)
+                *data   = &pData[nTail];
+            nTail      += count;
+
+            return count;
+        }
+
         size_t ShiftBuffer::append(float data)
         {
             // Check state
@@ -225,6 +262,27 @@ namespace lsp
             // Flush the buffer
             if (data != NULL)
                 dsp::copy(data, &pData[nHead], count);
+            nHead      += count;
+
+    //        lsp_trace("count=%d, capacity=%d, head=%d, tail=%d", int(count), int(nCapacity), int(nHead), int(nTail));
+
+            return count;
+        }
+
+        size_t ShiftBuffer::shift(float **data, size_t count)
+        {
+            // Check state
+            if (pData == NULL)
+                return 0;
+
+            // Determine the amount of samples to copy
+            size_t can_shift    = nTail - nHead;
+            if (count > can_shift)
+                count   = can_shift;
+
+            // Flush the buffer
+            if (data != NULL)
+                *data = &pData[nHead];
             nHead      += count;
 
     //        lsp_trace("count=%d, capacity=%d, head=%d, tail=%d", int(count), int(nCapacity), int(nHead), int(nTail));
@@ -344,5 +402,5 @@ namespace lsp
             v->write("nHead", nHead);
             v->write("nTail", nTail);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
