@@ -23,7 +23,7 @@
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define REFRESH_RATE        0x1000
+#define REFRESH_RATE        0x2000
 #define MIN_GAP_ITEMS       0x200U
 
 namespace lsp
@@ -569,16 +569,21 @@ namespace lsp
                         {
                             size_t n        = sBuffer.append(out, to_do - processed);
                             float *p        = sBuffer.tail(nReactivity + n);
+                            float rms       = fRmsValue;
 
                             for (size_t i=0; i<n; ++i)
                             {
-                                float sample    = *out;
-                                float last      = *(p++);
-                                fRmsValue      += sample*sample - last*last;
-                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : sqrtf(fRmsValue * interval);
+                                float sample    = out[i];
+                                float last      = p[i];
+                                rms            += sample*sample - last*last;
+                                out[i]          = rms * interval;
                             }
 
+                            dsp::ssqrt1(out, n);
                             sBuffer.shift(n);
+
+                            fRmsValue       = rms;
+                            out            += n;
                             processed      += n;
                         }
                         break;
@@ -670,18 +675,18 @@ namespace lsp
         {
             v->write_object("sBuffer", &sBuffer);
             v->write("nReactivity", nReactivity);
+            v->write("nSampleRate", nSampleRate);
+            v->write("pPreEq", pPreEq);
             v->write("fReactivity", fReactivity);
             v->write("fTau", fTau);
             v->write("fRmsValue", fRmsValue);
-            v->write("nSource", nSource);
-            v->write("nMode", nMode);
-            v->write("nSampleRate", nSampleRate);
-            v->write("nRefresh", nRefresh);
-            v->write("nChannels", nChannels);
             v->write("fMaxReactivity", fMaxReactivity);
             v->write("fGain", fGain);
+            v->write("nRefresh", nRefresh);
+            v->write("nSource", nSource);
+            v->write("nMode", nMode);
+            v->write("nChannels", nChannels);
             v->write("nFlags", nFlags);
-            v->write("pPreEq", pPreEq);
         }
     } /* namespace dspu */
 } /* namespace lsp */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 7 нояб. 2016 г.
@@ -44,14 +44,16 @@ namespace lsp
             {
                 curve_t *c = &sCurves[i];
     
-                c->fThreshold   = 0.0f;
-                c->fZone        = 1.0f;
-                c->fZS          = 0.0f;
-                c->fZE          = 0.0f;
-                c->vHermite[0]  = 0.0f;
-                c->vHermite[1]  = 0.0f;
-                c->vHermite[2]  = 0.0f;
-                c->vHermite[3]  = 0.0f;
+                c->fThreshold       = 0.0f;
+                c->fZone            = 1.0f;
+                c->sKnee.start      = 0.0f;
+                c->sKnee.end        = 0.0f;
+                c->sKnee.gain_start = 0.0f;
+                c->sKnee.gain_end   = 0.0f;
+                c->sKnee.herm[0]    = 0.0f;
+                c->sKnee.herm[1]    = 0.0f;
+                c->sKnee.herm[2]    = 0.0f;
+                c->sKnee.herm[3]    = 0.0f;
             }
 
             fAttack         = 0.0f;
@@ -80,17 +82,17 @@ namespace lsp
             // Calculate interpolation parameters
             for (size_t i=0; i<2; ++i)
             {
-                curve_t *c      = &sCurves[i];
+                curve_t *c          = &sCurves[i];
 
-                c->fZS          = c->fThreshold * c->fZone;
-                c->fZE          = c->fThreshold;
-                c->fZSGain      = (fReduction <= 1.0f) ? fReduction : 1.0f;
-                c->fZEGain      = (fReduction <= 1.0f) ? 1.0f : 1.0f / fReduction;
+                c->sKnee.start      = c->fThreshold * c->fZone;
+                c->sKnee.end        = c->fThreshold;
+                c->sKnee.gain_start = (fReduction <= 1.0f) ? fReduction : 1.0f;
+                c->sKnee.gain_end   = (fReduction <= 1.0f) ? 1.0f : 1.0f / fReduction;
 
                 interpolation::hermite_cubic(
-                    c->vHermite,
-                    logf(c->fZS), logf(c->fZSGain), 0.0f,
-                    logf(c->fZE), logf(c->fZEGain), 0.0f);
+                    c->sKnee.herm,
+                    logf(c->sKnee.start), logf(c->sKnee.gain_start), 0.0f,
+                    logf(c->sKnee.end), logf(c->sKnee.gain_end), 0.0f);
             }
 
             // Reset update flag
@@ -99,104 +101,114 @@ namespace lsp
 
         void Gate::curve(float *out, const float *in, size_t dots, bool hyst) const
         {
-            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
-
-            for (size_t i=0; i<dots; ++i)
-            {
-                float x     = lsp_abs(in[i]);
-                float lx    = logf(lsp_limit(x, c->fZS, c->fZE));
-                if (x <= c->fZS)
-                    x          *= c->fZSGain;
-                else if (x >= c->fZE)
-                    x          *= c->fZEGain;
-                else
-                    x          *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
-                out[i]      = x;
-            }
+            dsp::gate_x1_curve(out, in, &sCurves[(hyst) ? 1 : 0].sKnee, dots);
         }
 
         float Gate::curve(float in, bool hyst) const
         {
-            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
-            float x             = lsp_abs(in);
-            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
-            if (x <= c->fZS)
-                x          *= c->fZSGain;
-            else if (x >= c->fZE)
-                x          *= c->fZEGain;
+            const dsp::gate_knee_t *c   = &sCurves[(hyst) ? 1 : 0].sKnee;
+            float x             = fabsf(in);
+            if (x <= c->start)
+                x          *= c->gain_start;
+            else if (x >= c->end)
+                x          *= c->gain_end;
             else
-                x          *= expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            {
+                float lx        = logf(x);
+                x              *= expf(((c->herm[0]*lx + c->herm[1])*lx + c->herm[2])*lx + c->herm[3]);
+            }
             return x;
         }
 
         void Gate::amplification(float *out, const float *in, size_t dots, bool hyst) const
         {
-            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
-
-            for (size_t i=0; i<dots; ++i)
-            {
-                float x     = lsp_abs(in[i]);
-                float lx    = logf(lsp_limit(x, c->fZS, c->fZE));
-                if (x <= c->fZS)
-                    x           = c->fZSGain;
-                else if (x >= c->fZE)
-                    x           = c->fZEGain;
-                else
-                    x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
-                out[i]      = x;
-            }
+            dsp::gate_x1_gain(out, in, &sCurves[(hyst) ? 1 : 0].sKnee, dots);
         }
 
         float Gate::amplification(float in, bool hyst) const
         {
-            const curve_t *c    = &sCurves[(hyst) ? 1 : 0];
-            float x             = lsp_abs(in);
-            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
-            if (x <= c->fZS)
-                x           = c->fZSGain;
-            else if (x >= c->fZE)
-                x           = c->fZEGain;
+            const dsp::gate_knee_t *c   = &sCurves[(hyst) ? 1 : 0].sKnee;
+            float x             = fabsf(in);
+            if (x <= c->start)
+                x           = c->gain_start;
+            else if (x >= c->end)
+                x           = c->gain_end;
             else
-                x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            {
+                float lx    = logf(x);
+                x           = expf(((c->herm[0]*lx + c->herm[1])*lx + c->herm[2])*lx + c->herm[3]);
+            }
 
             return x;
         }
 
         float Gate::amplification(float in) const
         {
-            const curve_t *c    = &sCurves[nCurve];
-            float x             = lsp_abs(in);
-            float lx            = logf(lsp_limit(x, c->fZS, c->fZE));
-            if (x <= c->fZS)
-                x           = c->fZSGain;
-            else if (x >= c->fZE)
-                x           = c->fZEGain;
+            const dsp::gate_knee_t *c   = &sCurves[nCurve].sKnee;
+            float x             = fabsf(in);
+            if (x <= c->start)
+                x           = c->gain_start;
+            else if (x >= c->end)
+                x           = c->gain_end;
             else
-                x           = expf(((c->vHermite[0]*lx + c->vHermite[1])*lx + c->vHermite[2])*lx + c->vHermite[3]);
+            {
+                float lx    = logf(x);
+                x           = expf(((c->herm[0]*lx + c->herm[1])*lx + c->herm[2])*lx + c->herm[3]);
+            }
 
             return x;
         }
 
         void Gate::process(float *out, float *env, const float *in, size_t samples)
         {
-            // Calculate envelope of gate
-            for (size_t i=0; i<samples; ++i)
-            {
-                float s         = in[i];
+            size_t curr_i = 0, prev_i = 0;
 
-                // Change state
+            while (prev_i < samples)
+            {
+                // Process envelope, split the input stream into bulk parts of usage of the same curve.
                 curve_t *c      = &sCurves[nCurve];
-                fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-                if (fEnvelope < c->fZS)
-                    nCurve          = 0;
-                else if (fEnvelope > c->fZE)
-                    nCurve          = 1;
+                if (nCurve == 0)
+                {
+                    // Calculate envelope of the gate
+                    for (; curr_i < samples; ++curr_i)
+                    {
+                        float s         = in[curr_i];
+
+                        // Change state
+                        fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+                        out[curr_i]     = fEnvelope;
+                        if (fEnvelope > c->sKnee.end)
+                        {
+                            nCurve          = 1;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // Calculate envelope of the gate
+                    for (; curr_i < samples; ++curr_i)
+                    {
+                        float s         = in[curr_i];
+
+                        // Change state
+                        fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+                        out[curr_i]     = fEnvelope;
+                        if (fEnvelope < c->sKnee.start)
+                        {
+                            nCurve          = 0;
+                            break;
+                        }
+                    }
+                }
 
                 // Update result
-                c               = &sCurves[nCurve];
                 if (env != NULL)
-                    env[i]          = fEnvelope;
-                out[i]          = amplification(fEnvelope);
+                    dsp::copy(&env[prev_i], &out[prev_i], curr_i - prev_i);
+                dsp::gate_x1_gain(&out[prev_i], &out[prev_i], &c->sKnee, curr_i - prev_i);
+
+                // Update position
+                prev_i  = curr_i;
             }
         }
 
@@ -205,9 +217,9 @@ namespace lsp
             // Change state
             curve_t *c      = &sCurves[nCurve];
             fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-            if (fEnvelope < c->fZS)
+            if (fEnvelope < c->sKnee.start)
                 nCurve          = 0;
-            else if (fEnvelope > c->fZE)
+            else if (fEnvelope > c->sKnee.end)
                 nCurve          = 1;
 
             // Compute result
@@ -229,11 +241,17 @@ namespace lsp
                 {
                     v->write("fThreshold", c->fThreshold);
                     v->write("fZone", c->fZone);
-                    v->write("fZS", c->fZS);
-                    v->write("fZE", c->fZE);
-                    v->write("fZSGain", c->fZSGain);
-                    v->write("fZEGain", c->fZEGain);
-                    v->writev("vHermite", c->vHermite, 4);
+
+                    const dsp::gate_knee_t *k = &c->sKnee;
+                    v->begin_object("sKnee", k, sizeof(dsp::gate_knee_t));
+                    {
+                        v->write("start", k->start);
+                        v->write("end", k->end);
+                        v->write("gain_start", k->gain_start);
+                        v->write("gain_end", k->gain_end);
+                        v->writev("herm", k->herm, 4);
+                    }
+                    v->end_object();
                 }
                 v->end_object();
             }
@@ -250,5 +268,5 @@ namespace lsp
             v->write("nCurve", nCurve);
             v->write("bUpdate", bUpdate);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

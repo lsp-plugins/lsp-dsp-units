@@ -613,22 +613,22 @@ namespace lsp
 
         void Limiter::process_alr(float *gbuf, const float *sc, size_t samples)
         {
+            float e = sALR.fEnvelope;
+
             for (size_t i=0; i<samples; ++i)
             {
-                float d     = sc[i] - sALR.fEnvelope;
-                float k     = (d > 0.0f) ? sALR.fTauAttack : sALR.fTauRelease;
-                float e     = (sALR.fEnvelope += k * d);
+                float s     = sc[i];
+                e          += (s > e) ? sALR.fTauAttack * (s - e) : sALR.fTauRelease * (s - e);
 
-                if (e > sALR.fKS)
-                {
-                    float dg    = (e >= sALR.fKE) ? sALR.fGain :
-                                  (sALR.vHermite[0]*e + sALR.vHermite[1])*e + sALR.vHermite[2];
-
-                    gbuf[i]    *= dg / e;
-                }
+                if (e >= sALR.fKE)
+                    gbuf[i]    *= sALR.fGain / e;
+                else if (e > sALR.fKS)
+                    gbuf[i]    *= sALR.vHermite[0]*e + sALR.vHermite[1] + sALR.vHermite[2] / e;
 //                else
 //                    gbuf[i]    *= 1.0f;
             }
+
+            sALR.fEnvelope  = e;
         }
 
         void Limiter::process(float *gain, const float *sc, size_t samples)

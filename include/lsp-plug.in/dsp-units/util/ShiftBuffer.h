@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 29 янв. 2016 г.
@@ -87,6 +87,14 @@ namespace lsp
                  */
                 size_t append(const float *data, size_t count);
 
+                /** Reserve data at the end of buffer, return pointer to the beginning of appended chunk
+                 *
+                 * @param data pointer to store the beginning of appended chunk
+                 * @param count number of samples
+                 * @return actual number of samples appended
+                 */
+                size_t append(float **data, size_t count);
+
                 /** Append the single sample
                  *
                  * @param data sample to append
@@ -101,6 +109,14 @@ namespace lsp
                  * @return number of samples removed
                  */
                 size_t shift(float *data, size_t count);
+
+                /** Remove data from the beginning of the buffer
+                 *
+                 * @param data pointer to store the beginning of the removed chunk, valid until next append() call
+                 * @param count number of samples to remove
+                 * @return actual number of samples removed
+                 */
+                size_t shift(float **data, size_t count);
 
                 /** Remove data from the beginning of the buffer
                  *
@@ -226,7 +242,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_SHIFTBUFFER_H_ */

@@ -219,17 +219,16 @@ namespace lsp
             update_settings();
 
             // Calculate envelope of compressor
+            float e         = fEnvelope;
             for (size_t i=0; i<samples; ++i)
             {
-                float s         = *(in++);
-
-                if (fEnvelope > fReleaseThresh)
-                    fEnvelope       += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-                else
-                    fEnvelope       += fTauAttack * (s - fEnvelope);
-
-                out[i]          = fEnvelope;
+                float s         = in[i];
+                float d         = s - e;
+                float k         = ((e > fReleaseThresh) && (d < 0.0f)) ? fTauRelease : fTauAttack;
+                e              += k * d;
+                out[i]          = e;
             }
+            fEnvelope       = e;
 
             // Copy envelope to array if specified
             if (env != NULL)
@@ -243,17 +242,18 @@ namespace lsp
         {
             update_settings();
 
-            if (fEnvelope > fReleaseThresh)
-                fEnvelope       += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-            else
-                fEnvelope       += fTauAttack * (s - fEnvelope);
+            float d         = s - fEnvelope;
+            float k         = ((fEnvelope > fReleaseThresh) && (d < 0.0f)) ? fTauRelease : fTauAttack;
+            fEnvelope      += k * d;
 
             if (env != NULL)
                 *env    = fEnvelope;
 
             float x     = fabsf(fEnvelope);
-            float lx    = logf(x);
+            if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
+                return sComp.k[0].gain * sComp.k[1].gain;
 
+            float lx    = logf(x);
             float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
                           (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
                           expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
@@ -276,8 +276,10 @@ namespace lsp
             update_settings();
 
             float x     = fabsf(in);
-            float lx    = logf(x);
+            if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
+                return sComp.k[0].gain * sComp.k[1].gain * x;
 
+            float lx    = logf(x);
             float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
                           (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
                           expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);
@@ -300,8 +302,10 @@ namespace lsp
             update_settings();
 
             float x     = fabsf(in);
-            float lx    = logf(x);
+            if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
+                return sComp.k[0].gain * sComp.k[1].gain;
 
+            float lx    = logf(x);
             float g1    = (x <= sComp.k[0].start) ? sComp.k[0].gain :
                           (x >= sComp.k[0].end) ? expf(lx * sComp.k[0].tilt[0] + sComp.k[0].tilt[1]) :
                           expf((sComp.k[0].herm[0]*lx + sComp.k[0].herm[1])*lx + sComp.k[0].herm[2]);

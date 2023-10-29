@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 7 нояб. 2016 г.
@@ -23,6 +23,8 @@
 #define LSP_PLUG_IN_DSP_UNITS_DYNAMICS_GATE_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+
+#include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
@@ -31,20 +33,12 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC Gate
         {
-            private:
-                Gate & operator = (const Gate &);
-                Gate(const Gate &);
-
             protected:
                 typedef struct curve_t
                 {
-                    float       fThreshold;
-                    float       fZone;
-                    float       fZS;
-                    float       fZE;
-                    float       fZSGain;
-                    float       fZEGain;
-                    float       vHermite[4];
+                    float               fThreshold;
+                    float               fZone;
+                    dsp::gate_knee_t    sKnee;
                 } curve_t;
 
             protected:
@@ -64,7 +58,12 @@ namespace lsp
 
             public:
                 explicit Gate();
+                Gate(const Gate &) = delete;
+                Gate(Gate &&) = delete;
                 ~Gate();
+
+                Gate & operator = (const Gate &) = delete;
+                Gate & operator = (Gate &&) = delete;
 
                 /**
                  * Construct the object
@@ -244,7 +243,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_DYNAMICS_GATE_H_ */
