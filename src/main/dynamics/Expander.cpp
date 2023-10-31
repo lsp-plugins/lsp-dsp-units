@@ -53,12 +53,13 @@ namespace lsp
             // Pre-calculated parameters
             fTauAttack      = 0.0f;
             fTauRelease     = 0.0f;
+            fKS             = 0.0f;
+            fKE             = 0.0f;
             vHermite[0]     = 0.0f;
             vHermite[1]     = 0.0f;
             vHermite[2]     = 0.0f;
-            fLogKS          = 0.0f;
-            fLogKE          = 0.0f;
-            fLogTH          = 0.0f;
+            vTilt[0]        = 0.0f;
+            vTilt[1]        = 0.0f;
 
             // Additional parameters
             nSampleRate     = 0;
@@ -72,19 +73,27 @@ namespace lsp
 
         void Expander::update_settings()
         {
+            if (!bUpdate)
+                return;
+
             // Update settings if necessary
             fTauAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
             fTauRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
 
             // Calculate interpolation parameters
-            fLogKS          = logf(fAttackThresh * fKnee);      // Knee start
-            fLogKE          = logf(fAttackThresh / fKnee);      // Knee end
-            fLogTH          = logf(fAttackThresh);              // Attack threshold
+            fKS             = fAttackThresh * fKnee;
+            fKE             = fAttackThresh / fKnee;
+            float log_ks    = logf(fKS);                        // Knee start
+            float log_ke    = logf(fKE);                        // Knee end
+            float log_th    = logf(fAttackThresh);              // Attack threshold
 
             if (bUpward)
-                interpolation::hermite_quadratic(vHermite, fLogKS, fLogKS, 1.0f, fLogKE, fRatio);
+                interpolation::hermite_quadratic(vHermite, log_ks, log_ks, 1.0f, log_ke, fRatio);
             else
-                interpolation::hermite_quadratic(vHermite, fLogKE, fLogKE, 1.0f, fLogKS, fRatio);
+                interpolation::hermite_quadratic(vHermite, log_ke, log_ke, 1.0f, log_ks, fRatio);
+
+            vTilt[0]        = fRatio - 1.0f;
+            vTilt[1]        = log_th * (1.0f - fRatio);
 
             // Reset update flag
             bUpdate         = false;
@@ -93,17 +102,16 @@ namespace lsp
         void Expander::process(float *out, float *env, const float *in, size_t samples)
         {
             // Calculate envelope of expander
+            float e         = fEnvelope;
             for (size_t i=0; i<samples; ++i)
             {
-                float s         = *(in++);
-
-                if (fEnvelope > fReleaseThresh)
-                    fEnvelope       += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-                else
-                    fEnvelope       += fTauAttack * (s - fEnvelope);
-
-                out[i]          = fEnvelope;
+                float s         = in[i];
+                float d         = s - e;
+                float k         = ((e > fReleaseThresh) && (d < 0.0f)) ? fTauRelease : fTauAttack;
+                e              += k * d;
+                out[i]          = e;
             }
+            fEnvelope       = e;
 
             // Copy envelope to array if specified
             if (env != NULL)
@@ -132,68 +140,72 @@ namespace lsp
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = fabsf(*(in++));
+                    float x     = fabsf(in[i]);
                     if (x > FLOAT_SAT_P_INF)
-                        x       = FLOAT_SAT_P_INF;
-
-                    float lx    = logf(x);
-                    if (lx > fLogKS)
+                        out[i]      = FLOAT_SAT_P_INF * x;
+                    else if (x > fKS)
                     {
-                        x   = (lx >= fLogKE) ?
-                            expf(fRatio*(lx - fLogTH) + fLogTH) :
-                            expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
-                        *out        = x;
+                        float lx    = logf(x);
+                        out[i]      = (x >= fKE) ?
+                                      x * expf(vTilt[0]*lx + vTilt[1]) :
+                                      x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
                     }
                     else
-                        *out        = x;
-                    out++;
+                        out[i]      = x;
                 }
             }
             else
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = fabsf(*(in++));
-                    float lx    = logf(x);
-                    if (lx < fLogKE)
+                    float x     = lsp_max(fabsf(in[i]), FLOAT_SAT_M_INF);
+                    if (x < FLOAT_SAT_M_INF)
+                        out[i]      = 0.0f;
+                    else if (x < fKE)
                     {
-                        x   = (lx <= fLogKS) ?
-                            expf(fRatio*(lx - fLogTH) + fLogTH) :
-                            expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
-                        *out        = x;
+                        float lx    = logf(x);
+                        out[i]      = (x <= fKS) ?
+                                       x * expf(vTilt[0]*lx + vTilt[1]) :
+                                       x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
                     }
                     else
-                        *out        = x;
-                    out++;
+                        out[i]      = x;
                 }
             }
         }
 
         float Expander::curve(float in)
         {
-            in      = fabsf(in);
+            float x     = fabsf(in);
 
             if (bUpward)
             {
-                if (in > FLOAT_SAT_P_INF)
-                    in      = FLOAT_SAT_P_INF;
+                if (x > FLOAT_SAT_P_INF)
+                    return FLOAT_SAT_P_INF * x;
 
-                float lx    = logf(in);
-                if (lx > fLogKS)
-                    in = (lx >= fLogKE) ?
-                        expf(fRatio*(lx - fLogTH) + fLogTH) :
-                        expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
+                if (x > fKS)
+                {
+                    float lx    = logf(x);
+                    return (x >= fKE) ?
+                            x * expf(vTilt[0]*lx + vTilt[1]) :
+                            x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                }
             }
             else
             {
-                float lx    = logf(in);
-                if (lx < fLogKE)
-                    in = (lx <= fLogKS) ?
-                        expf(fRatio*(lx - fLogTH) + fLogTH) :
-                        expf((vHermite[0]*lx + vHermite[1])*lx + vHermite[2]);
+                if (x < FLOAT_SAT_M_INF)
+                    return 0.0f;
+
+                if (x < fKE)
+                {
+                    float lx    = logf(x);
+                    return (x <= fKS) ?
+                            x * expf(vTilt[0]*lx + vTilt[1]) :
+                            x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                }
             }
 
-            return in;
+            return x;
         }
 
         void Expander::amplification(float *out, const float *in, size_t dots)
@@ -202,64 +214,69 @@ namespace lsp
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = fabsf(*(in++));
+                    float x     = fabsf(in[i]);
                     if (x > FLOAT_SAT_P_INF)
-                        x       = FLOAT_SAT_P_INF;
-
-                    float lx    = logf(x);
-                    if (lx > fLogKS)
+                        out[i]      = FLOAT_SAT_P_INF;
+                    else if (x > fKS)
                     {
-                        *out    = (lx >= fLogKE) ?
-                            expf((fRatio - 1.0f)*(lx - fLogTH)) :
-                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                        float lx    = logf(x);
+                        out[i]      = (x >= fKE) ?
+                                      expf(vTilt[0]*lx + vTilt[1]) :
+                                      expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
                     }
                     else
-                        *out        = 1.0f;
-                    out++;
+                        out[i]      = 1.0f;
                 }
             }
             else
             {
                 for (size_t i=0; i<dots; ++i)
                 {
-                    float x     = fabsf(*(in++));
-                    float lx    = logf(x);
-                    if (lx < fLogKE)
+                    float x     = lsp_max(fabsf(in[i]), FLOAT_SAT_M_INF);
+                    if (x < FLOAT_SAT_M_INF)
+                        out[i]      = 0.0f;
+                    else if (x < fKE)
                     {
-                        *out    = (lx <= fLogKS) ?
-                            expf((fRatio - 1.0f)*(lx - fLogTH)) :
-                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                        float lx    = logf(x);
+                        out[i]      = (x <= fKS) ?
+                                       expf(vTilt[0]*lx + vTilt[1]) :
+                                       expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
                     }
                     else
-                        *out        = 1.0f;
-                    out++;
+                        out[i]      = 1.0f;
                 }
             }
         }
 
         float Expander::amplification(float in)
         {
-            in      = fabsf(in);
+            float x     = fabsf(in);
 
             if (bUpward)
             {
-                if (in > FLOAT_SAT_P_INF)
-                    in      = FLOAT_SAT_P_INF;
+                if (x > FLOAT_SAT_P_INF)
+                    return FLOAT_SAT_P_INF;
 
-                float lx    = logf(in);
-                if (lx > fLogKS)
-                    return (lx >= fLogKE) ?
-                        expf((fRatio - 1.0f)*(lx - fLogTH)) :
-                        expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
-
+                if (x > fKS)
+                {
+                    float lx    = logf(x);
+                    return (x >= fKE) ?
+                            expf(vTilt[0]*lx + vTilt[1]) :
+                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                }
             }
             else
             {
-                float lx    = logf(in);
-                if (lx < fLogKE)
-                    return (lx <= fLogKS) ?
-                        expf((fRatio - 1.0f)*(lx - fLogTH)) :
-                        expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                if (x < FLOAT_SAT_M_INF)
+                    return 0.0f;
+
+                if (x < fKE)
+                {
+                    float lx    = logf(x);
+                    return (x <= fKS) ?
+                            expf(vTilt[0]*lx + vTilt[1]) :
+                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                }
             }
 
             return 1.0f;
@@ -276,10 +293,10 @@ namespace lsp
             v->write("fEnvelope", fEnvelope);
             v->write("fTauAttack", fTauAttack);
             v->write("fTauRelease", fTauRelease);
+            v->write("fKS", fKS);
+            v->write("fKE", fKE);
             v->writev("vHermite", vHermite, 3);
-            v->write("fLogKS", fLogKS);
-            v->write("fLogKE", fLogKE);
-            v->write("fLogTH", fLogTH);
+            v->writev("vTilt", vTilt, 2);
             v->write("nSampleRate", nSampleRate);
             v->write("bUpdate", bUpdate);
             v->write("bUpward", bUpward);

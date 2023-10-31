@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.19 ===
-
+* Refactoring and optimizations of the Expander module.
 
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.

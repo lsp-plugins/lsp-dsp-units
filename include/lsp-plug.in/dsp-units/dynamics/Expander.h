@@ -50,10 +50,10 @@ namespace lsp
                 // Pre-calculated parameters
                 float       fTauAttack;
                 float       fTauRelease;
+                float       fKS;            // Knee start
+                float       fKE;            // Knee end
                 float       vHermite[3];    // Knee hermite interpolation
-                float       fLogKS;         // Knee start
-                float       fLogKE;         // Knee end
-                float       fLogTH;         // Logarithmic threshold
+                float       vTilt[2];       // Tilt
 
                 // Additional parameters
                 size_t      nSampleRate;
