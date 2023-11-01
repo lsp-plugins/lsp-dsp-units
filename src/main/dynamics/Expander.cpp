@@ -87,13 +87,13 @@ namespace lsp
             float log_ke    = logf(sExp.end);                   // Knee end
             float log_th    = logf(fAttackThresh);              // Attack threshold
 
-            if (bUpward)
-                interpolation::hermite_quadratic(sExp.herm, log_ks, log_ks, 1.0f, log_ke, fRatio);
-            else
-                interpolation::hermite_quadratic(sExp.herm, log_ke, log_ke, 1.0f, log_ks, fRatio);
-
             sExp.tilt[0]    = fRatio - 1.0f;
             sExp.tilt[1]    = log_th * (1.0f - fRatio);
+
+            if (bUpward)
+                interpolation::hermite_quadratic(sExp.herm, log_ks, 0.0f, 0.0f, log_ke, sExp.tilt[0]);
+            else
+                interpolation::hermite_quadratic(sExp.herm, log_ke, 0.0f, 0.0f, log_ks, sExp.tilt[0]);
 
             // Reset update flag
             bUpdate         = false;
@@ -156,7 +156,7 @@ namespace lsp
                     float lx    = logf(x);
                     return (x >= sExp.end) ?
                             x * expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
-                            x * expf((sExp.herm[0]*lx + sExp.herm[1] - 1.0f)*lx + sExp.herm[2]);
+                            x * expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
             else
@@ -169,7 +169,7 @@ namespace lsp
                     float lx    = logf(x);
                     return (x <= sExp.start) ?
                             x * expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
-                            x * expf((sExp.herm[0]*lx + sExp.herm[1] - 1.0f)*lx + sExp.herm[2]);
+                            x * expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
 
@@ -198,7 +198,7 @@ namespace lsp
                     float lx    = logf(x);
                     return (x >= sExp.end) ?
                             expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
-                            expf((sExp.herm[0]*lx + sExp.herm[1] - 1.0f)*lx + sExp.herm[2]);
+                            expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
             else
@@ -211,7 +211,7 @@ namespace lsp
                     float lx    = logf(x);
                     return (x <= sExp.start) ?
                             expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
-                            expf((sExp.herm[0]*lx + sExp.herm[1] - 1.0f)*lx + sExp.herm[2]);
+                            expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
 
