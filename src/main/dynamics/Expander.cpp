@@ -29,6 +29,12 @@ namespace lsp
 {
     namespace dspu
     {
+        static constexpr float MINIMUM_TILT         = 0.001f;           // minimum tilt value
+        static constexpr float UPPER_THRESHOLD      = 6.90775527898f;   // logf(1000.0f)
+        static constexpr float LOWER_THRESHOLD      = -16.118095651f;   // logf(10e-7)
+        static constexpr float MIN_LOWER_THRESHOLD  = 1e-7f;
+        static constexpr float MAX_UPPER_THRESHOLD  = 1e+3f;
+
         Expander::Expander()
         {
             construct();
@@ -55,6 +61,7 @@ namespace lsp
             fTauRelease     = 0.0f;
             sExp.start      = 0.0f;
             sExp.end        = 0.0f;
+            sExp.threshold  = 0.0f;
             sExp.herm[0]    = 0.0f;
             sExp.herm[1]    = 0.0f;
             sExp.herm[2]    = 0.0f;
@@ -91,9 +98,21 @@ namespace lsp
             sExp.tilt[1]    = log_th * (1.0f - fRatio);
 
             if (bUpward)
+            {
                 interpolation::hermite_quadratic(sExp.herm, log_ks, 0.0f, 0.0f, log_ke, sExp.tilt[0]);
+                sExp.threshold  =
+                    lsp_min(
+                        expf((UPPER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT)),
+                        MAX_UPPER_THRESHOLD);
+            }
             else
+            {
                 interpolation::hermite_quadratic(sExp.herm, log_ke, 0.0f, 0.0f, log_ks, sExp.tilt[0]);
+                sExp.threshold  =
+                    lsp_max(
+                        expf((LOWER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT)),
+                        MIN_LOWER_THRESHOLD);
+            }
 
             // Reset update flag
             bUpdate         = false;
@@ -148,8 +167,8 @@ namespace lsp
 
             if (bUpward)
             {
-                if (x > LSP_DSP_LIB_EXP_INF_SAT)
-                    return LSP_DSP_LIB_EXP_INF_SAT * x;
+                if (x > sExp.threshold)
+                    x = sExp.threshold;
 
                 if (x > sExp.start)
                 {
@@ -161,7 +180,7 @@ namespace lsp
             }
             else
             {
-                if (x < FLOAT_SAT_M_INF)
+                if (x < sExp.threshold)
                     return 0.0f;
 
                 if (x < sExp.end)
@@ -190,8 +209,8 @@ namespace lsp
 
             if (bUpward)
             {
-                if (x > FLOAT_SAT_P_INF)
-                    return FLOAT_SAT_P_INF;
+                if (x > sExp.threshold)
+                    x = sExp.threshold;
 
                 if (x > sExp.start)
                 {
@@ -203,7 +222,7 @@ namespace lsp
             }
             else
             {
-                if (x < FLOAT_SAT_M_INF)
+                if (x < sExp.threshold)
                     return 0.0f;
 
                 if (x < sExp.end)
@@ -234,6 +253,7 @@ namespace lsp
             {
                 v->write("start", sExp.start);
                 v->write("end", sExp.end);
+                v->write("thresh", sExp.threshold);
                 v->writev("herm", sExp.herm, 3);
                 v->writev("tilt", sExp.tilt, 2);
             }
