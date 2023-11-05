@@ -100,18 +100,14 @@ namespace lsp
             if (bUpward)
             {
                 interpolation::hermite_quadratic(sExp.herm, log_ks, 0.0f, 0.0f, log_ke, sExp.tilt[0]);
-                sExp.threshold  =
-                    lsp_min(
-                        expf((UPPER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT)),
-                        MAX_UPPER_THRESHOLD);
+                float ut = expf((UPPER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT));
+                sExp.threshold  = lsp_min(ut, MAX_UPPER_THRESHOLD);
             }
             else
             {
                 interpolation::hermite_quadratic(sExp.herm, log_ke, 0.0f, 0.0f, log_ks, sExp.tilt[0]);
-                sExp.threshold  =
-                    lsp_max(
-                        expf((LOWER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT)),
-                        MIN_LOWER_THRESHOLD);
+                float dt = expf((LOWER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT));
+                sExp.threshold  = lsp_max(dt, MIN_LOWER_THRESHOLD);
             }
 
             // Reset update flag
