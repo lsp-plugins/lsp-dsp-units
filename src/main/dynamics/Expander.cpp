@@ -30,10 +30,32 @@ namespace lsp
     namespace dspu
     {
         static constexpr float MINIMUM_TILT         = 0.001f;           // minimum tilt value
-        static constexpr float UPPER_THRESHOLD      = 6.90775527898f;   // logf(1000.0f)
+        static constexpr float UPPER_THRESHOLD      = 13.815510558f;    // logf(10e+6)
         static constexpr float LOWER_THRESHOLD      = -16.118095651f;   // logf(10e-7)
         static constexpr float MIN_LOWER_THRESHOLD  = 1e-7f;
-        static constexpr float MAX_UPPER_THRESHOLD  = 1e+3f;
+        static constexpr float MAX_UPPER_THRESHOLD  = 1e+6f;
+
+        typedef struct sqroot_t
+        {
+            float x1;
+            float x2;
+        } sqroot_t;
+
+        static inline sqroot_t square_roots(const float *p, float y)
+        {
+            // Solve equation: p[0] * x^2 + p[1] * x + p[2] - y = 0
+            const float a = p[0];
+            const float b = -p[1];
+            const float c = p[2] - y;
+            const float d = sqrtf(b*b - 4.0f*a*c);
+            const float k = 1.0f / (a + a);
+
+            return sqroot_t {
+                (b + d) * k,
+                (b - d) * k
+            };
+        }
+
 
         Expander::Expander()
         {
@@ -101,12 +123,22 @@ namespace lsp
             {
                 interpolation::hermite_quadratic(sExp.herm, log_ks, 0.0f, 0.0f, log_ke, sExp.tilt[0]);
                 float ut = expf((UPPER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT));
+                if (ut < sExp.end)
+                {
+                    sqroot_t ur     = square_roots(sExp.herm, UPPER_THRESHOLD);
+                    ut              = expf(lsp_max(ur.x1, ur.x2));
+                }
                 sExp.threshold  = lsp_min(ut, MAX_UPPER_THRESHOLD);
             }
             else
             {
                 interpolation::hermite_quadratic(sExp.herm, log_ke, 0.0f, 0.0f, log_ks, sExp.tilt[0]);
                 float dt = expf((LOWER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT));
+                if (dt > sExp.start)
+                {
+                    sqroot_t dr     = square_roots(sExp.herm, LOWER_THRESHOLD);
+                    dt              = expf(lsp_min(dr.x1, dr.x2));
+                }
                 sExp.threshold  = lsp_max(dt, MIN_LOWER_THRESHOLD);
             }
 
