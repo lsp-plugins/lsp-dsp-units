@@ -36,10 +36,10 @@ namespace lsp
         {
             protected:
                 float      *pBuffer;
-                size_t      nHead;
-                size_t      nTail;
-                size_t      nDelay;
-                size_t      nSize;
+                uint32_t    nHead;
+                uint32_t    nTail;
+                uint32_t    nDelay;
+                uint32_t    nSize;
 
             public:
                 explicit Delay();
