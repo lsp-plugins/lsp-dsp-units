@@ -75,8 +75,41 @@ namespace lsp
             }
         }
 
+        void Delay::append(const float *src, size_t count)
+        {
+            // We can not place more elements than we have
+            if (count < nSize)
+            {
+                // Push data to buffer
+                size_t end      = nHead + count;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize - nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, count);
+                nHead           = (nHead + count) % nSize;
+            }
+            else
+            {
+                dsp::copy(pBuffer, &src[count - nSize], nSize);
+                nHead       = 0;
+            }
+
+            nTail       = (nHead + nSize - nDelay) % nSize;
+        }
+
         void Delay::process(float *dst, const float *src, size_t count)
         {
+            // We can avoid exra copies if source and destination are pointing to the same buffer and there is no delay
+            if ((dst == src) && (nDelay == 0))
+            {
+                append(src, count);
+                return;
+            }
+
             size_t free_gap = nSize - nDelay;
 
             while (count > 0)
@@ -88,9 +121,9 @@ namespace lsp
                 size_t end      = nHead + to_do;
                 if (end > nSize)
                 {
-                    size_t hcut     = nSize-nHead;
+                    size_t hcut     = nSize - nHead;
                     dsp::copy(&pBuffer[nHead], src, hcut);
-                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
                 }
                 else
                     dsp::copy(&pBuffer[nHead], src, to_do);
@@ -101,9 +134,9 @@ namespace lsp
                 end             = nTail + to_do;
                 if (end > nSize)
                 {
-                    size_t tcut     = nSize-nTail;
+                    size_t tcut     = nSize - nTail;
                     dsp::copy(dst, &pBuffer[nTail], tcut);
-                    dsp::copy(&dst[tcut], pBuffer, end-nSize);
+                    dsp::copy(&dst[tcut], pBuffer, end - nSize);
                 }
                 else
                     dsp::copy(dst, &pBuffer[nTail], to_do);
@@ -118,6 +151,14 @@ namespace lsp
 
         void Delay::process(float *dst, const float *src, float gain, size_t count)
         {
+            // We can avoid exra copies if source and destination are pointing to the same buffer and there is no delay
+            if ((dst == src) && (nDelay == 0))
+            {
+                append(src, count);
+                dsp::mul_k2(dst, gain, count);
+                return;
+            }
+
             size_t free_gap = nSize - nDelay;
 
             while (count > 0)
@@ -129,9 +170,9 @@ namespace lsp
                 size_t end      = nHead + to_do;
                 if (end > nSize)
                 {
-                    size_t hcut     = nSize-nHead;
+                    size_t hcut     = nSize - nHead;
                     dsp::copy(&pBuffer[nHead], src, hcut);
-                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
                 }
                 else
                     dsp::copy(&pBuffer[nHead], src, to_do);
@@ -142,9 +183,9 @@ namespace lsp
                 end             = nTail + to_do;
                 if (end > nSize)
                 {
-                    size_t tcut     = nSize-nTail;
+                    size_t tcut     = nSize - nTail;
                     dsp::mul_k3(dst, &pBuffer[nTail], gain, tcut);
-                    dsp::mul_k3(&dst[tcut], pBuffer, gain, end-nSize);
+                    dsp::mul_k3(&dst[tcut], pBuffer, gain, end - nSize);
                 }
                 else
                     dsp::mul_k3(dst, &pBuffer[nTail], gain, to_do);
@@ -159,6 +200,14 @@ namespace lsp
 
         void Delay::process(float *dst, const float *src, const float *gain, size_t count)
         {
+            // We can avoid exra copies if source and destination are pointing to the same buffer and there is no delay
+            if ((dst == src) && (nDelay == 0))
+            {
+                append(src, count);
+                dsp::mul2(dst, gain, count);
+                return;
+            }
+
             size_t free_gap     = nSize - nDelay;
 
             while (count > 0)
@@ -170,9 +219,9 @@ namespace lsp
                 size_t end      = nHead + to_do;
                 if (end > nSize)
                 {
-                    size_t hcut     = nSize-nHead;
+                    size_t hcut     = nSize - nHead;
                     dsp::copy(&pBuffer[nHead], src, hcut);
-                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
                 }
                 else
                     dsp::copy(&pBuffer[nHead], src, to_do);
@@ -183,9 +232,9 @@ namespace lsp
                 end             = nTail + to_do;
                 if (end > nSize)
                 {
-                    size_t tcut     = nSize-nTail;
+                    size_t tcut     = nSize - nTail;
                     dsp::mul3(dst, &pBuffer[nTail], gain, tcut);
-                    dsp::mul3(&dst[tcut], pBuffer, &gain[tcut], end-nSize);
+                    dsp::mul3(&dst[tcut], pBuffer, &gain[tcut], end - nSize);
                 }
                 else
                     dsp::mul3(dst, &pBuffer[nTail], gain, to_do);
@@ -224,9 +273,9 @@ namespace lsp
                 size_t end      = nHead + to_do;
                 if (end > nSize)
                 {
-                    size_t hcut     = nSize-nHead;
+                    size_t hcut     = nSize - nHead;
                     dsp::copy(&pBuffer[nHead], src, hcut);
-                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
                 }
                 else
                     dsp::copy(&pBuffer[nHead], src, to_do);
@@ -273,9 +322,9 @@ namespace lsp
                 size_t end      = nHead + to_do;
                 if (end > nSize)
                 {
-                    size_t hcut     = nSize-nHead;
+                    size_t hcut     = nSize - nHead;
                     dsp::copy(&pBuffer[nHead], src, hcut);
-                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
                 }
                 else
                     dsp::copy(&pBuffer[nHead], src, to_do);
@@ -322,9 +371,9 @@ namespace lsp
                 size_t end      = nHead + to_do;
                 if (end > nSize)
                 {
-                    size_t hcut     = nSize-nHead;
+                    size_t hcut     = nSize - nHead;
                     dsp::copy(&pBuffer[nHead], src, hcut);
-                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
                 }
                 else
                     dsp::copy(&pBuffer[nHead], src, to_do);

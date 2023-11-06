@@ -70,6 +70,14 @@ namespace lsp
                  */
                 bool init(size_t max_size);
 
+                /** Push data to delay buffer and update internal pointers,
+                 * do not return anything.
+                 *
+                 * @param src source buffer
+                 * @param count number of samples to process
+                 */
+                void append(const float *src, size_t count);
+
                 /** Process data
                  *
                  * @param dst destination buffer
