@@ -29,6 +29,34 @@ namespace lsp
 {
     namespace dspu
     {
+        static constexpr float MINIMUM_TILT         = 0.001f;           // minimum tilt value
+        static constexpr float UPPER_THRESHOLD      = 13.815510558f;    // logf(10e+6)
+        static constexpr float LOWER_THRESHOLD      = -16.118095651f;   // logf(10e-7)
+        static constexpr float MIN_LOWER_THRESHOLD  = 1e-7f;
+        static constexpr float MAX_UPPER_THRESHOLD  = 1e+6f;
+
+        typedef struct sqroot_t
+        {
+            float x1;
+            float x2;
+        } sqroot_t;
+
+        static inline sqroot_t square_roots(const float *p, float y)
+        {
+            // Solve equation: p[0] * x^2 + p[1] * x + p[2] - y = 0
+            const float a = p[0];
+            const float b = -p[1];
+            const float c = p[2] - y;
+            const float d = sqrtf(b*b - 4.0f*a*c);
+            const float k = 1.0f / (a + a);
+
+            return sqroot_t {
+                (b + d) * k,
+                (b - d) * k
+            };
+        }
+
+
         Expander::Expander()
         {
             construct();
@@ -53,13 +81,14 @@ namespace lsp
             // Pre-calculated parameters
             fTauAttack      = 0.0f;
             fTauRelease     = 0.0f;
-            fKS             = 0.0f;
-            fKE             = 0.0f;
-            vHermite[0]     = 0.0f;
-            vHermite[1]     = 0.0f;
-            vHermite[2]     = 0.0f;
-            vTilt[0]        = 0.0f;
-            vTilt[1]        = 0.0f;
+            sExp.start      = 0.0f;
+            sExp.end        = 0.0f;
+            sExp.threshold  = 0.0f;
+            sExp.herm[0]    = 0.0f;
+            sExp.herm[1]    = 0.0f;
+            sExp.herm[2]    = 0.0f;
+            sExp.tilt[0]    = 0.0f;
+            sExp.tilt[1]    = 0.0f;
 
             // Additional parameters
             nSampleRate     = 0;
@@ -81,19 +110,37 @@ namespace lsp
             fTauRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
 
             // Calculate interpolation parameters
-            fKS             = fAttackThresh * fKnee;
-            fKE             = fAttackThresh / fKnee;
-            float log_ks    = logf(fKS);                        // Knee start
-            float log_ke    = logf(fKE);                        // Knee end
+            sExp.start      = fAttackThresh * fKnee;
+            sExp.end        = fAttackThresh / fKnee;
+            float log_ks    = logf(sExp.start);                 // Knee start
+            float log_ke    = logf(sExp.end);                   // Knee end
             float log_th    = logf(fAttackThresh);              // Attack threshold
 
-            if (bUpward)
-                interpolation::hermite_quadratic(vHermite, log_ks, log_ks, 1.0f, log_ke, fRatio);
-            else
-                interpolation::hermite_quadratic(vHermite, log_ke, log_ke, 1.0f, log_ks, fRatio);
+            sExp.tilt[0]    = fRatio - 1.0f;
+            sExp.tilt[1]    = log_th * (1.0f - fRatio);
 
-            vTilt[0]        = fRatio - 1.0f;
-            vTilt[1]        = log_th * (1.0f - fRatio);
+            if (bUpward)
+            {
+                interpolation::hermite_quadratic(sExp.herm, log_ks, 0.0f, 0.0f, log_ke, sExp.tilt[0]);
+                float ut = expf((UPPER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT));
+                if (ut < sExp.end)
+                {
+                    sqroot_t ur     = square_roots(sExp.herm, UPPER_THRESHOLD);
+                    ut              = expf(lsp_max(ur.x1, ur.x2));
+                }
+                sExp.threshold  = lsp_min(ut, MAX_UPPER_THRESHOLD);
+            }
+            else
+            {
+                interpolation::hermite_quadratic(sExp.herm, log_ke, 0.0f, 0.0f, log_ks, sExp.tilt[0]);
+                float dt = expf((LOWER_THRESHOLD - sExp.tilt[1])/lsp_max(sExp.tilt[0], MINIMUM_TILT));
+                if (dt > sExp.start)
+                {
+                    sqroot_t dr     = square_roots(sExp.herm, LOWER_THRESHOLD);
+                    dt              = expf(lsp_min(dr.x1, dr.x2));
+                }
+                sExp.threshold  = lsp_max(dt, MIN_LOWER_THRESHOLD);
+            }
 
             // Reset update flag
             bUpdate         = false;
@@ -137,41 +184,9 @@ namespace lsp
         void Expander::curve(float *out, const float *in, size_t dots)
         {
             if (bUpward)
-            {
-                for (size_t i=0; i<dots; ++i)
-                {
-                    float x     = fabsf(in[i]);
-                    if (x > FLOAT_SAT_P_INF)
-                        out[i]      = FLOAT_SAT_P_INF * x;
-                    else if (x > fKS)
-                    {
-                        float lx    = logf(x);
-                        out[i]      = (x >= fKE) ?
-                                      x * expf(vTilt[0]*lx + vTilt[1]) :
-                                      x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
-                    }
-                    else
-                        out[i]      = x;
-                }
-            }
+                dsp::uexpander_x1_curve(out, in, &sExp, dots);
             else
-            {
-                for (size_t i=0; i<dots; ++i)
-                {
-                    float x     = lsp_max(fabsf(in[i]), FLOAT_SAT_M_INF);
-                    if (x < FLOAT_SAT_M_INF)
-                        out[i]      = 0.0f;
-                    else if (x < fKE)
-                    {
-                        float lx    = logf(x);
-                        out[i]      = (x <= fKS) ?
-                                       x * expf(vTilt[0]*lx + vTilt[1]) :
-                                       x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
-                    }
-                    else
-                        out[i]      = x;
-                }
-            }
+                dsp::dexpander_x1_curve(out, in, &sExp, dots);
         }
 
         float Expander::curve(float in)
@@ -180,28 +195,28 @@ namespace lsp
 
             if (bUpward)
             {
-                if (x > FLOAT_SAT_P_INF)
-                    return FLOAT_SAT_P_INF * x;
+                if (x > sExp.threshold)
+                    x = sExp.threshold;
 
-                if (x > fKS)
+                if (x > sExp.start)
                 {
                     float lx    = logf(x);
-                    return (x >= fKE) ?
-                            x * expf(vTilt[0]*lx + vTilt[1]) :
-                            x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                    return (x >= sExp.end) ?
+                            x * expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
+                            x * expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
             else
             {
-                if (x < FLOAT_SAT_M_INF)
+                if (x < sExp.threshold)
                     return 0.0f;
 
-                if (x < fKE)
+                if (x < sExp.end)
                 {
                     float lx    = logf(x);
-                    return (x <= fKS) ?
-                            x * expf(vTilt[0]*lx + vTilt[1]) :
-                            x * expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                    return (x <= sExp.start) ?
+                            x * expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
+                            x * expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
 
@@ -211,41 +226,9 @@ namespace lsp
         void Expander::amplification(float *out, const float *in, size_t dots)
         {
             if (bUpward)
-            {
-                for (size_t i=0; i<dots; ++i)
-                {
-                    float x     = fabsf(in[i]);
-                    if (x > FLOAT_SAT_P_INF)
-                        out[i]      = FLOAT_SAT_P_INF;
-                    else if (x > fKS)
-                    {
-                        float lx    = logf(x);
-                        out[i]      = (x >= fKE) ?
-                                      expf(vTilt[0]*lx + vTilt[1]) :
-                                      expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
-                    }
-                    else
-                        out[i]      = 1.0f;
-                }
-            }
+                dsp::uexpander_x1_gain(out, in, &sExp, dots);
             else
-            {
-                for (size_t i=0; i<dots; ++i)
-                {
-                    float x     = lsp_max(fabsf(in[i]), FLOAT_SAT_M_INF);
-                    if (x < FLOAT_SAT_M_INF)
-                        out[i]      = 0.0f;
-                    else if (x < fKE)
-                    {
-                        float lx    = logf(x);
-                        out[i]      = (x <= fKS) ?
-                                       expf(vTilt[0]*lx + vTilt[1]) :
-                                       expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
-                    }
-                    else
-                        out[i]      = 1.0f;
-                }
-            }
+                dsp::dexpander_x1_gain(out, in, &sExp, dots);
         }
 
         float Expander::amplification(float in)
@@ -254,28 +237,28 @@ namespace lsp
 
             if (bUpward)
             {
-                if (x > FLOAT_SAT_P_INF)
-                    return FLOAT_SAT_P_INF;
+                if (x > sExp.threshold)
+                    x = sExp.threshold;
 
-                if (x > fKS)
+                if (x > sExp.start)
                 {
                     float lx    = logf(x);
-                    return (x >= fKE) ?
-                            expf(vTilt[0]*lx + vTilt[1]) :
-                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                    return (x >= sExp.end) ?
+                            expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
+                            expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
             else
             {
-                if (x < FLOAT_SAT_M_INF)
+                if (x < sExp.threshold)
                     return 0.0f;
 
-                if (x < fKE)
+                if (x < sExp.end)
                 {
                     float lx    = logf(x);
-                    return (x <= fKS) ?
-                            expf(vTilt[0]*lx + vTilt[1]) :
-                            expf((vHermite[0]*lx + vHermite[1] - 1.0f)*lx + vHermite[2]);
+                    return (x <= sExp.start) ?
+                            expf(sExp.tilt[0]*lx + sExp.tilt[1]) :
+                            expf((sExp.herm[0]*lx + sExp.herm[1])*lx + sExp.herm[2]);
                 }
             }
 
@@ -293,10 +276,17 @@ namespace lsp
             v->write("fEnvelope", fEnvelope);
             v->write("fTauAttack", fTauAttack);
             v->write("fTauRelease", fTauRelease);
-            v->write("fKS", fKS);
-            v->write("fKE", fKE);
-            v->writev("vHermite", vHermite, 3);
-            v->writev("vTilt", vTilt, 2);
+
+            v->begin_object("sExp", &sExp, sizeof(dsp::expander_knee_t));
+            {
+                v->write("start", sExp.start);
+                v->write("end", sExp.end);
+                v->write("thresh", sExp.threshold);
+                v->writev("herm", sExp.herm, 3);
+                v->writev("tilt", sExp.tilt, 2);
+            }
+            v->end_object();
+
             v->write("nSampleRate", nSampleRate);
             v->write("bUpdate", bUpdate);
             v->write("bUpward", bUpward);

@@ -23,6 +23,8 @@
 #define LSP_PLUG_IN_DSP_UNITS_DYNAMICS_EXPANDER_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
+
+#include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
 
 namespace lsp
@@ -50,10 +52,7 @@ namespace lsp
                 // Pre-calculated parameters
                 float       fTauAttack;
                 float       fTauRelease;
-                float       fKS;            // Knee start
-                float       fKE;            // Knee end
-                float       vHermite[3];    // Knee hermite interpolation
-                float       vTilt[2];       // Tilt
+                dsp::expander_knee_t sExp;  // Expander settings
 
                 // Additional parameters
                 size_t      nSampleRate;

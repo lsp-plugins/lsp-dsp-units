@@ -4,6 +4,7 @@
 
 === 1.0.19 ===
 * Refactoring and optimizations of the Expander module.
+* Expander module now uses functions from lsp-dsp-lib for faster processing.
 
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.
