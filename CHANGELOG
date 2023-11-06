@@ -5,6 +5,7 @@
 === 1.0.19 ===
 * Refactoring and optimizations of the Expander module.
 * Expander module now uses functions from lsp-dsp-lib for faster processing.
+* Small optimizations and improvements of the dspu::Delay module.
 
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.

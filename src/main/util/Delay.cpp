@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 06 дек. 2015 г.
@@ -82,31 +82,34 @@ namespace lsp
             while (count > 0)
             {
                 // Determine how many samples to process
-                size_t to_do    = (count > free_gap) ? free_gap : count;
+                size_t to_do    = lsp_min(count, free_gap);
 
                 // Push data to buffer
-                for (size_t in=to_do; in > 0;)
+                size_t end      = nHead + to_do;
+                if (end > nSize)
                 {
-                    size_t to_copy  = nSize - nHead;
-                    if (to_copy > in)
-                        to_copy         = in;
-                    dsp::copy(&pBuffer[nHead], src, to_copy);
-                    nHead           = (nHead + to_copy) % nSize;
-                    src            += to_copy;
-                    in             -= to_copy;
+                    size_t hcut     = nSize-nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end-nSize);
                 }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
 
                 // Shift data from buffer
-                for (size_t out=to_do; out > 0;)
+                end             = nTail + to_do;
+                if (end > nSize)
                 {
-                    size_t to_copy  = nSize - nTail;
-                    if (to_copy > out)
-                        to_copy         = out;
-                    dsp::copy(dst, &pBuffer[nTail], to_copy);
-                    nTail           = (nTail + to_copy) % nSize;
-                    dst            += to_copy;
-                    out            -= to_copy;
+                    size_t tcut     = nSize-nTail;
+                    dsp::copy(dst, &pBuffer[nTail], tcut);
+                    dsp::copy(&dst[tcut], pBuffer, end-nSize);
                 }
+                else
+                    dsp::copy(dst, &pBuffer[nTail], to_do);
+
+                nTail           = (nTail + to_do) % nSize;
+                dst            += to_do;
 
                 // Update number of samples
                 count          -= to_do;
@@ -120,31 +123,34 @@ namespace lsp
             while (count > 0)
             {
                 // Determine how many samples to process
-                size_t to_do    = (count > free_gap) ? free_gap : count;
+                size_t to_do    = lsp_min(count, free_gap);
 
                 // Push data to buffer
-                for (size_t in=to_do; in > 0;)
+                size_t end      = nHead + to_do;
+                if (end > nSize)
                 {
-                    size_t to_copy  = nSize - nHead;
-                    if (to_copy > in)
-                        to_copy         = in;
-                    dsp::copy(&pBuffer[nHead], src, to_copy);
-                    nHead           = (nHead + to_copy) % nSize;
-                    src            += to_copy;
-                    in             -= to_copy;
+                    size_t hcut     = nSize-nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end-nSize);
                 }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
 
                 // Shift data from buffer
-                for (size_t out=to_do; out > 0;)
+                end             = nTail + to_do;
+                if (end > nSize)
                 {
-                    size_t to_copy  = nSize - nTail;
-                    if (to_copy > out)
-                        to_copy         = out;
-                    dsp::mul_k3(dst, &pBuffer[nTail], gain, to_copy);
-                    nTail           = (nTail + to_copy) % nSize;
-                    dst            += to_copy;
-                    out            -= to_copy;
+                    size_t tcut     = nSize-nTail;
+                    dsp::mul_k3(dst, &pBuffer[nTail], gain, tcut);
+                    dsp::mul_k3(&dst[tcut], pBuffer, gain, end-nSize);
                 }
+                else
+                    dsp::mul_k3(dst, &pBuffer[nTail], gain, to_do);
+
+                nTail           = (nTail + to_do) % nSize;
+                dst            += to_do;
 
                 // Update number of samples
                 count          -= to_do;
@@ -153,37 +159,40 @@ namespace lsp
 
         void Delay::process(float *dst, const float *src, const float *gain, size_t count)
         {
-            size_t free_gap = nSize - nDelay;
+            size_t free_gap     = nSize - nDelay;
 
             while (count > 0)
             {
                 // Determine how many samples to process
-                size_t to_do    = (count > free_gap) ? free_gap : count;
+                size_t to_do    = lsp_min(count, free_gap);
 
                 // Push data to buffer
-                for (size_t in=to_do; in > 0;)
+                size_t end      = nHead + to_do;
+                if (end > nSize)
                 {
-                    size_t to_copy  = nSize - nHead;
-                    if (to_copy > in)
-                        to_copy         = in;
-                    dsp::copy(&pBuffer[nHead], src, to_copy);
-                    nHead           = (nHead + to_copy) % nSize;
-                    src            += to_copy;
-                    in             -= to_copy;
+                    size_t hcut     = nSize-nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end-nSize);
                 }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
 
                 // Shift data from buffer
-                for (size_t out=to_do; out > 0;)
+                end             = nTail + to_do;
+                if (end > nSize)
                 {
-                    size_t to_copy  = nSize - nTail;
-                    if (to_copy > out)
-                        to_copy         = out;
-                    dsp::mul3(dst, &pBuffer[nTail], gain, to_copy);
-                    nTail           = (nTail + to_copy) % nSize;
-                    gain           += to_copy;
-                    dst            += to_copy;
-                    out            -= to_copy;
+                    size_t tcut     = nSize-nTail;
+                    dsp::mul3(dst, &pBuffer[nTail], gain, tcut);
+                    dsp::mul3(&dst[tcut], pBuffer, &gain[tcut], end-nSize);
                 }
+                else
+                    dsp::mul3(dst, &pBuffer[nTail], gain, to_do);
+
+                nTail           = (nTail + to_do) % nSize;
+                dst            += to_do;
+                gain           += to_do;
 
                 // Update number of samples
                 count          -= to_do;
@@ -202,20 +211,41 @@ namespace lsp
                 return;
 
             // More slower algorithm
-            float delta     = float(ssize_t(delay) - ssize_t(nDelay)) / float(count);
-            size_t step     = 0;
-            do
+            const size_t free_gap   = nSize - lsp_max(delay, nDelay);
+            const float delta       = 1.0f + float(ssize_t(nDelay) - ssize_t(delay)) / float(count);
+            const size_t old_tail   = nTail;
+
+            for (size_t offset = 0; offset < count; )
             {
-                pBuffer[nHead]  = *(src++);
-                *(dst++)        = pBuffer[nTail];
+                // Determine how many samples to process
+                size_t to_do    = lsp_min(count - offset, free_gap);
 
-                nHead           = (nHead + 1) % nSize;
-                nTail           = (nHead + nSize - ssize_t(nDelay + delta * step)) % nSize;
+                // Push data to buffer
+                size_t end      = nHead + to_do;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize-nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
 
-                step            ++;
-            } while ((--count) > 0);
+                // Shift data from buffer, slower because delay is changing
+                for (size_t i=0; i<to_do; ++i, ++offset)
+                {
+                    size_t tail     = (old_tail + ssize_t(delta * offset)) % nSize;
+                    dst[i]          = pBuffer[tail];
+                }
 
-            nDelay  = delay;
+                // Update pointers
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
+                dst            += to_do;
+            }
+
+            nTail           = (nHead + nSize - delay) % nSize;
+            nDelay          = delay;
         }
 
         void Delay::process_ramping(float *dst, const float *src, float gain, size_t delay, size_t count)
@@ -230,20 +260,91 @@ namespace lsp
                 return;
 
             // More slower algorithm
-            float delta     = float(ssize_t(delay) - ssize_t(nDelay)) / float(count);
-            size_t step     = 0;
-            do
+            const size_t free_gap   = nSize - lsp_max(delay, nDelay);
+            const float delta       = 1.0f + float(ssize_t(nDelay) - ssize_t(delay)) / float(count);
+            const size_t old_tail   = nTail;
+
+            for (size_t offset = 0; offset < count; )
             {
-                pBuffer[nHead]  = *(src++);
-                *(dst++)        = pBuffer[nTail] * gain;
+                // Determine how many samples to process
+                size_t to_do    = lsp_min(count - offset, free_gap);
 
-                nHead           = (nHead + 1) % nSize;
-                nTail           = (nHead + nSize - ssize_t(nDelay + delta * step)) % nSize;
+                // Push data to buffer
+                size_t end      = nHead + to_do;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize-nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
 
-                step            ++;
-            } while ((--count) > 0);
+                // Shift data from buffer, slower because delay is changing
+                for (size_t i=0; i<to_do; ++i, ++offset)
+                {
+                    size_t tail     = (old_tail + ssize_t(delta * offset)) % nSize;
+                    dst[i]          = pBuffer[tail] * gain;
+                }
 
-            nDelay  = delay;
+                // Update pointers
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
+                dst            += to_do;
+            }
+
+            nTail           = (nHead + nSize - delay) % nSize;
+            nDelay          = delay;
+        }
+
+        void Delay::process_ramping(float *dst, const float *src, const float *gain, size_t delay, size_t count)
+        {
+            // If delay does not change - use faster algorithm
+            if (delay == nDelay)
+            {
+                process(dst, src, gain, count);
+                return;
+            }
+            else if (count <= 0)
+                return;
+
+            // More slower algorithm
+            const size_t free_gap   = nSize - lsp_max(delay, nDelay);
+            const float delta       = 1.0f + float(ssize_t(nDelay) - ssize_t(delay)) / float(count);
+            const size_t old_tail   = nTail;
+
+            for (size_t offset = 0; offset < count; )
+            {
+                // Determine how many samples to process
+                size_t to_do    = lsp_min(count - offset, free_gap);
+
+                // Push data to buffer
+                size_t end      = nHead + to_do;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize-nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end-nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+
+                // Shift data from buffer, slower because delay is changing
+                for (size_t i=0; i<to_do; ++i, ++offset)
+                {
+                    size_t tail     = (old_tail + ssize_t(delta * offset)) % nSize;
+                    dst[i]          = pBuffer[tail] * gain[i];
+                }
+
+                // Update pointers
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
+                dst            += to_do;
+                gain           += to_do;
+            }
+
+            nTail           = (nHead + nSize - delay) % nSize;
+            nDelay          = delay;
         }
 
         float Delay::process(float src)
@@ -288,5 +389,5 @@ namespace lsp
             v->write("nDelay", nDelay);
             v->write("nSize", nSize);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
