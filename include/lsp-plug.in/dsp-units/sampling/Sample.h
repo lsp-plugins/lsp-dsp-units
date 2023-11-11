@@ -43,10 +43,6 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC Sample
         {
             private:
-                Sample & operator = (const Sample &);
-                Sample(const Sample &);
-
-            private:
                 float              *vBuffer;        // Sample data
                 size_t              nSampleRate;    // Sample rate
                 size_t              nLength;        // Current length
@@ -76,7 +72,12 @@ namespace lsp
 
             public:
                 explicit Sample();
+                Sample(const Sample &) = delete;
+                Sample(Sample &&) = delete;
                 ~Sample();
+
+                Sample & operator = (const Sample &) = delete;
+                Sample & operator = (Sample &&) = delete;
 
                 /**
                  * Create uninitialied sample
