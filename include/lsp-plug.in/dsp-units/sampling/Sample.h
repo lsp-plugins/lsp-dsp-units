@@ -219,7 +219,15 @@ namespace lsp
                  * @param length initial sample length
                  * @return true if data was successful allocated
                  */
-                bool init(size_t channels, size_t max_length, size_t length = 0);
+                bool init(size_t channels, size_t max_length, size_t length);
+
+                /** Initialize sample, all previously allocated data will be lost
+                 *
+                 * @param channels number of channels
+                 * @param length initial sample length
+                 * @return true if data was successful allocated
+                 */
+                bool init(size_t channels, size_t length);
 
                 /** Resize sample, all previously allocated data will be kept
                  *
@@ -310,6 +318,22 @@ namespace lsp
                  * @param mode the normalization mode
                  */
                 void normalize(float gain, sample_normalize_t mode);
+
+                /**
+                 * apply gain to the whole sample
+                 * @param gain gain to apply
+                 * @return status of operation
+                 */
+                status_t apply_gain(float gain);
+
+                /**
+                 * Apply gain to the selected range of the sample
+                 * @param gain gain to apply
+                 * @param first the index of the first sample to modify
+                 * @param count the number of samples to modify
+                 * @return status of operation
+                 */
+                status_t apply_gain(float gain, size_t first, size_t count);
 
                 /**
                  * Swap contents with another sample

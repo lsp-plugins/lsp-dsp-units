@@ -4,6 +4,7 @@
 
 === 1.0.19 ===
 * Refactoring and optimizations of the Expander module.
+* Updated interface of the dspu::Sample, added gain function.
 * Expander module now uses functions from lsp-dsp-lib for faster processing.
 * Small optimizations and improvements of the dspu::Delay module.
 

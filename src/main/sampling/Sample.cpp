@@ -193,6 +193,11 @@ namespace lsp
             pUserData       = NULL;
         }
 
+        bool Sample::init(size_t channels, size_t length)
+        {
+            return init(channels, length, length);
+        }
+
         bool Sample::init(size_t channels, size_t max_length, size_t length)
         {
             if ((channels <= 0) || (length > max_length))
@@ -893,7 +898,22 @@ namespace lsp
             float k = gain / peak;
             for (size_t i=0; i<nChannels; ++i)
                 dsp::mul_k2(channel(i), k, nLength);
+        }
 
+        status_t Sample::apply_gain(float gain)
+        {
+            return apply_gain(gain, 0, nLength);
+        }
+
+        status_t Sample::apply_gain(float gain, size_t first, size_t count)
+        {
+            if ((first + count) > nLength)
+                return STATUS_OVERFLOW;
+
+            for (size_t i=0; i<nChannels; ++i)
+                dsp::mul_k2(channel(i, first), gain, count);
+
+            return STATUS_OK;
         }
 
         status_t Sample::fast_downsample(Sample *s, size_t new_sample_rate)
