@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 14 авг. 2016 г.
@@ -53,14 +53,16 @@ namespace lsp
             nPeriod         = 0;
             nStep           = 0;
             nHead           = 0;
+            nReconfigure    = 0;
+            nEnvelope       = envelope::PINK_NOISE;
+            nWindow         = windows::HANN;
+
             fReactivity     = 0.0f;
             fTau            = 1.0f;
             fRate           = 1.0f;
             fMinRate        = 1.0f;
             fShift          = 1.0f;
-            nReconfigure    = 0;
-            nEnvelope       = envelope::PINK_NOISE;
-            nWindow         = windows::HANN;
+
             bActive         = true;
 
             vChannels       = NULL;
@@ -82,12 +84,17 @@ namespace lsp
             free_aligned(vData);
         }
 
-        bool Analyzer::init(size_t channels, size_t max_rank, size_t max_sr, float min_rate)
+        bool Analyzer::init(size_t channels, size_t max_rank, size_t max_sr, float min_rate, size_t max_delay)
         {
             destroy();
 
             size_t fft_size         = 1 << max_rank;
-            nBufSize                = align_size(fft_size + size_t(float(max_sr * 2) / min_rate) + DEFAULT_ALIGN, DEFAULT_ALIGN);
+            nBufSize                = align_size(
+                                            fft_size +
+                                            size_t(float(max_sr * 2) / min_rate) +
+                                            max_delay +
+                                            DEFAULT_ALIGN,
+                                        DEFAULT_ALIGN);
             size_t allocate         = 5 * fft_size +                // vSigRe, vFftReIm (re + im), vWindow, vEnvelope
                                       channels * nBufSize +         // c->vBuffer
                                       channels * fft_size +         // c->vAmp
@@ -110,6 +117,7 @@ namespace lsp
             nMaxRank            = max_rank;
             nRank               = max_rank;
             nMaxSampleRate      = max_sr;
+            nMaxUserDelay       = max_delay;
             fMinRate            = min_rate;
 
             // Clear buffers
@@ -141,6 +149,7 @@ namespace lsp
 
                 // Counters
                 c->nDelay           = 0;
+                c->nUserDelay       = 0;
                 c->bFreeze          = false;
                 c->bActive          = true;
             }
@@ -238,6 +247,16 @@ namespace lsp
             return true;
         }
 
+        bool Analyzer::set_channel_delay(size_t channel, size_t delay)
+        {
+            if ((channel >= nChannels) || (delay > nMaxUserDelay))
+                return false;
+
+            vChannels[channel].nUserDelay   = delay;
+
+            return true;
+        }
+
         void Analyzer::reconfigure()
         {
             if (!nReconfigure)
@@ -319,7 +338,7 @@ namespace lsp
                         if ((bActive) && (c->bActive))
                         {
                             // Get the time mark to start from
-                            ssize_t doff    = nHead - (fft_size + c->nDelay);
+                            ssize_t doff    = nHead - (fft_size + c->nDelay + c->nUserDelay);
 
     //                        lsp_trace("channel=%d, head=%d, delay=%d, offset=%d, buf_size=%d, samples=%d",
     //                                int(channel), int(nHead), int(c->nDelay), int(doff), int(nBufSize), int(samples));
@@ -481,14 +500,17 @@ namespace lsp
             v->write("nPeriod", nPeriod);
             v->write("nStep", nStep);
             v->write("nHead", nHead);
+            v->write("nReconfigure", nReconfigure);
+            v->write("nEnvelope", nEnvelope);
+            v->write("nWindow", nWindow);
+            v->write("nMaxUserDelay", nMaxUserDelay);
+
             v->write("fReactivity", fReactivity);
             v->write("fTau", fTau);
             v->write("fRate", fRate);
             v->write("fMinRate", fMinRate);
             v->write("fShift", fShift);
-            v->write("nReconfigure", nReconfigure);
-            v->write("nEnvelope", nEnvelope);
-            v->write("nWindow", nWindow);
+
             v->write("bActive", bActive);
 
             v->begin_array("vChannels", vChannels, nChannels);
@@ -501,6 +523,7 @@ namespace lsp
                     v->write("vAmp", c->vAmp);
                     v->write("vData", c->vData);
                     v->write("nDelay", c->nDelay);
+                    v->write("nUserDelay", c->nUserDelay);
                     v->write("bFreeze", c->bFreeze);
                     v->write("bActive", c->bActive);
                 }
@@ -514,5 +537,5 @@ namespace lsp
             v->write("vWindow", vWindow);
             v->write("vEnvelope", vEnvelope);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

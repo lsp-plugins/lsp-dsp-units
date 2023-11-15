@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 14 авг. 2016 г.
@@ -51,295 +51,316 @@ namespace lsp
         };
 
         class LSP_DSP_UNITS_PUBLIC Analyzer
-         {
-             private:
-                 Analyzer & operator = (const Analyzer &);
-                 Analyzer(const Analyzer &);
+        {
+            protected:
+                enum reconfigure_flags
+                {
+                    R_ENVELOPE  = 1<<0,
+                    R_WINDOW    = 1<<1,
+                    R_ANALYSIS  = 1<<2,
+                    R_TAU       = 1<<3,
+                    R_COUNTERS  = 1<<4,
 
-             protected:
-                 enum reconfigure_flags
-                 {
-                     R_ENVELOPE  = 1<<0,
-                     R_WINDOW    = 1<<1,
-                     R_ANALYSIS  = 1<<2,
-                     R_TAU       = 1<<3,
-                     R_COUNTERS  = 1<<4,
+                    R_ALL       = R_ENVELOPE | R_WINDOW | R_ANALYSIS | R_TAU | R_COUNTERS
+                };
 
-                     R_ALL       = R_ENVELOPE | R_WINDOW | R_ANALYSIS | R_TAU | R_COUNTERS
-                 };
+                typedef struct channel_t
+                {
+                    float      *vBuffer;            // FFT delay buffer
+                    float      *vAmp;               // FFT amplitude
+                    float      *vData;              // FFT data
+                    uint32_t    nDelay;             // Delay in the delay buffer
+                    uint32_t    nUserDelay;         // User-defined delay
+                    bool        bFreeze;            // Freeze analysis
+                    bool        bActive;            // Enable analysis
+                } channel_t;
 
-                 typedef struct channel_t
-                 {
-                     float      *vBuffer;        // FFT delay buffer
-                     float      *vAmp;           // FFT amplitude
-                     float      *vData;          // FFT data
-                     size_t      nDelay;         // Delay in the delay buffer
-                     bool        bFreeze;        // Freeze analysis
-                     bool        bActive;        // Enable analysis
-                 } channel_t;
+            protected:
+                uint32_t    nChannels;          // Overall number of channels
+                uint32_t    nMaxRank;           // Maximum FFT rank
+                uint32_t    nRank;              // Current FFT rank
+                uint32_t    nSampleRate;        // Sample rate
+                uint32_t    nMaxSampleRate;     // Maximum possible sample rate
+                uint32_t    nBufSize;           // Delay buffer size
+                uint32_t    nCounter;           // Current counter
+                uint32_t    nPeriod;            // FFT transform period
+                uint32_t    nStep;              // FFT transform period
+                uint32_t    nHead;              // Head of each delay buffer
+                uint32_t    nReconfigure;       // Reconfiguration flags
+                uint32_t    nEnvelope;          // Type of spectral envelope
+                uint32_t    nWindow;            // Type of FFT window
+                uint32_t    nMaxUserDelay;      // Maximum possible additional user delay
 
-             protected:
-                 size_t      nChannels;          // Overall number of channels
-                 size_t      nMaxRank;           // Maximum FFT rank
-                 size_t      nRank;              // Current FFT rank
-                 size_t      nSampleRate;        // Sample rate
-                 size_t      nMaxSampleRate;     // Maximum possible sample rate
-                 size_t      nBufSize;           // Delay buffer size
-                 size_t      nCounter;           // Current counter
-                 size_t      nPeriod;            // FFT transform period
-                 size_t      nStep;              // FFT transform period
-                 size_t      nHead;              // Head of each delay buffer
-                 float       fReactivity;        // FFT reactivity
-                 float       fTau;               // Smooth coefficient
-                 float       fRate;              // FFT refresh rate
-                 float       fMinRate;           // Minimum possible FFT refresh rate
-                 float       fShift;             // Gain shift
-                 size_t      nReconfigure;       // Reconfiguration flags
-                 size_t      nEnvelope;          // Type of spectral envelope
-                 size_t      nWindow;            // Type of FFT window
-                 bool        bActive;            // Activity flag
+                float       fReactivity;        // FFT reactivity
+                float       fTau;               // Smooth coefficient
+                float       fRate;              // FFT refresh rate
+                float       fMinRate;           // Minimum possible FFT refresh rate
+                float       fShift;             // Gain shift
 
-                 channel_t  *vChannels;          // List of channels
-                 void       *vData;              // Allocated floating-point data
-                 float      *vSigRe;             // Real part of signal
-                 float      *vFftReIm;           // Buffer for FFT transform (real part)
-                 float      *vWindow;            // FFT window
-                 float      *vEnvelope;          // FFT envelope
+                bool        bActive;            // Activity flag
 
-             public:
-                 explicit Analyzer();
-                 ~Analyzer();
+                channel_t  *vChannels;          // List of channels
+                void       *vData;              // Allocated floating-point data
+                float      *vSigRe;             // Real part of signal
+                float      *vFftReIm;           // Buffer for FFT transform (real part)
+                float      *vWindow;            // FFT window
+                float      *vEnvelope;          // FFT envelope
 
-                 /**
-                  * Construct analyzer
-                  */
-                 void        construct();
+            public:
+                explicit Analyzer();
+                Analyzer(const Analyzer &) = delete;
+                Analyzer(Analyzer &&) = delete;
+                ~Analyzer();
 
-                 /** Destroy analyzer
-                  *
-                  */
-                 void        destroy();
+                Analyzer & operator = (const Analyzer &) = delete;
+                Analyzer & operator = (Analyzer &&) = delete;
 
-             public:
-                 /** Initialize analyzer
-                  *
-                  * @param channels number of channels for analysis
-                  * @param max_rank maximum FFT rank
-                  * @param max_sr maximum sample rate
-                  * @param min_rate minimum refresh rate
-                  * @return status of operation
-                  */
-                 bool init(size_t channels, size_t max_rank, size_t max_sr, float min_rate);
+                /**
+                * Construct analyzer
+                */
+                void        construct();
 
-                 /**
-                  * Get overall number of channels
-                  * @return overall number of channels
-                  */
-                 inline size_t get_channels() const      { return nChannels; }
+                /** Destroy analyzer
+                *
+                */
+                void        destroy();
 
-                 /** Set window for analysis
-                  *
-                  * @param window window
-                  */
-                 void set_window(size_t window);
+            public:
+                /** Initialize analyzer
+                 *
+                 * @param channels number of channels for analysis
+                 * @param max_rank maximum FFT rank
+                 * @param max_sr maximum sample rate
+                 * @param min_rate minimum refresh rate
+                 * @param max_delay maximum additional delay that can be applied to a channel
+                 * @return status of operation
+                 */
+                bool init(size_t channels, size_t max_rank, size_t max_sr, float min_rate, size_t max_delay = 0);
 
-                 /**
-                  * Get analyzer window
-                  * @return analyzer window
-                  */
-                 inline size_t get_window() const        { return nWindow; }
+                /**
+                 * Get overall number of channels
+                 * @return overall number of channels
+                 */
+                inline size_t get_channels() const      { return nChannels; }
 
-                 /** Set envelope for analysis
-                  *
-                  * @param envelope envelope type
-                  */
-                 void set_envelope(size_t envelope);
+                /** Set window for analysis
+                 *
+                 * @param window window
+                 */
+                void set_window(size_t window);
 
-                 /**
-                  * Get envelope of analysis
-                  * @return envelope of analysis
-                  */
-                 inline size_t get_envelope() const       { return nEnvelope; }
+                /**
+                 * Get analyzer window
+                 * @return analyzer window
+                 */
+                inline size_t get_window() const        { return nWindow; }
 
-                 /** Set shift gain for analysis
-                  *
-                  * @param envelope envelope type
-                  */
-                 void set_shift(float shift);
+                /** Set envelope for analysis
+                 *
+                 * @param envelope envelope type
+                 */
+                void set_envelope(size_t envelope);
 
-                 /**
-                  * Get gain shift value
-                  * @return gain shift value
-                  */
-                 inline float get_shift() const          { return fShift; }
+                /**
+                 * Get envelope of analysis
+                 * @return envelope of analysis
+                 */
+                inline size_t get_envelope() const       { return nEnvelope; }
 
-                 /** Set sample rate for analysis
-                  *
-                  * @param sr sample rate
-                  */
-                 void set_sample_rate(size_t sr);
+                /** Set shift gain for analysis
+                 *
+                 * @param envelope envelope type
+                 */
+                void set_shift(float shift);
 
-                 /**
-                  * Get sample rate
-                  * @return sample rate
-                  */
-                 inline size_t get_sample_rate() const { return nSampleRate; }
+                /**
+                 * Get gain shift value
+                 * @return gain shift value
+                 */
+                inline float get_shift() const          { return fShift; }
 
-                 /**
-                  * Get maximum possible sample rate
-                  * @return maximum possible sample rate
-                  */
-                 inline size_t get_max_sample_rate() const { return nMaxSampleRate; }
+                /** Set sample rate for analysis
+                 *
+                 * @param sr sample rate
+                 */
+                void set_sample_rate(size_t sr);
 
-                 /** Set-up FFT analysis rate
-                  *
-                  * @param rate FFT rate
-                  */
-                 void set_rate(float rate);
+                /**
+                 * Get sample rate
+                 * @return sample rate
+                 */
+                inline size_t get_sample_rate() const { return nSampleRate; }
 
-                 /**
-                  * Get current refresh rate
-                  * @return current refresh rate
-                  */
-                 inline float get_rate() const { return fRate;   }
+                /**
+                 * Get maximum possible sample rate
+                 * @return maximum possible sample rate
+                 */
+                inline size_t get_max_sample_rate() const { return nMaxSampleRate; }
 
-                 /**
-                  * Get minimum possible rate
-                  * @return minimum possible rate
-                  */
-                 inline float get_min_rate() const { return fMinRate;    }
+                /** Set-up FFT analysis rate
+                 *
+                 * @param rate FFT rate
+                 */
+                void set_rate(float rate);
 
-                 /** Set-up FFT analysis reactivity
-                  *
-                  * @param reactivity reactivity (msec)
-                  */
-                 void set_reactivity(float reactivity);
+                /**
+                 * Get current refresh rate
+                 * @return current refresh rate
+                 */
+                inline float get_rate() const { return fRate;   }
 
-                 /**
-                  * Get reactivity of the analysis
-                  * @return reactivivy of the analysis
-                  */
-                 inline float get_reactivity() const     { return fReactivity; }
+                /**
+                 * Get minimum possible rate
+                 * @return minimum possible rate
+                 */
+                inline float get_min_rate() const { return fMinRate;    }
 
-                 /** Set rank of the analysis
-                  *
-                  * @param rank analysis rank
-                  * @return analysis rank
-                  */
-                 bool set_rank(size_t rank);
+                /** Set-up FFT analysis reactivity
+                 *
+                 * @param reactivity reactivity (msec)
+                 */
+                void set_reactivity(float reactivity);
 
-                 /**
-                  * Return current rank of analyzer
-                  * @return current rank of analyzer
-                  */
-                 inline size_t get_rank() const          { return nRank; }
+                /**
+                 * Get reactivity of the analysis
+                 * @return reactivivy of the analysis
+                 */
+                inline float get_reactivity() const     { return fReactivity; }
 
-                 /** Set analyzer activity
-                  *
-                  * @param active activity flag
-                  */
-                 inline void set_activity(bool active)   { bActive = active; }
+                /** Set rank of the analysis
+                 *
+                 * @param rank analysis rank
+                 * @return analysis rank
+                 */
+                bool set_rank(size_t rank);
 
-                 /**
-                  * Get analyzer activity
-                  * @return analyzer activity
-                  */
-                 inline bool activity() const            { return bActive; }
+                /**
+                 * Return current rank of analyzer
+                 * @return current rank of analyzer
+                 */
+                inline size_t get_rank() const          { return nRank; }
 
-                 /** Freeze channel
-                  *
-                  * @param channel channel to freeze
-                  * @param freeze freeze flag
-                  * @return status of operation
-                  */
-                 bool freeze_channel(size_t channel, bool freeze);
+                /** Set analyzer activity
+                 *
+                 * @param active activity flag
+                 */
+                inline void set_activity(bool active)   { bActive = active; }
 
-                 /** Enable channel
-                  *
-                  * @param channel channel to enable
-                  * @param enable enable flag
-                  * @return status of operation
-                  */
-                 bool enable_channel(size_t channel, bool enable);
+                /**
+                 * Get analyzer activity
+                 * @return analyzer activity
+                 */
+                inline bool activity() const            { return bActive; }
 
-                 /** Check if channel is active
-                  *
-                  * @param channel channel to check
-                  * @return true if channel is active
-                  */
-                 inline bool channel_active(size_t channel) const { return (channel < nChannels) ? vChannels[channel].bActive : false; }
+                /** Freeze channel
+                 *
+                 * @param channel channel to freeze
+                 * @param freeze freeze flag
+                 * @return status of operation
+                 */
+                bool freeze_channel(size_t channel, bool freeze);
 
-                 /**
-                  * Reset the FFT data of analyzer
-                  */
-                 inline void reset() { nReconfigure       |= R_ANALYSIS; }
+                /** Enable channel
+                 *
+                 * @param channel channel to enable
+                 * @param enable enable flag
+                 * @return status of operation
+                 */
+                bool enable_channel(size_t channel, bool enable);
 
-                 /**
-                  * Process input signal
-                  * @param in array of pointers to buffers for all channels
-                  *        if pointer is NULL or the pointer to buffer is NULL, it is considered to be zero-filled
-                  * @param samples number of samples to process
-                  */
-                 void process(const float * const *in, size_t samples);
+                /** Check if channel is active
+                 *
+                 * @param channel channel to check
+                 * @return true if channel is active
+                 */
+                inline bool channel_active(size_t channel) const { return (channel < nChannels) ? vChannels[channel].bActive : false; }
 
-                 /** Read spectrum data
-                  *
-                  * @param channel channel
-                  * @param out output buffer
-                  * @param idx array of frequency numbers
-                  * @param count size of input and output arrays
-                  */
-                 bool get_spectrum(size_t channel, float *out, const uint32_t *idx, size_t count);
+                /**
+                 * Get additional delay associated with channel
+                 * @param channel channel number
+                 * @return additional delay associated with channel
+                 */
+                inline size_t channel_delay(size_t channel) const { return (channel < nChannels) ? vChannels[channel].nUserDelay : 0; }
 
-                 /**
-                  * Get level of one frequency
-                  * @param channel channel number
-                  * @param idx frequency index
-                  * @return level
-                  */
-                 float get_level(size_t channel, const uint32_t idx);
+                /**
+                 * Set additional delay associated with channel
+                 * @param channel channel
+                 * @param delay additional delay associated with channel
+                 * @return true on success
+                 */
+                bool set_channel_delay(size_t channel, size_t delay);
 
-                 /** Get list of frequencies
-                  *
-                  * @param f frequency list
-                  * @param idx frequency indexes containing frequency numbers for future get_spectrum() call
-                  * @param start start frequency
-                  * @param stop stop frequency
-                  * @param count number of elements
-                  */
-                 void get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count);
+                /**
+                 * Reset the FFT data of analyzer
+                 */
+                inline void reset() { nReconfigure       |= R_ANALYSIS; }
 
-                 /** Read the frequencies of the analyzer
-                  *
-                  * @param frq target array to store frequency value
-                  * @param channel channel ID of input channel
-                  * @param start start frequency
-                  * @param stop end frequency
-                  * @param count number of items to store in frq and amp arrays
-                  * @param flags additional flags
-                  * @return true on success
-                  */
-                 bool read_frequencies(float *frq, float start, float stop, size_t count, size_t flags = FRQA_SCALE_LOGARITHMIC);
+                /**
+                 * Process input signal
+                 * @param in array of pointers to buffers for all channels
+                 *        if pointer is NULL or the pointer to buffer is NULL, it is considered to be zero-filled
+                 * @param samples number of samples to process
+                 */
+                void process(const float * const *in, size_t samples);
 
-                 /** Reconfigure analyzer
-                  *
-                  */
-                 void            reconfigure();
+                /** Read spectrum data
+                 *
+                 * @param channel channel
+                 * @param out output buffer
+                 * @param idx array of frequency numbers
+                 * @param count size of input and output arrays
+                 */
+                bool get_spectrum(size_t channel, float *out, const uint32_t *idx, size_t count);
 
-                 /** Check that analyzer needs reconfiguration
-                  *
-                  * @return true if needs reconfiguration
-                  */
-                 inline bool     needs_reconfiguration() const   { return nReconfigure; }
+                /**
+                 * Get level of one frequency
+                 * @param channel channel number
+                 * @param idx frequency index
+                 * @return level
+                 */
+                float get_level(size_t channel, const uint32_t idx);
 
-                 /**
-                  * Dump the state
-                  * @param dumper dumper
-                  */
-                 void            dump(IStateDumper *v) const;
+                /** Get list of frequencies
+                 *
+                 * @param f frequency list
+                 * @param idx frequency indexes containing frequency numbers for future get_spectrum() call
+                 * @param start start frequency
+                 * @param stop stop frequency
+                 * @param count number of elements
+                 */
+                void get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count);
+
+                /** Read the frequencies of the analyzer
+                 *
+                 * @param frq target array to store frequency value
+                 * @param channel channel ID of input channel
+                 * @param start start frequency
+                 * @param stop end frequency
+                 * @param count number of items to store in frq and amp arrays
+                 * @param flags additional flags
+                 * @return true on success
+                 */
+                bool read_frequencies(float *frq, float start, float stop, size_t count, size_t flags = FRQA_SCALE_LOGARITHMIC);
+
+                /** Reconfigure analyzer
+                 *
+                 */
+                void            reconfigure();
+
+                /** Check that analyzer needs reconfiguration
+                 *
+                 * @return true if needs reconfiguration
+                 */
+                inline bool     needs_reconfiguration() const   { return nReconfigure; }
+
+                /**
+                 * Dump the state
+                 * @param dumper dumper
+                 */
+                void            dump(IStateDumper *v) const;
          };
-    }
 
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_ANALYZER_H_ */
