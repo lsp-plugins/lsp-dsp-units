@@ -44,7 +44,7 @@ namespace lsp
             float quadratic(float x)
             {
                 if (x < 0.0f)
-                    return (x > -2.0f) ? -x * (1.0f + 0.25f * x) : -1.0f;
+                    return (x > -2.0f) ? x * (1.0f - 0.25f * x) : -1.0f;
 
                 return (x < 2.0f) ? x * (1.0f - 0.25f * x) : 1.0f;
             }
