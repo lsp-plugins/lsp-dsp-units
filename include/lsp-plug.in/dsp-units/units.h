@@ -118,6 +118,17 @@ namespace lsp
             return (time * 0.001f) * sr;
         }
 
+        /** Convert period of specified frequency to samples [samp]
+         *
+         * @param sr sample rate [samp/s]
+         * @param freq frequency [hz]
+         * @return samples [samp]
+         */
+        inline float hz_to_samples(float sr, float freq)
+        {
+            return sr / freq;
+        }
+
         /** Convert decibels to gain value
          *
          * @param db decibels
