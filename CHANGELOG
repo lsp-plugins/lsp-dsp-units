@@ -8,6 +8,7 @@
 * Expander module now uses functions from lsp-dsp-lib for faster processing.
 * Small optimizations and improvements of the dspu::Delay module.
 * Added possibility to specify additional delay for each channel in dspu::Analzer module.
+* Updated build scripts.
 
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.
