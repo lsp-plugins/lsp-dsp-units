@@ -78,7 +78,7 @@ namespace lsp
                  */
                 void append(const float *src, size_t count);
 
-                /** Process data
+                /** Process input data and copy result to the destination buffer
                  *
                  * @param dst destination buffer
                  * @param src source buffer
@@ -86,7 +86,7 @@ namespace lsp
                  */
                 void process(float *dst, const float *src, size_t count);
 
-                /** Process data and apply constant gain to the output.
+                /** Process input data, apply constant gain and copy result to the destination buffer.
                  *
                  * @param dst destination buffer
                  * @param src source buffer
@@ -95,7 +95,7 @@ namespace lsp
                  */
                 void process(float *dst, const float *src, float gain, size_t count);
 
-                /** Process data and apply variable gain to the output.
+                /** Process input data, apply variable gain and copy result to the destination buffer.
                  *
                  * @param dst destination buffer
                  * @param src source buffer
@@ -103,6 +103,32 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void process(float *dst, const float *src, const float *gain, size_t count);
+
+                /** Process input data and add result to the destination buffer
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param count number of samples to process
+                 */
+                void process_add(float *dst, const float *src, size_t count);
+
+                /** Process input data, apply constant gain and add result to the destination buffer.
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param gain gain to adjust
+                 * @param count number of samples to process
+                 */
+                void process_add(float *dst, const float *src, float gain, size_t count);
+
+                /** Process input data, apply variable gain and copy result to the destination buffer.
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param gain gain buffer to apply to the output
+                 * @param count number of samples to process
+                 */
+                void process_add(float *dst, const float *src, const float *gain, size_t count);
 
                 /** Process data
                  *

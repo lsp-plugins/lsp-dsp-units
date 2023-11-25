@@ -248,6 +248,154 @@ namespace lsp
             }
         }
 
+        void Delay::process_add(float *dst, const float *src, size_t count)
+        {
+            // We can avoid exra copies if source and destination are pointing to the same buffer and there is no delay
+            if ((dst == src) && (nDelay == 0))
+            {
+                append(src, count);
+                dsp::mul_k2(dst, 2.0f, count);
+                return;
+            }
+
+            size_t free_gap = nSize - nDelay;
+
+            while (count > 0)
+            {
+                // Determine how many samples to process
+                size_t to_do    = lsp_min(count, free_gap);
+
+                // Push data to buffer
+                size_t end      = nHead + to_do;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize - nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
+
+                // Shift data from buffer
+                end             = nTail + to_do;
+                if (end > nSize)
+                {
+                    size_t tcut     = nSize - nTail;
+                    dsp::add2(dst, &pBuffer[nTail], tcut);
+                    dsp::add2(&dst[tcut], pBuffer, end - nSize);
+                }
+                else
+                    dsp::add2(dst, &pBuffer[nTail], to_do);
+
+                nTail           = (nTail + to_do) % nSize;
+                dst            += to_do;
+
+                // Update number of samples
+                count          -= to_do;
+            }
+        }
+
+        void Delay::process_add(float *dst, const float *src, float gain, size_t count)
+        {
+            // We can avoid exra copies if source and destination are pointing to the same buffer and there is no delay
+            if ((dst == src) && (nDelay == 0))
+            {
+                append(src, count);
+                dsp::mul_k2(dst, 1.0f + gain, count);
+                return;
+            }
+
+            size_t free_gap = nSize - nDelay;
+
+            while (count > 0)
+            {
+                // Determine how many samples to process
+                size_t to_do    = lsp_min(count, free_gap);
+
+                // Push data to buffer
+                size_t end      = nHead + to_do;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize - nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
+
+                // Shift data from buffer
+                end             = nTail + to_do;
+                if (end > nSize)
+                {
+                    size_t tcut     = nSize - nTail;
+                    dsp::fmadd_k3(dst, &pBuffer[nTail], gain, tcut);
+                    dsp::fmadd_k3(&dst[tcut], pBuffer, gain, end - nSize);
+                }
+                else
+                    dsp::fmadd_k3(dst, &pBuffer[nTail], gain, to_do);
+
+                nTail           = (nTail + to_do) % nSize;
+                dst            += to_do;
+
+                // Update number of samples
+                count          -= to_do;
+            }
+        }
+
+        void Delay::process_add(float *dst, const float *src, const float *gain, size_t count)
+        {
+            // We can avoid exra copies if source and destination are pointing to the same buffer and there is no delay
+            if ((dst == src) && (nDelay == 0))
+            {
+                append(src, count);
+                dsp::fmadd3(dst, src, gain, count);
+                return;
+            }
+
+            size_t free_gap     = nSize - nDelay;
+
+            while (count > 0)
+            {
+                // Determine how many samples to process
+                size_t to_do    = lsp_min(count, free_gap);
+
+                // Push data to buffer
+                size_t end      = nHead + to_do;
+                if (end > nSize)
+                {
+                    size_t hcut     = nSize - nHead;
+                    dsp::copy(&pBuffer[nHead], src, hcut);
+                    dsp::copy(pBuffer, &src[hcut], end - nSize);
+                }
+                else
+                    dsp::copy(&pBuffer[nHead], src, to_do);
+                nHead           = (nHead + to_do) % nSize;
+                src            += to_do;
+
+                // Shift data from buffer
+                end             = nTail + to_do;
+                if (end > nSize)
+                {
+                    size_t tcut     = nSize - nTail;
+                    dsp::fmadd3(dst, &pBuffer[nTail], gain, tcut);
+                    dsp::fmadd3(&dst[tcut], pBuffer, &gain[tcut], end - nSize);
+                }
+                else
+                    dsp::fmadd3(dst, &pBuffer[nTail], gain, to_do);
+
+                nTail           = (nTail + to_do) % nSize;
+                dst            += to_do;
+                gain           += to_do;
+
+                // Update number of samples
+                count          -= to_do;
+            }
+        }
+
         void Delay::process_ramping(float *dst, const float *src, size_t delay, size_t count)
         {
             // If delay does not change - use faster algorithm
