@@ -164,6 +164,74 @@ namespace lsp
             }
         }
 
+        void MeterGraph::process(const float *s, float gain, size_t n)
+        {
+            if (bMinimize)
+            {
+                while (n > 0)
+                {
+                    // Determine amount of samples to process
+                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
+
+                    // Process the samples
+                    if (can_do > 0)
+                    {
+                        // Get maximum sample
+                        float sample        = dsp::abs_min(s, can_do) * gain;
+                        if ((nCount == 0) || (fCurrent > sample))
+                            fCurrent        = sample;
+
+                        // Update counters and pointers
+                        nCount             += can_do;
+                        n                  -= can_do;
+                        s                  += can_do;
+                    }
+
+                    // Check that need to switch to next sample
+                    if (nCount >= nPeriod)
+                    {
+                        // Append current sample to buffer
+                        sBuffer.shift();
+                        sBuffer.append(fCurrent);
+
+                        // Update counter
+                        nCount      = 0;
+                    }
+                }
+            }
+            else
+            {
+                while (n > 0)
+                {
+                    // Determine amount of samples to process
+                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
+
+                    // Process the samples
+                    if (can_do > 0)
+                    {
+                        // Get maximum sample
+                        float sample        = dsp::abs_max(s, can_do) * gain;
+                        if ((nCount == 0) || (fCurrent < sample))
+                            fCurrent        = sample;
+
+                        // Update counters and pointers
+                        nCount             += can_do;
+                        n                  -= can_do;
+                        s                  += can_do;
+                    }
+
+                    // Check that need to switch to next sample
+                    if (nCount >= nPeriod)
+                    {
+                        // Append current sample to buffer and update counter
+                        sBuffer.shift();
+                        sBuffer.append(fCurrent);
+                        nCount      = 0;
+                    }
+                }
+            }
+        }
+
         void MeterGraph::dump(IStateDumper *v) const
         {
             v->write_object("sBuffer", &sBuffer);

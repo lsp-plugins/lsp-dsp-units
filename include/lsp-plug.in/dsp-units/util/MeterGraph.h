@@ -113,6 +113,13 @@ namespace lsp
                  */
                 void process(const float *s, size_t n);
 
+                /** Process multiple samples multiplied by specified value
+                 *
+                 * @param s array of samples
+                 * @param n number of samples to process
+                 */
+                void process(const float *s, float gain, size_t n);
+
                 /** Get current level
                  *
                  * @return current level
