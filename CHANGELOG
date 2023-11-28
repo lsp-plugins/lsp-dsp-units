@@ -10,6 +10,7 @@
 * Added possibility to specify additional delay for each channel in dspu::Analzer module.
 * Added dspu::hz_to_samples function.
 * Added process_add methods for the dspu::Delay module.
+* Added dspu::SimpleAutoGain module.
 * Updated build scripts.
 
 === 1.0.18 ===

@@ -121,6 +121,8 @@ namespace lsp
 
                 /** Initialize object
                  *
+                 * @param channels number of input channels
+                 * @param max_period maximum measurement period in milliseconds
                  * @return status of operation
                  */
                 status_t        init(size_t channels, float max_period);

@@ -13,11 +13,13 @@ Set of modules provided:
     * Crossfade switch
     * Toggle
   * Dynamic processing
+    * Autogain
     * Compressor
     * Dynamic processor
     * Expander
     * Gate
     * Limiter
+    * Simple autogain
     * Surge protector
   * Filters and equalization
     * Butterworth filter
