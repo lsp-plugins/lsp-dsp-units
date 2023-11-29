@@ -168,7 +168,8 @@ namespace lsp
                 else if (s > fThreshold)
                     cgain      *= fKFall;
 
-                dst[i]      = lsp_limit(cgain, fMinGain, fMaxGain);
+                cgain       = lsp_limit(cgain, fMinGain, fMaxGain);
+                dst[i]      = cgain;
             }
             fCurrGain       = cgain;
         }
@@ -178,14 +179,18 @@ namespace lsp
             // Update settings if needed
             update();
 
-            const float s     = src * fCurrGain;
+            float cgain     = fCurrGain;
+            const float s   = src * cgain;
 
             if (s < fThreshold)
-                fCurrGain      *= fKGrow;
+                cgain      *= fKGrow;
             else if (s > fThreshold)
-                fCurrGain      *= fKFall;
+                cgain      *= fKFall;
 
-            return lsp_limit(fCurrGain, fMinGain, fMaxGain);
+            cgain       = lsp_limit(cgain, fMinGain, fMaxGain);
+            fCurrGain   = cgain;
+
+            return cgain;
         }
 
         void SimpleAutoGain::dump(IStateDumper *v) const
