@@ -248,6 +248,27 @@ namespace lsp
             return 1;
         }
 
+        float ShiftBuffer::process(float data)
+        {
+            // Check state
+            if (pData == NULL)
+                return 0;
+
+            // Check free space in buffer
+            if (nTail >= nCapacity)
+            {
+                if (nHead <= 0)
+                    return 0;
+                dsp::move(pData, &pData[nHead], nTail - nHead);
+                nTail  -= nHead;
+                nHead   = 0;
+            }
+
+            // Append sample
+            pData[nTail++]  = data;
+            return pData[nHead++];
+        }
+
         size_t ShiftBuffer::shift(float *data, size_t count)
         {
             // Check state

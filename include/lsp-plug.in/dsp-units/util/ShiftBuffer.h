@@ -79,6 +79,13 @@ namespace lsp
                  */
                 bool resize(size_t size, size_t gap = 0);
 
+                /** Append the single sample and shift buffer head
+                 *
+                 * @param data sample to append
+                 * @return the shifted sample
+                 */
+                float process(float data);
+
                 /** Add data to the end of buffer
                  *
                  * @param data amount of data to push, if NULL then buffer is filled with zeros

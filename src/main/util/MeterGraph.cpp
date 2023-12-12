@@ -88,10 +88,7 @@ namespace lsp
             if ((++nCount) >= nPeriod)
             {
                 // Append current sample to buffer
-                sBuffer.shift();
-                sBuffer.append(fCurrent);
-
-                // Update counter
+                sBuffer.process(fCurrent);
                 nCount      = 0;
             }
         }
@@ -123,10 +120,7 @@ namespace lsp
                     if (nCount >= nPeriod)
                     {
                         // Append current sample to buffer
-                        sBuffer.shift();
-                        sBuffer.append(fCurrent);
-
-                        // Update counter
+                        sBuffer.process(fCurrent);
                         nCount      = 0;
                     }
                 }
@@ -156,8 +150,7 @@ namespace lsp
                     if (nCount >= nPeriod)
                     {
                         // Append current sample to buffer and update counter
-                        sBuffer.shift();
-                        sBuffer.append(fCurrent);
+                        sBuffer.process(fCurrent);
                         nCount      = 0;
                     }
                 }
@@ -191,10 +184,7 @@ namespace lsp
                     if (nCount >= nPeriod)
                     {
                         // Append current sample to buffer
-                        sBuffer.shift();
-                        sBuffer.append(fCurrent);
-
-                        // Update counter
+                        sBuffer.process(fCurrent);
                         nCount      = 0;
                     }
                 }
@@ -224,8 +214,7 @@ namespace lsp
                     if (nCount >= nPeriod)
                     {
                         // Append current sample to buffer and update counter
-                        sBuffer.shift();
-                        sBuffer.append(fCurrent);
+                        sBuffer.process(fCurrent);
                         nCount      = 0;
                     }
                 }
