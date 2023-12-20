@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 мая 2016 г.
@@ -38,10 +38,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC MeterGraph
         {
-            private:
-                MeterGraph & operator = (const MeterGraph &);
-                MeterGraph(const MeterGraph &);
-
             protected:
                 ShiftBuffer         sBuffer;
                 float               fCurrent;
@@ -51,7 +47,12 @@ namespace lsp
 
             public:
                 explicit MeterGraph();
+                MeterGraph(const MeterGraph &) = delete;
+                MeterGraph(MeterGraph &&) = delete;
                 ~MeterGraph();
+
+                MeterGraph & operator = (const MeterGraph &) = delete;
+                MeterGraph & operator = (MeterGraph &&) = delete;
 
                 /**
                  * Construct object
@@ -112,6 +113,13 @@ namespace lsp
                  */
                 void process(const float *s, size_t n);
 
+                /** Process multiple samples multiplied by specified value
+                 *
+                 * @param s array of samples
+                 * @param n number of samples to process
+                 */
+                void process(const float *s, float gain, size_t n);
+
                 /** Get current level
                  *
                  * @return current level
@@ -130,7 +138,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_METER_GRAPH_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 20 мая 2016 г.
@@ -88,10 +88,7 @@ namespace lsp
             if ((++nCount) >= nPeriod)
             {
                 // Append current sample to buffer
-                sBuffer.shift();
-                sBuffer.append(fCurrent);
-
-                // Update counter
+                sBuffer.process(fCurrent);
                 nCount      = 0;
             }
         }
@@ -123,10 +120,7 @@ namespace lsp
                     if (nCount >= nPeriod)
                     {
                         // Append current sample to buffer
-                        sBuffer.shift();
-                        sBuffer.append(fCurrent);
-
-                        // Update counter
+                        sBuffer.process(fCurrent);
                         nCount      = 0;
                     }
                 }
@@ -156,8 +150,71 @@ namespace lsp
                     if (nCount >= nPeriod)
                     {
                         // Append current sample to buffer and update counter
-                        sBuffer.shift();
-                        sBuffer.append(fCurrent);
+                        sBuffer.process(fCurrent);
+                        nCount      = 0;
+                    }
+                }
+            }
+        }
+
+        void MeterGraph::process(const float *s, float gain, size_t n)
+        {
+            if (bMinimize)
+            {
+                while (n > 0)
+                {
+                    // Determine amount of samples to process
+                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
+
+                    // Process the samples
+                    if (can_do > 0)
+                    {
+                        // Get maximum sample
+                        float sample        = dsp::abs_min(s, can_do) * gain;
+                        if ((nCount == 0) || (fCurrent > sample))
+                            fCurrent        = sample;
+
+                        // Update counters and pointers
+                        nCount             += can_do;
+                        n                  -= can_do;
+                        s                  += can_do;
+                    }
+
+                    // Check that need to switch to next sample
+                    if (nCount >= nPeriod)
+                    {
+                        // Append current sample to buffer
+                        sBuffer.process(fCurrent);
+                        nCount      = 0;
+                    }
+                }
+            }
+            else
+            {
+                while (n > 0)
+                {
+                    // Determine amount of samples to process
+                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
+
+                    // Process the samples
+                    if (can_do > 0)
+                    {
+                        // Get maximum sample
+                        float sample        = dsp::abs_max(s, can_do) * gain;
+                        if ((nCount == 0) || (fCurrent < sample))
+                            fCurrent        = sample;
+
+                        // Update counters and pointers
+                        nCount             += can_do;
+                        n                  -= can_do;
+                        s                  += can_do;
+                    }
+
+                    // Check that need to switch to next sample
+                    if (nCount >= nPeriod)
+                    {
+                        // Append current sample to buffer and update counter
+                        sBuffer.process(fCurrent);
                         nCount      = 0;
                     }
                 }
@@ -172,8 +229,8 @@ namespace lsp
             v->write("nPeriod", nPeriod);
             v->write("bMinimize", bMinimize);
         }
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 

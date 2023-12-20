@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 06 дек. 2015 г.
@@ -34,20 +34,21 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Delay
         {
-            private:
-                Delay & operator = (const Delay &);
-                Delay(const Delay &);
-
             protected:
                 float      *pBuffer;
-                size_t      nHead;
-                size_t      nTail;
-                size_t      nDelay;
-                size_t      nSize;
+                uint32_t    nHead;
+                uint32_t    nTail;
+                uint32_t    nDelay;
+                uint32_t    nSize;
 
             public:
                 explicit Delay();
+                Delay(const Delay &) = delete;
+                Delay(Delay &&) = delete;
                 ~Delay();
+
+                Delay & operator = (const Delay &) = delete;
+                Delay & operator = (Delay &&) = delete;
 
                 /** Construct the processor, can be called
                  * when there is no possibility to explicitly call
@@ -69,7 +70,15 @@ namespace lsp
                  */
                 bool init(size_t max_size);
 
-                /** Process data
+                /** Push data to delay buffer and update internal pointers,
+                 * do not return anything.
+                 *
+                 * @param src source buffer
+                 * @param count number of samples to process
+                 */
+                void append(const float *src, size_t count);
+
+                /** Process input data and copy result to the destination buffer
                  *
                  * @param dst destination buffer
                  * @param src source buffer
@@ -77,7 +86,7 @@ namespace lsp
                  */
                 void process(float *dst, const float *src, size_t count);
 
-                /** Process data
+                /** Process input data, apply constant gain and copy result to the destination buffer.
                  *
                  * @param dst destination buffer
                  * @param src source buffer
@@ -86,14 +95,40 @@ namespace lsp
                  */
                 void process(float *dst, const float *src, float gain, size_t count);
 
-                /** Process data and apply gain
+                /** Process input data, apply variable gain and copy result to the destination buffer.
                  *
                  * @param dst destination buffer
                  * @param src source buffer
-                 * @param gain gain buffer to apply at output
+                 * @param gain gain buffer to apply to the output
                  * @param count number of samples to process
                  */
                 void process(float *dst, const float *src, const float *gain, size_t count);
+
+                /** Process input data and add result to the destination buffer
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param count number of samples to process
+                 */
+                void process_add(float *dst, const float *src, size_t count);
+
+                /** Process input data, apply constant gain and add result to the destination buffer.
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param gain gain to adjust
+                 * @param count number of samples to process
+                 */
+                void process_add(float *dst, const float *src, float gain, size_t count);
+
+                /** Process input data, apply variable gain and copy result to the destination buffer.
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param gain gain buffer to apply to the output
+                 * @param count number of samples to process
+                 */
+                void process_add(float *dst, const float *src, const float *gain, size_t count);
 
                 /** Process data
                  *
@@ -104,15 +139,25 @@ namespace lsp
                  */
                 void process_ramping(float *dst, const float *src, size_t delay, size_t count);
 
-                /** Process data
+                /** Process data and apply constant gain to the output.
                  *
                  * @param dst destination buffer
                  * @param src source buffer
-                 * @param gain the amount of gain to adjust to output
+                 * @param gain the amount of gain to apply to the output
                  * @param delay the final delay that will be set at the end of processing
                  * @param count number of samples to process
                  */
                 void process_ramping(float *dst, const float *src, float gain, size_t delay, size_t count);
+
+                /** Process data and apply variable gain to the output.
+                 *
+                 * @param dst destination buffer
+                 * @param src source buffer
+                 * @param gain gain buffer to apply to the output
+                 * @param delay the final delay that will be set at the end of processing
+                 * @param count number of samples to process
+                 */
+                void process_ramping(float *dst, const float *src, const float *gain, size_t delay, size_t count);
 
                 /** Process one sample
                  *
@@ -158,7 +203,7 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_DYNAMICS_UTIL_DELAY_HPP_ */

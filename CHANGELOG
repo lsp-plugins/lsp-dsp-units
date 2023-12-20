@@ -2,6 +2,18 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.19 ===
+* Refactoring and optimizations of the Expander module.
+* Updated interface of the dspu::Sample, added gain function.
+* Expander module now uses functions from lsp-dsp-lib for faster processing.
+* Small optimizations and improvements of the dspu::Delay module.
+* Added possibility to specify additional delay for each channel in dspu::Analzer module.
+* Added dspu::hz_to_samples function.
+* Added process_add methods for the dspu::Delay module.
+* Added dspu::SimpleAutoGain module.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.
 * Gate module now uses lsp-dsp-lib for low-level gain and curve optimizations.

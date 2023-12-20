@@ -267,14 +267,11 @@ namespace lsp
 
         void Compressor::curve(float *out, const float *in, size_t dots)
         {
-            update_settings();
             dsp::compressor_x2_curve(out, in, &sComp, dots);
         }
 
         float Compressor::curve(float in)
         {
-            update_settings();
-
             float x     = fabsf(in);
             if ((x <= sComp.k[0].start) && (x <= sComp.k[1].start))
                 return sComp.k[0].gain * sComp.k[1].gain * x;
