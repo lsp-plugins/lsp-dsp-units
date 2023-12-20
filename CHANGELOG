@@ -12,6 +12,7 @@
 * Added process_add methods for the dspu::Delay module.
 * Added dspu::SimpleAutoGain module.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.18 ===
 * Optimizations of compressor, expander and gate modules.
