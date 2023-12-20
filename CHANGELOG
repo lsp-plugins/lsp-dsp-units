@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.20 ===
+
+
 === 1.0.19 ===
 * Refactoring and optimizations of the Expander module.
 * Updated interface of the dspu::Sample, added gain function.
