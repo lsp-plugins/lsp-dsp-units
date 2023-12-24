@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 07 дек. 2015 г.
@@ -115,7 +115,7 @@ namespace lsp
                 if (fDelta > 0.0f)
                 {
                     // Process transition
-                    while (fGain < 1.0)
+                    while (fGain < 1.0f)
                     {
                         *dst    =   *dry + (*wet - *dry) * fGain;
 
@@ -137,7 +137,7 @@ namespace lsp
                 else
                 {
                     // Process transition
-                    while (fGain > 0.0)
+                    while (fGain > 0.0f)
                     {
                         *dst    =   *dry + (*wet - *dry) * fGain;
 
@@ -163,7 +163,7 @@ namespace lsp
                 if (fDelta > 0.0f)
                 {
                     // Process transition
-                    while (fGain < 1.0)
+                    while (fGain < 1.0f)
                     {
                         *dst    =   (*wet) * fGain;
 
@@ -180,6 +180,108 @@ namespace lsp
                     nState  = S_OFF;
                     if (count > 0)
                         dsp::copy(dst, wet, count);
+                }
+                else
+                {
+                    // Process transition
+                    while (fGain > 0.0f)
+                    {
+                        *dst    =   (*wet) * fGain;
+
+                        fGain   +=  fDelta;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy dry data
+                    fGain   = 0.0;
+                    nState  = S_ON;
+                    if (count > 0)
+                        dsp::fill_zero(dst, count);
+                }
+            }
+        }
+
+        void Bypass::process_wet(float *dst, const float *dry, const float *wet, float wet_gain, size_t count)
+        {
+            // Skip empty buffers
+            if (count == 0)
+                return;
+
+            if (dry != NULL)
+            {
+                // Analyze direction
+                if (fDelta > 0.0f)
+                {
+                    // Process transition
+                    while (fGain < 1.0f)
+                    {
+                        *dst    =   *dry + (*wet * wet_gain - *dry) * fGain;
+
+                        fGain   +=  fDelta;
+                        dry     ++;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy wet data
+                    fGain   = 1.0;
+                    nState  = S_OFF;
+                    if (count > 0)
+                        dsp::mul_k3(dst, wet, wet_gain, count);
+                }
+                else
+                {
+                    // Process transition
+                    while (fGain > 0.0f)
+                    {
+                        *dst    =   *dry + (*wet * wet_gain - *dry) * fGain;
+
+                        fGain   +=  fDelta;
+                        dry     ++;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy dry data
+                    fGain   = 0.0;
+                    nState  = S_ON;
+                    if (count > 0)
+                        dsp::copy(dst, dry, count);
+                }
+            }
+            else
+            {
+                // Analyze direction
+                if (fDelta > 0.0f)
+                {
+                    // Process transition
+                    while (fGain < 1.0)
+                    {
+                        *dst    =   (*wet) * fGain * wet_gain;
+
+                        fGain   +=  fDelta;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy wet data
+                    fGain   = 1.0;
+                    nState  = S_OFF;
+                    if (count > 0)
+                        dsp::mul_k3(dst, wet, wet_gain, count);
                 }
                 else
                 {
@@ -211,5 +313,5 @@ namespace lsp
             v->write("fDelta", fDelta);
             v->write("fGain", fGain);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
