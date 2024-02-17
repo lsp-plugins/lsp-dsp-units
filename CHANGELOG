@@ -4,6 +4,7 @@
 
 === 1.0.20 ===
 * Fixed RLC implementation of allpass filters.
+* Added support of LR2 (12 dB/oct) filters by the Crossover.
 * Updated build scripts.
 
 === 1.0.19 ===

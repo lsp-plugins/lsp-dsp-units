@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 03 авг. 2016 г.
@@ -85,6 +85,20 @@ namespace lsp
             CROSS_MODE_MT      //!< CROSS_MODE_MT matched transform
         };
 
+        enum crossover_slope_t
+        {
+            CROSS_SLOPE_OFF     = 0,
+            CROSS_SLOPE_LR2     = 1,
+            CROSS_SLOPE_LR4     = 2,
+            CROSS_SLOPE_LR8     = 3,
+            CROSS_SLOPE_LR12    = 4,
+            CROSS_SLOPE_LR16    = 5,
+            CROSS_SLOPE_LR20    = 6,
+            CROSS_SLOPE_LR24    = 7,
+            CROSS_SLOPE_LR28    = 8,
+            CROSS_SLOPE_LR32    = 9,
+        };
+
         /** Crossover, splits signal into bands, calls processing handler (if present)
          * and mixes processed bands back after adjusting the post-processing amplification gain
          *
@@ -134,27 +148,28 @@ namespace lsp
                 } band_t;
 
             protected:
-                size_t          nReconfigure;   // Change flag
-                size_t          nSplits;        // Number of splits
-                size_t          nBufSize;       // Buffer size
-                size_t          nSampleRate;    // Sample rate
+                uint32_t        nReconfigure;   // Change flag
+                uint32_t        nSplits;        // Number of splits
+                uint32_t        nBufSize;       // Buffer size
+                uint32_t        nSampleRate;    // Sample rate
+                uint32_t        nPlanSize;      // Size of plan
 
                 band_t         *vBands;         // List of bands
                 split_t        *vSplit;         // List of split points
                 split_t       **vPlan;          // Split plan
-                size_t          nPlanSize;      // Size of plan
 
                 float          *vLpfBuf;        // Buffer for LPF
                 float          *vHpfBuf;        // Buffer for HPF
                 uint8_t        *pData;          // Unaligned data
 
             protected:
-                inline filter_type_t    select_filter(xover_type_t type, crossover_mode_t mode);
+                static inline filter_type_t    select_filter(xover_type_t type, crossover_mode_t mode, size_t slope);
+                static inline uint32_t         select_slope(size_t slope);
 
             public:
                 explicit Crossover();
                 Crossover(const Crossover &) = delete;
-                Crossover(Crossover &) = delete;
+                Crossover(Crossover &&) = delete;
                 ~Crossover();
 
                 Crossover & operator = (const Crossover &) = delete;
