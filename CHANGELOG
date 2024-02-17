@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.20 ===
+* Fixed RLC implementation of allpass filters.
 * Updated build scripts.
 
 === 1.0.19 ===

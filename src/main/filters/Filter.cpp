@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 июня 2016 г.
@@ -973,40 +973,38 @@ namespace lsp
 
                 case FLT_BT_RLC_ALLPASS:
                 {
-                    // Single all-pass filter
+                    // Add cascade with one pole
+                    float k         = 2.0f / (1.0f + fp->fQuality);
                     size_t i        = fp->nSlope & 1;
                     if (i)
                     {
-                        c                       = add_cascade();
-                        c->t[0]                 = -1.0;
-                        c->t[1]                 = 1.0;
-                        c->t[2]                 = 0.0;
+                        c           = add_cascade();
+                        c->t[0]     = 1.0f;
+                        c->t[1]     = -1.0f;
+                        c->t[2]     = 0.0f;
 
-                        c->b[0]                 = 1.0;
-                        c->b[1]                 = 1.0;
-                        c->b[2]                 = 0.0;
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
-                    // 2x all-pass filters in one cascade
-                    for (size_t j=i; j < fp->nSlope; j += 2)
+                    // Add additional 2x cascades
+                    for (size_t j=i; j < fp->nSlope; j+=2)
                     {
-                        c                       = add_cascade();
-                        // Create transfer function
-                        c->t[0]                 = 1.0;
-                        c->t[1]                 = -2.0;
-                        c->t[2]                 = 1.0;
+                        c           = add_cascade();
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
 
-                        // Bottom polynom
-                        c->b[0]                 = 1.0;
-                        c->b[1]                 = 2.0;
-                        c->b[2]                 = 1.0;
+                        c->t[0]     = 1.0f;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = -1.0f;
                     }
 
                     // Adjust gain for the last cascade
                     if (c != NULL)
                     {
                         c->t[0]    *= fp->fGain;
-                        c->t[1]    *= fp->fGain;
                         c->t[2]    *= fp->fGain;
                     }
 
