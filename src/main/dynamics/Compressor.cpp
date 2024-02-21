@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 сент. 2016 г.
@@ -53,7 +53,9 @@ namespace lsp
             fRelease        = 0.0f;
             fKnee           = 0.0f;
             fRatio          = 1.0f;
+            fHold           = 0.0f;
             fEnvelope       = 0.0f;
+            fPeak           = 0.0f;
 
             // Pre-calculated parameters
             fTauAttack      = 0.0f;
@@ -73,6 +75,8 @@ namespace lsp
             }
 
             // Additional parameters
+            nHold           = 0;
+            nHoldCounter    = 0;
             nSampleRate     = 0;
             nMode           = CM_DOWNWARD;
             bUpdate         = true;
@@ -90,6 +94,7 @@ namespace lsp
             // Update settings if necessary
             fTauAttack          = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
             fTauRelease         = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
+            nHold               = millis_to_samples(nSampleRate, fHold);
 
             // Mode-dependent configuration
             switch (nMode)
@@ -220,15 +225,38 @@ namespace lsp
 
             // Calculate envelope of compressor
             float e         = fEnvelope;
+            float peak      = fPeak;
+            uint32_t hold   = nHoldCounter;
+
             for (size_t i=0; i<samples; ++i)
             {
                 float s         = in[i];
                 float d         = s - e;
-                float k         = ((e > fReleaseThresh) && (d < 0.0f)) ? fTauRelease : fTauAttack;
-                e              += k * d;
+                if (d < 0.0f)
+                {
+                    if (hold > 0)
+                        --hold;
+                    else
+                    {
+                        e              += ((e > fReleaseThresh) ? fTauRelease : fTauAttack) * d;
+                        peak            = e;
+                    }
+                }
+                else
+                {
+                    e              += fTauAttack * d;
+                    if (e >= peak)
+                    {
+                        peak            = e;
+                        hold            = nHold;
+                    }
+                }
+
                 out[i]          = e;
             }
             fEnvelope       = e;
+            fPeak           = peak;
+            nHoldCounter    = hold;
 
             // Copy envelope to array if specified
             if (env != NULL)
@@ -243,8 +271,25 @@ namespace lsp
             update_settings();
 
             float d         = s - fEnvelope;
-            float k         = ((fEnvelope > fReleaseThresh) && (d < 0.0f)) ? fTauRelease : fTauAttack;
-            fEnvelope      += k * d;
+            if (d < 0.0f)
+            {
+                if (nHoldCounter > 0)
+                    --nHoldCounter;
+                else
+                {
+                    fEnvelope      += ((fEnvelope > fReleaseThresh) ? fTauRelease : fTauAttack) * d;
+                    fPeak           = fEnvelope;
+                }
+            }
+            else
+            {
+                fEnvelope      += fTauAttack * d;
+                if (fEnvelope >= fPeak)
+                {
+                    fPeak           = fEnvelope;
+                    nHoldCounter    = nHold;
+                }
+            }
 
             if (env != NULL)
                 *env    = fEnvelope;
@@ -312,6 +357,22 @@ namespace lsp
 
             x           = g1 * g2;
             return x;
+        }
+
+        void Compressor::set_attack_threshold(float threshold)
+        {
+            if (fAttackThresh == threshold)
+                return;
+            fAttackThresh       = threshold;
+            bUpdate             = true;
+        }
+
+        void Compressor::set_release_threshold(float threshold)
+        {
+            if (fReleaseThresh == threshold)
+                return;
+            fReleaseThresh      = threshold;
+            bUpdate             = true;
         }
 
         void Compressor::set_threshold(float attack, float release)
@@ -390,6 +451,15 @@ namespace lsp
             bUpdate     = true;
         }
 
+        void Compressor::set_hold(float hold)
+        {
+            hold        = lsp_max(hold, 0.0f);
+            if (hold == fHold)
+                return;
+            fHold       = hold;
+            bUpdate     = true;
+        }
+
         void Compressor::dump(IStateDumper *v) const
         {
             v->write("fAttackThresh", fAttackThresh);
@@ -399,7 +469,9 @@ namespace lsp
             v->write("fRelease", fRelease);
             v->write("fKnee", fKnee);
             v->write("fRatio", fRatio);
+            v->write("fHold", fHold);
             v->write("fEnvelope", fEnvelope);
+            v->write("fPeak", fPeak);
             v->write("fTauAttack", fTauAttack);
             v->write("fTauRelease", fTauRelease);
             v->begin_object("sComp", &sComp, sizeof(sComp));
