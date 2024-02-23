@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 19 окт. 2016 г.
@@ -90,9 +90,13 @@ namespace lsp
 
                 // Dynamic patameters
                 float       fEnvelope;
+                float       fHold;
+                float       fPeak;
 
                 // Additional parameters
-                size_t      nSampleRate;
+                uint32_t    nHold;
+                uint32_t    nHoldCounter;
+                uint32_t    nSampleRate;
                 bool        bUpdate;
 
             protected:
@@ -132,59 +136,41 @@ namespace lsp
                  */
                 void update_settings();
 
+                /**
+                 * Get sample rate
+                 * @return sample rate
+                 */
+                inline size_t sample_rate() const           { return nSampleRate; }
+
                 /** Set sample rate
                  *
                  * @param sr sample rate
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (sr == nSampleRate)
-                        return;
-                    nSampleRate = sr;
-                    bUpdate     = true;
-                }
+                void set_sample_rate(size_t sr);
 
                 /** Get input ratio
                  *
                  * @return input ratio
                  */
-                inline float get_in_ratio() const
-                {
-                    return fInRatio;
-                }
+                inline float in_ratio() const               { return fInRatio; }
 
                 /** Set input ratio
                  *
                  * @param ratio input ratio
                  */
-                inline void set_in_ratio(float ratio)
-                {
-                    if (fInRatio == ratio)
-                        return;
-                    fInRatio = ratio;
-                    bUpdate = true;
-                }
+                void set_in_ratio(float ratio);
 
                 /** Get output ratio
                  *
                  * @return output ratio
                  */
-                inline float get_out_ratio() const
-                {
-                    return fOutRatio;
-                }
+                inline float out_ratio() const              { return fOutRatio; }
 
                 /** Set output ratio
                  *
                  * @param ratio output ratio
                  */
-                inline void set_out_ratio(float ratio)
-                {
-                    if (fOutRatio == ratio)
-                        return;
-                    fOutRatio = ratio;
-                    bUpdate = true;
-                }
+                void set_out_ratio(float ratio);
 
                 /** Get dot configuration
                  *
@@ -192,13 +178,7 @@ namespace lsp
                  * @param dst pointer to store data
                  * @return status of operation
                  */
-                inline bool get_dot(size_t id, dyndot_t *dst) const
-                {
-                    if ((id >= DYNAMIC_PROCESSOR_DOTS) || (dst == NULL))
-                        return false;
-                    *dst    = vDots[id];
-                    return true;
-                }
+                bool get_dot(size_t id, dyndot_t *dst) const;
 
                 /** Set dot configuration
                  *
@@ -223,92 +203,68 @@ namespace lsp
                  * @param id split level
                  * @return attack level
                  */
-                inline float get_attack_level(size_t id) const
-                {
-                    return (id >= DYNAMIC_PROCESSOR_DOTS) ? -1.0f : vAttackLvl[id];
-                }
+                float attack_level(size_t id) const;
 
                 /** Set attack level
                  *
                  * @param id split level
                  * @param value level value
                  */
-                inline void set_attack_level(size_t id, float value)
-                {
-                    if ((id >= DYNAMIC_PROCESSOR_DOTS) || (vAttackLvl[id] == value))
-                        return;
-                    vAttackLvl[id] = value;
-                    bUpdate = true;
-                }
+                void set_attack_level(size_t id, float value);
 
                 /** Get release level
                  *
                  * @param id split level
                  * @return attack level
                  */
-                inline float get_release_level(size_t id) const
-                {
-                    return (id >= DYNAMIC_PROCESSOR_DOTS) ? -1.0f : vReleaseLvl[id];
-                }
+                float release_level(size_t id) const;
 
                 /** Set release level
                  *
                  * @param id split level
                  * @param value level value
                  */
-                inline void set_release_level(size_t id, float value)
-                {
-                    if ((id >= DYNAMIC_PROCESSOR_DOTS) || (vReleaseLvl[id] == value))
-                        return;
-                    vReleaseLvl[id] = value;
-                    bUpdate = true;
-                }
+                void set_release_level(size_t id, float value);
 
                 /** Get attack time of the specified range
                  *
                  * @param id identifier of the range
                  * @return attack time
                  */
-                inline float get_attack_time(size_t id) const
-                {
-                    return (id >= DYNAMIC_PROCESSOR_RANGES) ? -1.0f : vAttackTime[id];
-                }
+                float attack_time(size_t id) const;
 
                 /** Set attack time
                  *
                  * @param id identifier of the range
                  * @param value attack time value
                  */
-                inline void set_attack_time(size_t id, float value)
-                {
-                    if ((id >= DYNAMIC_PROCESSOR_RANGES) || (vAttackTime[id] == value))
-                        return;
-                    vAttackTime[id] = value;
-                    bUpdate = true;
-                }
+                void set_attack_time(size_t id, float value);
 
                 /** Get release time of the specified range
                  *
                  * @param id identifier of the range
                  * @return release time
                  */
-                inline float get_release_time(size_t id) const
-                {
-                    return (id >= DYNAMIC_PROCESSOR_RANGES) ? -1.0f : vReleaseTime[id];
-                }
+                float release_time(size_t id) const;
 
                 /** Set release time
                  *
                  * @param id identifier of the range
                  * @param value attack time value
                  */
-                inline void set_release_time(size_t id, float value)
-                {
-                    if ((id >= DYNAMIC_PROCESSOR_RANGES) || (vReleaseTime[id] == value))
-                        return;
-                    vReleaseTime[id] = value;
-                    bUpdate = true;
-                }
+                void set_release_time(size_t id, float value);
+
+                /**
+                 * Get the hold time
+                 * @return hold time
+                 */
+                float hold() const                          { return fHold; }
+
+                /**
+                 * Set hold time in milliseconds
+                 * @param hold hold time in milliseconds
+                 */
+                void set_hold(float hold);
 
                 /** Process sidechain signal
                  *
@@ -321,11 +277,11 @@ namespace lsp
 
                 /** Process one sample of sidechain signal
                  *
-                 * @param in sidechain signal
+                 * @param s sidechain signal
                  * @param out envelope signal of processor, may be NULL
                  * @return output signal gain to VCA
                  */
-                float process(float *env, float in);
+                float process(float *env, float s);
 
                 /** Get dynamic curve
                  *
@@ -375,7 +331,8 @@ namespace lsp
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_DYNAMICS_DYNAMICPROCESSOR_H_ */

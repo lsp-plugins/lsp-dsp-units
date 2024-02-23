@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 19 окт. 2016 г.
@@ -45,6 +45,11 @@ namespace lsp
             fInRatio        = 1.0f;
             fOutRatio       = 1.0f;
             fEnvelope       = 0.0f;
+            fHold           = 0.0f;
+            fPeak           = 0.0f;
+
+            nHold           = 0;
+            nHoldCounter    = 0;
             nSampleRate     = 0.0f;
             bUpdate         = true;
 
@@ -70,6 +75,99 @@ namespace lsp
 
         void DynamicProcessor::destroy()
         {
+        }
+
+        void DynamicProcessor::set_sample_rate(size_t sr)
+        {
+            if (sr == nSampleRate)
+                return;
+            nSampleRate = sr;
+            bUpdate     = true;
+        }
+
+        void DynamicProcessor::set_in_ratio(float ratio)
+        {
+            if (fInRatio == ratio)
+                return;
+            fInRatio = ratio;
+            bUpdate = true;
+        }
+
+        void DynamicProcessor::set_out_ratio(float ratio)
+        {
+            if (fOutRatio == ratio)
+                return;
+            fOutRatio = ratio;
+            bUpdate = true;
+        }
+
+        bool DynamicProcessor::get_dot(size_t id, dyndot_t *dst) const
+        {
+            if ((id >= DYNAMIC_PROCESSOR_DOTS) || (dst == NULL))
+                return false;
+            *dst    = vDots[id];
+            return true;
+        }
+
+        float DynamicProcessor::attack_level(size_t id) const
+        {
+            return (id >= DYNAMIC_PROCESSOR_DOTS) ? -1.0f : vAttackLvl[id];
+        }
+
+        void DynamicProcessor::set_attack_level(size_t id, float value)
+        {
+            if ((id >= DYNAMIC_PROCESSOR_DOTS) || (vAttackLvl[id] == value))
+                return;
+            vAttackLvl[id] = value;
+            bUpdate = true;
+        }
+
+        float DynamicProcessor::release_level(size_t id) const
+        {
+            return (id >= DYNAMIC_PROCESSOR_DOTS) ? -1.0f : vReleaseLvl[id];
+        }
+
+        void DynamicProcessor::set_release_level(size_t id, float value)
+        {
+            if ((id >= DYNAMIC_PROCESSOR_DOTS) || (vReleaseLvl[id] == value))
+                return;
+            vReleaseLvl[id] = value;
+            bUpdate = true;
+        }
+
+        float DynamicProcessor::attack_time(size_t id) const
+        {
+            return (id >= DYNAMIC_PROCESSOR_RANGES) ? -1.0f : vAttackTime[id];
+        }
+
+        void DynamicProcessor::set_attack_time(size_t id, float value)
+        {
+            if ((id >= DYNAMIC_PROCESSOR_RANGES) || (vAttackTime[id] == value))
+                return;
+            vAttackTime[id] = value;
+            bUpdate = true;
+        }
+
+        float DynamicProcessor::release_time(size_t id) const
+        {
+            return (id >= DYNAMIC_PROCESSOR_RANGES) ? -1.0f : vReleaseTime[id];
+        }
+
+        void DynamicProcessor::set_release_time(size_t id, float value)
+        {
+            if ((id >= DYNAMIC_PROCESSOR_RANGES) || (vReleaseTime[id] == value))
+                return;
+            vReleaseTime[id] = value;
+            bUpdate = true;
+        }
+
+        void DynamicProcessor::set_hold(float hold)
+        {
+            hold        = lsp_max(hold, 0.0f);
+            if (hold == fHold)
+                return;
+            fHold       = hold;
+            bUpdate     = true;
         }
 
         inline float DynamicProcessor::spline_amp(const spline_t *s, float lx)
@@ -268,6 +366,9 @@ namespace lsp
                 }
             }
 
+            // Update hold time
+            nHold           = millis_to_samples(nSampleRate, fHold);
+
             // Build spline list
             spline_t *s     = vSplines;
             for (size_t i=0; i<DYNAMIC_PROCESSOR_DOTS; ++i)
@@ -296,16 +397,41 @@ namespace lsp
         void DynamicProcessor::process(float *out, float *env, const float *in, size_t samples)
         {
             // Calculate envelope of compressor
+            float e         = fEnvelope;
+            float peak      = fPeak;
+            uint32_t hold   = nHoldCounter;
+
             for (size_t i=0; i<samples; ++i)
             {
-                float s     = *(in++);
+                float s         = *(in++);
+                float d         = s - e;
 
-                fEnvelope  += (s > fEnvelope) ?
-                        (s - fEnvelope) * solve_reaction(vAttack, fEnvelope, fCount[CT_ATTACK]) :
-                        (s - fEnvelope) * solve_reaction(vRelease, fEnvelope, fCount[CT_RELEASE]);
+                if (d < 0.0f)
+                {
+                    if (hold > 0)
+                        --hold;
+                    else
+                    {
+                        e              += d * solve_reaction(vRelease, e, fCount[CT_RELEASE]);
+                        peak            = e;
+                    }
+                }
+                else
+                {
+                    e              += d * solve_reaction(vAttack, e, fCount[CT_ATTACK]);
+                    if (e >= peak)
+                    {
+                        peak            = e;
+                        hold            = nHold;
+                    }
+                }
 
-                out[i]      = fEnvelope;
+                out[i]          = e;
             }
+
+            fEnvelope       = e;
+            fPeak           = peak;
+            nHoldCounter    = hold;
 
             // Copy envelope to array if specified
             if (env != NULL)
@@ -315,11 +441,29 @@ namespace lsp
             reduction(out, out, samples);
         }
 
-        float DynamicProcessor::process(float *env, float in)
+        float DynamicProcessor::process(float *env, float s)
         {
-            fEnvelope  += (in > fEnvelope) ?
-                    (in - fEnvelope) * solve_reaction(vAttack, fEnvelope, fCount[CT_ATTACK]) :
-                    (in - fEnvelope) * solve_reaction(vRelease, fEnvelope, fCount[CT_RELEASE]);
+            float d         = s - fEnvelope;
+
+            if (d < 0.0f)
+            {
+                if (nHoldCounter > 0)
+                    --nHoldCounter;
+                else
+                {
+                    fEnvelope      += d * solve_reaction(vRelease, fEnvelope, fCount[CT_RELEASE]);
+                    fPeak           = fEnvelope;
+                }
+            }
+            else
+            {
+                fEnvelope      += d * solve_reaction(vAttack, fEnvelope, fCount[CT_ATTACK]);
+                if (fEnvelope >= fPeak)
+                {
+                    fPeak           = fEnvelope;
+                    nHoldCounter    = nHold;
+                }
+            }
 
             if (env != NULL)
                 *env    = fEnvelope;
@@ -528,8 +672,14 @@ namespace lsp
             v->end_array();
 
             v->write("fEnvelope", fEnvelope);
+            v->write("fHold", fHold);
+            v->write("fPeak", fPeak);
+
+            v->write("nHold", nHold);
+            v->write("nHoldCounter", nHoldCounter);
             v->write("nSampleRate", nSampleRate);
             v->write("bUpdate", bUpdate);
         }
-    }
+
+    } /* namespace dspu */
 } /* namespace lsp */
