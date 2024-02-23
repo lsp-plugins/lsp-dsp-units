@@ -62,8 +62,12 @@ namespace lsp
             fTauRelease     = 0.0f;
             fReduction      = 0.0f;
             fEnvelope       = 0.0f;
+            fHold           = 0.0f;
+            fPeak           = 0.0f;
 
             // Additional parameters
+            nHold           = 0;
+            nHoldCounter    = 0;
             nSampleRate     = 0;
             nCurve          = 0;
             bUpdate         = true;
