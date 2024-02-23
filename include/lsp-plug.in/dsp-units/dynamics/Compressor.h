@@ -222,6 +222,8 @@ namespace lsp
                  */
                 void set_mode(size_t mode);
 
+                inline size_t mode() const          { return nMode; }
+
                 /**
                  * Get the hold time of compressor
                  * @return hold time of compressor

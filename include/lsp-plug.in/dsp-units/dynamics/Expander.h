@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 нояб. 2016 г.
@@ -48,6 +48,8 @@ namespace lsp
                 float       fKnee;
                 float       fRatio;
                 float       fEnvelope;
+                float       fHold;
+                float       fPeak;
 
                 // Pre-calculated parameters
                 float       fTauAttack;
@@ -55,7 +57,9 @@ namespace lsp
                 dsp::expander_knee_t sExp;  // Expander settings
 
                 // Additional parameters
-                size_t      nSampleRate;
+                uint32_t    nHold;
+                uint32_t    nHoldCounter;
+                uint32_t    nSampleRate;
                 bool        bUpdate;
                 bool        bUpward;
 
@@ -104,107 +108,127 @@ namespace lsp
                  */
                 void update_settings();
 
+                /**
+                 * Set attack threshold
+                 * @param threshold attack threshold
+                 */
+                void set_attack_threshold(float threshold);
+
+                /**
+                 * Get attack threshold
+                 * @return attack threshold
+                 */
+                inline float attack_threshold() const   { return fAttackThresh; }
+
+                /**
+                 * Set release threshold
+                 * @param threshold release threshold (relative to attack, must be positive, less or equal to 1.0)
+                 */
+                void set_release_threshold(float threshold);
+
+                /**
+                 * Get release threshold
+                 * @return release threshold
+                 */
+                inline float release_threshold() const      { return fReleaseThresh; }
+
                 /** Set threshold
                  *
                  * @param attack the attack threshold
                  * @param release the release threshold (relative to attack, must be positive, less or equal to 1.0)
                  */
-                inline void set_threshold(float attack, float release)
-                {
-                    if ((fAttackThresh == attack) && (fReleaseThresh == release))
-                        return;
-                    fAttackThresh       = attack;
-                    fReleaseThresh      = release;
-                    bUpdate             = true;
-                }
+                void set_threshold(float attack, float release);
 
                 /** Set timings
                  *
                  * @param attack attack time (ms)
                  * @param release release time (ms)
                  */
-                inline void set_timings(float attack, float release)
-                {
-                    if ((fAttack == attack) && (fRelease == release))
-                        return;
-                    fAttack     = attack;
-                    fRelease    = release;
-                    bUpdate     = true;
-                }
+                void set_timings(float attack, float release);
 
                 /** Set attack time
                  *
                  * @param attack attack time (ms)
                  */
-                inline void set_attack(float attack)
-                {
-                    if (fAttack == attack)
-                        return;
-                    fAttack     = attack;
-                    bUpdate     = true;
-                }
+                void set_attack(float attack);
+
+                /**
+                 * Get attack time
+                 * @return attack time (ms)
+                 */
+                inline float attack() const                 { return fAttack; }
 
                 /** Set release time
                  *
                  * @param release release time (ms)
                  */
-                inline void set_release(float release)
-                {
-                    if (fRelease == release)
-                        return;
-                    fRelease    = release;
-                    bUpdate     = true;
-                }
+                void set_release(float release);
+
+                /**
+                 * Get release time
+                 * @return release time (ms)
+                 */
+                inline float release() const                { return fRelease; }
 
                 /** Set sample rate
                  *
                  * @param sr sample rate
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (sr == nSampleRate)
-                        return;
-                    nSampleRate = sr;
-                    bUpdate     = true;
-                }
+                void set_sample_rate(size_t sr);
+
+                /**
+                 * Get sample rate
+                 * @return sample rate
+                 */
+                inline size_t sample_rate() const           { return nSampleRate; }
 
                 /** Set knee
                  *
                  * @param knee (in gain units)
                  */
-                inline void set_knee(float knee)
-                {
-                    if (knee == fKnee)
-                        return;
-                    fKnee       = knee;
-                    bUpdate     = true;
-                }
+                void set_knee(float knee);
+
+                /**
+                 * Get knee
+                 * @return knee
+                 */
+                inline float knee() const                   { return fKnee; }
 
                 /** Set ratio
                  *
                  * @param ratio expansion ratio
                  */
-                inline void set_ratio(float ratio)
-                {
-                    if (ratio == fRatio)
-                        return;
-                    bUpdate     = true;
-                    fRatio      = ratio;
-                }
+                void set_ratio(float ratio);
+
+                /**
+                 * Get ratio
+                 * @return ratio
+                 */
+                inline float ratio() const                  { return fRatio; }
 
                 /** Set expander mode: upward/downward
                  *
                  * @param mode expander mode
                  */
-                inline void set_mode(size_t mode)
-                {
-                    bool upward = (mode == EM_UPWARD);
-                    if (upward == bUpward)
-                        return;
+                void set_mode(size_t mode);
 
-                    bUpward     = upward;
-                    bUpdate     = true;
-                }
+                /**
+                 * Get expander mode
+                 * @return expander mode
+                 */
+                inline size_t mode() const                  { return (bUpward) ? EM_UPWARD : EM_DOWNWARD; }
+
+                /**
+                 * Get the hold time
+                 * @return hold time
+                 */
+                float hold() const                          { return fHold; }
+
+                /**
+                 * Set hold time in milliseconds
+                 * @param hold hold time in milliseconds
+                 */
+                void set_hold(float hold);
 
                 /** Process sidechain signal
                  *

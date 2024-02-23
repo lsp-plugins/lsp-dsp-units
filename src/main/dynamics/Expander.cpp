@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 нояб. 2016 г.
@@ -77,6 +77,8 @@ namespace lsp
             fKnee           = 0.0f;
             fRatio          = 1.0f;
             fEnvelope       = 0.0f;
+            fHold           = 0.0f;
+            fPeak           = 0.0f;
 
             // Pre-calculated parameters
             fTauAttack      = 0.0f;
@@ -91,6 +93,8 @@ namespace lsp
             sExp.tilt[1]    = 0.0f;
 
             // Additional parameters
+            nHold           = 0;
+            nHoldCounter    = 0;
             nSampleRate     = 0;
             bUpdate         = true;
             bUpward         = true;
@@ -98,6 +102,99 @@ namespace lsp
 
         void Expander::destroy()
         {
+        }
+
+        void Expander::set_attack_threshold(float threshold)
+        {
+            if (fAttackThresh == threshold)
+                return;
+            fAttackThresh       = threshold;
+            bUpdate             = true;
+        }
+
+        void Expander::set_release_threshold(float threshold)
+        {
+            if (fReleaseThresh == threshold)
+                return;
+            fReleaseThresh      = threshold;
+            bUpdate             = true;
+        }
+
+        void Expander::set_threshold(float attack, float release)
+        {
+            if ((fAttackThresh == attack) && (fReleaseThresh == release))
+                return;
+            fAttackThresh       = attack;
+            fReleaseThresh      = release;
+            bUpdate             = true;
+        }
+
+        void Expander::set_timings(float attack, float release)
+        {
+            if ((fAttack == attack) && (fRelease == release))
+                return;
+            fAttack     = attack;
+            fRelease    = release;
+            bUpdate     = true;
+        }
+
+        void Expander::set_attack(float attack)
+        {
+            if (fAttack == attack)
+                return;
+            fAttack     = attack;
+            bUpdate     = true;
+        }
+
+        void Expander::set_release(float release)
+        {
+            if (fRelease == release)
+                return;
+            fRelease    = release;
+            bUpdate     = true;
+        }
+
+        void Expander::set_sample_rate(size_t sr)
+        {
+            if (sr == nSampleRate)
+                return;
+            nSampleRate = sr;
+            bUpdate     = true;
+        }
+
+        void Expander::set_knee(float knee)
+        {
+            if (knee == fKnee)
+                return;
+            fKnee       = knee;
+            bUpdate     = true;
+        }
+
+        void Expander::set_ratio(float ratio)
+        {
+            if (ratio == fRatio)
+                return;
+            bUpdate     = true;
+            fRatio      = ratio;
+        }
+
+        void Expander::set_mode(size_t mode)
+        {
+            bool upward = (mode == EM_UPWARD);
+            if (upward == bUpward)
+                return;
+
+            bUpward     = upward;
+            bUpdate     = true;
+        }
+
+        void Expander::set_hold(float hold)
+        {
+            hold        = lsp_max(hold, 0.0f);
+            if (hold == fHold)
+                return;
+            fHold       = hold;
+            bUpdate     = true;
         }
 
         void Expander::update_settings()
@@ -108,6 +205,7 @@ namespace lsp
             // Update settings if necessary
             fTauAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
             fTauRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
+            nHold           = millis_to_samples(nSampleRate, fHold);
 
             // Calculate interpolation parameters
             sExp.start      = fAttackThresh * fKnee;
@@ -148,17 +246,42 @@ namespace lsp
 
         void Expander::process(float *out, float *env, const float *in, size_t samples)
         {
+            update_settings();
+
             // Calculate envelope of expander
             float e         = fEnvelope;
+            float peak      = fPeak;
+            uint32_t hold   = nHoldCounter;
+
             for (size_t i=0; i<samples; ++i)
             {
                 float s         = in[i];
                 float d         = s - e;
-                float k         = ((e > fReleaseThresh) && (d < 0.0f)) ? fTauRelease : fTauAttack;
-                e              += k * d;
+                if (d < 0.0f)
+                {
+                    if (hold > 0)
+                        --hold;
+                    else
+                    {
+                        e              += ((e > fReleaseThresh) ? fTauRelease : fTauAttack) * d;
+                        peak            = e;
+                    }
+                }
+                else
+                {
+                    e              += fTauAttack * d;
+                    if (e >= peak)
+                    {
+                        peak            = e;
+                        hold            = nHold;
+                    }
+                }
+
                 out[i]          = e;
             }
             fEnvelope       = e;
+            fPeak           = peak;
+            nHoldCounter    = hold;
 
             // Copy envelope to array if specified
             if (env != NULL)
@@ -170,10 +293,28 @@ namespace lsp
     
         float Expander::process(float *env, float s)
         {
-            if (fEnvelope > fReleaseThresh)
-                fEnvelope       += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+            update_settings();
+
+            float d         = s - fEnvelope;
+            if (d < 0.0f)
+            {
+                if (nHoldCounter > 0)
+                    --nHoldCounter;
+                else
+                {
+                    fEnvelope      += ((fEnvelope > fReleaseThresh) ? fTauRelease : fTauAttack) * d;
+                    fPeak           = fEnvelope;
+                }
+            }
             else
-                fEnvelope       += fTauAttack * (s - fEnvelope);
+            {
+                fEnvelope      += fTauAttack * d;
+                if (fEnvelope >= fPeak)
+                {
+                    fPeak           = fEnvelope;
+                    nHoldCounter    = nHold;
+                }
+            }
 
             if (env != NULL)
                 *env    = fEnvelope;
@@ -274,6 +415,8 @@ namespace lsp
             v->write("fKnee", fKnee);
             v->write("fRatio", fRatio);
             v->write("fEnvelope", fEnvelope);
+            v->write("fHold", fHold);
+            v->write("fPeak", fPeak);
             v->write("fTauAttack", fTauAttack);
             v->write("fTauRelease", fTauRelease);
 
@@ -287,6 +430,8 @@ namespace lsp
             }
             v->end_object();
 
+            v->write("nHold", nHold);
+            v->write("nHoldCounter", nHoldCounter);
             v->write("nSampleRate", nSampleRate);
             v->write("bUpdate", bUpdate);
             v->write("bUpward", bUpward);
