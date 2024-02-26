@@ -405,6 +405,8 @@ namespace lsp
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
                 fp.fGain            = (i < (nPlanSize-1)) ? GAIN_AMP_0_DB : right->fGain;
+                if (sp->nSlope == CROSS_SLOPE_LR2)
+                    fp.fGain            = -fp.fGain;
                 fp.nSlope           = select_slope(sp->nSlope);
                 fp.fQuality         = 0.0f;
 

@@ -992,13 +992,13 @@ namespace lsp
                     for (size_t j=i; j < fp->nSlope; j+=2)
                     {
                         c           = add_cascade();
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = k;
-                        c->b[2]     = 1.0f;
-
                         c->t[0]     = 1.0f;
                         c->t[1]     = 0.0f;
                         c->t[2]     = -1.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
                     }
 
                     // Adjust gain for the last cascade
