@@ -164,7 +164,7 @@ namespace lsp
 
             protected:
                 static inline filter_type_t    select_filter(xover_type_t type, crossover_mode_t mode, size_t slope);
-                static inline uint32_t         select_slope(size_t slope);
+                static inline uint32_t         select_slope(xover_type_t type, size_t slope);
 
             public:
                 explicit Crossover();

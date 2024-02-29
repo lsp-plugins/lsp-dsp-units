@@ -973,28 +973,15 @@ namespace lsp
 
                 case FLT_BT_RLC_ALLPASS:
                 {
-                    // Add cascade with one pole
-                    float k         = 2.0f / (1.0f + fp->fQuality);
-                    size_t i        = fp->nSlope & 1;
-                    if (i)
-                    {
-                        c           = add_cascade();
-                        c->t[0]     = 1.0f;
-                        c->t[1]     = -1.0f;
-                        c->t[2]     = 0.0f;
-
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = 1.0f;
-                        c->b[2]     = 0.0f;
-                    }
+                    const float k           = 2.0f / (1.0f + fp->fQuality);
 
                     // Add additional 2x cascades
-                    for (size_t j=i; j < fp->nSlope; j+=2)
+                    for (size_t j=0; j < fp->nSlope; ++j)
                     {
                         c           = add_cascade();
                         c->t[0]     = 1.0f;
-                        c->t[1]     = 0.0f;
-                        c->t[2]     = -1.0f;
+                        c->t[1]     = -k;
+                        c->t[2]     = 1.0f;
 
                         c->b[0]     = 1.0f;
                         c->b[1]     = k;
@@ -1005,6 +992,7 @@ namespace lsp
                     if (c != NULL)
                     {
                         c->t[0]    *= fp->fGain;
+                        c->t[1]    *= fp->fGain;
                         c->t[2]    *= fp->fGain;
                     }
 
@@ -1500,11 +1488,11 @@ namespace lsp
             float a0, a1, a2;
             float b0, b1, b2;
 
-            float omega    = 2.0 * M_PI * fp->fFreq / float(nSampleRate);
+            float omega    = 2.0f * M_PI * fp->fFreq / float(nSampleRate);
             float cs       = sinf(omega);
             float cc       = cosf(omega); // Have to use trig functions for both to have correct sign
             float Q        = (fp->fQuality > MIN_APO_Q) ? fp->fQuality : MIN_APO_Q;
-            float alpha    = 0.5 * cs / Q;
+            float alpha    = 0.5f * cs / Q;
 
             // In LSP convention, the b coefficients are in the denominator. The a coefficients are in the
             // numerator. This is opposite to the most usual convention.
@@ -1516,12 +1504,12 @@ namespace lsp
                 {
                     float A     = fp->fGain;
 
-                    a0 = A * 0.5 * (1.0 - cc);
-                    a1 = A * (1.0 - cc);
+                    a0 = A * 0.5f * (1.0f - cc);
+                    a1 = A * (1.0f - cc);
                     a2 = a0;
-                    b0 = 1.0 + alpha;
-                    b1 = -2.0 * cc;
-                    b2 = 1.0 - alpha;
+                    b0 = 1.0f + alpha;
+                    b1 = -2.0f * cc;
+                    b2 = 1.0f - alpha;
 
                     break;
                 }
@@ -1530,12 +1518,12 @@ namespace lsp
                 {
                     float A     = fp->fGain;
 
-                    a0 = A * 0.5 * (1.0 + cc);
-                    a1 = A * (-1.0 - cc);
+                    a0 = A * 0.5f * (1.0f + cc);
+                    a1 = A * (-1.0f - cc);
                     a2 = a0;
-                    b0 = 1.0 + alpha;
-                    b1 = -2.0 * cc;
-                    b2 = 1.0 - alpha;
+                    b0 = 1.0f + alpha;
+                    b1 = -2.0f * cc;
+                    b2 = 1.0f - alpha;
 
                     break;
                 }
@@ -1545,11 +1533,11 @@ namespace lsp
                     float A     = fp->fGain;
 
                     a0 = A * alpha;
-                    a1 = 0.0;
+                    a1 = 0.0f;
                     a2 = A * -alpha;
-                    b0 = 1.0 + alpha;
-                    b1 = -2.0 * cc;
-                    b2 = 1 - alpha;
+                    b0 = 1.0f + alpha;
+                    b1 = -2.0f * cc;
+                    b2 = 1.0f - alpha;
 
                     break;
                 }
@@ -1559,11 +1547,11 @@ namespace lsp
                     float A     = fp->fGain;
 
                     a0 = A;
-                    a1 = A * -2.0 * cc;
+                    a1 = A * -2.0f * cc;
                     a2 = a0;
-                    b0 = 1.0 + alpha;
-                    b1 = -2.0 * cc;
-                    b2 = 1.0 - alpha;
+                    b0 = 1.0f + alpha;
+                    b1 = -2.0f * cc;
+                    b2 = 1.0f - alpha;
 
                     break;
                 }
@@ -1572,9 +1560,9 @@ namespace lsp
                 {
                     float A     = fp->fGain;
 
-                    a0 = A * (1.0 - alpha);
-                    a1 = A * -2.0 * cc;
-                    a2 = A * (1.0 + alpha);
+                    a0 = A * (1.0f - alpha);
+                    a1 = A * -2.0f * cc;
+                    a2 = A * (1.0f + alpha);
                     b0 = a2;
                     b1 = a1;
                     b2 = a0;
@@ -1586,12 +1574,12 @@ namespace lsp
                 {
                     float A     = sqrtf(fp->fGain);
 
-                    a0 = 1.0 + alpha * A;
-                    a1 = -2.0 * cc;
-                    a2 = 1.0 - alpha * A;
-                    b0 = 1.0 + alpha / A;
+                    a0 = 1.0f + alpha * A;
+                    a1 = -2.0f * cc;
+                    a2 = 1.0f - alpha * A;
+                    b0 = 1.0f + alpha / A;
                     b1 = a1;
-                    b2 = 1.0 - alpha / A;
+                    b2 = 1.0f - alpha / A;
 
                     break;
                 }
@@ -1599,14 +1587,14 @@ namespace lsp
                 case FLT_DR_APO_LOSHELF:
                 {
                     float A     = sqrtf(fp->fGain);
-                    float beta  = 2.0 * alpha * sqrtf(A);
+                    float beta  = 2.0f * alpha * sqrtf(A);
 
-                    a0 = A * ((A + 1.0) - (A - 1.0) * cc + beta);
-                    a1 = 2.0 * A * ((A - 1.0) - (A + 1.0) * cc);
-                    a2 = A * ((A + 1.0) - (A - 1.0) * cc - beta);
-                    b0 = (A + 1.0) + (A - 1.0) * cc + beta;
-                    b1 = -2.0 * ((A - 1.0) + (A + 1.0) * cc);
-                    b2 = (A + 1.0) + (A - 1.0) * cc - beta;
+                    a0 = A * ((A + 1.0f) - (A - 1.0f) * cc + beta);
+                    a1 = 2.0f * A * ((A - 1.0f) - (A + 1.0f) * cc);
+                    a2 = A * ((A + 1.0f) - (A - 1.0f) * cc - beta);
+                    b0 = (A + 1.0f) + (A - 1.0f) * cc + beta;
+                    b1 = -2.0f * ((A - 1.0f) + (A + 1.0f) * cc);
+                    b2 = (A + 1.0f) + (A - 1.0f) * cc - beta;
 
                     break;
                 }
@@ -1616,12 +1604,12 @@ namespace lsp
                     float A     = sqrtf(fp->fGain);
                     float beta  = 2.0 * alpha * sqrtf(A);
 
-                    a0 = A * ((A + 1.0) + (A - 1.0) * cc + beta);
-                    a1 = -2.0 * A * ((A - 1.0) + (A + 1.0) * cc);
-                    a2 = A * ((A + 1.0) + (A - 1.0) * cc - beta);
-                    b0 = (A + 1.0) - (A - 1.0) * cc + beta;
-                    b1 = 2.0 * ((A - 1.0) - (A + 1.0) * cc);
-                    b2 = (A + 1.0) - (A - 1.0) * cc - beta;
+                    a0 = A * ((A + 1.0f) + (A - 1.0f) * cc + beta);
+                    a1 = -2.0f * A * ((A - 1.0f) + (A + 1.0f) * cc);
+                    a2 = A * ((A + 1.0f) + (A - 1.0f) * cc - beta);
+                    b0 = (A + 1.0f) - (A - 1.0f) * cc + beta;
+                    b1 = 2.0f * ((A - 1.0f) - (A + 1.0f) * cc);
+                    b2 = (A + 1.0f) - (A - 1.0f) * cc - beta;
 
                     break;
                 }

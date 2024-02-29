@@ -188,9 +188,11 @@ namespace lsp
             }
         }
 
-        uint32_t Crossover::select_slope(size_t slope)
+        uint32_t Crossover::select_slope(xover_type_t type, size_t slope)
         {
-            return (slope == CROSS_SLOPE_LR2) ? 2 : slope - 1;
+            if (slope == CROSS_SLOPE_LR2)
+                return (type == FILTER_APF) ? 1 : 2;
+            return slope - 1;
         }
 
         void Crossover::set_slope(size_t sp, size_t slope)
@@ -367,7 +369,7 @@ namespace lsp
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
                 fp.fGain            = left->fGain;
-                fp.nSlope           = select_slope(sp->nSlope);
+                fp.nSlope           = select_slope(FILTER_LPF, sp->nSlope);
                 fp.fQuality         = 0.0f;
 
                 sp->sLPF.set_params(filter_id++, &fp);
@@ -381,7 +383,7 @@ namespace lsp
                     fp.fFreq            = xsp->fFreq;
                     fp.fFreq2           = xsp->fFreq;
                     fp.fGain            = GAIN_AMP_0_DB;
-                    fp.nSlope           = select_slope(xsp->nSlope);
+                    fp.nSlope           = select_slope(FILTER_APF, xsp->nSlope);
                     fp.fQuality         = 0.0f;
 
                     sp->sLPF.set_params(filter_id++, &fp);
@@ -407,7 +409,7 @@ namespace lsp
                 fp.fGain            = (i < (nPlanSize-1)) ? GAIN_AMP_0_DB : right->fGain;
                 if (sp->nSlope == CROSS_SLOPE_LR2)
                     fp.fGain            = -fp.fGain;
-                fp.nSlope           = select_slope(sp->nSlope);
+                fp.nSlope           = select_slope(FILTER_HPF, sp->nSlope);
                 fp.fQuality         = 0.0f;
 
                 sp->sHPF.update(nSampleRate, &fp);
@@ -436,9 +438,8 @@ namespace lsp
             {
                 band_t *b           = &vBands[i];
                 lsp_trace("  band #%d: this=%p, enabled=%s, gain=%f, start=%.2f, end=%.2f, start=%p, end=%p",
-                                int(i), b, (b->bEnabled) ? "true " : "false",
-                                b->fGain, b->fStart, b->fEnd, b->pStart, b->pEnd
-                            );
+                    int(i), b, (b->bEnabled) ? "true " : "false",
+                    b->fGain, b->fStart, b->fEnd, b->pStart, b->pEnd);
             }
         #endif
             // DEBUG END
