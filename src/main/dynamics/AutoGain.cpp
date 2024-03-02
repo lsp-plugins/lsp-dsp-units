@@ -59,6 +59,7 @@ namespace lsp
             fSilence        = GAIN_AMP_M_72_DB;
             fDeviation      = GAIN_AMP_P_6_DB;
             fCurrGain       = 1.0f;
+            fMaxGain        = GAIN_AMP_P_12_DB;
             fOutGain        = 1.0f;
 
             nFlags          = F_UPDATE;
