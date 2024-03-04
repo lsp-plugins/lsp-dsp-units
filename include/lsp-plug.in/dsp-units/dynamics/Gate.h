@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 7 нояб. 2016 г.
@@ -50,10 +50,14 @@ namespace lsp
                 float       fTauRelease;
                 float       fReduction;
                 float       fEnvelope;
+                float       fHold;
+                float       fPeak;
 
                 // Additional parameters
-                size_t      nSampleRate;
-                size_t      nCurve;
+                uint32_t    nHold;
+                uint32_t    nHoldCounter;
+                uint32_t    nSampleRate;
+                uint8_t     nCurve;
                 bool        bUpdate;
 
             public:
@@ -97,90 +101,129 @@ namespace lsp
                  * @param tclose close curve threshold
                  *
                  */
-                inline void set_threshold(float topen, float tclose)
-                {
-                    if ((topen == sCurves[0].fThreshold) && (tclose == sCurves[1].fThreshold))
-                        return;
-                    sCurves[0].fThreshold   = topen;
-                    sCurves[1].fThreshold   = tclose;
-                    bUpdate                 = true;
-                }
+                void set_threshold(float topen, float tclose);
+
+                /**
+                 * Get open curve threshold
+                 * @return open curve threshold
+                 */
+                inline float open_threshold() const                 { return sCurves[0].fThreshold; }
+
+                /**
+                 * Set open curve threshold
+                 * @param threshold open curve threshold
+                 */
+                void set_open_threshold(float threshold);
+
+                /**
+                 * Get close curve threshold
+                 * @return close curve threshold
+                 */
+                inline float close_threshold() const                { return sCurves[1].fThreshold; }
+
+                /**
+                 * Set close curve threshold
+                 * @param threshold close curve threshold
+                 */
+                void set_close_threshold(float threshold);
 
                 /** Set reduction
                  *
                  * @param reduction the reduction threshold
                  */
-                inline void set_reduction(float reduction)
-                {
-                    if (reduction == fReduction)
-                        return;
-                    fReduction          = reduction;
-                    bUpdate             = true;
-                }
+                void set_reduction(float reduction);
+
+                /**
+                 * Get reduction
+                 * @return gain reduction threshold
+                 */
+                inline float reduction() const                      { return fReduction; }
 
                 /** Set timings
                  *
                  * @param attack attack time (ms)
                  * @param release release time (ms)
                  */
-                inline void set_timings(float attack, float release)
-                {
-                    if ((fAttack == attack) && (fRelease == release))
-                        return;
-                    fAttack     = attack;
-                    fRelease    = release;
-                    bUpdate     = true;
-                }
+                void set_timings(float attack, float release);
 
                 /** Set attack time
                  *
                  * @param attack attack time (ms)
                  */
-                inline void set_attack(float attack)
-                {
-                    if (fAttack == attack)
-                        return;
-                    fAttack     = attack;
-                    bUpdate     = true;
-                }
+                void set_attack(float attack);
+
+                /**
+                 * Get attack time
+                 * @return attack time (ms)
+                 */
+                inline float attack() const                         { return fAttack; }
 
                 /** Set release time
                  *
                  * @param release release time (ms)
                  */
-                inline void set_release(float release)
-                {
-                    if (fRelease == release)
-                        return;
-                    fRelease    = release;
-                    bUpdate     = true;
-                }
+                void set_release(float release);
+
+                /**
+                 * Get release time
+                 * @return release time (ms)
+                 */
+                inline float release() const                        { return fRelease; }
 
                 /** Set sample rate
                  *
                  * @param sr sample rate
                  */
-                inline void set_sample_rate(size_t sr)
-                {
-                    if (sr == nSampleRate)
-                        return;
-                    nSampleRate = sr;
-                    bUpdate     = true;
-                }
+                void set_sample_rate(size_t sr);
 
-                /** Set reduction zone
-                 *
-                 * @param open open curve ratio
-                 * @param close close curve ratio
+                /**
+                 * Get sample rate
+                 * @return sample rate
                  */
-                inline void set_zone(float open, float close)
-                {
-                    if ((open == sCurves[0].fZone) && (close == sCurves[1].fZone))
-                        return;
-                    sCurves[0].fZone    = open;
-                    sCurves[1].fZone    = close;
-                    bUpdate             = true;
-                }
+                inline size_t sample_rate() const                   { return nSampleRate; }
+
+                /** Set transition zone
+                 *
+                 * @param open open curve transition zone
+                 * @param close close curve transition zone
+                 */
+                void set_zone(float open, float close);
+
+                /**
+                 * Set open curve transition zone
+                 * @param zone open curve transition zone
+                 */
+                void set_open_zone(float zone);
+
+                /**
+                 * Get open curve transition zone
+                 * @return open curve transition zone
+                 */
+                inline float open_zone() const                      { return sCurves[0].fZone; }
+
+                /**
+                 * Set close curve transition zone
+                 * @param zone close curve transition zone
+                 */
+                void set_close_zone(float zone);
+
+                /**
+                 * Get close curve transition zone
+                 * @return close curve transition zone
+                 */
+                inline float close_zone() const                     { return sCurves[1].fZone; }
+
+                /**
+                 * Set hold time in milliseconds
+                 * @param hold hold time in milliseconds
+                 */
+                void set_hold(float hold);
+
+                /**
+                 * Get the hold time
+                 * @return hold time
+                 */
+                float hold() const                                  { return fHold; }
 
                 /** Process sidechain signal
                  *

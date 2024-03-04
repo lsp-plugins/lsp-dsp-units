@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 03 авг. 2016 г.
@@ -44,11 +44,11 @@ namespace lsp
             nSplits         = 0;
             nBufSize        = 0;
             nSampleRate     = LSP_DSP_UNITS_DEFAULT_SAMPLE_RATE;
+            nPlanSize       = 0;
 
             vBands          = NULL;
             vSplit          = NULL;
             vPlan           = NULL;
-            nPlanSize       = 0;
 
             vLpfBuf         = NULL;
             vHpfBuf         = NULL;
@@ -93,16 +93,11 @@ namespace lsp
                 return false;
 
             // Distribute the allocated space
-            vBands              = reinterpret_cast<band_t *>(ptr);
-            ptr                += band_size;
-            vSplit              = reinterpret_cast<split_t *>(ptr);
-            ptr                += split_size;
-            vPlan               = reinterpret_cast<split_t **>(ptr);
-            ptr                += plan_size;
-            vLpfBuf             = reinterpret_cast<float *>(ptr);
-            ptr                += xbuf_size;
-            vHpfBuf             = reinterpret_cast<float *>(ptr);
-            ptr                += xbuf_size;
+            vBands              = advance_ptr_bytes<band_t>(ptr, band_size);
+            vSplit              = advance_ptr_bytes<split_t>(ptr, split_size);
+            vPlan               = advance_ptr_bytes<split_t *>(ptr, plan_size);
+            vLpfBuf             = advance_ptr_bytes<float>(ptr, xbuf_size);
+            vHpfBuf             = advance_ptr_bytes<float>(ptr, xbuf_size);
 
             // Initialize fields, keep sample_rate unchanged
             nReconfigure        = R_ALL;
@@ -169,8 +164,20 @@ namespace lsp
             return true;
         }
 
-        filter_type_t Crossover::select_filter(xover_type_t type, crossover_mode_t mode)
+        filter_type_t Crossover::select_filter(xover_type_t type, crossover_mode_t mode, size_t slope)
         {
+            if (slope == CROSS_SLOPE_LR2)
+            {
+                switch (type)
+                {
+                    case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS  : FLT_MT_RLC_LOPASS;
+                    case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS  : FLT_MT_RLC_HIPASS;
+                    case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_ALLPASS : FLT_MT_RLC_ALLPASS;
+                    default:
+                        return FLT_NONE;
+                }
+            }
+
             switch (type)
             {
                 case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_LOPASS  : FLT_MT_LRX_LOPASS;
@@ -179,6 +186,13 @@ namespace lsp
                 default:
                     return FLT_NONE;
             }
+        }
+
+        uint32_t Crossover::select_slope(xover_type_t type, size_t slope)
+        {
+            if (slope == CROSS_SLOPE_LR2)
+                return (type == FILTER_APF) ? 1 : 2;
+            return slope - 1;
         }
 
         void Crossover::set_slope(size_t sp, size_t slope)
@@ -318,7 +332,7 @@ namespace lsp
             nPlanSize       = 0;
             for (size_t i=0; i<nSplits; ++i)
             {
-                if (vSplit[i].nSlope > 0)
+                if (vSplit[i].nSlope != CROSS_SLOPE_OFF)
                     vPlan[nPlanSize++]  = &vSplit[i];
             }
             for (size_t i=0; i<=nSplits; ++i)
@@ -351,11 +365,11 @@ namespace lsp
                 size_t filter_id    = 0;
                 filter_params_t fp;
 
-                fp.nType            = select_filter(FILTER_LPF, sp->nMode);
+                fp.nType            = select_filter(FILTER_LPF, sp->nMode, sp->nSlope);
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
                 fp.fGain            = left->fGain;
-                fp.nSlope           = sp->nSlope;
+                fp.nSlope           = select_slope(FILTER_LPF, sp->nSlope);
                 fp.fQuality         = 0.0f;
 
                 sp->sLPF.set_params(filter_id++, &fp);
@@ -365,11 +379,11 @@ namespace lsp
                 {
                     split_t *xsp        = vPlan[j];
 
-                    fp.nType            = select_filter(FILTER_APF, xsp->nMode);
+                    fp.nType            = select_filter(FILTER_APF, xsp->nMode, xsp->nSlope);
                     fp.fFreq            = xsp->fFreq;
                     fp.fFreq2           = xsp->fFreq;
                     fp.fGain            = GAIN_AMP_0_DB;
-                    fp.nSlope           = xsp->nSlope;
+                    fp.nSlope           = select_slope(FILTER_APF, xsp->nSlope);
                     fp.fQuality         = 0.0f;
 
                     sp->sLPF.set_params(filter_id++, &fp);
@@ -389,11 +403,13 @@ namespace lsp
                 }
 
                 // Set HPF parameters
-                fp.nType            = select_filter(FILTER_HPF, sp->nMode);
+                fp.nType            = select_filter(FILTER_HPF, sp->nMode, sp->nSlope);
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
                 fp.fGain            = (i < (nPlanSize-1)) ? GAIN_AMP_0_DB : right->fGain;
-                fp.nSlope           = sp->nSlope;
+                if (sp->nSlope == CROSS_SLOPE_LR2)
+                    fp.fGain            = -fp.fGain;
+                fp.nSlope           = select_slope(FILTER_HPF, sp->nSlope);
                 fp.fQuality         = 0.0f;
 
                 sp->sHPF.update(nSampleRate, &fp);
@@ -422,9 +438,8 @@ namespace lsp
             {
                 band_t *b           = &vBands[i];
                 lsp_trace("  band #%d: this=%p, enabled=%s, gain=%f, start=%.2f, end=%.2f, start=%p, end=%p",
-                                int(i), b, (b->bEnabled) ? "true " : "false",
-                                b->fGain, b->fStart, b->fEnd, b->pStart, b->pEnd
-                            );
+                    int(i), b, (b->bEnabled) ? "true " : "false",
+                    b->fGain, b->fStart, b->fEnd, b->pStart, b->pEnd);
             }
         #endif
             // DEBUG END
@@ -576,6 +591,7 @@ namespace lsp
             v->write("nSplits", nSplits);
             v->write("nBufSize", nBufSize);
             v->write("nSampleRate", nSampleRate);
+            v->write("nPlanSize", nPlanSize);
 
             v->begin_array("vBands", vBands, nSplits+1);
             for (size_t i=0; i<=nSplits; ++i)
@@ -618,7 +634,6 @@ namespace lsp
             v->end_array();
 
             v->writev("vPlan", vPlan, nPlanSize);
-            v->write("nPlanSize", nPlanSize);
 
             v->write("vLpfBuf", vLpfBuf);
             v->write("vHpfBuf", vHpfBuf);

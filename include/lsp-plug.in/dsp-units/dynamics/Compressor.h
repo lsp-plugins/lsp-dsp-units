@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 сент. 2016 г.
@@ -55,7 +55,9 @@ namespace lsp
                 float       fRelease;
                 float       fKnee;
                 float       fRatio;
+                float       fHold;
                 float       fEnvelope;
+                float       fPeak;
 
                 // Pre-calculated parameters
                 float       fTauAttack;
@@ -63,8 +65,10 @@ namespace lsp
                 comp_t      sComp;          // Two compressor knees
 
                 // Additional parameters
-                size_t      nSampleRate;
-                size_t      nMode;
+                uint32_t    nHold;
+                uint32_t    nHoldCounter;
+                uint32_t    nSampleRate;
+                uint32_t    nMode;
                 bool        bUpdate;
 
             public:
@@ -102,12 +106,42 @@ namespace lsp
                  */
                 void update_settings();
 
+                /**
+                 * Get attack threshold of compressor
+                 * @return attack threshold of compressor
+                 */
+                inline float attack_threshold() const       { return fAttackThresh; }
+
+                /**
+                 * Set attack threshold
+                 * @param threshold attack threshold
+                 */
+                void set_attack_threshold(float threshold);
+
+                /**
+                 * Get release threshold of compressor
+                 * @return release threshold of compressor
+                 */
+                inline float release_threshold() const      { return fReleaseThresh; }
+
+                /**
+                 * Set release threshold
+                 * @param threshold release threshold
+                 */
+                void set_release_threshold(float threshold);
+
                 /** Set compressor threshold
                  *
                  * @param attack the attack threshold
                  * @param release the release threshold (relative to attack, must be positive, less or equal to 1.0)
                  */
                 void set_threshold(float attack, float release);
+
+                /**
+                 * Get boost threshold of compressor
+                 * @return boost threshold of compressor
+                 */
+                inline float boost_threshold() const    { return fBoostThresh; }
 
                 /**
                  * Set boost threshold, valid for upward compression only
@@ -122,11 +156,23 @@ namespace lsp
                  */
                 void set_timings(float attack, float release);
 
+                /**
+                 * Get attack time
+                 * @return attack time (ms)
+                 */
+                inline float attack() const         { return fAttack;   }
+
                 /** Set attack time
                  *
                  * @param attack attack time (ms)
                  */
                 void set_attack(float attack);
+
+                /**
+                 * Get release time of compressor
+                 * @return release time of compressor (ms)
+                 */
+                inline float release() const        { return fRelease;  }
 
                 /** Set release time
                  *
@@ -134,17 +180,35 @@ namespace lsp
                  */
                 void set_release(float release);
 
+                /**
+                 * Get sample rate
+                 * @return sample rate
+                 */
+                inline size_t sample_rate() const   { return nSampleRate; }
+
                 /** Set compressor's sample rate
                  *
                  * @param sr sample rate
                  */
                 void set_sample_rate(size_t sr);
 
+                /**
+                 * Get compressor knee
+                 * @return compressor knee
+                 */
+                inline float knee() const           { return fKnee; }
+
                 /** Set compressor's knee
                  *
                  * @param knee (in gain units)
                  */
                 void set_knee(float knee);
+
+                /**
+                 * Get compression ratio
+                 * @return compression ratio
+                 */
+                inline float ratio() const          { return fRatio; }
 
                 /** Set compression ratio
                  *
@@ -157,6 +221,20 @@ namespace lsp
                  * @param mode compression mode
                  */
                 void set_mode(size_t mode);
+
+                inline size_t mode() const          { return nMode; }
+
+                /**
+                 * Get the hold time of compressor
+                 * @return hold time of compressor
+                 */
+                float hold() const                  { return fHold; }
+
+                /**
+                 * Set hold time in milliseconds
+                 * @param hold hold time in milliseconds
+                 */
+                void set_hold(float hold);
 
                 /** Process sidechain signal
                  *

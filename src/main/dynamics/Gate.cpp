@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 7 нояб. 2016 г.
@@ -62,8 +62,12 @@ namespace lsp
             fTauRelease     = 0.0f;
             fReduction      = 0.0f;
             fEnvelope       = 0.0f;
+            fHold           = 0.0f;
+            fPeak           = 0.0f;
 
             // Additional parameters
+            nHold           = 0;
+            nHoldCounter    = 0;
             nSampleRate     = 0;
             nCurve          = 0;
             bUpdate         = true;
@@ -72,12 +76,113 @@ namespace lsp
         void Gate::destroy()
         {
         }
+
+        void Gate::set_threshold(float topen, float tclose)
+        {
+            if ((topen == sCurves[0].fThreshold) && (tclose == sCurves[1].fThreshold))
+                return;
+            sCurves[0].fThreshold   = topen;
+            sCurves[1].fThreshold   = tclose;
+            bUpdate                 = true;
+        }
+
+        void Gate::set_open_threshold(float threshold)
+        {
+            if (threshold == sCurves[0].fThreshold)
+                return;
+            sCurves[0].fThreshold   = threshold;
+            bUpdate                 = true;
+        }
+
+        void Gate::set_close_threshold(float threshold)
+        {
+            if (threshold == sCurves[1].fThreshold)
+                return;
+            sCurves[1].fThreshold   = threshold;
+            bUpdate                 = true;
+        }
+
+        void Gate::set_reduction(float reduction)
+        {
+            if (reduction == fReduction)
+                return;
+            fReduction          = reduction;
+            bUpdate             = true;
+        }
+
+        void Gate::set_timings(float attack, float release)
+        {
+            if ((fAttack == attack) && (fRelease == release))
+                return;
+            fAttack     = attack;
+            fRelease    = release;
+            bUpdate     = true;
+        }
+
+        void Gate::set_attack(float attack)
+        {
+            if (fAttack == attack)
+                return;
+            fAttack     = attack;
+            bUpdate     = true;
+        }
+
+        void Gate::set_release(float release)
+        {
+            if (fRelease == release)
+                return;
+            fRelease    = release;
+            bUpdate     = true;
+        }
+
+        void Gate::set_sample_rate(size_t sr)
+        {
+            if (sr == nSampleRate)
+                return;
+            nSampleRate = sr;
+            bUpdate     = true;
+        }
+
+        void Gate::set_zone(float open, float close)
+        {
+            if ((open == sCurves[0].fZone) && (close == sCurves[1].fZone))
+                return;
+            sCurves[0].fZone    = open;
+            sCurves[1].fZone    = close;
+            bUpdate             = true;
+        }
+
+        void Gate::set_open_zone(float zone)
+        {
+            if (zone == sCurves[0].fZone)
+                return;
+            sCurves[0].fZone    = zone;
+            bUpdate             = true;
+        }
+
+        void Gate::set_close_zone(float zone)
+        {
+            if (zone == sCurves[1].fZone)
+                return;
+            sCurves[1].fZone    = zone;
+            bUpdate             = true;
+        }
+
+        void Gate::set_hold(float hold)
+        {
+            hold                = lsp_max(hold, 0.0f);
+            if (hold == fHold)
+                return;
+            fHold               = hold;
+            bUpdate             = true;
+        }
     
         void Gate::update_settings()
         {
             // Update settings if necessary
             fTauAttack      = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fAttack)));
             fTauRelease     = 1.0f - expf(logf(1.0f - M_SQRT1_2) / (millis_to_samples(nSampleRate, fRelease)));
+            nHold           = millis_to_samples(nSampleRate, fHold);
 
             // Calculate interpolation parameters
             for (size_t i=0; i<2; ++i)
@@ -167,17 +272,42 @@ namespace lsp
             {
                 // Process envelope, split the input stream into bulk parts of usage of the same curve.
                 curve_t *c      = &sCurves[nCurve];
+                float e         = fEnvelope;
+                float peak      = fPeak;
+                uint32_t hold   = nHoldCounter;
+
                 if (nCurve == 0)
                 {
                     // Calculate envelope of the gate
                     for (; curr_i < samples; ++curr_i)
                     {
                         float s         = in[curr_i];
+                        float d         = s - e;
 
                         // Change state
-                        fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-                        out[curr_i]     = fEnvelope;
-                        if (fEnvelope > c->sKnee.end)
+                        if (d < 0.0f)
+                        {
+                            if (hold > 0)
+                                --hold;
+                            else
+                            {
+                                e              += fTauRelease * d;
+                                peak            = e;
+                            }
+                        }
+                        else
+                        {
+                            e              += fTauAttack * d;
+                            if (e >= peak)
+                            {
+                                peak            = e;
+                                hold            = nHold;
+                            }
+                        }
+                        out[curr_i]     = e;
+
+                        // Change current curve and leave cycle if the value of envelope is above threshold
+                        if (e > c->sKnee.end)
                         {
                             nCurve          = 1;
                             break;
@@ -190,17 +320,41 @@ namespace lsp
                     for (; curr_i < samples; ++curr_i)
                     {
                         float s         = in[curr_i];
+                        float d         = s - e;
 
                         // Change state
-                        fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
-                        out[curr_i]     = fEnvelope;
-                        if (fEnvelope < c->sKnee.start)
+                        if (d < 0.0f)
+                        {
+                            if (hold > 0)
+                                --hold;
+                            else
+                            {
+                                e              += fTauRelease * d;
+                                peak            = e;
+                            }
+                        }
+                        else
+                        {
+                            e              += fTauAttack * d;
+                            if (e >= peak)
+                            {
+                                peak            = e;
+                                hold            = nHold;
+                            }
+                        }
+                        out[curr_i]     = e;
+
+                        // Change current curve and leave cycle if the value of envelope is below threshold
+                        if (e < c->sKnee.start)
                         {
                             nCurve          = 0;
                             break;
                         }
                     }
                 }
+                fEnvelope       = e;
+                fPeak           = peak;
+                nHoldCounter    = hold;
 
                 // Update result
                 if (env != NULL)
@@ -216,7 +370,28 @@ namespace lsp
         {
             // Change state
             curve_t *c      = &sCurves[nCurve];
-            fEnvelope      += (s > fEnvelope) ? fTauAttack * (s - fEnvelope) : fTauRelease * (s - fEnvelope);
+            float d         = s - fEnvelope;
+            if (d < 0.0f)
+            {
+                if (nHoldCounter > 0)
+                    --nHoldCounter;
+                else
+                {
+                    fEnvelope      += fTauRelease * d;
+                    fPeak           = fEnvelope;
+                }
+            }
+            else
+            {
+                fEnvelope      += fTauAttack * d;
+                if (fEnvelope >= fPeak)
+                {
+                    fPeak           = fEnvelope;
+                    nHoldCounter    = nHold;
+                }
+            }
+
+            // Select curve depending on the value of envelope
             if (fEnvelope < c->sKnee.start)
                 nCurve          = 0;
             else if (fEnvelope > c->sKnee.end)
@@ -263,7 +438,11 @@ namespace lsp
             v->write("fTauRelease", fTauRelease);
             v->write("fReduction", fReduction);
             v->write("fEnvelope", fEnvelope);
+            v->write("fHold", fHold);
+            v->write("fPeak", fPeak);
 
+            v->write("nHold", nHold);
+            v->write("nHoldCounter", nHoldCounter);
             v->write("nSampleRate", nSampleRate);
             v->write("nCurve", nCurve);
             v->write("bUpdate", bUpdate);

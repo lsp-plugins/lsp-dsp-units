@@ -2,6 +2,16 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.20 ===
+* Added Hold option to the dspu::Compressor module.
+* Added Hold option to the dspu::Expander module.
+* Added Hold option to the dspu::Gate module.
+* Added Hold option to the dspu::DynamicProcessor module.
+* Fixed RLC implementation of allpass filters.
+* Added support of LR2 (12 dB/oct) filters by the Crossover.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.19 ===
 * Refactoring and optimizations of the Expander module.
 * Updated interface of the dspu::Sample, added gain function.

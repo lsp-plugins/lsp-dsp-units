@@ -56,6 +56,7 @@ namespace lsp
             nReconfigure    = 0;
             nEnvelope       = envelope::PINK_NOISE;
             nWindow         = windows::HANN;
+            nMaxUserDelay   = 0;
 
             fReactivity     = 0.0f;
             fTau            = 1.0f;
