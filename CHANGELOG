@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.21 ===
+
+
 === 1.0.20 ===
 * Added Hold option to the dspu::Compressor module.
 * Added Hold option to the dspu::Expander module.
