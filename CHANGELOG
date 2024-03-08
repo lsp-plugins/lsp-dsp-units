@@ -3,7 +3,8 @@
 *******************************************************************************
 
 === 1.0.21 ===
-
+* Implemented safer algorithm of loading sample when the underlying stream
+  does not know the actual number of frames in the stream.
 
 === 1.0.20 ===
 * Added Hold option to the dspu::Compressor module.
