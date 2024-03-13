@@ -381,7 +381,7 @@ namespace lsp
             }
 
             nLength        += samples;
-            return true;
+            return STATUS_OK;
         }
 
         status_t Sample::append(size_t samples)
