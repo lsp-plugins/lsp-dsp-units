@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.21 ===
-
+* Implemented dspu::Correlometer module.
 
 === 1.0.20 ===
 * Added Hold option to the dspu::Compressor module.

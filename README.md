@@ -28,6 +28,7 @@ Set of modules provided:
     * Filter
     * Spectral tilt
   * Metering
+    * Correlation meter
     * Loudness meter
   * Miscellaneous functions
     * Broadcasting related functions and constants
