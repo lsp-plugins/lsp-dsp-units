@@ -56,6 +56,7 @@ namespace lsp
                 uint32_t            nHead;      // Write position of the buffer
                 uint32_t            nMaxPeriod; // Maximum measurement period
                 uint32_t            nPeriod;    // Measurement period
+                uint32_t            nWindow;    // Number of samples processed before reset
                 uint32_t            nFlags;     // Flags
 
                 uint8_t            *pData;      // Pointer to the allocated data

@@ -50,6 +50,7 @@ namespace lsp
             nHead       = 0;
             nMaxPeriod  = 0;
             nPeriod     = 0;
+            nWindow     = 0;
             nFlags      = CF_UPDATE;
 
             pData       = NULL;
@@ -116,21 +117,8 @@ namespace lsp
             if (nFlags == 0)
                 return;
 
-            sCorr.v     = 0.0f;
-            sCorr.a     = 0.0f;
-            sCorr.b     = 0.0f;
-
-            // The buffer can be wrapped, so we need call corr_init two times for that case
-            const size_t tail = (nHead + nCapacity - nPeriod) % nCapacity;
-            if (nHead < tail)
-            {
-                dsp::corr_init(&sCorr, &vInA[tail], &vInB[tail], nCapacity - tail);
-                dsp::corr_init(&sCorr, vInA, vInB, nHead);
-            }
-            else
-                dsp::corr_init(&sCorr, &vInA[tail], &vInB[tail], nPeriod);
-
-            nFlags = 0;
+            nWindow     = nPeriod;
+            nFlags      = 0;
         }
 
         void Correlometer::clear()
@@ -152,11 +140,31 @@ namespace lsp
             for (size_t offset=0; offset<count; )
             {
                 const size_t tail = (nHead + nCapacity - nPeriod) % nCapacity;
-                const size_t to_do = lsp_min(
-                    count - offset,             // Number of samples left in input buffers
-                    nCapacity - nMaxPeriod,     // Number of free samples in the ring buffer
-                    nCapacity - nHead,          // The number of samples before head goes out of ring buffer
-                    nCapacity - tail);          // The number of samples before tail goes out of ring buffer
+
+                // Check that we need to reset the window
+                if (nWindow >= nPeriod)
+                {
+                    sCorr.v     = 0.0f;
+                    sCorr.a     = 0.0f;
+                    sCorr.b     = 0.0f;
+
+                    if (nHead < tail)
+                    {
+                        dsp::corr_init(&sCorr, &vInA[tail], &vInB[tail], nCapacity - tail);
+                        dsp::corr_init(&sCorr, vInA, vInB, nHead);
+                    }
+                    else
+                        dsp::corr_init(&sCorr, &vInA[tail], &vInB[tail], nPeriod);
+                    nWindow     = 0;
+                }
+
+                const size_t can_do = nPeriod - nWindow;
+                size_t to_do = lsp_min(
+                    count - offset,                             // Number of samples left in input buffers
+                    nCapacity - nMaxPeriod,                     // Number of free samples in the ring buffer
+                    nCapacity - nHead,                          // The number of samples before head goes out of ring buffer
+                    nCapacity - tail);                          // The number of samples before tail goes out of ring buffer
+                to_do = lsp_min(to_do, can_do);
 
                 // Fill buffers with data
                 dsp::copy(&vInA[nHead], &a[offset], to_do);
@@ -172,6 +180,7 @@ namespace lsp
 
                 // Update pointers and counters
                 nHead       = (nHead + to_do) % nCapacity;
+                nWindow    += to_do;
                 offset     += to_do;
             }
         }
