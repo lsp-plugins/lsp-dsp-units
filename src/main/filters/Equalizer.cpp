@@ -237,6 +237,7 @@ namespace lsp
 
             if (nMode == EQM_BYPASS)
             {
+                nFlags         &= ~(EF_REBUILD | EF_CLEAR | EF_XFADE);
                 nLatency        = 0;
                 return;
             }
