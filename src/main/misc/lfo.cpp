@@ -29,6 +29,7 @@ namespace lsp
         namespace lfo
         {
             static constexpr float      REV_LN100               = 0.5f / M_LN10;
+            static constexpr float      LOG2TOLN                = 1.0f / M_LOG2E;
 
             static inline float taylor_sinf(float x)
             {
@@ -54,7 +55,7 @@ namespace lsp
                 const float y = (X - 1.0f)/(X + 1.0f);
                 const float y2 = y*y;
 
-                return 2.0f*y * (1.0f + y2*(0.333333333333f + y2*(0.2f + y2*(0.142857142857f)))) + f * (1.0f / M_LOG2E);
+                return 2.0f*y * (1.0f + y2*(0.333333333333f + y2*(0.2f + y2*(0.142857142857f)))) + f * LOG2TOLN;
             }
 
 
@@ -85,13 +86,6 @@ namespace lsp
                 return (phase >= 0.25f) ?
                     0.75f + 0.25f * sinf((phase - 0.375f) * M_PI * 4.0f) :
                     0.25f + 0.25f * sinf((phase - 0.125f) * M_PI * 4.0f);
-//                if ((phase >= 0.25f) && (phase < 0.75f))
-//                {
-//                    phase -= 0.25f;
-//                    return 0.75f - 0.25f * cosf(4.0f * M_PI * phase);
-//                }
-//
-//                return 0.25f - 0.25f * cosf(4.0f * M_PI * phase);
             }
 
             LSP_DSP_UNITS_PUBLIC
