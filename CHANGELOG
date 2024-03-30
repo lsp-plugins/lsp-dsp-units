@@ -6,6 +6,7 @@
 * Implemented safer algorithm of loading sample when the underlying stream
   does not know the actual number of frames in the stream.
 * Implemented dspu::Correlometer module.
+* Optimized LFO sin-based and log-based functions.
 * Updated build scripts.
 
 === 1.0.20 ===
