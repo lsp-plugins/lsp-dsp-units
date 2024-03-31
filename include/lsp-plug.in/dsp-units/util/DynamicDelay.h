@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 дек. 2020 г.
@@ -35,20 +35,21 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC DynamicDelay
         {
-            private:
-                DynamicDelay & operator = (const DynamicDelay &);
-                DynamicDelay(const DynamicDelay &);
-
             protected:
                 float      *vDelay;
-                size_t      nHead;
-                size_t      nCapacity;
-                ssize_t     nMaxDelay;
+                uint32_t    nHead;
+                uint32_t    nCapacity;
+                int32_t     nMaxDelay;
                 uint8_t    *pData;
 
             public:
                 explicit DynamicDelay();
+                DynamicDelay(const DynamicDelay &) = delete;
+                DynamicDelay(DynamicDelay &&) = delete;
                 ~DynamicDelay();
+
+                DynamicDelay & operator = (const DynamicDelay &) = delete;
+                DynamicDelay & operator = (DynamicDelay &&) = delete;
 
                 void        construct();
                 void        destroy();
@@ -109,7 +110,8 @@ namespace lsp
                  */
                 void        dump(IStateDumper *v) const;
         };
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_DYNAMICDELAY_H_ */

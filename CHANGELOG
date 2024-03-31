@@ -7,6 +7,7 @@
   does not know the actual number of frames in the stream.
 * Implemented dspu::Correlometer module.
 * Optimized LFO sin-based and log-based functions.
+* Fixed DynamicDelay buffer not cleaned up on initialization, garbage could be produced.
 * Updated build scripts.
 
 === 1.0.20 ===

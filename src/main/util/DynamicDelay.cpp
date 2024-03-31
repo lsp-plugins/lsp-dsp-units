@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 дек. 2020 г.
@@ -23,12 +23,12 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/dsp/dsp.h>
 
-#define BUF_SIZE        0x400
-
 namespace lsp
 {
     namespace dspu
     {
+        static constexpr size_t BUF_SIZE        = 0x400;
+
         DynamicDelay::DynamicDelay()
         {
             construct();
@@ -53,6 +53,7 @@ namespace lsp
             if (pData != NULL)
             {
                 free_aligned(pData);
+
                 vDelay      = NULL;
                 nHead       = 0;
                 nCapacity   = 0;
@@ -75,13 +76,14 @@ namespace lsp
             if (pData != NULL)
                 free_aligned(pData);
 
-            vDelay              = reinterpret_cast<float *>(ptr);
-            ptr                += buf_sz * sizeof(float);
+            vDelay              = advance_ptr_bytes<float>(ptr, buf_sz * sizeof(float));
 
             nHead               = 0;
             nCapacity           = buf_sz;
             nMaxDelay           = max_size;
             pData               = data;
+
+            dsp::fill_zero(vDelay, buf_sz);
 
             return STATUS_OK;
         }
@@ -162,7 +164,8 @@ namespace lsp
             v->write("nMaxDelay", nMaxDelay);
             v->write("pData", pData);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
