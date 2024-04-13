@@ -8,6 +8,7 @@
 * Implemented dspu::Correlometer module.
 * Optimized LFO sin-based and log-based functions.
 * Fixed DynamicDelay buffer not cleaned up on initialization, garbage could be produced.
+* Implemented dspu::RawRingBuffer which is better suitable for direct memory operations.
 * Updated build scripts.
 
 === 1.0.20 ===

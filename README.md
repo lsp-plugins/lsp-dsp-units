@@ -60,6 +60,7 @@ Set of modules provided:
     * Oscillator
     * Oversampler
     * Randomizer
+    * Raw ring buffer
     * Ring buffer
     * Shift buffer
     * Sidechain control
