@@ -67,6 +67,11 @@ LIBICONV_NAME              := libiconv
 LIBICONV_TYPE              := opt
 LIBICONV_LDFLAGS           := -liconv
 
+LIBRT_VERSION              := system
+LIBRT_NAME                 := librt
+LIBRT_TYPE                 := opt
+LIBRT_LDFLAGS              := -lrt
+
 LIBSNDFILE_VERSION         := system
 LIBSNDFILE_NAME            := sndfile
 LIBSNDFILE_TYPE            := pkg
