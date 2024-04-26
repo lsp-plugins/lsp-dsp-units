@@ -371,8 +371,18 @@ UTEST_BEGIN("dspu.sampling", sample)
         test_lspc_named_file("some\\test\\fileD.wav", "some\\test\\fileD.wav");
     }
 
+    void test_load_unknown_length()
+    {
+        io::Path path;
+        dspu::Sample s;
+
+        UTEST_ASSERT(path.fmt("%s/f32.wav", resources()) > 0);
+        UTEST_ASSERT(s.load(&path, -1) == STATUS_OK);
+    }
+
     UTEST_MAIN
     {
+        test_load_unknown_length();
         test_copy();
         test_io();
         test_resample(TEST_SRATE);

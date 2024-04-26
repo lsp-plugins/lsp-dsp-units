@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 июн. 2023 г.
@@ -36,8 +36,8 @@ namespace lsp
         {
             protected:
                 float      *pData;
-                size_t      nCapacity;
-                size_t      nHead;
+                uint32_t    nCapacity;
+                uint32_t    nHead;
 
             public:
                 explicit RingBuffer();
@@ -69,7 +69,7 @@ namespace lsp
             public:
                 /** Add data to the buffer
                  *
-                 * @param data amount of data to push, if NULL then buffer is filled with zeros
+                 * @param data data to append to the buffer
                  * @param count number of samples
                  * @return actual number of samples appended
                  */
@@ -99,9 +99,19 @@ namespace lsp
                  */
                 inline float    *data()                 { return pData; }
 
-                /** Get the data pointer at the head of buffer
-                 * @param offset offset behind the head
-                 * @return data pointer at the head of buffer
+                /**
+                 * Read the data from the buffer
+                 * @param dst destination buffer to store the data
+                 * @param offset offset relative to the current buffer pointer
+                 * @param count number of samples to read
+                 * @return actual number of samples read
+                 */
+                size_t      get(float *dst, size_t offset, size_t count);
+
+                /**
+                 * Get the sample at the tail of the buffer specified by the offset
+                 * @param offset offset relative to the current buffer pointer
+                 * @return data the sample at the tail of the buffer
                  */
                 float       get(size_t offset);
 
@@ -117,15 +127,6 @@ namespace lsp
                  * @return position of the tail relative to the beginning of the buffer
                  */
                 size_t      tail_offset(size_t offset) const;
-
-                /**
-                 * Read the data from the buffer
-                 * @param dst destination buffer to store the data
-                 * @param offset offset relative to the current buffer pointer
-                 * @param count number of samples to read
-                 * @return actual number of samples read
-                 */
-                size_t      get(float *dst, size_t offset, size_t count);
 
                 /**
                  * Dump data to the shift buffer

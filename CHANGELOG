@@ -2,6 +2,16 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.21 ===
+* Implemented safer algorithm of loading sample when the underlying stream
+  does not know the actual number of frames in the stream.
+* Implemented dspu::Correlometer module.
+* Optimized LFO sin-based and log-based functions.
+* Fixed DynamicDelay buffer not cleaned up on initialization, garbage could be produced.
+* Implemented dspu::RawRingBuffer which is better suitable for direct memory operations.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.20 ===
 * Added Hold option to the dspu::Compressor module.
 * Added Hold option to the dspu::Expander module.

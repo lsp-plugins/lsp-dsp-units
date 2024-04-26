@@ -28,6 +28,7 @@ Set of modules provided:
     * Filter
     * Spectral tilt
   * Metering
+    * Correlation meter
     * Loudness meter
   * Miscellaneous functions
     * Broadcasting related functions and constants
@@ -59,6 +60,7 @@ Set of modules provided:
     * Oscillator
     * Oversampler
     * Randomizer
+    * Raw ring buffer
     * Ring buffer
     * Shift buffer
     * Sidechain control

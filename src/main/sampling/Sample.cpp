@@ -36,13 +36,13 @@
 #include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define BUFFER_FRAMES           4096
-#define RESAMPLING_PERIODS      32
-
 namespace lsp
 {
     namespace dspu
     {
+        static constexpr size_t BUFFER_FRAMES       = 0x1000;
+        static constexpr size_t RESAMPLING_PERIODS  = 32;
+
         namespace
         {
             // SFZ file handler
@@ -263,6 +263,25 @@ namespace lsp
         {
             if (channels <= 0)
                 return false;
+            if (length > max_length)
+                return false;
+
+            // More simplified algorithm if only length of the sample is changed
+            if ((channels == nChannels) && (max_length == nMaxLength))
+            {
+                if (length > nLength)
+                {
+                    float *dptr         = &vBuffer[nLength];
+                    for (size_t ch=0; ch < channels; ++ch)
+                    {
+                        dsp::fill_zero(dptr, length - nLength);
+                        dptr           += nMaxLength;
+                    }
+                }
+
+                nLength         = length;
+                return true;
+            }
 
             // Allocate new data
             max_length      = align_size(max_length, DEFAULT_ALIGN);    // Make multiple of 4
@@ -362,7 +381,7 @@ namespace lsp
             }
 
             nLength        += samples;
-            return true;
+            return STATUS_OK;
         }
 
         status_t Sample::append(size_t samples)
@@ -675,7 +694,7 @@ namespace lsp
                 return written;
 
             // Allocate temporary buffer for writes
-            size_t bufsize  = lsp_min(count, BUFFER_FRAMES);
+            size_t bufsize  = lsp_min(count, ssize_t(BUFFER_FRAMES));
             uint8_t *data   = NULL;
             float *buf      = alloc_aligned<float>(data, nChannels * bufsize);
             if (buf == NULL)
@@ -686,7 +705,7 @@ namespace lsp
             while (count > 0)
             {
                 // Generate frame data
-                size_t to_do    = lsp_min(count, BUFFER_FRAMES);
+                size_t to_do    = lsp_min(count, ssize_t(BUFFER_FRAMES));
                 for (size_t i=0; i<nChannels; ++i)
                 {
                     const float *src    = &vBuffer[i * nMaxLength + offset];
@@ -799,42 +818,94 @@ namespace lsp
             if (res != STATUS_OK)
                 return res;
 
-            // Allocate temporary sample to perform read
-            ssize_t count = (max_samples < 0) ? fmt.frames : lsp_min(fmt.frames, max_samples);
-            size_t offset = 0;
+            // Temporary sample is used to store the intermediate data
             Sample tmp;
-            if (!tmp.init(fmt.channels, count, count))
-                return STATUS_NO_MEM;
 
-            // Allocate temporary buffer for reads
-            size_t bufsize  = lsp_min(count, BUFFER_FRAMES);
-            uint8_t *data   = NULL;
-            float *buf      = alloc_aligned<float>(data, fmt.channels * bufsize);
-            if (buf == NULL)
-                return STATUS_NO_MEM;
-            lsp_finally { free_aligned(data); };
-
-            // Perform reads from underlying stream
-            while (count > 0)
+            if (fmt.frames >= 0)
             {
-                // Read data from input stream
-                size_t to_do    = lsp_min(count, BUFFER_FRAMES);
-                ssize_t nframes = in->read(buf, to_do);
-                if (nframes < 0)
-                    return -nframes;
+                // Initialize the temporary sample
+                ssize_t count = (max_samples < 0) ? fmt.frames : lsp_min(fmt.frames, max_samples);
+                if (!tmp.init(fmt.channels, count, count))
+                    return STATUS_NO_MEM;
 
-                // Unpack buffer
-                for (size_t i=0; i<fmt.channels; ++i)
+                // Allocate temporary buffer for reads
+                size_t bufsize  = lsp_min(count, ssize_t(BUFFER_FRAMES));
+                float *buf      = reinterpret_cast<float *>(malloc(fmt.channels * bufsize * sizeof(float)));
+                if (buf == NULL)
+                    return STATUS_NO_MEM;
+                lsp_finally { free(buf); };
+
+                // Perform reads from underlying stream
+                size_t offset = 0;
+                while (count > 0)
                 {
-                    const float *src    = &buf[i];
-                    float *dst          = &tmp.vBuffer[i * tmp.nMaxLength + offset];
-                    for (size_t j=0; j<to_do; ++j, src += fmt.channels, ++dst)
-                        *dst    = *src;
+                    // Read data from input stream
+                    size_t to_do    = lsp_min(count, ssize_t(BUFFER_FRAMES));
+                    ssize_t nframes = in->read(buf, to_do);
+                    if (nframes < 0)
+                        return -nframes;
+
+                    // Unpack buffer
+                    for (size_t i=0; i<fmt.channels; ++i)
+                    {
+                        const float *src    = &buf[i];
+                        float *dst          = &tmp.vBuffer[i * tmp.nMaxLength + offset];
+                        for (ssize_t j=0; j<nframes; ++j, src += fmt.channels, ++dst)
+                            *dst    = *src;
+                    }
+
+                    // Update position
+                    offset         += nframes;
+                    count          -= nframes;
+                }
+            }
+            else
+            {
+                // We do not know number of frames, perform another read algorithm
+                if (!tmp.init(fmt.channels, BUFFER_FRAMES, 0))
+                    return STATUS_NO_MEM;
+
+                // Allocate temporary buffer for reads
+                float *buf      = reinterpret_cast<float *>(malloc(fmt.channels * BUFFER_FRAMES * sizeof(float)));
+                if (buf == NULL)
+                    return STATUS_NO_MEM;
+                lsp_finally { free(buf); };
+
+                size_t limit = (max_samples >= 0) ? max_samples : size_t(size_t(0) - 1);
+                while (tmp.nLength < limit)
+                {
+                    // Try to read frames
+                    ssize_t nframes = in->read(buf, BUFFER_FRAMES);
+                    if (nframes < 0)
+                    {
+                        if (nframes == -STATUS_EOF)
+                            break;
+                        return -nframes;
+                    }
+
+                    // Ensure that we have enough space
+                    if (tmp.nMaxLength < (tmp.nLength + nframes))
+                    {
+                        if (!tmp.resize(fmt.channels, tmp.nMaxLength*2, tmp.nLength))
+                            return STATUS_NO_MEM;
+                    }
+
+                    // Unpack buffer
+                    for (size_t i=0; i<fmt.channels; ++i)
+                    {
+                        const float *src    = &buf[i];
+                        float *dst          = &tmp.vBuffer[i * tmp.nMaxLength + tmp.nLength];
+                        for (ssize_t j=0; j<nframes; ++j, src += fmt.channels, ++dst)
+                            *dst    = *src;
+                    }
+
+                    // Update position
+                    tmp.nLength    += nframes;
                 }
 
-                // Update position
-                offset         += nframes;
-                count          -= nframes;
+                // Reduce memory usage by the file
+                if (!tmp.resize(fmt.channels, tmp.nLength, tmp.nLength))
+                    return STATUS_NO_MEM;
             }
 
             // All is OK, free temporary buffer and swap self state with the temporary sample
