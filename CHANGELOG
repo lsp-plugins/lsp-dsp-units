@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.22 ===
+
+
 === 1.0.21 ===
 * Implemented safer algorithm of loading sample when the underlying stream
   does not know the actual number of frames in the stream.
