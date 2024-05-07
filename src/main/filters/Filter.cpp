@@ -2220,9 +2220,9 @@ namespace lsp
 
         void Filter::bilinear_transform()
         {
-            float kf        = 1.0/tanf(sParams.fFreq * M_PI / float(nSampleRate));
-            float kf2       = kf * kf;
-            float T[4], B[4], N;
+            double kf       = 1.0/tanf(sParams.fFreq * M_PI / float(nSampleRate));
+            double kf2      = kf * kf;
+            double T[4], B[4], N;
             size_t chains   = 0;
 
             for (size_t i=0; i<nItems; ++i)
