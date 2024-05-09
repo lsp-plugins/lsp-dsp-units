@@ -26,7 +26,7 @@
 
 #include <lsp-plug.in/common/status.h>
 #include <lsp-plug.in/common/types.h>
-
+#include <lsp-plug.in/ipc/SharedMem.h>
 #include <lsp-plug.in/runtime/LSPString.h>
 
 namespace lsp
@@ -56,20 +56,23 @@ namespace lsp
                     uint32_t            nHead;          // Read/Write head
                     uint32_t            nPosition;      // Read/Write position
                     uint32_t            nAvail;         // Number of samples available
+                    uint32_t            nCounter;       // Counter
                     float              *pData;          // Pointer to channel data
                 } channel_t;
 
             protected:
+                ipc::SharedMem      hMem;           // Shared memory descriptor
                 sh_header_t        *pHeader;        // Header of the shared buffer
                 channel_t          *vChannels;      // Pointer to channel descriptions
                 uint32_t            nChannels;      // Number of channels
-                uint32_t            nCounter;       // Stalled change counter
                 bool                bWriteMode;     // Stream is opened for writing
                 bool                bIO;            // I/O mode (begin() called)
                 bool                bUnderrun;      // Underrun detected
 
             protected:
                 bool                check_channels_synchronized();
+                status_t            open_internal();
+                status_t            create_internal(size_t channels, size_t hdr_size, size_t channel_size);
 
             public:
                 SharedAudioStream();
@@ -123,6 +126,12 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t        create(const LSPString *id, size_t channels, size_t length);
+
+                /**
+                 * Close
+                 * @return status of operation
+                 */
+                status_t        close();
 
             public:
                 /**
