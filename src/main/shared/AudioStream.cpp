@@ -23,7 +23,8 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/common/new.h>
-#include <lsp-plug.in/dsp-units/shared/SharedAudioStream.h>
+#include <lsp-plug.in/dsp-units/shared/AudioStream.h>
+#include <lsp-plug.in/runtime/system.h>
 
 namespace lsp
 {
@@ -31,18 +32,17 @@ namespace lsp
     {
         static constexpr uint32_t shared_stream_magic = 0x5354524d; // "STRM"
 
-
-        SharedAudioStream::SharedAudioStream()
+        AudioStream::AudioStream()
         {
             construct();
         }
 
-        SharedAudioStream::~SharedAudioStream()
+        AudioStream::~AudioStream()
         {
             destroy();
         }
 
-        void SharedAudioStream::construct()
+        void AudioStream::construct()
         {
             new (&hMem, inplace_new_tag_t()) ipc::SharedMem();
 
@@ -54,7 +54,7 @@ namespace lsp
             bUnderrun       = false;
         }
 
-        void SharedAudioStream::destroy()
+        void AudioStream::destroy()
         {
             pHeader         = NULL;
             if (vChannels != NULL)
@@ -67,15 +67,15 @@ namespace lsp
             bIO             = false;
             bUnderrun       = false;
 
-            hMem::~SharedMem();
+            hMem.~SharedMem();
         }
 
-        status_t SharedAudioStream::open(const char *id)
+        status_t AudioStream::open(const char *id)
         {
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
-            status_t res = hMem.open(id, ipc::SharedMem::SHM_READ | ipc::SharedMem::SHM_PERSIST, 0);
+            status_t res = hMem.open(id, ipc::SharedMem::SHM_READ, 0);
             if (res == STATUS_OK)
                 res = open_internal();
 
@@ -85,12 +85,12 @@ namespace lsp
             return res;
         }
 
-        status_t SharedAudioStream::open(const LSPString *id)
+        status_t AudioStream::open(const LSPString *id)
         {
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
-            status_t res = hMem.open(id, ipc::SharedMem::SHM_READ | ipc::SharedMem::SHM_PERSIST, 0);
+            status_t res = hMem.open(id, ipc::SharedMem::SHM_READ, 0);
             if (res == STATUS_OK)
                 res = open_internal();
 
@@ -100,13 +100,165 @@ namespace lsp
             return res;
         }
 
-        status_t SharedAudioStream::open_internal()
+        bool AudioStream::calc_params(alloc_params_t *params, size_t channels, size_t length)
+        {
+            if ((channels < 1) || (length <= 0))
+                return false;
+
+            const size_t page_size      = system::page_size();
+
+            params->nChannels           = channels;
+            params->nHdrBytes           = align_size(sizeof(sh_header_t), page_size);
+            params->nChannelBytes       = align_size(sizeof(float) * length, page_size);
+            params->nSegmentBytes       = params->nHdrBytes + params->nChannelBytes*params->nChannels;
+
+            return true;
+        }
+
+        status_t AudioStream::create(const char *id, size_t channels, size_t length)
+        {
+            if (pHeader != NULL)
+                return STATUS_OPENED;
+
+            status_t res;
+            alloc_params_t params;
+            if (!calc_params(&params, channels, length))
+                return STATUS_INVALID_VALUE;
+
+            if ((res = hMem.open(id, ipc::SharedMem::SHM_RW | ipc::SharedMem::SHM_CREATE, params.nSegmentBytes)) == STATUS_OK)
+                res = create_internal(channels, &params);
+
+            if (res != STATUS_OK)
+                close();
+
+            return res;
+        }
+
+        status_t AudioStream::create(const LSPString *id, size_t channels, size_t length)
+        {
+            if (pHeader != NULL)
+                return STATUS_OPENED;
+
+            status_t res;
+            alloc_params_t params;
+            if (!calc_params(&params, channels, length))
+                return STATUS_INVALID_VALUE;
+
+            if ((res = hMem.open(id, ipc::SharedMem::SHM_RW | ipc::SharedMem::SHM_CREATE, params.nSegmentBytes)) == STATUS_OK)
+                res = create_internal(channels, &params);
+
+            if (res != STATUS_OK)
+                close();
+
+            return res;
+        }
+
+        status_t AudioStream::allocate(LSPString *name, const char *postfix, size_t channels, size_t length)
+        {
+            if (pHeader != NULL)
+                return STATUS_OPENED;
+
+            status_t res;
+            alloc_params_t params;
+            if (!calc_params(&params, channels, length))
+                return STATUS_INVALID_VALUE;
+
+            LSPString tmp;
+            if ((res = hMem.create(&tmp, postfix, ipc::SharedMem::SHM_RW | ipc::SharedMem::SHM_CREATE, params.nSegmentBytes)) == STATUS_OK)
+                res = create_internal(channels, &params);
+
+            if (res == STATUS_OK)
+                tmp.swap(name);
+            else
+                close();
+
+            return res;
+        }
+
+        status_t AudioStream::allocate(LSPString *name, const LSPString *postfix, size_t channels, size_t length)
+        {
+            if (pHeader != NULL)
+                return STATUS_OPENED;
+
+            status_t res;
+            alloc_params_t params;
+            if (!calc_params(&params, channels, length))
+                return STATUS_INVALID_VALUE;
+
+            LSPString tmp;
+            if ((res = hMem.create(&tmp, postfix, ipc::SharedMem::SHM_RW | ipc::SharedMem::SHM_CREATE, params.nSegmentBytes)) == STATUS_OK)
+                res = create_internal(channels, &params);
+
+            if (res == STATUS_OK)
+                tmp.swap(name);
+            else
+                close();
+
+            return res;
+        }
+
+        status_t AudioStream::create_internal(size_t channels, const alloc_params_t *params)
+        {
+            status_t res;
+
+            // Map memory
+            res = hMem.map(0, params->nSegmentBytes);
+            if (res != STATUS_OK)
+                return res;
+
+            uint8_t *ptr    = reinterpret_cast<uint8_t *>(hMem.data());
+            if (ptr == NULL)
+                return STATUS_UNKNOWN_ERR;
+
+            // Initialize buffer
+            pHeader             = advance_ptr_bytes<sh_header_t>(ptr, params->nHdrBytes);
+            uint32_t head       = pHeader->nHead;
+            const uint32_t len  = params->nChannelBytes / sizeof(float);
+
+            pHeader->nMagic     = CPU_TO_BE(shared_stream_magic);   // Magic identifier 'STRM'
+            pHeader->nVersion   = 1;                                // Version of the buffer
+            pHeader->nFlags     = 0;                                // Clean up flags
+            pHeader->nChannels  = channels;                         // Number of channels
+            pHeader->nLength    = len;                              // Length of the channel
+            pHeader->nMaxBlkSize= 0;                                // Maximum block size written
+            pHeader->nHead      = 0;                                // Position of the head of the buffer
+            pHeader->nCounter   = 0;                                // Auto-incrementing counter for each change
+
+            // Allocate channel information
+            nChannels           = channels;
+            vChannels           = static_cast<channel_t *>(malloc(sizeof(channel_t) * nChannels));
+            if (vChannels == NULL)
+                return STATUS_NO_MEM;
+
+            // Initialize channels
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c        = &vChannels[i];
+
+                c->nHead            = head;
+                c->nPosition        = 0;
+                c->nAvail           = 0;
+                c->nCounter         = 0;
+                c->pData            = advance_ptr_bytes<float>(ptr, params->nChannelBytes);
+
+                dsp::fill_zero(c->pData, len);
+            }
+
+            // Initialize fields
+            pHeader->nFlags     = SS_INITIALIZED;
+            bWriteMode          = true;
+            bIO                 = false;
+            bUnderrun           = false;
+
+            return res;
+        }
+
+        status_t AudioStream::open_internal()
         {
             status_t res;
 
             // Map header
-            const size_t hdr_size = align_size(sizeof(sh_header_t), 0x40);
-            if ((res = hMem.map(0, hdr_size)) != STATUS_OK)
+            if ((res = hMem.map(0, sizeof(sh_header_t))) != STATUS_OK)
                 return res;
 
             // Parse header information
@@ -114,31 +266,38 @@ namespace lsp
             if (hdr == NULL)
                 return STATUS_UNKNOWN_ERR;
 
-            if (CPU_TO_BE(hdr->nMagic) != shared_stream_magic)
+            if (BE_TO_CPU(hdr->nMagic) != shared_stream_magic)
                 return STATUS_BAD_FORMAT;
-            uint32_t version= pHeader->nVersion;
+            uint32_t version= hdr->nVersion;
             if (version != 1)
                 return STATUS_UNSUPPORTED_FORMAT;
 
-            nChannels       = hdr->nChannels;
+            // Do not open already terminated stream
+            uint32_t flags  = hdr->nFlags;
+            if ((flags & SS_TERM_MASK) == SS_TERMINATED)
+                return STATUS_CLOSED;
+
+            alloc_params_t params;
+            if (!calc_params(&params, hdr->nChannels, hdr->nLength))
+                return STATUS_CORRUPTED;
+            hdr             = NULL;
 
             // Allocate channel information
-            vChannels       = static_cast<channel_t *>(malloc(sizeof(channel_t) * nChannels));
+            nChannels       = params.nChannels;
+            vChannels       = static_cast<channel_t *>(malloc(sizeof(channel_t) * params.nChannels));
             if (vChannels == NULL)
                 return STATUS_NO_MEM;
 
             // Remap header
-            const size_t channel_size   = sizeof(float) * hdr->nLength;
-            const size_t payload_size   = align_size(channel_size * hdr->nChannels, 0x40);
-            if ((res = hMem.map(0, hdr_size + payload_size)) != STATUS_OK)
+            if ((res = hMem.map(0, params.nSegmentBytes)) != STATUS_OK)
                 return res;
 
-            hdr             = NULL;
             uint8_t *ptr    = reinterpret_cast<uint8_t *>(hMem.data());
             if (ptr == NULL)
                 return STATUS_UNKNOWN_ERR;
 
-            pHeader         = advance_ptr_bytes<sh_header_t>(ptr, hdr_size);
+            // Initialize header pointer
+            pHeader         = advance_ptr_bytes<sh_header_t>(ptr, params.nHdrBytes);
             uint32_t head   = pHeader->nHead;
             uint32_t counter= pHeader->nCounter - 0x80000000; // Make out of sync
 
@@ -151,7 +310,7 @@ namespace lsp
                 c->nPosition    = 0;
                 c->nAvail       = 0;
                 c->nCounter     = counter;
-                c->pData        = advance_ptr_bytes<float>(ptr, channel_size);
+                c->pData        = advance_ptr_bytes<float>(ptr, params.nChannelBytes);
             }
 
             // Initialize fields
@@ -162,91 +321,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t SharedAudioStream::create(const char *id, size_t channels, size_t length)
-        {
-            if (pHeader != NULL)
-                return STATUS_OPENED;
-
-            const size_t hdr_size       = align_size(sizeof(sh_header_t), 0x40);
-            const size_t channel_size   = align_size(sizeof(float) * channels, 0x40);
-            const size_t payload_size   = channel_size * channels;
-
-            status_t res = hMem.open(id, ipc::SharedMem::SHM_PERSIST | ipc::SharedMem::SHM_CREATE | ipc::SharedMem::SHM_PERSIST, hdr_size + payload_size);
-            if (res == STATUS_OK)
-                res = create_internal(channels, hdr_size, channel_size);
-
-            if (res != STATUS_OK)
-                close();
-
-            return res;
-        }
-
-        status_t SharedAudioStream::create(const LSPString *id, size_t channels, size_t length)
-        {
-            if (pHeader != NULL)
-                return STATUS_OPENED;
-
-            const size_t hdr_size       = align_size(sizeof(sh_header_t), 0x40);
-            const size_t channel_size   = align_size(sizeof(float) * channels, 0x40);
-            const size_t payload_size   = channel_size * channels;
-
-            status_t res = hMem.open(id, ipc::SharedMem::SHM_PERSIST | ipc::SharedMem::SHM_CREATE | ipc::SharedMem::SHM_PERSIST, hdr_size + payload_size);
-            if (res == STATUS_OK)
-                res = create_internal(channels, hdr_size, channel_size);
-
-            if (res != STATUS_OK)
-                close();
-
-            return res;
-        }
-
-        status_t SharedAudioStream::create_internal(size_t channels, size_t hdr_size, size_t channel_size)
-        {
-            status_t res;
-
-            // Map memory
-            const size_t payload_size   = channel_size * channels;
-            res = hMem.map(0, hdr_size + payload_size);
-            if (res != STATUS_OK)
-                return res;
-
-            uint8_t *ptr    = reinterpret_cast<uint8_t *>(hMem.data());
-            if (ptr == NULL)
-                return STATUS_UNKNOWN_ERR;
-
-            // Initialize buffer
-            pHeader             = advance_ptr_bytes<sh_header_t>(ptr, hdr_size);
-            uint32_t head       = pHeader->nHead;
-
-            pHeader->nMagic     = BE_TO_CPU(shared_stream_magic);   // Magic identifier 'STRM'
-            pHeader->nVersion   = 1;                                // Version of the buffer
-            pHeader->nChannels  = channels;                         // Number of channels
-            pHeader->nLength    = channel_size / sizeof(float);     // Length of the channel
-            pHeader->nMaxBlkSize= 0;                                // Maximum block size written
-            pHeader->nHead      = 0;                                // Position of the head of the buffer
-            pHeader->nCounter   = 0;                                // Auto-incrementing counter for each change
-
-            // Initialize channels
-            for (size_t i=0; i<nChannels; ++i)
-            {
-                channel_t *c    = &vChannels[i];
-
-                c->nHead        = head;
-                c->nPosition    = 0;
-                c->nAvail       = 0;
-                c->nCounter     = 0;
-                c->pData        = advance_ptr_bytes<float>(ptr, channel_size);
-            }
-
-            // Initialize fields
-            bWriteMode      = true;
-            bIO             = false;
-            bUnderrun       = false;
-
-            return res;
-        }
-
-        status_t SharedAudioStream::close()
+        status_t AudioStream::close()
         {
             pHeader         = NULL;
             if (vChannels != NULL)
@@ -262,18 +337,18 @@ namespace lsp
             return hMem.close();
         }
 
-        size_t SharedAudioStream::channels() const
+        size_t AudioStream::channels() const
         {
             size_t channels = (pHeader != NULL) ? pHeader->nChannels : 0;
             return lsp_min(nChannels, channels);
         }
 
-        size_t SharedAudioStream::length() const
+        size_t AudioStream::length() const
         {
             return (pHeader != NULL) ? pHeader->nLength : 0;
         }
 
-        status_t SharedAudioStream::begin()
+        status_t AudioStream::begin()
         {
             if (pHeader == NULL)
                 return STATUS_BAD_STATE;
@@ -295,16 +370,25 @@ namespace lsp
             else
             {
                 // Check that we are in sync
+                uint32_t flags      = pHeader->nFlags;
                 uint32_t src_counter= pHeader->nCounter;
                 uint32_t src_head   = pHeader->nHead;
                 uint32_t blk_size   = pHeader->nMaxBlkSize;
 
                 uint32_t head       = vChannels[0].nPosition;
                 uint32_t counter    = vChannels[0].nCounter;
-                size_t avail        = src_counter - counter;
 
+                // Compute number of available samples
+                size_t avail        = src_counter - counter;
+                if ((flags & (SS_UPD_MASK | SS_INIT_MASK)) != (SS_UPDATED | SS_INITIALIZED))
+                    avail           = 0;
+
+                // Synchronize position
                 if (avail > blk_size * 4)
                 {
+                    if ((flags & SS_TERM_MASK) == SS_TERMINATED)
+                        return STATUS_EOF;
+
                     // We went out of sync, need to re-sync
                     uint32_t length     = pHeader->nLength;
                     head                = (src_head + length - blk_size) % length;
@@ -317,6 +401,11 @@ namespace lsp
                         c->nHead            = head;
                         c->nCounter         = counter;
                     }
+                }
+                else if (avail <= 0)
+                {
+                    if ((flags & SS_TERM_MASK) == SS_TERMINATED)
+                        return STATUS_EOF;
                 }
 
                 // Set-up read position and number of available frames
@@ -333,7 +422,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t SharedAudioStream::read(size_t channel, float *dst, size_t samples)
+        status_t AudioStream::read(size_t channel, float *dst, size_t samples)
         {
             if (pHeader == NULL)
                 return STATUS_CLOSED;
@@ -341,6 +430,15 @@ namespace lsp
                 return STATUS_BAD_STATE;
             if (bWriteMode)
                 return STATUS_BAD_STATE;
+
+            // Check that audio stream is in valid state
+            uint32_t flags = pHeader->nFlags;
+            if ((flags & (SS_UPD_MASK | SS_INIT_MASK)) != (SS_UPDATED | SS_INITIALIZED))
+            {
+                bUnderrun       = true;
+                dsp::fill_zero(dst, samples);
+                return STATUS_OK;
+            }
 
             // Check that we went out of channel
             if (channel >= nChannels)
@@ -373,7 +471,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t SharedAudioStream::write(size_t channel, const float *src, size_t samples)
+        status_t AudioStream::write(size_t channel, const float *src, size_t samples)
         {
             if (pHeader == NULL)
                 return STATUS_CLOSED;
@@ -404,7 +502,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        bool SharedAudioStream::check_channels_synchronized()
+        bool AudioStream::check_channels_synchronized()
         {
             for (size_t i=1; i<nChannels; ++i)
             {
@@ -422,7 +520,7 @@ namespace lsp
             return true;
         }
 
-        status_t SharedAudioStream::end()
+        status_t AudioStream::end()
         {
             if (pHeader == NULL)
                 return STATUS_BAD_STATE;
@@ -440,7 +538,7 @@ namespace lsp
                 uint32_t avail          = vChannels[0].nAvail;
 
                 // Commit new position and statistics
-                pHeader->nMaxBlkSize    = lsp_max(pHeader->nMaxBlkSize, avail);
+                pHeader->nMaxBlkSize    = lsp_max(blk_size, avail);
                 pHeader->nCounter       = counter;
                 pHeader->nHead          = (head + avail) % pHeader->nLength;
             }

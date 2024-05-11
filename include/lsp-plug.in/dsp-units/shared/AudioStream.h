@@ -19,8 +19,8 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_DSP_UNITS_SHARED_SHAREDAUDIOSTREAM_H_
-#define LSP_PLUG_IN_DSP_UNITS_SHARED_SHAREDAUDIOSTREAM_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_SHARED_AUDIOSTREAM_H_
+#define LSP_PLUG_IN_DSP_UNITS_SHARED_AUDIOSTREAM_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
 
@@ -34,16 +34,35 @@ namespace lsp
     namespace dspu
     {
         /**
-         * Shared audio stream FIFO.
+         * Shared audio stream FIFO with single producer and multiple consumers.
          */
-        class SharedAudioStream
+        class LSP_DSP_UNITS_PUBLIC AudioStream
         {
             protected:
+                enum stream_flags_t
+                {
+                    SS_INITIALIZED  = 0x000000c3,
+                    SS_UPDATED      = 0x00009600,
+                    SS_TERMINATED   = 0x005a0000,
+
+                    SS_INIT_MASK    = 0x000000ff,
+                    SS_UPD_MASK     = 0x0000ff00,
+                    SS_TERM_MASK    = 0x00ff0000
+                } stream_flags_t;
+
+                typedef struct alloc_params_t
+                {
+                    size_t          nChannels;
+                    size_t          nHdrBytes;
+                    size_t          nChannelBytes;
+                    size_t          nSegmentBytes;
+                } alloc_params_t;
 
                 typedef struct sh_header_t
                 {
                     uint32_t            nMagic;         // Magic number
                     uint32_t            nVersion;       // Version of the buffer
+                    uint32_t            nFlags;         // Stream flags
                     uint32_t            nChannels;      // Number of channels
                     uint32_t            nLength;        // Number of samples per channel
                     volatile uint32_t   nMaxBlkSize;    // Maximum block size written
@@ -72,16 +91,19 @@ namespace lsp
             protected:
                 bool                check_channels_synchronized();
                 status_t            open_internal();
-                status_t            create_internal(size_t channels, size_t hdr_size, size_t channel_size);
+                status_t            create_internal(size_t channels, const alloc_params_t *params);
+
+            protected:
+                static bool         calc_params(alloc_params_t *params, size_t channels, size_t length);
 
             public:
-                SharedAudioStream();
-                SharedAudioStream(const SharedAudioStream &) = delete;
-                SharedAudioStream(SharedAudioStream &&);
-                ~SharedAudioStream();
+                AudioStream();
+                AudioStream(const AudioStream &) = delete;
+                AudioStream(AudioStream &&);
+                ~AudioStream();
 
-                SharedAudioStream & operator = (const SharedAudioStream &) = delete;
-                SharedAudioStream & operator = (SharedAudioStream &&);
+                AudioStream & operator = (const AudioStream &) = delete;
+                AudioStream & operator = (AudioStream &&);
 
                 /** Construct object
                  *
@@ -114,6 +136,7 @@ namespace lsp
                  * @param id identifier of the named audio stream
                  * @param channels number of audio channels
                  * @param length length of each channel
+                 * @param persist use persistent shared memory segment
                  * @return status of operation
                  */
                 status_t        create(const char *id, size_t channels, size_t length);
@@ -123,9 +146,32 @@ namespace lsp
                  * @param id identifier of the named audio stream
                  * @param channels number of audio channels
                  * @param length length of each channel
+                 * @param persit use persistent shared memory segment
                  * @return status of operation
                  */
                 status_t        create(const LSPString *id, size_t channels, size_t length);
+
+                /**
+                 * Create and open named audio stream for writing
+                 * @param name pointer to store the name of the shared segment
+                 * @param postfix postfix for the shared segment to add
+                 * @param channels number of audio channels
+                 * @param length length of each channel
+                 * @param persit use persistent shared memory segment
+                 * @return status of operation
+                 */
+                status_t        allocate(LSPString *name, const char *postfix, size_t channels, size_t length);
+
+                /**
+                 * Create and open named audio stream for writing
+                 * @param name pointer to store the name of the shared segment
+                 * @param postfix postfix for the shared segment to add
+                 * @param channels number of audio channels
+                 * @param length length of each channel
+                 * @param persit use persistent shared memory segment
+                 * @return status of operation
+                 */
+                status_t        allocate(LSPString *name, const LSPString *postfix, size_t channels, size_t length);
 
                 /**
                  * Close

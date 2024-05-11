@@ -55,6 +55,7 @@
 								<option id="gnu.cpp.link.option.flags.1996842112" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="$(shell pkg-config --libs sndfile)" valueType="string"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.libs.1754094703" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="dl"/>
+									<listOptionValue builtIn="false" value="rt"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1016670562" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
