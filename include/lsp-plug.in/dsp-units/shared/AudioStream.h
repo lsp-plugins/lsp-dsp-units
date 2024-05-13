@@ -72,10 +72,8 @@ namespace lsp
 
                 typedef struct channel_t
                 {
-                    uint32_t            nHead;          // Read/Write head
                     uint32_t            nPosition;      // Read/Write position
-                    uint32_t            nAvail;         // Number of samples available
-                    uint32_t            nCounter;       // Counter
+                    uint32_t            nCount;         // Number of samples read/written
                     float              *pData;          // Pointer to channel data
                 } channel_t;
 
@@ -84,6 +82,10 @@ namespace lsp
                 sh_header_t        *pHeader;        // Header of the shared buffer
                 channel_t          *vChannels;      // Pointer to channel descriptions
                 uint32_t            nChannels;      // Number of channels
+                uint32_t            nHead;          // Head position
+                uint32_t            nAvail;         // Number of samples available
+                uint32_t            nBlkSize;       // Block size
+                uint32_t            nCounter;       // Counter
                 bool                bWriteMode;     // Stream is opened for writing
                 bool                bIO;            // I/O mode (begin() called)
                 bool                bUnderrun;      // Underrun detected
@@ -194,9 +196,10 @@ namespace lsp
 
                 /**
                  * Begin I/O operation on the stream
+                 * @param block_size the desired block size that will be read or written, zero value means infinite block size
                  * @return status of operation
                  */
-                status_t        begin();
+                status_t        begin(ssize_t block_size = 0);
 
                 /**
                  * Read contents of specific channel

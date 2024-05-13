@@ -49,6 +49,10 @@ namespace lsp
             pHeader         = NULL;
             vChannels       = NULL;
             nChannels       = 0;
+            nHead           = 0;
+            nAvail          = 0;
+            nBlkSize        = 0;
+            nCounter        = 0;
             bWriteMode      = false;
             bIO             = false;
             bUnderrun       = false;
@@ -63,6 +67,10 @@ namespace lsp
                 vChannels       = NULL;
             }
             nChannels       = 0;
+            nHead           = 0;
+            nAvail          = 0;
+            nBlkSize        = 0;
+            nCounter        = 0;
             bWriteMode      = false;
             bIO             = false;
             bUnderrun       = false;
@@ -212,7 +220,6 @@ namespace lsp
 
             // Initialize buffer
             pHeader             = advance_ptr_bytes<sh_header_t>(ptr, params->nHdrBytes);
-            uint32_t head       = pHeader->nHead;
             const uint32_t len  = params->nChannelBytes / sizeof(float);
 
             pHeader->nMagic     = CPU_TO_BE(shared_stream_magic);   // Magic identifier 'STRM'
@@ -235,10 +242,8 @@ namespace lsp
             {
                 channel_t *c        = &vChannels[i];
 
-                c->nHead            = head;
                 c->nPosition        = 0;
-                c->nAvail           = 0;
-                c->nCounter         = 0;
+                c->nCount           = 0;
                 c->pData            = advance_ptr_bytes<float>(ptr, params->nChannelBytes);
 
                 dsp::fill_zero(c->pData, len);
@@ -246,6 +251,10 @@ namespace lsp
 
             // Initialize fields
             pHeader->nFlags     = SS_INITIALIZED;
+            nHead               = 0;
+            nAvail              = 0;
+            nBlkSize            = 0;
+            nCounter            = 0;
             bWriteMode          = true;
             bIO                 = false;
             bUnderrun           = false;
@@ -298,22 +307,22 @@ namespace lsp
 
             // Initialize header pointer
             pHeader         = advance_ptr_bytes<sh_header_t>(ptr, params.nHdrBytes);
-            uint32_t head   = pHeader->nHead;
-            uint32_t counter= pHeader->nCounter - 0x80000000; // Make out of sync
 
             // Initialize channels
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c    = &vChannels[i];
 
-                c->nHead        = head;
                 c->nPosition    = 0;
-                c->nAvail       = 0;
-                c->nCounter     = counter;
+                c->nCount       = 0;
                 c->pData        = advance_ptr_bytes<float>(ptr, params.nChannelBytes);
             }
 
             // Initialize fields
+            nHead           = pHeader->nHead;
+            nAvail          = 0;
+            nBlkSize        = 0;
+            nCounter        = pHeader->nCounter + 0x80000000; // Make out of sync
             bWriteMode      = false;
             bIO             = false;
             bUnderrun       = false;
@@ -348,26 +357,16 @@ namespace lsp
             return (pHeader != NULL) ? pHeader->nLength : 0;
         }
 
-        status_t AudioStream::begin()
+        status_t AudioStream::begin(ssize_t block_size)
         {
             if (pHeader == NULL)
                 return STATUS_BAD_STATE;
             if (bIO)
                 return STATUS_BAD_STATE;
 
-            if (bWriteMode)
-            {
-                uint32_t head   = pHeader->nHead;
+            nBlkSize        = block_size;
 
-                for (size_t i=0; i<nChannels; ++i)
-                {
-                    channel_t *c    = &vChannels[i];
-                    c->nHead        = head;
-                    c->nPosition    = head;
-                    c->nAvail       = 0;
-                }
-            }
-            else
+            if (!bWriteMode)
             {
                 // Check that we are in sync
                 uint32_t flags      = pHeader->nFlags;
@@ -375,46 +374,45 @@ namespace lsp
                 uint32_t src_head   = pHeader->nHead;
                 uint32_t blk_size   = pHeader->nMaxBlkSize;
 
-                uint32_t head       = vChannels[0].nPosition;
-                uint32_t counter    = vChannels[0].nCounter;
-
                 // Compute number of available samples
-                size_t avail        = src_counter - counter;
+                nAvail              = src_counter - nCounter;
                 if ((flags & (SS_UPD_MASK | SS_INIT_MASK)) != (SS_UPDATED | SS_INITIALIZED))
-                    avail           = 0;
+                    nAvail              = 0;
 
                 // Synchronize position
-                if (avail > blk_size * 4)
+                if (nAvail > blk_size * 4)
                 {
                     if ((flags & SS_TERM_MASK) == SS_TERMINATED)
                         return STATUS_EOF;
 
                     // We went out of sync, need to re-sync
                     uint32_t length     = pHeader->nLength;
-                    head                = (src_head + length - blk_size) % length;
-                    avail               = blk_size;
-                    counter             = src_counter - avail;
-
-                    for (size_t i=0; i<nChannels; ++i)
-                    {
-                        channel_t *c        = &vChannels[i];
-                        c->nHead            = head;
-                        c->nCounter         = counter;
-                    }
+                    nHead               = (src_head + length - blk_size) % length;
+                    nAvail              = blk_size;
+                    nCounter            = src_counter - nAvail;
                 }
-                else if (avail <= 0)
+                else if (nAvail <= 0)
                 {
                     if ((flags & SS_TERM_MASK) == SS_TERMINATED)
                         return STATUS_EOF;
                 }
 
-                // Set-up read position and number of available frames
-                for (size_t i=0; i<nChannels; ++i)
-                {
-                    channel_t *c        = &vChannels[i];
-                    c->nPosition        = c->nHead;
-                    c->nAvail           = avail;
-                }
+                // Limit number of samples to read if limit is set
+                if ((nBlkSize > 0) && (nAvail > size_t(nBlkSize)))
+                    nAvail              = nBlkSize;
+            }
+            else
+            {
+                nHead           = pHeader->nHead;
+                nCounter        = pHeader->nCounter;
+                nAvail          = 0;
+            }
+
+            for (size_t i=0; i<nChannels; ++i)
+            {
+                channel_t *c    = &vChannels[i];
+                c->nPosition    = nHead;
+                c->nCount       = 0;
             }
 
             bIO             = true;
@@ -451,14 +449,15 @@ namespace lsp
             channel_t *c = &vChannels[channel];
             const uint32_t length = pHeader->nLength;
 
-            while ((samples > 0) && (c->nAvail > 0))
+            while ((samples > 0) && (c->nCount < nAvail))
             {
-                size_t to_read  = lsp_min(samples, c->nAvail, length - c->nPosition);
+                size_t to_read  = lsp_min(samples, nAvail - c->nCount, length - c->nPosition);
                 dsp::copy(dst, &c->pData[c->nPosition], to_read);
 
                 samples        -= to_read;
                 dst            += to_read;
                 c->nPosition    = (c->nPosition + to_read) % length;
+                c->nCount    += to_read;
             }
 
             // Detected buffer underrun?
@@ -477,7 +476,7 @@ namespace lsp
                 return STATUS_CLOSED;
             if (!bIO)
                 return STATUS_BAD_STATE;
-            if (bWriteMode)
+            if (!bWriteMode)
                 return STATUS_BAD_STATE;
 
             // Check that we went out of channel
@@ -496,7 +495,7 @@ namespace lsp
                 samples        -= to_write;
                 src            += to_write;
                 c->nPosition    = (c->nPosition + to_write) % length;
-                c->nAvail      += to_write;
+                c->nCount      += to_write;
             }
 
             return STATUS_OK;
@@ -507,13 +506,9 @@ namespace lsp
             for (size_t i=1; i<nChannels; ++i)
             {
                 channel_t *c        = &vChannels[i];
-                if (c->nHead != vChannels[0].nHead)
-                    return false;
                 if (c->nPosition != vChannels[0].nPosition)
                     return false;
-                if (c->nCounter != vChannels[0].nCounter)
-                    return false;
-                if (c->nAvail != vChannels[0].nHead)
+                if (c->nCount != vChannels[0].nCount)
                     return false;
             }
 
@@ -527,20 +522,43 @@ namespace lsp
             if (!bIO)
                 return STATUS_BAD_STATE;
 
-            if (!check_channels_synchronized())
-                return STATUS_CORRUPTED;
+            // Estimate size of I/O block
+            size_t block_size = nBlkSize;
+            if (block_size == 0)
+            {
+                for (size_t i=0; i<nChannels; ++i)
+                    block_size = lsp_max(block_size, vChannels[i].nCount);
+            }
+
+            uint32_t length         = pHeader->nLength;
 
             if (bWriteMode)
             {
-                uint32_t blk_size       = pHeader->nMaxBlkSize;
-                uint32_t head           = pHeader->nHead;
-                uint32_t counter        = vChannels[0].nCounter;
-                uint32_t avail          = vChannels[0].nAvail;
+                uint32_t hdr_blk_size   = pHeader->nMaxBlkSize;
+                uint32_t flags          = pHeader->nFlags;
+
+                // Fill missing data with zeros
+                for (size_t i=0; i<nChannels; ++i)
+                {
+                    channel_t *c = &vChannels[i];
+
+                    // Perform write zeros
+                    size_t samples = block_size - c->nCount;
+                    while (samples > 0)
+                    {
+                        size_t to_write = lsp_min(samples, length - c->nPosition);
+                        dsp::fill_zero(&c->pData[c->nPosition], to_write);
+
+                        samples        -= to_write;
+                        c->nPosition    = (c->nPosition + to_write) % length;
+                    }
+                }
 
                 // Commit new position and statistics
-                pHeader->nMaxBlkSize    = lsp_max(blk_size, avail);
-                pHeader->nCounter       = counter;
-                pHeader->nHead          = (head + avail) % pHeader->nLength;
+                pHeader->nMaxBlkSize    = lsp_max(hdr_blk_size, block_size);
+                pHeader->nCounter       = nCounter + block_size;
+                pHeader->nHead          = (nHead + block_size) % length;
+                pHeader->nFlags         = flags | SS_UPDATED;
             }
             else
             {
@@ -548,15 +566,8 @@ namespace lsp
                 if (bUnderrun)
                     return STATUS_OK;
 
-                // Update current head position for each channel
-                for (size_t i=0; i<nChannels; ++i)
-                {
-                    channel_t *c            = &vChannels[i];
-                    c->nHead                = c->nPosition;
-                    c->nPosition            = 0;
-                    c->nCounter             = 0;
-                    c->nAvail               = 0;
-                }
+                nHead                   = (nHead + block_size) % length;
+                nCounter               += block_size;
             }
 
             bIO                     = false;
