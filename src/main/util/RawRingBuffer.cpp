@@ -76,6 +76,11 @@ namespace lsp
                 dsp::fill_zero(pData, nCapacity);
         }
 
+        void RawRingBuffer::reset()
+        {
+            nHead           = 0;
+        }
+
         size_t RawRingBuffer::write(const float *data, size_t count)
         {
             count               = lsp_min(count, nCapacity);
@@ -126,9 +131,10 @@ namespace lsp
             return pData[tail];
         }
 
-        void RawRingBuffer::advance(size_t count)
+        float *RawRingBuffer::advance(size_t count)
         {
             nHead           = (nHead + count) % nCapacity;
+            return &pData[nHead];
         }
 
         float *RawRingBuffer::tail(size_t offset)

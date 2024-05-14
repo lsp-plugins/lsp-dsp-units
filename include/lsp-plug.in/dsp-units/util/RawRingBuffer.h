@@ -102,8 +102,9 @@ namespace lsp
                 /**
                  * Advance head by the specified amount of samples
                  * @param count number of samples to advance
+                 * @return pointer to new head
                  */
-                void                advance(size_t count);
+                float              *advance(size_t count);
 
             public:
                 /**
@@ -116,6 +117,11 @@ namespace lsp
                  * Clear buffer contents, fill all data with zero
                  */
                 void                clear();
+
+                /**
+                 * Reset head to zero (initial) position
+                 */
+                void                reset();
 
                 /**
                  * Get the pointer to the beginning of the entire buffer
