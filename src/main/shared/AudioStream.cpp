@@ -332,7 +332,17 @@ namespace lsp
 
         status_t AudioStream::close()
         {
-            pHeader         = NULL;
+            if (pHeader != NULL)
+            {
+                if (bWriteMode)
+                {
+                    uint32_t flags      = pHeader->nFlags;
+                    pHeader->nFlags     = flags | SS_TERMINATED;
+                }
+
+                pHeader         = NULL;
+            }
+
             if (vChannels != NULL)
             {
                 free(vChannels);
@@ -416,6 +426,7 @@ namespace lsp
             }
 
             bIO             = true;
+            bUnderrun       = false;
 
             return STATUS_OK;
         }
@@ -560,17 +571,15 @@ namespace lsp
                 pHeader->nHead          = (nHead + block_size) % length;
                 pHeader->nFlags         = flags | SS_UPDATED;
             }
-            else
+            else if (!bUnderrun)
             {
                 // Check if requested number of samples was greater than available
-                if (bUnderrun)
-                    return STATUS_OK;
-
                 nHead                   = (nHead + block_size) % length;
                 nCounter               += block_size;
             }
 
             bIO                     = false;
+            bUnderrun               = false;
 
             return STATUS_OK;
         }
