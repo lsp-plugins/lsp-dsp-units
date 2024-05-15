@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.22 ===
-
+* Implemented shared audio stream class.
 
 === 1.0.21 ===
 * Implemented safer algorithm of loading sample when the underlying stream
