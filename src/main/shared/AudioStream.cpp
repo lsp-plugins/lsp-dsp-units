@@ -34,18 +34,6 @@ namespace lsp
 
         AudioStream::AudioStream()
         {
-            construct();
-        }
-
-        AudioStream::~AudioStream()
-        {
-            destroy();
-        }
-
-        void AudioStream::construct()
-        {
-            new (&hMem, inplace_new_tag_t()) ipc::SharedMem();
-
             pHeader         = NULL;
             vChannels       = NULL;
             nChannels       = 0;
@@ -58,7 +46,7 @@ namespace lsp
             bUnderrun       = false;
         }
 
-        void AudioStream::destroy()
+        AudioStream::~AudioStream()
         {
             pHeader         = NULL;
             if (vChannels != NULL)
@@ -74,8 +62,6 @@ namespace lsp
             bWriteMode      = false;
             bIO             = false;
             bUnderrun       = false;
-
-            hMem.~SharedMem();
         }
 
         status_t AudioStream::open(const char *id)

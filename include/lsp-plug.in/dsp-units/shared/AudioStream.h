@@ -48,7 +48,7 @@ namespace lsp
                     SS_INIT_MASK    = 0x000000ff,
                     SS_UPD_MASK     = 0x0000ff00,
                     SS_TERM_MASK    = 0x00ff0000
-                } stream_flags_t;
+                };
 
                 typedef struct alloc_params_t
                 {
@@ -101,11 +101,11 @@ namespace lsp
             public:
                 AudioStream();
                 AudioStream(const AudioStream &) = delete;
-                AudioStream(AudioStream &&);
+                AudioStream(AudioStream &&) = delete;
                 ~AudioStream();
 
                 AudioStream & operator = (const AudioStream &) = delete;
-                AudioStream & operator = (AudioStream &&);
+                AudioStream & operator = (AudioStream &&) = delete;
 
                 /** Construct object
                  *
