@@ -40,40 +40,57 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC Catalog
         {
             public:
+                static constexpr size_t NAME_BYTES      = 64;
+                static constexpr size_t ID_BYTES        = 64;
+
                 typedef struct Record
                 {
-                    uint32_t        index;              // Record index
-                    uint32_t        magic;              // Record type
-                    LSPString       name;               // Name of the record
-                    LSPString       id;                 // Shared segment identifier of the record
+                    uint32_t        index;                  // Record index
+                    uint32_t        magic;                  // Record type
+                    uint32_t        version;                // Version of the record
+                    LSPString       name;                   // Name of the record
+                    LSPString       id;                     // Shared segment identifier of the record
                 } Record;
 
             protected:
                 typedef struct sh_header_t
                 {
-                    uint32_t            nMagic;         // Magic number
-                    uint32_t            nVersion;       // Version of the catalog
-                    uint32_t            nSize;          // Number of records
-                    uint32_t            nAllocated;     // Number of allocated records
-                    volatile uint32_t   nChanges;       // Number of changes
+                    uint32_t            nMagic;             // Magic number
+                    uint32_t            nVersion;           // Version of the catalog
+                    uint32_t            nSize;              // Number of records
+                    uint32_t            nAllocated;         // Number of allocated records
+                    volatile uint32_t   nChanges;           // Number of changes
                 } sh_header_t;
 
                 typedef struct sh_record_t
                 {
-                    uint32_t            nMagic;         // Record type
-                    uint32_t            nReplacement;   // Replacement index
-                    uint32_t            nReferences;    // Number of references
-                    uint32_t            nReserved;      // Reserved: padding
-                    char                sName[64];      // Unique name of the record
-                    char                sId[64];        // The identifier of associated shared segment
+                    uint32_t            nMagic;             // Record type
+                    uint32_t            nHash;              // Name hash
+                    uint32_t            nVersion;           // Version of the record
+                    uint32_t            nReserved;          // Reserved data
+                    char                sName[NAME_BYTES];  // Unique name of the record
+                    char                sId[ID_BYTES];      // The identifier of associated shared segment
                 } sh_record_t;
 
             protected:
-                ipc::SharedMutex    hMutex;             // Shared mutex for access
-                ipc::SharedMem      hMem;               // Shared memory descriptor
-                sh_header_t        *pHeader;            // Header of the shared buffer
-                sh_record_t        *vRecords;           // Records stored in catalog
-                uint32_t            nChanges;           // Number of changes
+                mutable ipc::SharedMutex    hMutex;         // Shared mutex for access
+                ipc::SharedMem              hMem;           // Shared memory descriptor
+                sh_header_t                *pHeader;        // Header of the shared buffer
+                sh_record_t                *vRecords;       // Records stored in catalog
+                uint32_t                    nChanges;       // Number of changes
+
+            protected:
+                static bool         str_equals(const char *var, size_t var_len, const char *fixed, size_t fixed_len);
+                static bool         str_copy(char *fixed, size_t fixed_len, const char *var, size_t var_len);
+                static uint32_t     str_hash(const char *var, size_t len);
+                static void         commit_record(Record *dst, Record *src);
+
+                static status_t     fill_record(Record *dst, const sh_record_t *src);
+
+                status_t            create_catalog(const LSPString *name, size_t entries);
+                status_t            open_catalog(const LSPString *name);
+                ssize_t             find_empty() const;
+                ssize_t             find_by_name(uint32_t hash, const char *name, size_t len) const;
 
             public:
                 Catalog();
@@ -88,16 +105,18 @@ namespace lsp
                 /**
                  * Open or create shared catalog
                  * @param id the name of the catalog
+                 * @param entries number of entries if catalog is created
                  * @return status of operation
                  */
-                status_t        open(const char *id);
+                status_t        open(const char *id, size_t entries);
 
                 /**
                  * Open or create shared catalog
                  * @param id the name of the catalog
+                 * @param entries number of entries if catalog is created
                  * @return status of operation
                  */
-                status_t        open(const LSPString *id);
+                status_t        open(const LSPString *id, size_t entries);
 
                 /**
                  * Close catalog
@@ -117,10 +136,9 @@ namespace lsp
                  * @param magic record type
                  * @param name unique record name (UTF-8 encoded string)
                  * @param id associated shared segment identifier (UTF-8 encoded string)
-                 * @param lock lock the record flag
                  * @return record index or negative error code
                  */
-                ssize_t         create(uint32_t magic, const char *name, const char *id, bool lock = true);
+                ssize_t         publish(uint32_t magic, const char *name, const char *id);
 
                 /**
                  * Create catalog record. If record already exists, it will be replaced.
@@ -130,7 +148,7 @@ namespace lsp
                  * @param lock lock the record flag
                  * @return record index or negative error code
                  */
-                ssize_t         create(uint32_t magic, const LSPString *name, const LSPString *id, bool lock = true);
+                ssize_t         publish(uint32_t magic, const LSPString *name, const LSPString *id);
 
                 /**
                  * Read record from catalog
@@ -138,7 +156,7 @@ namespace lsp
                  * @param index index of the record
                  * @return status of operation
                  */
-                status_t        get(Record *record, uint32_t index);
+                status_t        get(Record *record, uint32_t index) const;
 
                 /**
                  * Read record from catalog by unique name
@@ -146,7 +164,7 @@ namespace lsp
                  * @param name unique name of the record (UTF-8 encoded string)
                  * @return status of operation
                  */
-                status_t        get(Record *record, const char *name);
+                status_t        get(Record *record, const char *name) const;
 
                 /**
                  * Read record from catalog by unique name
@@ -154,14 +172,15 @@ namespace lsp
                  * @param name unique name of the record
                  * @return status of operation
                  */
-                status_t        get(Record *record, const LSPString *name);
+                status_t        get(Record *record, const LSPString *name) const;
 
                 /**
-                 * Enumerate all records in catalog
-                 * @param result collection to store result, caller is responsible for deleting items
+                 * Erase record with specified index and version
+                 * @param index index of the record
+                 * @param version version of the record to erase
                  * @return status of operation
                  */
-                status_t        enumerate(lltl::parray<Record> *result);
+                status_t        revoke(size_t index, uint32_t version);
 
                 /**
                  * Enumerate all records in catalog with specific type
@@ -169,35 +188,7 @@ namespace lsp
                  * @param magic record type
                  * @return status of operation
                  */
-                status_t        enumerate(lltl::parray<Record> *result, uint32_t magic);
-
-                /**
-                 * Lock record by it's index
-                 * @param index the index of the record
-                 * @return status of operation
-                 */
-                status_t        lock(size_t index);
-
-                /**
-                 * Lock record by it's unique name
-                 * @param name name of the record (UTF-8 encoded string)
-                 * @return status of operation
-                 */
-                status_t        lock(const char *name);
-
-                /**
-                 * Lock record by it's unique name
-                 * @param name name of the record
-                 * @return status of operation
-                 */
-                status_t        lock(const LSPString *name);
-
-                /**
-                 * Unlock record by it's index
-                 * @param index the index of the record
-                 * @return status of operation
-                 */
-                status_t        unlock(size_t index);
+                status_t        enumerate(lltl::parray<Record> *result, uint32_t magic = 0);
 
             public:
                 /**
