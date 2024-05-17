@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.22 ===
+* Implemented shared catalog class.
 * Implemented shared audio stream class.
 
 === 1.0.21 ===

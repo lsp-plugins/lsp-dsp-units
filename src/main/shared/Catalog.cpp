@@ -199,12 +199,34 @@ namespace lsp
 
         bool Catalog::sync()
         {
+            if (pHeader == NULL)
+                return false;
+
             uint32_t changes = pHeader->nChanges;
             if (nChanges == changes)
                 return false;
 
             nChanges        = changes;
             return true;
+        }
+
+        bool Catalog::changed() const
+        {
+            if (pHeader == NULL)
+                return false;
+
+            uint32_t changes = pHeader->nChanges;
+            return nChanges != changes;
+        }
+
+        size_t Catalog::capacity() const
+        {
+            return (pHeader != NULL) ? pHeader->nSize : 0;
+        }
+
+        size_t Catalog::size() const
+        {
+            return (pHeader != NULL) ? pHeader->nAllocated: 0;
         }
 
         ssize_t Catalog::find_empty() const
@@ -233,14 +255,18 @@ namespace lsp
         ssize_t Catalog::find_by_name(uint32_t hash, const char *name, size_t len) const
         {
             size_t count = pHeader->nSize;
-            if (pHeader->nAllocated >= count)
+            size_t allocated = pHeader->nAllocated;
+
+            if (allocated >= count)
                 return -STATUS_NO_MEM;
 
-            for (size_t i=0; i<count; ++i)
+            for (size_t i=0, found=0; (i<count) && (found < allocated); ++i)
             {
                 const sh_record_t *rec = &vRecords[i];
                 if (rec->nMagic == 0)
                     continue;
+                ++found;
+
                 if (rec->nHash != hash)
                     continue;
                 if (str_equals(name, len, rec->sName, NAME_BYTES))
@@ -248,6 +274,12 @@ namespace lsp
             }
 
             return -STATUS_NOT_FOUND;
+        }
+
+        void Catalog::mark_changed()
+        {
+            uint32_t changes    = pHeader->nChanges;
+            pHeader->nChanges   = changes + 1;
         }
 
         ssize_t Catalog::publish(uint32_t magic, const char *name, const char *id)
@@ -302,6 +334,8 @@ namespace lsp
             rec->nMagic         = magic;
             str_copy(rec->sId, ID_BYTES, id, id_len);
             ++rec->nVersion;
+
+            mark_changed();
 
             return index;
         }
@@ -377,7 +411,7 @@ namespace lsp
             // Find record
             ssize_t index = find_by_name(hash, name, name_len);
             if (index < 0)
-                return index;
+                return -index;
 
             // Check that we need to return value
             if (record != NULL)
@@ -424,15 +458,17 @@ namespace lsp
             if (rec->nVersion != version)
                 return STATUS_NOT_FOUND;
 
-            rec->nMagic     = 0;
-            rec->nHash      = 0;
+            rec->nMagic         = 0;
+            rec->nHash          = 0;
             ++rec->nVersion;
-            rec->nReserved  = 0;
+            rec->nReserved      = 0;
 
             bzero(rec->sName, NAME_BYTES);
             bzero(rec->sId, ID_BYTES);
 
             --pHeader->nAllocated;
+
+            mark_changed();
 
             return STATUS_OK;
         }

@@ -91,6 +91,7 @@ namespace lsp
                 status_t            open_catalog(const LSPString *name);
                 ssize_t             find_empty() const;
                 ssize_t             find_by_name(uint32_t hash, const char *name, size_t len) const;
+                void                mark_changed();
 
             public:
                 Catalog();
@@ -126,9 +127,28 @@ namespace lsp
 
                 /**
                  * Perform lock-free check that there are pending changes available in the catalog
+                 * and mark catalog as synchronized.
                  * @return true if there are pending changes available in the catalog
                  */
                 bool            sync();
+
+                /**
+                 * Perform lock-free check that there are pending changes available in the catalog
+                 * @return true if there are pending changes available in the catalog
+                 */
+                bool            changed() const;
+
+                /**
+                 * Return the capacity of catalog
+                 * @return capacity of catalog
+                 */
+                size_t          capacity() const;
+
+                /**
+                 * Return number of allocated items
+                 * @return number of allocated items
+                 */
+                size_t          size() const;
 
             public:
                 /**

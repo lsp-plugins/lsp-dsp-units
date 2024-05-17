@@ -20,7 +20,6 @@
  */
 
 #include <lsp-plug.in/dsp/dsp.h>
-#include <lsp-plug.in/dsp-units/sampling/Sample.h>
 #include <lsp-plug.in/dsp-units/shared/AudioStream.h>
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/test-fw/FloatBuffer.h>
@@ -409,8 +408,3 @@ UTEST_BEGIN("dspu.shared", audiostream)
         test_close();
     }
 UTEST_END
-
-
-
-
-
