@@ -5,6 +5,7 @@
 === 1.0.22 ===
 * Implemented shared catalog class.
 * Implemented shared audio stream class.
+* Updated module versions in dependencies.
 
 === 1.0.21 ===
 * Implemented safer algorithm of loading sample when the underlying stream
