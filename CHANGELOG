@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.23 ===
+
+
 === 1.0.22 ===
 * Implemented shared catalog class.
 * Implemented shared audio stream class.
