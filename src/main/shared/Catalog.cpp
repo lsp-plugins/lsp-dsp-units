@@ -229,6 +229,11 @@ namespace lsp
             return (pHeader != NULL) ? pHeader->nAllocated: 0;
         }
 
+        bool Catalog::opened() const
+        {
+            return pHeader != NULL;
+        }
+
         ssize_t Catalog::find_empty() const
         {
             size_t count = pHeader->nSize;

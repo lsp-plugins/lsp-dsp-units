@@ -150,6 +150,12 @@ namespace lsp
                  */
                 size_t          size() const;
 
+                /**
+                 * Ensure that catalog is opened
+                 * @return true if catalog is opened
+                 */
+                bool            opened() const;
+
             public:
                 /**
                  * Create catalog record. If record already exists, it will be replaced.
