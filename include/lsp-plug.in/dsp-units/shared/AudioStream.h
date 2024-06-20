@@ -213,12 +213,12 @@ namespace lsp
                 status_t        read(size_t channel, float *dst, size_t samples);
 
                 /**
-                 * Read contents of specific channel
+                 * Write contents of the specific channel
                  * Should be called between begin() and end() calls
                  *
                  * @param channel number of channel
-                 * @param dst destination buffer to store data
-                 * @param samples number of samples to read
+                 * @param src source buffer to take data
+                 * @param samples number of samples to write
                  * @return status of operation
                  */
                 status_t        write(size_t channel, const float *src, size_t samples);
