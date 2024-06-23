@@ -45,15 +45,15 @@ UTEST_BEGIN("dspu.shared", catalog)
         UTEST_ASSERT(cat.capacity() == 16);
         UTEST_ASSERT(cat.size() == 0);
 
-        UTEST_ASSERT(cat.publish(0, "test", "test") < 0);
-        UTEST_ASSERT(cat.publish(0x11223344, "", "test") < 0);
-        UTEST_ASSERT(cat.publish(0x11223344, NULL, "test") < 0);
-        UTEST_ASSERT(cat.publish(0x11223344, "test", "") < 0);
-        UTEST_ASSERT(cat.publish(0x11223344, "test", NULL) < 0);
-        UTEST_ASSERT(cat.publish(0x11223344, "test", "test.shm") >= 0);
-        UTEST_ASSERT(cat.publish(0x11223344, "0123456789012345678901234567890123456789012345678901234567890123456789", "test2.shm") < 0);
-        UTEST_ASSERT(cat.publish(0x11223344, "test2", "0123456789012345678901234567890123456789012345678901234567890123456789") < 0);
-        UTEST_ASSERT(cat.publish(0x22334455, "test2", "test2.shm") >= 0);
+        UTEST_ASSERT(cat.publish(NULL, 0, "test", "test") < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, "", "test") < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, NULL, "test") < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, "test", "") < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, "test", NULL) < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, "test", "test.shm") >= 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, "0123456789012345678901234567890123456789012345678901234567890123456789", "test2.shm") < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x11223344, "test2", "0123456789012345678901234567890123456789012345678901234567890123456789") < 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x22334455, "test2", "test2.shm") >= 0);
 
         UTEST_ASSERT(cat.changed());
         UTEST_ASSERT(cat.sync());
@@ -86,7 +86,7 @@ UTEST_BEGIN("dspu.shared", catalog)
         UTEST_ASSERT(!cat.changed());
 
         // Update record
-        UTEST_ASSERT(cat.publish(0x33445566, "test", "another-segment.shm") == STATUS_OK);
+        UTEST_ASSERT(cat.publish(NULL, 0x33445566, "test", "another-segment.shm") == STATUS_OK);
         UTEST_ASSERT(cat.changed());
         UTEST_ASSERT(cat.sync());
         UTEST_ASSERT(!cat.changed());
@@ -145,7 +145,7 @@ UTEST_BEGIN("dspu.shared", catalog)
         UTEST_ASSERT(!cat.changed());
 
         // Publish record with long name and description and delete it
-        UTEST_ASSERT(cat.publish(0x12345678, "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnop", "0123456789012345678901234567890123456789012345678901234567890123") >= 0);
+        UTEST_ASSERT(cat.publish(NULL, 0x12345678, "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnop", "0123456789012345678901234567890123456789012345678901234567890123") >= 0);
         UTEST_ASSERT(cat.capacity() == 16);
         UTEST_ASSERT(cat.size() == 1);
         UTEST_ASSERT(cat.changed());

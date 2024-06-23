@@ -287,7 +287,7 @@ namespace lsp
             pHeader->nChanges   = changes + 1;
         }
 
-        ssize_t Catalog::publish(uint32_t magic, const char *name, const char *id)
+        ssize_t Catalog::publish(Record *record, uint32_t magic, const char *name, const char *id)
         {
             if (pHeader == NULL)
                 return -STATUS_CLOSED;
@@ -340,12 +340,17 @@ namespace lsp
             str_copy(rec->sId, ID_BYTES, id, id_len);
             ++rec->nVersion;
 
+            // Mark catalog as changed
             mark_changed();
+
+            // Fill result
+            if (record != NULL)
+                fill_record(record, rec);
 
             return index;
         }
 
-        ssize_t Catalog::publish(uint32_t magic, const LSPString *name, const LSPString *id)
+        ssize_t Catalog::publish(Record *record, uint32_t magic, const LSPString *name, const LSPString *id)
         {
             if (pHeader == NULL)
                 return -STATUS_CLOSED;
@@ -353,7 +358,7 @@ namespace lsp
             if ((name == NULL) || (id == NULL) || (magic == 0))
                 return -STATUS_BAD_ARGUMENTS;
 
-            return publish(magic, name->get_utf8(), id->get_utf8());
+            return publish(record, magic, name->get_utf8(), id->get_utf8());
         }
 
         status_t Catalog::get(Record *record, uint32_t index) const
@@ -387,6 +392,44 @@ namespace lsp
             }
 
             return STATUS_OK;
+        }
+
+        bool Catalog::validate(const Record *record) const
+        {
+            if ((record == NULL) || (record->magic == 0))
+                return false;
+            if (pHeader == NULL)
+                return false;
+            if (record->index >= pHeader->nSize)
+                return false;
+
+            // Lock the mutex
+            status_t res = hMutex.lock();
+            if (res != STATUS_OK)
+                return -res;
+            lsp_finally {
+                hMutex.unlock();
+            };
+
+            // Check that record is valid
+            const sh_record_t *rec = &vRecords[record->index];
+            if (rec->nMagic != record->magic)
+                return false;
+            if (rec->nVersion != record->version)
+                return false;
+
+            LSPString tmp;
+            if (!tmp.set_utf8(rec->sName, strnlen(rec->sName, NAME_BYTES)))
+                return false;
+            if (!record->name.equals(&tmp))
+                return false;
+
+            if (!tmp.set_utf8(rec->sId, strnlen(rec->sId, ID_BYTES)))
+                return false;
+            if (!record->name.equals(&tmp))
+                return false;
+
+            return true;
         }
 
         status_t Catalog::get(Record *record, const char *name) const
