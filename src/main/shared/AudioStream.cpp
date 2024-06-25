@@ -353,6 +353,11 @@ namespace lsp
             return (pHeader != NULL) ? pHeader->nLength : 0;
         }
 
+        uint32_t AudioStream::counter() const
+        {
+            return (pHeader != NULL) ? pHeader->nCounter : 0;
+        }
+
         status_t AudioStream::begin(ssize_t block_size)
         {
             if (pHeader == NULL)
@@ -417,7 +422,7 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t AudioStream::read(size_t channel, float *dst, size_t samples)
+        status_t AudioStream::read_internal(size_t channel, float *dst, size_t samples, copy_function_t copy_func)
         {
             if (pHeader == NULL)
                 return STATUS_CLOSED;
@@ -449,7 +454,7 @@ namespace lsp
             while ((samples > 0) && (c->nCount < nAvail))
             {
                 size_t to_read  = lsp_min(samples, nAvail - c->nCount, length - c->nPosition);
-                dsp::copy(dst, &c->pData[c->nPosition], to_read);
+                copy_func(dst, &c->pData[c->nPosition], to_read);
 
                 samples        -= to_read;
                 dst            += to_read;
@@ -467,7 +472,17 @@ namespace lsp
             return STATUS_OK;
         }
 
-        status_t AudioStream::write(size_t channel, const float *src, size_t samples)
+        status_t AudioStream::read(size_t channel, float *dst, size_t samples)
+        {
+            return read_internal(channel, dst, samples, dsp::copy);
+        }
+
+        status_t AudioStream::read_sanitized(size_t channel, float *dst, size_t samples)
+        {
+            return read_internal(channel, dst, samples, dsp::sanitize2);
+        }
+
+        status_t AudioStream::write_internal(size_t channel, const float *src, size_t samples, copy_function_t copy_func)
         {
             if (pHeader == NULL)
                 return STATUS_CLOSED;
@@ -487,7 +502,7 @@ namespace lsp
             while (samples > 0)
             {
                 size_t to_write = lsp_min(samples, length - c->nPosition);
-                dsp::copy(&c->pData[c->nPosition], src, to_write);
+                copy_func(&c->pData[c->nPosition], src, to_write);
 
                 samples        -= to_write;
                 src            += to_write;
@@ -496,6 +511,16 @@ namespace lsp
             }
 
             return STATUS_OK;
+        }
+
+        status_t AudioStream::write(size_t channel, const float *src, size_t samples)
+        {
+            return write_internal(channel, src, samples, dsp::copy);
+        }
+
+        status_t AudioStream::write_sanitized(size_t channel, const float *src, size_t samples)
+        {
+            return write_internal(channel, src, samples, dsp::sanitize2);
         }
 
         bool AudioStream::check_channels_synchronized()

@@ -77,6 +77,8 @@ namespace lsp
                     float              *pData;          // Pointer to channel data
                 } channel_t;
 
+                typedef void (*copy_function_t)(float *dst, const float *src, size_t count);
+
             protected:
                 ipc::SharedMem      hMem;           // Shared memory descriptor
                 sh_header_t        *pHeader;        // Header of the shared buffer
@@ -94,6 +96,8 @@ namespace lsp
                 bool                check_channels_synchronized();
                 status_t            open_internal();
                 status_t            create_internal(size_t channels, const alloc_params_t *params);
+                status_t            read_internal(size_t channel, float *dst, size_t samples, copy_function_t copy_func);
+                status_t            write_internal(size_t channel, const float *src, size_t samples, copy_function_t copy_func);
 
             protected:
                 static bool         calc_params(alloc_params_t *params, size_t channels, size_t length);
@@ -183,26 +187,32 @@ namespace lsp
 
             public:
                 /**
-                 * Return number of channels
+                 * Return number of channels, RT safe
                  * @return number of channels
                  */
                 size_t          channels() const;
 
                 /**
-                 * Get number of samples per channel
-                 * @return number of samples per channel
+                 * Get number of frames (or samples per channel) in the buffer, RT safe
+                 * @return number of frames
                  */
                 size_t          length() const;
 
                 /**
-                 * Begin I/O operation on the stream
+                 * Begin I/O operation on the stream, RT safe
                  * @param block_size the desired block size that will be read or written, zero value means infinite block size
                  * @return status of operation
                  */
                 status_t        begin(ssize_t block_size = 0);
 
                 /**
-                 * Read contents of specific channel
+                 * Get change counter
+                 * @return change counter
+                 */
+                uint32_t        counter() const;
+
+                /**
+                 * Read contents of specific channel, RT safe
                  * Should be called between begin() and end() calls
                  *
                  * @param channel number of channel
@@ -213,7 +223,18 @@ namespace lsp
                 status_t        read(size_t channel, float *dst, size_t samples);
 
                 /**
-                 * Write contents of the specific channel
+                 * Read sanitized contents (removed NaNs, Infs and denormals) of specific channel, RT safe
+                 * Should be called between begin() and end() calls
+                 *
+                 * @param channel number of channel
+                 * @param dst destination buffer to store data
+                 * @param samples number of samples to read
+                 * @return status of operation
+                 */
+                status_t        read_sanitized(size_t channel, float *dst, size_t samples);
+
+                /**
+                 * Write contents of the specific channel, RT safe
                  * Should be called between begin() and end() calls
                  *
                  * @param channel number of channel
@@ -224,7 +245,18 @@ namespace lsp
                 status_t        write(size_t channel, const float *src, size_t samples);
 
                 /**
-                 * End I/O operations on the stream
+                 * Write sanitized contents (removed NaNs, Infs and denormals) of the specific channel, RT safe
+                 * Should be called between begin() and end() calls
+                 *
+                 * @param channel number of channel
+                 * @param src source buffer to take data
+                 * @param samples number of samples to write
+                 * @return status of operation
+                 */
+                status_t        write_sanitized(size_t channel, const float *src, size_t samples);
+
+                /**
+                 * End I/O operations on the stream, RT safe
                  * @return status of operation
                  */
                 status_t        end();

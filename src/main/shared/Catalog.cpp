@@ -313,7 +313,7 @@ namespace lsp
             // Lock the mutex
             status_t res = hMutex.lock();
             if (res != STATUS_OK)
-                return -res;
+                return res;
             lsp_finally {
                 hMutex.unlock();
             };
@@ -371,7 +371,7 @@ namespace lsp
             // Lock the mutex
             status_t res = hMutex.lock();
             if (res != STATUS_OK)
-                return -res;
+                return res;
             lsp_finally {
                 hMutex.unlock();
             };
@@ -406,7 +406,7 @@ namespace lsp
             // Lock the mutex
             status_t res = hMutex.lock();
             if (res != STATUS_OK)
-                return -res;
+                return false;
             lsp_finally {
                 hMutex.unlock();
             };
@@ -442,16 +442,16 @@ namespace lsp
                 return STATUS_BAD_ARGUMENTS;
             const size_t name_len  = strlen(name);
             if (name_len > NAME_BYTES)
-                return -STATUS_TOO_BIG;
+                return STATUS_TOO_BIG;
             else if (name_len < 1)
-                return -STATUS_BAD_ARGUMENTS;
+                return STATUS_BAD_ARGUMENTS;
 
             const uint32_t hash = str_hash(name, name_len);
 
             // Lock the mutex
             status_t res = hMutex.lock();
             if (res != STATUS_OK)
-                return -res;
+                return res;
             lsp_finally {
                 hMutex.unlock();
             };
@@ -494,7 +494,7 @@ namespace lsp
             // Lock the mutex
             status_t res = hMutex.lock();
             if (res != STATUS_OK)
-                return -res;
+                return res;
             lsp_finally {
                 hMutex.unlock();
             };
@@ -537,7 +537,7 @@ namespace lsp
             // Lock the mutex
             status_t res = hMutex.lock();
             if (res != STATUS_OK)
-                return -res;
+                return res;
             lsp_finally {
                 hMutex.unlock();
             };
