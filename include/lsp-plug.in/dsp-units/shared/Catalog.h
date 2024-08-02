@@ -150,25 +150,40 @@ namespace lsp
                  */
                 size_t          size() const;
 
+                /**
+                 * Ensure that catalog is opened
+                 * @return true if catalog is opened
+                 */
+                bool            opened() const;
+
             public:
                 /**
                  * Create catalog record. If record already exists, it will be replaced.
+                 * @param record pointer to store catalog record
                  * @param magic record type
                  * @param name unique record name (UTF-8 encoded string)
                  * @param id associated shared segment identifier (UTF-8 encoded string)
                  * @return record index or negative error code
                  */
-                ssize_t         publish(uint32_t magic, const char *name, const char *id);
+                ssize_t         publish(Record *record, uint32_t magic, const char *name, const char *id);
 
                 /**
                  * Create catalog record. If record already exists, it will be replaced.
+                 * @param record pointer to store catalog record
                  * @param magic record type
                  * @param name unique record name
                  * @param id associated shared segment identifier
                  * @param lock lock the record flag
                  * @return record index or negative error code
                  */
-                ssize_t         publish(uint32_t magic, const LSPString *name, const LSPString *id);
+                ssize_t         publish(Record *record, uint32_t magic, const LSPString *name, const LSPString *id);
+
+                /**
+                 * Ensure that record is valid
+                 * @param record record to validate
+                 * @return true if record is valid
+                 */
+                bool            validate(const Record *record) const;
 
                 /**
                  * Read record from catalog
