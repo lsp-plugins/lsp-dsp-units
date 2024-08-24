@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.25 ===
-
+* Bugfixes in shared memory catalog record validation.
 
 === 1.0.24 ===
 * Updated build scripts.

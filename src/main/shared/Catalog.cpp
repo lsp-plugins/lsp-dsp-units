@@ -345,7 +345,10 @@ namespace lsp
 
             // Fill result
             if (record != NULL)
+            {
+                record->index       = index;
                 fill_record(record, rec);
+            }
 
             return index;
         }
@@ -426,7 +429,7 @@ namespace lsp
 
             if (!tmp.set_utf8(rec->sId, strnlen(rec->sId, ID_BYTES)))
                 return false;
-            if (!record->name.equals(&tmp))
+            if (!record->id.equals(&tmp))
                 return false;
 
             return true;
