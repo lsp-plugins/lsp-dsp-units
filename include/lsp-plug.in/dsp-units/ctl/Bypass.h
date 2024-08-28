@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 07 дек. 2015 г.
@@ -80,7 +80,7 @@ namespace lsp
                  * output.
                  *
                  * @param dst output buffer
-                 * @param dry dry signal buffer
+                 * @param dry dry signal buffer, optional, can be NULL
                  * @param wet wet signal buffer
                  * @param count number of samples to process
                  */
@@ -93,12 +93,27 @@ namespace lsp
                  * output.
                  *
                  * @param dst output buffer
-                 * @param dry dry signal buffer
+                 * @param dry dry signal buffer, optional, can be NULL
                  * @param wet wet signal buffer
                  * @param wet_gain additional gain to apply to wet signal
                  * @param count number of samples to process
                  */
                 void        process_wet(float *dst, const float *dry, const float *wet, float wet_gain, size_t count);
+
+                /**
+                 * Process the signal and apply gain to wet signal. If Bypass is on, then dry signal is passed to output.
+                 * If bypass is off, then wet signal is passed.
+                 * When bypass is in active state, the mix of dry and wet signal is passed to
+                 * output.
+                 *
+                 * @param dst output buffer
+                 * @param dry dry signal buffer, optional, can be NULL
+                 * @param wet wet signal buffer
+                 * @param dry_gain additional gain to apply to dry signal if it is used
+                 * @param wet_gain additional gain to apply to wet signal
+                 * @param count number of samples to process
+                 */
+                void        process_drywet(float *dst, const float *dry, const float *wet, float dry_gain, float wet_gain, size_t count);
 
                 /**
                  * Enable/disable bypass

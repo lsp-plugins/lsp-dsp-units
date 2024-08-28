@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 07 дек. 2015 г.
@@ -39,15 +39,15 @@ namespace lsp
         void Bypass::construct()
         {
             nState      = S_OFF;
-            fDelta      = 0;
-            fGain       = 0;
+            fDelta      = 0.0f;
+            fGain       = 0.0f;
         }
 
         void Bypass::destroy()
         {
             nState      = S_OFF;
-            fDelta      = 0;
-            fGain       = 0;
+            fDelta      = 0.0f;
+            fGain       = 0.0f;
         }
 
         bool Bypass::set_bypass(bool bypass)
@@ -99,8 +99,8 @@ namespace lsp
             if (length < 1.0f)
                 length          = 1.0f;
             nState          = S_OFF;
-            fDelta          = 1.0 / length;
-            fGain           = 1.0;
+            fDelta          = 1.0f / length;
+            fGain           = 1.0f;
         }
 
         void Bypass::process(float *dst, const float *dry, const float *wet, size_t count)
@@ -129,7 +129,7 @@ namespace lsp
                     }
 
                     // Copy wet data
-                    fGain   = 1.0;
+                    fGain   = 1.0f;
                     nState  = S_OFF;
                     if (count > 0)
                         dsp::copy(dst, wet, count);
@@ -151,7 +151,7 @@ namespace lsp
                     }
 
                     // Copy dry data
-                    fGain   = 0.0;
+                    fGain   = 0.0f;
                     nState  = S_ON;
                     if (count > 0)
                         dsp::copy(dst, dry, count);
@@ -176,7 +176,7 @@ namespace lsp
                     }
 
                     // Copy wet data
-                    fGain   = 1.0;
+                    fGain   = 1.0f;
                     nState  = S_OFF;
                     if (count > 0)
                         dsp::copy(dst, wet, count);
@@ -197,7 +197,7 @@ namespace lsp
                     }
 
                     // Copy dry data
-                    fGain   = 0.0;
+                    fGain   = 0.0f;
                     nState  = S_ON;
                     if (count > 0)
                         dsp::fill_zero(dst, count);
@@ -231,7 +231,7 @@ namespace lsp
                     }
 
                     // Copy wet data
-                    fGain   = 1.0;
+                    fGain   = 1.0f;
                     nState  = S_OFF;
                     if (count > 0)
                         dsp::mul_k3(dst, wet, wet_gain, count);
@@ -253,7 +253,7 @@ namespace lsp
                     }
 
                     // Copy dry data
-                    fGain   = 0.0;
+                    fGain   = 0.0f;
                     nState  = S_ON;
                     if (count > 0)
                         dsp::copy(dst, dry, count);
@@ -265,7 +265,7 @@ namespace lsp
                 if (fDelta > 0.0f)
                 {
                     // Process transition
-                    while (fGain < 1.0)
+                    while (fGain < 1.0f)
                     {
                         *dst    =   (*wet) * fGain * wet_gain;
 
@@ -278,7 +278,7 @@ namespace lsp
                     }
 
                     // Copy wet data
-                    fGain   = 1.0;
+                    fGain   = 1.0f;
                     nState  = S_OFF;
                     if (count > 0)
                         dsp::mul_k3(dst, wet, wet_gain, count);
@@ -286,9 +286,9 @@ namespace lsp
                 else
                 {
                     // Process transition
-                    while (fGain > 0.0)
+                    while (fGain > 0.0f)
                     {
-                        *dst    =   (*wet) * fGain;
+                        *dst    =   (*wet) * fGain * wet_gain;
 
                         fGain   +=  fDelta;
                         wet     ++;
@@ -299,7 +299,109 @@ namespace lsp
                     }
 
                     // Copy dry data
-                    fGain   = 0.0;
+                    fGain   = 0.0f;
+                    nState  = S_ON;
+                    if (count > 0)
+                        dsp::fill_zero(dst, count);
+                }
+            }
+        }
+
+        void Bypass::process_drywet(float *dst, const float *dry, const float *wet, float dry_gain, float wet_gain, size_t count)
+        {
+            // Skip empty buffers
+            if (count == 0)
+                return;
+
+            if (dry != NULL)
+            {
+                // Analyze direction
+                if (fDelta > 0.0f)
+                {
+                    // Process transition
+                    while (fGain < 1.0f)
+                    {
+                        *dst    =   *dry + (*wet * wet_gain - *dry * dry_gain) * fGain;
+
+                        fGain   +=  fDelta;
+                        dry     ++;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy wet data
+                    fGain   = 1.0f;
+                    nState  = S_OFF;
+                    if (count > 0)
+                        dsp::mul_k3(dst, wet, wet_gain, count);
+                }
+                else
+                {
+                    // Process transition
+                    while (fGain > 0.0f)
+                    {
+                        *dst    =   *dry + (*wet * wet_gain - *dry * dry_gain) * fGain;
+
+                        fGain   +=  fDelta;
+                        dry     ++;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy dry data
+                    fGain   = 0.0f;
+                    nState  = S_ON;
+                    if (count > 0)
+                        dsp::mul_k3(dst, dry, dry_gain, count);
+                }
+            }
+            else
+            {
+                // Analyze direction
+                if (fDelta > 0.0f)
+                {
+                    // Process transition
+                    while (fGain < 1.0f)
+                    {
+                        *dst    =   (*wet) * fGain * wet_gain;
+
+                        fGain   +=  fDelta;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy wet data
+                    fGain   = 1.0f;
+                    nState  = S_OFF;
+                    if (count > 0)
+                        dsp::mul_k3(dst, wet, wet_gain, count);
+                }
+                else
+                {
+                    // Process transition
+                    while (fGain > 0.0f)
+                    {
+                        *dst    =   (*wet) * fGain * wet_gain;
+
+                        fGain   +=  fDelta;
+                        wet     ++;
+                        dst     ++;
+
+                        if ((--count) <= 0) // Last sample?
+                            return;
+                    }
+
+                    // Copy dry data
+                    fGain   = 0.0f;
                     nState  = S_ON;
                     if (count > 0)
                         dsp::fill_zero(dst, count);
