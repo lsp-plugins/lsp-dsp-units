@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.25 ===
-* Bugfixes in shared memory catalog record validation.
+* Bugfixes and improvements in shared memory catalog and clients.
 * Added dspu::Bypass::process_drywet method.
 
 === 1.0.24 ===

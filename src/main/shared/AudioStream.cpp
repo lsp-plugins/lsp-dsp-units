@@ -66,6 +66,12 @@ namespace lsp
 
         status_t AudioStream::open(const char *id)
         {
+            if (id == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            if (strlen(id) <= 0)
+                return STATUS_INVALID_VALUE;
+
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
@@ -81,6 +87,12 @@ namespace lsp
 
         status_t AudioStream::open(const LSPString *id)
         {
+            if (id == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            if (id->is_empty())
+                return STATUS_INVALID_VALUE;
+
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
@@ -111,6 +123,11 @@ namespace lsp
 
         status_t AudioStream::create(const char *id, size_t channels, size_t length)
         {
+            if (id == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            if (strlen(id) <= 0)
+                return STATUS_INVALID_VALUE;
+
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
@@ -130,6 +147,11 @@ namespace lsp
 
         status_t AudioStream::create(const LSPString *id, size_t channels, size_t length)
         {
+            if (id == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            if (id->is_empty())
+                return STATUS_INVALID_VALUE;
+
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
@@ -149,6 +171,9 @@ namespace lsp
 
         status_t AudioStream::allocate(LSPString *name, const char *postfix, size_t channels, size_t length)
         {
+            if (name == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
@@ -171,6 +196,9 @@ namespace lsp
 
         status_t AudioStream::allocate(LSPString *name, const LSPString *postfix, size_t channels, size_t length)
         {
+            if (name == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
             if (pHeader != NULL)
                 return STATUS_OPENED;
 
