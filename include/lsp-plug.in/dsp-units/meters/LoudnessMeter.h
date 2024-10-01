@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 сент. 2023 г.
@@ -39,7 +39,13 @@ namespace lsp
          * loudness according to the BS.1770-4 standard specification.
          * The meter does not output LKFS (LUFS) values nor LU (Loudness Unit) values.
          * Instead, it provides the regular RMS value which then can be converted into
-         * DBFS, LKFS/LUFS or LU values by applying logarithmic function.
+         * DBFS, LKFS/LUFS or LU values by applying corresponding logarithmic function.
+         *
+         * By default, it uses the standardized K-weighted filter over 400 ms measurement
+         * window as described by the BS.1770-4 specification.
+         * If number of channels in the configuration is 1 or 2, then the meter automatically
+         * sets designation value for inputs to CENTER for mono configuration or LEFT/RIGHT
+         * for stereo configuration.
          */
         class LSP_DSP_UNITS_PUBLIC LoudnessMeter
         {
@@ -125,7 +131,7 @@ namespace lsp
                  * @param max_period maximum measurement period in milliseconds
                  * @return status of operation
                  */
-                status_t        init(size_t channels, float max_period);
+                status_t        init(size_t channels, float max_period = dspu::bs::LUFS_MEASURE_PERIOD_MS);
 
             public:
                 /**
