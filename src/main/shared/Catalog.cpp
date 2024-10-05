@@ -29,7 +29,8 @@ namespace lsp
 {
     namespace dspu
     {
-        static constexpr uint32_t catalog_magic = 0x53434154; // "SCAT"
+        static constexpr uint32_t CATALOG_MAGIC         = 0x53434154; // "SCAT"
+        static constexpr uint32_t KEEPALIVE_THRESHOLD   = 0x20000;
 
         Catalog::Catalog()
         {
@@ -135,7 +136,7 @@ namespace lsp
             vRecords                = advance_ptr_bytes<sh_record_t>(ptr, recs_size);
             nChanges                = 0;
 
-            pHeader->nMagic         = BE_TO_CPU(catalog_magic);
+            pHeader->nMagic         = BE_TO_CPU(CATALOG_MAGIC);
             pHeader->nVersion       = 1;
             pHeader->nSize          = entries;
             pHeader->nAllocated     = 0;
@@ -159,7 +160,7 @@ namespace lsp
             sh_header_t *hdr        = reinterpret_cast<sh_header_t *>(hMem.data());
 
             const uint32_t magic    = CPU_TO_BE(hdr->nMagic);
-            if (magic != catalog_magic)
+            if (magic != CATALOG_MAGIC)
                 return STATUS_BAD_FORMAT;
             if (hdr->nVersion != 1)
                 return STATUS_UNSUPPORTED_FORMAT;
@@ -236,31 +237,42 @@ namespace lsp
 
         ssize_t Catalog::find_empty() const
         {
-            size_t count = pHeader->nSize;
-            if (pHeader->nAllocated >= count)
-                return -STATUS_NO_MEM;
+            const size_t count = pHeader->nSize;
 
-            for (size_t i=0; i<count; ++i)
+            // Find new records first
+            if (pHeader->nAllocated < count)
             {
-                const sh_record_t *rec = &vRecords[i];
-                if (rec->nMagic == 0)
+                for (size_t i=0; i<count; ++i)
                 {
-                    // Validate state of record
-                    if (rec->sName[0] != '\0')
-                        return -STATUS_CORRUPTED;
-                    if (rec->sId[0] != '\0')
-                        return -STATUS_CORRUPTED;
-                    return i;
+                    const sh_record_t *rec = &vRecords[i];
+
+                    if (rec->nMagic == 0)
+                    {
+                        // Validate state of record
+                        if (rec->sName[0] != '\0')
+                            return -STATUS_CORRUPTED;
+                        if (rec->sId[0] != '\0')
+                            return -STATUS_CORRUPTED;
+                        return i;
+                    }
                 }
             }
 
-            return -STATUS_CORRUPTED;
+            // Now look across stalled records
+            for (size_t i=0; i<count; ++i)
+            {
+                const sh_record_t *rec = &vRecords[i];
+                if (rec->nKeepAlive >= KEEPALIVE_THRESHOLD)
+                    return i;
+            }
+
+            return -STATUS_NO_MEM;
         }
 
         ssize_t Catalog::find_by_name(uint32_t hash, const char *name, size_t len) const
         {
-            size_t count = pHeader->nSize;
-            size_t allocated = pHeader->nAllocated;
+            size_t count        = pHeader->nSize;
+            size_t allocated    = pHeader->nAllocated;
 
             if (allocated >= count)
                 return -STATUS_NO_MEM;
@@ -326,11 +338,13 @@ namespace lsp
                 if (index != -STATUS_NOT_FOUND)
                     return index;
                 if ((index = find_empty()) < 0)
-                    return index;
+                    return -index;
 
                 // Create new record
-                ++pHeader->nAllocated;
                 rec                 = &vRecords[index];
+                if (rec->nMagic == 0)
+                    ++pHeader->nAllocated;
+
                 rec->nHash          = hash;
                 str_copy(rec->sName, NAME_BYTES, name, name_len);
             }
@@ -345,7 +359,10 @@ namespace lsp
 
             // Fill result
             if (record != NULL)
+            {
+                record->index       = index;
                 fill_record(record, rec);
+            }
 
             return index;
         }
@@ -426,7 +443,7 @@ namespace lsp
 
             if (!tmp.set_utf8(rec->sId, strnlen(rec->sId, ID_BYTES)))
                 return false;
-            if (!record->name.equals(&tmp))
+            if (!record->id.equals(&tmp))
                 return false;
 
             return true;
@@ -443,7 +460,7 @@ namespace lsp
             const size_t name_len  = strlen(name);
             if (name_len > NAME_BYTES)
                 return STATUS_TOO_BIG;
-            else if (name_len < 1)
+            else if (name_len <= 0)
                 return STATUS_BAD_ARGUMENTS;
 
             const uint32_t hash = str_hash(name, name_len);
@@ -484,6 +501,79 @@ namespace lsp
             return get(record, name->get_utf8());
         }
 
+        status_t Catalog::get_or_reserve(Record *record, const char *name, uint32_t magic)
+        {
+            if (pHeader == NULL)
+                return STATUS_CLOSED;
+
+            // Validate arguments
+            if (name == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            const size_t name_len  = strlen(name);
+            if (name_len > NAME_BYTES)
+                return STATUS_TOO_BIG;
+            else if (name_len <= 0)
+                return STATUS_BAD_ARGUMENTS;
+
+            const uint32_t hash = str_hash(name, name_len);
+
+            // Lock the mutex
+            status_t res = hMutex.lock();
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally {
+                hMutex.unlock();
+            };
+
+            // Find record
+            ssize_t index = find_by_name(hash, name, name_len);
+            if (index < 0)
+            {
+                if (index != -STATUS_NOT_FOUND)
+                    return index;
+                if ((index = find_empty()) < 0)
+                    return -index;
+
+                // Create new record
+                sh_record_t *rec    = &vRecords[index];
+                if (rec->nMagic == 0)
+                    ++pHeader->nAllocated;
+
+                rec->nMagic         = magic;
+                rec->nHash          = hash;
+                ++rec->nVersion;
+                rec->nKeepAlive     = 0;
+
+                str_copy(rec->sName, NAME_BYTES, name, name_len);
+                bzero(rec->sId, ID_BYTES);
+
+                // Mark catalog as changed
+                mark_changed();
+            }
+
+            // Check that we need to return value
+            if (record != NULL)
+            {
+                const sh_record_t *rec = &vRecords[index];
+
+                Record tmp;
+                tmp.index       = index;
+                if ((res = fill_record(&tmp, rec)) != STATUS_OK)
+                    return res;
+
+                commit_record(record, &tmp);
+            }
+
+            return STATUS_OK;
+        }
+
+        status_t Catalog::get_or_reserve(Record *record, const LSPString *name, uint32_t magic)
+        {
+            if (pHeader == NULL)
+                return STATUS_CLOSED;
+            return get_or_reserve(record, name->get_utf8(), magic);
+        }
+
         status_t Catalog::revoke(size_t index, uint32_t version)
         {
             if (pHeader == NULL)
@@ -509,7 +599,7 @@ namespace lsp
             rec->nMagic         = 0;
             rec->nHash          = 0;
             ++rec->nVersion;
-            rec->nReserved      = 0;
+            rec->nKeepAlive     = 0;
 
             bzero(rec->sName, NAME_BYTES);
             bzero(rec->sId, ID_BYTES);
@@ -623,6 +713,75 @@ namespace lsp
                 res             = uint32_t(tmp) ^ uint32_t(tmp >> 32);
             }
             return res;
+        }
+
+        status_t Catalog::keep_alive(const LSPString *name)
+        {
+            if (name == NULL)
+                return STATUS_BAD_ARGUMENTS;
+            return keep_alive(name->get_utf8());
+        }
+
+        status_t Catalog::keep_alive(const char *name)
+        {
+            if (name == NULL)
+                return STATUS_BAD_ARGUMENTS;
+
+            if (pHeader == NULL)
+                return STATUS_CLOSED;
+
+            const size_t name_len = strlen(name);
+            if (name_len > NAME_BYTES)
+                return -STATUS_TOO_BIG;
+            else if (name_len < 1)
+                return -STATUS_BAD_ARGUMENTS;
+
+            const uint32_t hash = str_hash(name, name_len);
+
+            // Lock the mutex
+            status_t res = hMutex.lock();
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally {
+                hMutex.unlock();
+            };
+
+            ssize_t index       = find_by_name(hash, name, name_len);
+            if (index < 0)
+                return -index;
+
+            // Reset keep-alive counter
+            sh_record_t *rec    = &vRecords[index];
+            rec->nKeepAlive     = 0;
+
+            return STATUS_OK;
+        }
+
+        status_t Catalog::gc()
+        {
+            if (pHeader == NULL)
+                return STATUS_CLOSED;
+
+            // Lock the mutex
+            status_t res = hMutex.lock();
+            if (res != STATUS_OK)
+                return res;
+            lsp_finally {
+                hMutex.unlock();
+            };
+
+            // Increment keep-alive counter
+            const size_t count = pHeader->nSize;
+            const size_t allocated = pHeader->nAllocated;
+            for (size_t i=0, found=0; (i<count) && (found < allocated); ++i)
+            {
+                sh_record_t *rec = &vRecords[i];
+                if (rec->nMagic == 0)
+                    continue;
+
+                rec->nKeepAlive = lsp_min(rec->nKeepAlive + 1, KEEPALIVE_THRESHOLD);
+            }
+            return STATUS_OK;
         }
 
         void Catalog::commit_record(Record *dst, Record *src)

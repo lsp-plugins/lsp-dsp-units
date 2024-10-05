@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 19 сент. 2023 г.
@@ -106,6 +106,11 @@ namespace lsp
             constexpr float LO_TO_LUFS_SHIFT_GAIN   = 0.0707945784385f;
             constexpr float DB_TO_LU_SHIFT_GAIN     = 13.0451777184f;
             constexpr float LU_TO_DB_SHIFT_GAIN     = 0.0766566789345f;
+
+            /**
+             * According to the standard, the default measuring period is 400 ms.
+             */
+            constexpr float LUFS_MEASURE_PERIOD_MS  = 400.0f;
 
             /**
              * Return the channel weighting coefficient accoding to BS.1770-4 recommendation

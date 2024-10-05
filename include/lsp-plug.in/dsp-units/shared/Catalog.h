@@ -67,7 +67,7 @@ namespace lsp
                     uint32_t            nMagic;             // Record type
                     uint32_t            nHash;              // Name hash
                     uint32_t            nVersion;           // Version of the record
-                    uint32_t            nReserved;          // Reserved data
+                    uint32_t            nKeepAlive;         // Keep-alive counter
                     char                sName[NAME_BYTES];  // Unique name of the record
                     char                sId[ID_BYTES];      // The identifier of associated shared segment
                 } sh_record_t;
@@ -210,6 +210,23 @@ namespace lsp
                 status_t        get(Record *record, const LSPString *name) const;
 
                 /**
+                 * Read record from catalog by unique name, create new record if it does not exist
+                 * @param record ponter to store result
+                 * @param name unique name of the record (UTF-8 encoded string)
+                 * @param magic record magic number to create unexisting record
+                 * @return status of operation
+                 */
+                status_t        get_or_reserve(Record *record, const char *name, uint32_t magic);
+
+                /**
+                 * Read record from catalog by unique name, create new record if it does not exist
+                 * @param record ponter to store result
+                 * @param name unique name of the record
+                 * @return status of operation
+                 */
+                status_t        get_or_reserve(Record *record, const LSPString *name, uint32_t magic);
+
+                /**
                  * Erase record with specified index and version
                  * @param index index of the record
                  * @param version version of the record to erase
@@ -224,6 +241,26 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t        enumerate(lltl::parray<Record> *result, uint32_t magic = 0);
+
+                /**
+                 * Mark record as alive
+                 * @param name name of the record to mark keep-alive
+                 * @return status of operation
+                 */
+                status_t        keep_alive(const LSPString *name);
+
+                /**
+                 * Mark record as alive
+                 * @param name name of the record to mark keep-alive
+                 * @return status of operation
+                 */
+                status_t        keep_alive(const char *name);
+
+                /**
+                 * Perform garbage collection: increment keep-alive counter for each used record
+                 * @return status of operation
+                 */
+                status_t        gc();
 
             public:
                 /**

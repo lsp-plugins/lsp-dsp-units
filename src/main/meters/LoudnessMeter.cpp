@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 сент. 2023 г.
@@ -104,10 +104,8 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Allocate buffers
-            vChannels               = reinterpret_cast<channel_t *>(ptr);
-            ptr                    += szof_channels;
-            vBuffer                 = reinterpret_cast<float *>(ptr);
-            ptr                    += szof_buffer;
+            vChannels               = advance_ptr_bytes<channel_t>(ptr, szof_channels);
+            vBuffer                 = advance_ptr_bytes<float>(ptr, szof_buffer);
 
             // Cleanup
             dsp::fill_zero(vBuffer, BUFFER_SIZE);
@@ -125,8 +123,7 @@ namespace lsp
                 c->vIn                  = NULL;
                 c->vOut                 = NULL;
                 c->vData                = NULL;
-                c->vMS                  = reinterpret_cast<float *>(ptr);
-                ptr                    += szof_buffer;
+                c->vMS                  = advance_ptr_bytes<float>(ptr, szof_buffer);
 
                 c->fMS                  = 0.0f;
                 c->fWeight              = 0.0f;
@@ -135,6 +132,24 @@ namespace lsp
 
                 c->nFlags               = C_ENABLED;
                 c->nOffset              = 0;
+            }
+
+            // Set-up default designations
+            if (channels == 1)
+            {
+                channel_t *c            = &vChannels[0];
+                c->enDesignation        = bs::CHANNEL_CENTER;
+                c->fWeight              = bs::channel_weighting(c->enDesignation);
+            }
+            else if (channels == 2)
+            {
+                channel_t *l            = &vChannels[0];
+                channel_t *r            = &vChannels[1];
+
+                l->enDesignation        = bs::CHANNEL_LEFT;
+                l->fWeight              = bs::channel_weighting(l->enDesignation);
+                r->enDesignation        = bs::CHANNEL_RIGHT;
+                r->fWeight              = bs::channel_weighting(r->enDesignation);
             }
 
             // Initialize channels
@@ -147,7 +162,7 @@ namespace lsp
             }
 
             // Initialize settings
-            fPeriod                 = lsp_min(max_period, 400.0f);      // BS.1770-4: RMS measurement period
+            fPeriod                 = lsp_min(max_period, dspu::bs::LUFS_MEASURE_PERIOD_MS);  // BS.1770-4: RMS measurement period
             fMaxPeriod              = max_period;
             fAvgCoeff               = 1.0f;
 
