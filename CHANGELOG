@@ -7,6 +7,7 @@
 * Bugfixes and improvements in shared memory catalog and clients.
 * Added dspu::Bypass::process_drywet method.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.24 ===
 * Updated build scripts.
