@@ -35,11 +35,7 @@ namespace lsp
     {
 
         /**
-         * Loudness meter. Allows to specify multiple channels and their roles to measure the
-         * loudness according to the BS.1770-4 standard specification.
-         * The meter does not output LKFS (LUFS) values nor LU (Loudness Unit) values.
-         * Instead, it provides the regular RMS value which then can be converted into
-         * DBFS, LKFS/LUFS or LU values by applying logarithmic function.
+         * Corellometer. Computes normalized correlation between two signals.
          */
         class LSP_DSP_UNITS_PUBLIC Correlometer
         {
