@@ -201,12 +201,13 @@ namespace lsp
             for (size_t offset = 0; offset < count; )
             {
                 // Ensure that we have enough space for processing
-                size_t to_process   = lsp_min(count - offset, BUFFER_SIZE - nHead);
+                size_t to_process   = lsp_min(count - offset, (BUFFER_SIZE - nHead) / nTimes);
                 if (to_process <= 0)
                 {
-                    dsp::copy(vBuffer, &vBuffer[BUFFER_SIZE], MAX_BUFFER_TAIL);
-                    dsp::fill_zero(&vBuffer[MAX_BUFFER_TAIL], BUFFER_SIZE);
-                    nHead           = 0;
+                    const size_t tail   = BUFFER_SIZE + TRUE_PEAK_LATENCY * 2 * nTimes - nHead;
+                    dsp::copy(vBuffer, &vBuffer[nHead], tail);
+                    dsp::fill_zero(&vBuffer[tail], BUFFER_SIZE);
+                    nHead               = 0;
                     continue;
                 }
 
@@ -216,6 +217,7 @@ namespace lsp
 
                 // Update pointers
                 nHead          += nTimes * to_process;
+                dst            += to_process;
                 offset         += to_process;
             }
         }
@@ -239,12 +241,13 @@ namespace lsp
             for (size_t offset = 0; offset < count; )
             {
                 // Ensure that we have enough space for processing
-                size_t to_process   = lsp_min(count - offset, BUFFER_SIZE - nHead);
+                size_t to_process   = lsp_min(count - offset, (BUFFER_SIZE - nHead) / nTimes);
                 if (to_process <= 0)
                 {
-                    dsp::copy(vBuffer, &vBuffer[BUFFER_SIZE], MAX_BUFFER_TAIL);
-                    dsp::fill_zero(&vBuffer[MAX_BUFFER_TAIL], BUFFER_SIZE);
-                    nHead           = 0;
+                    const size_t tail   = BUFFER_SIZE + TRUE_PEAK_LATENCY * 2 * nTimes - nHead;
+                    dsp::copy(vBuffer, &vBuffer[nHead], tail);
+                    dsp::fill_zero(&vBuffer[tail], BUFFER_SIZE);
+                    nHead               = 0;
                     continue;
                 }
 
@@ -280,5 +283,4 @@ namespace lsp
 
     } /* namespce dspu */
 } /* namespace lsp */
-
 

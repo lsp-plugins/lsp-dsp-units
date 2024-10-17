@@ -61,9 +61,6 @@ namespace lsp
                 static void         reduce_6x(float *dst, const float *src, size_t count);
                 static void         reduce_8x(float *dst, const float *src, size_t count);
 
-            protected:
-                void                update_settings();
-
             public:
                 TruePeakMeter();
                 TruePeakMeter(const TruePeakMeter &) = delete;
@@ -89,6 +86,7 @@ namespace lsp
                 void            init();
 
             public:
+                void            update_settings();
 
                 /**
                  * Set sample rate of the true peak meter
