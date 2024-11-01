@@ -83,7 +83,7 @@ namespace lsp
                 /**
                  * Initialize
                  */
-                void            init();
+                bool            init();
 
             public:
                 void            update_settings();

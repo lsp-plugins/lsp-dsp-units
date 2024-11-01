@@ -68,10 +68,14 @@ namespace lsp
             pData           = NULL;
         }
 
-        void TruePeakMeter::init()
+        bool TruePeakMeter::init()
         {
             vBuffer         = alloc_aligned<float>(pData, BUFFER_SIZE + MAX_BUFFER_TAIL, 0x40);
+            if (vBuffer == NULL)
+                return false;
+
             clear();
+            return true;
         }
 
         uint8_t TruePeakMeter::calc_oversampling_multiplier(size_t sample_rate)
