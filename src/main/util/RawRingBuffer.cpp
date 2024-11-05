@@ -148,7 +148,7 @@ namespace lsp
             return count;
         }
 
-        float RawRingBuffer::read(size_t offset)
+        float RawRingBuffer::read(size_t offset) const
         {
             const size_t tail   = (nHead + nCapacity - offset) % nCapacity;
             return pData[tail];
@@ -182,6 +182,11 @@ namespace lsp
         {
             const size_t tail   = (nHead + nCapacity - offset) % nCapacity;
             return lsp_min(nCapacity - nHead, nCapacity - tail);
+        }
+
+        void RawRingBuffer::fill(float value)
+        {
+            dsp::fill(pData, value, nCapacity);
         }
 
         void RawRingBuffer::dump(IStateDumper *v) const

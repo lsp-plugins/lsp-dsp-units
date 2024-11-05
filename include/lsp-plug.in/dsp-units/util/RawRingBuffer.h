@@ -114,7 +114,7 @@ namespace lsp
                  * @param offset offset behind the head
                  * @return data pointer at the head of buffer
                  */
-                float               read(size_t offset);
+                float               read(size_t offset) const;
 
                 /**
                  * Advance head by the specified amount of samples
@@ -193,6 +193,12 @@ namespace lsp
                  * @return number of samples
                  */
                 size_t              remaining(size_t offset) const;
+
+                /**
+                 * Fill the whole buffer with specified value
+                 * @param value value to fill
+                 */
+                void                fill(float value);
 
                 /**
                  * Dump data to the shift buffer
