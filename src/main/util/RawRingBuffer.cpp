@@ -91,6 +91,28 @@ namespace lsp
                 const size_t part2  = count - part1;
                 dsp::copy(&pData[nHead], data, part1);
                 dsp::copy(pData, &data[part1], part2);
+            }
+            else
+                dsp::copy(&pData[nHead], data, count);
+
+            return count;
+        }
+
+        void RawRingBuffer::write(float data)
+        {
+            pData[nHead]        = data;
+        }
+
+        size_t RawRingBuffer::push(const float *data, size_t count)
+        {
+            count               = lsp_min(count, nCapacity);
+
+            if ((nHead + count) > nCapacity)
+            {
+                const size_t part1  = nCapacity - nHead;
+                const size_t part2  = count - part1;
+                dsp::copy(&pData[nHead], data, part1);
+                dsp::copy(pData, &data[part1], part2);
                 nHead               = part2;
             }
             else
@@ -102,9 +124,10 @@ namespace lsp
             return count;
         }
 
-        void RawRingBuffer::write(float data)
+        void RawRingBuffer::push(float data)
         {
             pData[nHead]        = data;
+            nHead               = (nHead + 1) % nCapacity;
         }
 
         size_t RawRingBuffer::read(float *dst, size_t offset, size_t count)

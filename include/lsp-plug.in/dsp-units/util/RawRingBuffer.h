@@ -85,6 +85,23 @@ namespace lsp
                 void                write(float data);
 
                 /**
+                 * Write data to the buffer at current head position and advance position
+                 *
+                 * @param src buffer to write
+                 * @param count number of samples
+                 * @return actual number of samples written
+                 */
+                size_t              push(const float *data, size_t count);
+
+                /**
+                 * Write the single sample to the ring buffer at current head position and advance position
+                 *
+                 * @param data sample to append
+                 * @return number of samples appended
+                 */
+                void                push(float data);
+
+                /**
                  * Read the data from the ring buffer at the specified offset relative to the current head pointer
                  * @param dst destination buffer to store the data
                  * @param count number of samples to read

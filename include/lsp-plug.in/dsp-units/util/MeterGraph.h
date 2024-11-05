@@ -100,6 +100,8 @@ namespace lsp
                     nPeriod         = period;
                 }
 
+                inline float period() const             { return nPeriod; }
+
                 /** Process single sample
                  *
                  * @param sample sample to process
