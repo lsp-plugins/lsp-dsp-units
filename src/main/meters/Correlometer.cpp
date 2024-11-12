@@ -201,6 +201,7 @@ namespace lsp
             v->write("nHead", nHead);
             v->write("nMaxPeriod", nMaxPeriod);
             v->write("nPeriod", nPeriod);
+            v->write("nWindow", nWindow);
             v->write("nFlags", nFlags);
 
             v->write("pData", pData);
