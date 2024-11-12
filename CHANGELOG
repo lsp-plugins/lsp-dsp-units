@@ -4,6 +4,7 @@
 
 === 1.0.27 ===
 * Implemented TruePeak meter.
+* Implemented Panorama meter (Panometer).
 * Implemented ScaledMeterGraph with subsampling option.
 * Several fixes and improvements in RawRingBuffer.
 
