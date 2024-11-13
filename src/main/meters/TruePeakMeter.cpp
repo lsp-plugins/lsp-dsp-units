@@ -70,9 +70,13 @@ namespace lsp
 
         bool TruePeakMeter::init()
         {
-            vBuffer         = alloc_aligned<float>(pData, BUFFER_SIZE + MAX_BUFFER_TAIL, 0x40);
+            uint8_t *data   = NULL;
+            vBuffer         = alloc_aligned<float>(data, BUFFER_SIZE + MAX_BUFFER_TAIL, 0x40);
             if (vBuffer == NULL)
                 return false;
+
+            free_aligned(pData);
+            pData           = data;
 
             clear();
             return true;

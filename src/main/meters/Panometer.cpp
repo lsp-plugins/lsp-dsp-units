@@ -90,6 +90,7 @@ namespace lsp
             nMaxPeriod  = max_period;
             nPeriod     = 0;
 
+            free_aligned(pData);
             pData       = data;
 
             // Cleanup buffers (both vInA and vInB -> nCapacity * 2)

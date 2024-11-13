@@ -58,13 +58,11 @@ namespace lsp
 
         void Correlometer::destroy()
         {
-            if (pData != NULL)
-            {
-                free_aligned(pData);
-                vInA        = NULL;
-                vInB        = NULL;
-                pData       = NULL;
-            }
+            free_aligned(pData);
+
+            vInA        = NULL;
+            vInB        = NULL;
+            pData       = NULL;
         }
 
         status_t Correlometer::init(size_t max_period)
