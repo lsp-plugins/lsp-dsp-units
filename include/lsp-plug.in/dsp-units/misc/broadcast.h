@@ -115,12 +115,12 @@ namespace lsp
             /**
              * The period of the momentary loudness in milliseconds
              */
-            constexpr float LUFS_MOMENTARY_PEROID   = 400.0f;
+            constexpr float LUFS_MOMENTARY_PERIOD   = 400.0f;
 
             /**
              * The period of the short-term loudness in milliseconds
              */
-            constexpr float LUFS_SHORT_TERM_PEROID  = 3000.0f;
+            constexpr float LUFS_SHORT_TERM_PERIOD  = 3000.0f;
 
             /**
              * Absolute gating threshold for Integrated Loudness, LKFS

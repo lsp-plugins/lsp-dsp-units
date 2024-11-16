@@ -23,6 +23,7 @@
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/common/bits.h>
+#include <lsp-plug.in/common/debug.h>
 
 namespace lsp
 {
@@ -282,7 +283,7 @@ namespace lsp
 
             // Reallocate ring buffers for RMS estimation and lookahead
             const size_t blk_count  = dspu::millis_to_samples(sample_rate, fBlockPeriod * 0.25f); // 75% overlapping
-            size_t int_count        = (dspu::seconds_to_samples(sample_rate, fMaxIntTime) + blk_count*2 - 1) / blk_count;
+            size_t int_count        = (dspu::seconds_to_samples(sample_rate, fMaxIntTime) + blk_count - 1) / blk_count;
 
             const size_t int_szof   = align_size(int_count * sizeof(float), DEFAULT_ALIGN);
             int_count               = int_szof / sizeof(float);
@@ -339,18 +340,19 @@ namespace lsp
             for (size_t offset = 0; offset < count; )
             {
                 // Estimate how many samples we are ready to process
-                const size_t to_do      = lsp_min(count - offset, nBlockSize - nBlockOffset);
+                const size_t to_do      = lsp_min(count - offset, nBlockSize - nBlockOffset, BUFFER_SIZE);
                 if (to_do > 0)
                 {
                     // Compute square sum
                     for (size_t i=0; i<nChannels; ++i)
                     {
                         channel_t              *c = &vChannels[i];
-
                         if ((c->vIn != NULL) && (c->nFlags & C_ENABLED))
                         {
-                            float *s            = &c->vBlock[nBlockPart];
-                            *s                 += dsp::h_sqr_sum(&c->vIn[offset], to_do);
+                            // Apply the weighting filter
+                            c->sFilter.process(vBuffer, &c->vIn[offset], to_do);
+                            // Compute the sum of squares
+                            c->vBlock[nBlockPart]      += dsp::h_sqr_sum(vBuffer, to_do);
                         }
                     }
 
@@ -359,14 +361,14 @@ namespace lsp
 
                 // Output the loudness
                 if (out != NULL)
-                    dsp::fill(out, fLoudness * gain, to_do);
+                    dsp::fill(&out[offset], fLoudness * gain, to_do);
 
-                // Perform metering if we exceed a quarter of a block size
+                // Perform metering if we exceed a quarter of a gating block size
                 if (nBlockOffset >= nBlockSize)
                 {
                     // For each channel push new block to the history buffer
                     // Compute the loudness of the gating block and store to the buffer
-                    float loudness      = 0;
+                    float loudness      = 0.0f;
                     for (size_t i=0; i<nChannels; ++i)
                     {
                         channel_t *c        = &vChannels[i];
@@ -387,7 +389,7 @@ namespace lsp
                     if (thresh > GATING_ABS_THRESH)
                         loudness                = compute_gated_loudness(thresh);
 
-                    // Convert toe loudness for output. Because we use amplitude decibels,
+                    // Convert the loudness for output. Because we use amplitude decibels,
                     // we need to extract square root
                     fLoudness               = sqrtf(loudness);
 
@@ -410,8 +412,9 @@ namespace lsp
 
             if (nFlags & F_UPD_TIME)
             {
+                // The Integration period consists of one full block and set of overlapping blocks.
                 const size_t blk_count  = dspu::millis_to_samples(nSampleRate, fBlockPeriod * 0.25f); // 75% overlapping
-                nMSInt      = (dspu::seconds_to_samples(nSampleRate, fIntTime) + blk_count - 1) / blk_count;
+                nMSInt      = lsp_max((dspu::seconds_to_samples(nSampleRate, fIntTime) - blk_count*2 - 1) / blk_count, 1);
                 nMSCount    = lsp_min(nMSCount, nMSInt);
             }
 
