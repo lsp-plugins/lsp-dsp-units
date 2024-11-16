@@ -35,14 +35,17 @@ namespace lsp
     namespace dspu
     {
         /**
-         * Loudness meter. Allows to specify multiple channels and their roles to measure the
-         * loudness according to the BS.1770-4 standard specification.
+         * Momenatry/Short Term Loudness meter. Allows to specify multiple channels and
+         * their roles to measure the loudness according to the BS.1770-5 standard specification.
          * The meter does not output LKFS (LUFS) values nor LU (Loudness Unit) values.
-         * Instead, it provides the regular RMS value which then can be converted into
+         * Instead, it provides the regular mean square value which then can be converted into
          * DBFS, LKFS/LUFS or LU values by applying corresponding logarithmic function.
          *
+         * This meter is useful for measuring Momentary LUFS and Short-Term LUFS,
+         * for Integrated LUFS consider using ILUFSMeter.
+         *
          * By default, it uses the standardized K-weighted filter over 400 ms measurement
-         * window as described by the BS.1770-4 specification.
+         * window as described by the BS.1770-5 specification.
          * If number of channels in the configuration is 1 or 2, then the meter automatically
          * sets designation value for inputs to CENTER for mono configuration or LEFT/RIGHT
          * for stereo configuration.
@@ -92,7 +95,7 @@ namespace lsp
 
                 size_t                  nSampleRate;    // Sample rate
                 size_t                  nPeriod;        // Measuring period
-                size_t                  nMSRefresh;    // RMS refresh counter
+                size_t                  nMSRefresh;     // RMS refresh counter
                 size_t                  nChannels;      // Number of channels
                 size_t                  nFlags;         // Update flags
                 size_t                  nDataHead;      // Position in the data buffer
@@ -172,6 +175,13 @@ namespace lsp
                  * @return linking of the channel
                  */
                 float           link(size_t id) const;
+                
+                /**
+                 * Get channel designation
+                 * @param id identifier of the channel
+                 * @return channel designation
+                 */
+                bs::channel_t   designation(size_t id) const;
 
                 /**
                  * Set channel active
@@ -187,13 +197,6 @@ namespace lsp
                  * @return true if channel is active
                  */
                 bool            active(size_t id) const;
-
-                /**
-                 * Get channel designation
-                 * @param id identifier of the channel
-                 * @return channel designation
-                 */
-                bs::channel_t   designation(size_t id) const;
 
                 /**
                  * Set weighting function
