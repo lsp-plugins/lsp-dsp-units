@@ -7,6 +7,7 @@
 * Implemented Panorama meter (Panometer).
 * Implemented ScaledMeterGraph with subsampling option.
 * Implemented QuantizedCounter statistics tool.
+* Implemented ILUFSMeter - integrated LUFS meter.
 * Several fixes and improvements in RawRingBuffer.
 
 === 1.0.26 ===
