@@ -161,6 +161,12 @@ namespace lsp
                 inline const float *head() const                { return &pData[nHead];     }
 
                 /**
+                 * Get current write position index
+                 * @return current write position
+                 */
+                inline size_t       position() const            { return nHead;             }
+
+                /**
                  * Get pointer to the tail
                  * @param offset tail offset relative to the head
                  */
@@ -208,8 +214,5 @@ namespace lsp
         };
     } /* namespace dspu */
 } /* namespace lsp */
-
-
-
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_RAWRINGBUFFER_H_ */
