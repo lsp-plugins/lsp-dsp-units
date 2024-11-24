@@ -32,8 +32,10 @@ namespace lsp
     {
         enum meter_method_t
         {
-            MM_MAXIMUM,
-            MM_MINIMUM
+            MM_ABS_MAXIMUM,
+            MM_ABS_MINIMUM,
+            MM_SIGN_MAXIMUM,
+            MM_SIGN_MINIMUM,
         };
 
         class LSP_DSP_UNITS_PUBLIC MeterGraph
@@ -41,9 +43,9 @@ namespace lsp
             protected:
                 ShiftBuffer         sBuffer;
                 float               fCurrent;
-                size_t              nCount;
-                size_t              nPeriod;
-                bool                bMinimize;
+                uint32_t            nCount;
+                uint32_t            nPeriod;
+                meter_method_t      enMethod;
 
             public:
                 explicit MeterGraph();
@@ -83,13 +85,13 @@ namespace lsp
                  *
                  * @param m metering method
                  */
-                inline void set_method(meter_method_t m) { bMinimize = (m == MM_MINIMUM); }
+                inline void set_method(meter_method_t m) { enMethod = m; }
 
                 /** Get data stored in buffer
                  *
                  * @return pointer to the first element of the buffer
                  */
-                inline float *data()    { return sBuffer.head();   }
+                inline float *data()                    { return sBuffer.head();   }
 
                 /** Set strobe period
                  *

@@ -55,7 +55,7 @@ namespace lsp
 
             nPeriod                 = 0;
             nMaxPeriod              = 0;
-            enMethod                = MM_MAXIMUM;
+            enMethod                = MM_ABS_MAXIMUM;
         }
 
         void ScaledMeterGraph::destroy()
@@ -102,19 +102,31 @@ namespace lsp
 
         void ScaledMeterGraph::process_sampler(sampler_t *sampler, float sample)
         {
-            sample = fabsf(sample);
+            // Update current sample
+            switch (enMethod)
+            {
+                case MM_SIGN_MINIMUM:
+                    if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) > fabsf(sample)))
+                        sampler->fCurrent   = sample;
+                    break;
 
-            if (enMethod == MM_MAXIMUM)
-            {
-                // Update current sample
-                if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
-                    sampler->fCurrent   = sample;
-            }
-            else
-            {
-                // Update current sample
-                if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
-                    sampler->fCurrent   = sample;
+                case MM_SIGN_MAXIMUM:
+                    if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) < fabsf(sample)))
+                        sampler->fCurrent   = sample;
+                    break;
+
+                case MM_ABS_MINIMUM:
+                    sample = fabsf(sample);
+                    if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
+                        sampler->fCurrent   = sample;
+                    break;
+
+                default:
+                case MM_ABS_MAXIMUM:
+                    sample = fabsf(sample);
+                    if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
+                        sampler->fCurrent   = sample;
+                    break;
             }
 
             ++sampler->nCount;
@@ -136,17 +148,37 @@ namespace lsp
 
                 if (to_process > 0)
                 {
-                    if (enMethod == MM_MAXIMUM)
+                    switch (enMethod)
                     {
-                        const float sample  = dsp::abs_max(&src[offset], to_process);
-                        if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
-                            sampler->fCurrent   = sample;
-                    }
-                    else
-                    {
-                        const float sample  = dsp::abs_min(&src[offset], to_process);
-                        if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
-                            sampler->fCurrent   = sample;
+                        case MM_SIGN_MINIMUM:
+                        {
+                            const float sample  = dsp::sign_min(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) > fabsf(sample)))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
+                        case MM_SIGN_MAXIMUM:
+                        {
+                            const float sample  = dsp::sign_max(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) < fabsf(sample)))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
+                        case MM_ABS_MINIMUM:
+                        {
+                            const float sample  = dsp::abs_min(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
+                        default:
+                        case MM_ABS_MAXIMUM:
+                        {
+                            const float sample  = dsp::abs_max(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
                     }
 
                     sampler->nCount    += to_process;
@@ -171,17 +203,37 @@ namespace lsp
                 size_t to_process   = lsp_min(count - offset, sampler->nPeriod - sampler->nCount);
                 if (to_process > 0)
                 {
-                    if (enMethod == MM_MAXIMUM)
+                    switch (enMethod)
                     {
-                        const float sample  = dsp::abs_max(&src[offset], count) * gain;
-                        if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
-                            sampler->fCurrent   = sample;
-                    }
-                    else
-                    {
-                        const float sample  = dsp::abs_min(&src[offset], count) * gain;
-                        if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
-                            sampler->fCurrent   = sample;
+                        case MM_SIGN_MINIMUM:
+                        {
+                            const float sample  = dsp::sign_min(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) > fabsf(sample)))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
+                        case MM_SIGN_MAXIMUM:
+                        {
+                            const float sample  = dsp::sign_max(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) < fabsf(sample)))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
+                        case MM_ABS_MINIMUM:
+                        {
+                            const float sample  = dsp::abs_min(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
+                        default:
+                        case MM_ABS_MAXIMUM:
+                        {
+                            const float sample  = dsp::abs_max(&src[offset], to_process);
+                            if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
+                                sampler->fCurrent   = sample;
+                            break;
+                        }
                     }
 
                     sampler->nCount    += to_process;
@@ -226,15 +278,36 @@ namespace lsp
             {
                 // Process sub-sample
                 const float subsample = sHistory.sBuffer.read(subsamples - i);
-                if (enMethod == MM_MAXIMUM)
+                switch (enMethod)
                 {
-                    if ((sFrames.fCurrent < 0.0f) || (sFrames.fCurrent < subsample))
-                        sFrames.fCurrent    = subsample;
-                }
-                else
-                {
-                    if ((sFrames.fCurrent < 0.0f) || (sFrames.fCurrent > subsample))
-                        sFrames.fCurrent    = subsample;
+                    case MM_SIGN_MINIMUM:
+                    {
+                        if ((sFrames.fCurrent < 0.0f) || (fabsf(sFrames.fCurrent) > fabsf(subsample)))
+                            sFrames.fCurrent    = subsample;
+                        break;
+                    }
+                    case MM_SIGN_MAXIMUM:
+                    {
+                        if ((sFrames.fCurrent < 0.0f) || (fabsf(sFrames.fCurrent) < fabsf(subsample)))
+                            sFrames.fCurrent    = subsample;
+                        break;
+                    }
+                    case MM_ABS_MINIMUM:
+                    {
+                        const float sample  = fabsf(subsample);
+                        if ((sFrames.fCurrent < 0.0f) || (sFrames.fCurrent > sample))
+                            sFrames.fCurrent    = sample;
+                        break;
+                    }
+
+                    default:
+                    case MM_ABS_MAXIMUM:
+                    {
+                        const float sample  = fabsf(subsample);
+                        if ((sFrames.fCurrent < 0.0f) || (sFrames.fCurrent < sample))
+                            sFrames.fCurrent    = sample;
+                        break;
+                    }
                 }
 
                 sFrames.nCount     += sHistory.nPeriod;
