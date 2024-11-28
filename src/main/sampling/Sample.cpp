@@ -1338,6 +1338,7 @@ namespace lsp
             status_t res = try_open_regular_file(is, path);
             if (res == STATUS_OK)
                 return res;
+            const status_t unsuccess_result = res;
 
             // Now we need to walk the whole path from the end to the begin and look for archive
             LSPString item;
@@ -1351,7 +1352,7 @@ namespace lsp
             {
                 // Check that there is nothing to do with
                 if ((parent.is_root()) || (parent.is_empty()))
-                    return STATUS_NOT_FOUND;
+                    return unsuccess_result;
 
                 // Remove child entry from parent and prepend for the child
                 if ((res = parent.get_last(&item)) != STATUS_OK)
