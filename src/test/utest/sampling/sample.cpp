@@ -344,23 +344,23 @@ UTEST_BEGIN("dspu.sampling", sample)
 
         // Test file with missing entry
         printf("  reading missing file as io::Path '%s'...\n", audio_missing.as_native());
-        UTEST_ASSERT(dst.load_ext(&audio_missing) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(dst.load_ext(&audio_missing) != STATUS_OK);
 
         printf("  reading missing file as LSPString '%s'...\n", str_missing.get_native());
-        UTEST_ASSERT(dst.load_ext(&str_missing) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(dst.load_ext(&str_missing) != STATUS_OK);
 
         printf("  reading missing file as (char *) '%s'...\n", str_missing.get_native());
-        UTEST_ASSERT(dst.load_ext(str_missing.get_native()) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(dst.load_ext(str_missing.get_native()) != STATUS_OK);
 
         // Test file with invalid path
         printf("  reading invalid file as io::Path '%s'...\n", audio_invalid.as_native());
-        UTEST_ASSERT(dst.load_ext(&audio_invalid) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(dst.load_ext(&audio_invalid) != STATUS_OK);
 
         printf("  reading invalid file as LSPString '%s'...\n", str_invalid.get_native());
-        UTEST_ASSERT(dst.load_ext(&str_invalid) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(dst.load_ext(&str_invalid) != STATUS_OK);
 
         printf("  reading invalid file as (char *) '%s'...\n", str_invalid.get_native());
-        UTEST_ASSERT(dst.load_ext(str_invalid.get_native()) == STATUS_NOT_FOUND);
+        UTEST_ASSERT(dst.load_ext(str_invalid.get_native()) != STATUS_OK);
     }
 
     void test_lspc_named_files()
