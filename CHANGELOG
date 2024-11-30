@@ -9,6 +9,7 @@
 * Implemented QuantizedCounter statistics tool.
 * Implemented ILUFSMeter - integrated LUFS meter.
 * Several fixes and improvements in RawRingBuffer.
+* Updated build scripts.
 
 === 1.0.26 ===
 * Updated build scripts.
