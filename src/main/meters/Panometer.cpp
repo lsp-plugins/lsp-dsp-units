@@ -187,7 +187,7 @@ namespace lsp
                         const float sl  = sqrtf(fabsf(va) * fNorm);
                         const float sr  = sqrtf(fabsf(vb) * fNorm);
                         const float den = sl + sr;
-                        dst[i]          = (den > 1e-5f) ? sr / den : fDefault;
+                        dst[i]          = (den > 1e-18f) ? sr / den : fDefault;
                     }
                 }
                 else
@@ -201,7 +201,7 @@ namespace lsp
                         const float sr  = fabsf(vb) * fNorm;
 
                         const float den = sl + sr;
-                        dst[i]          = (den > 1e-10f) ? sr / den : fDefault;
+                        dst[i]          = (den > 1e-36f) ? sr / den : fDefault;
                     }
                 }
                 fValueA     = va;
