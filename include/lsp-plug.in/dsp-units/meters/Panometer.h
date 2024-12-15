@@ -50,7 +50,7 @@ namespace lsp
         };
 
         /**
-         * Corellometer. Computes normalized correlation between two signals.
+         * Panorama meter. Computes panorama between two signals.
          */
         class LSP_DSP_UNITS_PUBLIC Panometer
         {
