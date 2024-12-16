@@ -20,31 +20,31 @@
 
 #------------------------------------------------------------------------------
 # Variables that describe source code dependencies
-LSP_COMMON_LIB_VERSION     := 1.0.39
+LSP_COMMON_LIB_VERSION     := 1.0.40
 LSP_COMMON_LIB_NAME        := lsp-common-lib
 LSP_COMMON_LIB_TYPE        := src
 LSP_COMMON_LIB_URL_RO      := https://github.com/lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 LSP_COMMON_LIB_URL_RW      := git@github.com:lsp-plugins/$(LSP_COMMON_LIB_NAME).git
 
-LSP_DSP_LIB_VERSION        := 1.0.27
+LSP_DSP_LIB_VERSION        := 1.0.28
 LSP_DSP_LIB_NAME           := lsp-dsp-lib
 LSP_DSP_LIB_TYPE           := src
 LSP_DSP_LIB_URL_RO         := https://github.com/lsp-plugins/$(LSP_DSP_LIB_NAME).git
 LSP_DSP_LIB_URL_RW         := git@github.com:lsp-plugins/$(LSP_DSP_LIB_NAME).git
 
-LSP_LLTL_LIB_VERSION       := 1.0.22
+LSP_LLTL_LIB_VERSION       := 1.0.23
 LSP_LLTL_LIB_NAME          := lsp-lltl-lib
 LSP_LLTL_LIB_TYPE          := src
 LSP_LLTL_LIB_URL_RO        := https://github.com/lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 LSP_LLTL_LIB_URL_RW        := git@github.com:lsp-plugins/$(LSP_LLTL_LIB_NAME).git
 
-LSP_RUNTIME_LIB_VERSION    := 1.0.25
+LSP_RUNTIME_LIB_VERSION    := 1.0.26
 LSP_RUNTIME_LIB_NAME       := lsp-runtime-lib
 LSP_RUNTIME_LIB_TYPE       := src
 LSP_RUNTIME_LIB_URL_RO     := https://github.com/lsp-plugins/$(LSP_RUNTIME_LIB_NAME).git
 LSP_RUNTIME_LIB_URL_RW     := git@github.com:lsp-plugins/$(LSP_RUNTIME_LIB_NAME).git
 
-LSP_TEST_FW_VERSION        := 1.0.28
+LSP_TEST_FW_VERSION        := 1.0.29
 LSP_TEST_FW_NAME           := lsp-test-fw
 LSP_TEST_FW_TYPE           := src
 LSP_TEST_FW_URL_RO         := https://github.com/lsp-plugins/$(LSP_TEST_FW_NAME).git

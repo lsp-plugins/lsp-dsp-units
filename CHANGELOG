@@ -10,6 +10,7 @@
 * Implemented ILUFSMeter - integrated LUFS meter.
 * Several fixes and improvements in RawRingBuffer.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.26 ===
 * Updated build scripts.
