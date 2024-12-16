@@ -162,7 +162,7 @@ namespace lsp
             }
 
             // Initialize settings
-            fPeriod                 = lsp_min(max_period, dspu::bs::LUFS_MEASURE_PERIOD_MS);  // BS.1770-4: RMS measurement period
+            fPeriod                 = lsp_min(max_period, dspu::bs::LUFS_MEASURE_PERIOD_MS);  // BS.1770-5: RMS measurement period
             fMaxPeriod              = max_period;
             fAvgCoeff               = 1.0f;
 
@@ -304,9 +304,7 @@ namespace lsp
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
-
-                c->vData                = reinterpret_cast<float *>(buf);
-                buf                    += szof_period;
+                c->vData                = advance_ptr_bytes<float>(buf, szof_period);
             }
 
             // Update settings

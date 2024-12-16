@@ -3,7 +3,7 @@
  *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
- * Created on: 20 сент. 2023 г.
+ * Created on: 16 нояб. 2024 г.
  *
  * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_DSP_UNITS_METERS_LOUDNESSMETER_H_
-#define LSP_PLUG_IN_DSP_UNITS_METERS_LOUDNESSMETER_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_METERS_ILUFSMETER_H_
+#define LSP_PLUG_IN_DSP_UNITS_METERS_ILUFSMETER_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
 
@@ -35,14 +35,14 @@ namespace lsp
     namespace dspu
     {
         /**
-         * Momenatry/Short Term Loudness meter. Allows to specify multiple channels and
-         * their roles to measure the loudness according to the BS.1770-5 standard specification.
+         * Integrated Loudness meter. Allows to specify multiple channels and their roles
+         * to measure the loudness according to the BS.1770-5 standard specification.
          * The meter does not output LKFS (LUFS) values nor LU (Loudness Unit) values.
          * Instead, it provides the regular mean square value which then can be converted into
          * DBFS, LKFS/LUFS or LU values by applying corresponding logarithmic function.
          *
-         * This meter is useful for measuring Momentary LUFS and Short-Term LUFS,
-         * for Integrated LUFS consider using ILUFSMeter.
+         * This meter is useful for measuring Integrated LUFS, for Momentary LUFS and
+         * Short-Term LUFS consider using LoudnessMeter.
          *
          * By default, it uses the standardized K-weighted filter over 400 ms measurement
          * window as described by the BS.1770-5 specification.
@@ -50,7 +50,7 @@ namespace lsp
          * sets designation value for inputs to CENTER for mono configuration or LEFT/RIGHT
          * for stereo configuration.
          */
-        class LSP_DSP_UNITS_PUBLIC LoudnessMeter
+        class LSP_DSP_UNITS_PUBLIC ILUFSMeter
         {
             protected:
                 enum c_flags_t {
@@ -71,52 +71,50 @@ namespace lsp
                     dspu::Filter        sFilter;        // Band filter
 
                     const float        *vIn;            // The input buffer
-                    float              *vOut;           // Output gain buffer
-                    float              *vData;          // Ring Buffer for measuring mean square
-                    float              *vMS;            // Temporary buffer for measured mean square
+                    float               vBlock[4];      // Buffer for computing gating block with overlapping of 75%
 
-                    float               fMS;            // Current Mean square value
                     float               fWeight;        // Weighting coefficient
-                    float               fLink;          // Channel linking
                     bs::channel_t       enDesignation;  // Channel designation
 
-                    size_t              nFlags;         // Flags
-                    size_t              nOffset;        // The offset relative to the beginning of the buffer
+                    uint32_t            nFlags;         // Flags
                 } split_t;
 
             protected:
                 channel_t              *vChannels;      // List of channels
 
                 float                  *vBuffer;        // Temporary buffer for processing
+                float                  *vLoudness;      // Loudness of the gating block
 
-                float                   fPeriod;        // Measuring period
-                float                   fMaxPeriod;     // Maximum measuring period
+                float                   fBlockPeriod;   // Block measuring period in milliseconds
+                float                   fIntTime;       // Integration time
+                float                   fMaxIntTime;    // Maximum integration time
                 float                   fAvgCoeff;      // Averaging coefficient
+                float                   fLoudness;      // Currently measured loudness
 
-                size_t                  nSampleRate;    // Sample rate
-                size_t                  nPeriod;        // Measuring period
-                size_t                  nMSRefresh;     // RMS refresh counter
-                size_t                  nChannels;      // Number of channels
-                size_t                  nFlags;         // Update flags
-                size_t                  nDataHead;      // Position in the data buffer
-                size_t                  nDataSize;      // Size of data buffer
+                uint32_t                nBlockSize;     // Block measuring samples
+                uint32_t                nBlockOffset;   // Block measuring period offset
+                uint32_t                nBlockPart;     // The index of the current value to update in the gating block
+                uint32_t                nMSSize;        // Overall number of blocks available in buffer
+                uint32_t                nMSHead;        // Current position to write new block to buffer
+                int32_t                 nMSInt;         // Number of blocks to integrate
+                int32_t                 nMSCount;       // Count of processed blocks
+
+                uint32_t                nSampleRate;    // Sample rate
+                uint32_t                nChannels;      // Number of channels
+                uint32_t                nFlags;         // Update flags
                 bs::weighting_t         enWeight;       // Weighting function
 
                 uint8_t                *pData;          // Unaligned data
                 uint8_t                *pVarData;       // Unaligned variable data
 
-            protected:
-                void                    refresh_rms();
-                size_t                  process_channels(size_t offset, size_t samples);
-
             public:
-                explicit LoudnessMeter();
-                LoudnessMeter(const LoudnessMeter &) = delete;
-                LoudnessMeter(LoudnessMeter &&) = delete;
-                ~LoudnessMeter();
+                explicit ILUFSMeter();
+                ILUFSMeter(const ILUFSMeter &) = delete;
+                ILUFSMeter(ILUFSMeter &&) = delete;
+                ~ILUFSMeter();
 
-                LoudnessMeter & operator = (const LoudnessMeter &) = delete;
-                LoudnessMeter & operator = (LoudnessMeter &&) = delete;
+                ILUFSMeter & operator = (const ILUFSMeter &) = delete;
+                ILUFSMeter & operator = (ILUFSMeter &&) = delete;
 
                 /** Construct object
                  *
@@ -131,28 +129,31 @@ namespace lsp
                 /** Initialize object
                  *
                  * @param channels number of input channels
-                 * @param max_period maximum measurement period in milliseconds
+                 * @param max_int_time maximum integration time in seconds
+                 * @param block_period the block measurement period in milliseconds
                  * @return status of operation
                  */
-                status_t        init(size_t channels, float max_period = dspu::bs::LUFS_MEASURE_PERIOD_MS);
+                status_t        init(size_t channels, float max_int_time = 60, float block_period = dspu::bs::LUFS_MEASURE_PERIOD_MS);
+
+            private:
+                float           compute_gated_loudness(float threshold);
 
             public:
                 /**
-                 * Bind the buffer to corresponding channel
+                 * Bind the buffer to corresponding channel.
                  * @param id channel index to bind
                  * @param in input buffer buffer to bind
                  * @param out output buffer to store measured loudness of channel (optional)
-                 * @param pos position to start processing
                  * @return status of operation
                  */
-                status_t        bind(size_t id, float *out, const float *in, size_t pos = 0);
+                status_t        bind(size_t id, const float *in);
 
                 /**
-                 * Unbind channel
+                 * Unbind buffer from channel
                  * @param id channel identifier
                  * @return status of operation
                  */
-                inline status_t unbind(size_t id)           { return bind(id, NULL, 0);     }
+                inline status_t unbind(size_t id)           { return bind(id, NULL);        }
 
                 /**
                  * Set channel designation
@@ -161,21 +162,6 @@ namespace lsp
                  */
                 status_t        set_designation(size_t id, bs::channel_t designation);
 
-                /**
-                 * Set channel linking to the overall loudness
-                 * @param id channel id
-                 * @param link link amount [0..1], 0 means no linking, 1 means full linking
-                 * @return status of operation
-                 */
-                status_t        set_link(size_t id, float link);
-
-                /**
-                 * Get the linking of the channel
-                 * @param id channel identifier
-                 * @return linking of the channel
-                 */
-                float           link(size_t id) const;
-                
                 /**
                  * Get channel designation
                  * @param id identifier of the channel
@@ -208,19 +194,19 @@ namespace lsp
                  * Get the weighting function
                  * @return weighting function
                  */
-                inline bs::weighting_t  weighting() const       { return enWeight; }
+                inline bs::weighting_t  weighting() const       { return enWeight;      }
 
                 /**
-                 * Set the measurement period
+                 * Set the integration period
                  * @param period measurement period
                  */
-                void            set_period(float period);
+                void            set_integration_period(float period);
 
                 /**
                  * Get the measurement period
                  * @return measurement period
                  */
-                inline float    period() const                  { return fPeriod; }
+                inline float    integration_period() const      { return fIntTime;      }
 
                 /**
                  * Set sample rate
@@ -233,34 +219,27 @@ namespace lsp
                  * Get the sample rate
                  * @return sample rate
                  */
-                inline size_t   sample_rate() const             { return nSampleRate; }
-
-                /**
-                 * Get actual latency
-                 * @return actual latency
-                 */
-                size_t          latency() const;
+                inline size_t   sample_rate() const             { return nSampleRate;   }
 
                 /**
                  * Process signal from channels and form the gain control signal
                  * @param out buffer to store the overall loudness (optional)
                  * @param count number of samples to process
+                 * @param gain additional gain to apply
                  */
-                void            process(float *out, size_t count);
+                void            process(float *out, size_t count, float gain = bs::DBFS_TO_LUFS_SHIFT_GAIN);
 
                 /**
-                 * Process signal from channels and form the gain control signal
-                 * @param out buffer to store the overall loudness (optional)
-                 * @param count number of samples to process
-                 * @param gain output gain correction
+                 * Get currently measured loudness
+                 * @return currently measured loudness
                  */
-                void            process(float *out, size_t count, float gain);
+                inline float    loudness() const                { return fLoudness;     }
 
                 /**
                  * Check that crossover needs to call reconfigure() before processing
                  * @return true if crossover needs to call reconfigure() before processing
                  */
-                inline bool     needs_update() const            { return nFlags != 0; }
+                inline bool     needs_update() const            { return nFlags != 0;   }
 
                 /** Reconfigure crossover after parameter update
                  *
@@ -284,4 +263,5 @@ namespace lsp
 
 
 
-#endif /* LSP_PLUG_IN_DSP_UNITS_METERS_LOUDNESSMETER_H_ */
+
+#endif /* LSP_PLUG_IN_DSP_UNITS_METERS_ILUFSMETER_H_ */

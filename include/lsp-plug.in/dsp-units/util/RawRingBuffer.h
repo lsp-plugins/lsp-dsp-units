@@ -85,6 +85,23 @@ namespace lsp
                 void                write(float data);
 
                 /**
+                 * Write data to the buffer at current head position and advance position
+                 *
+                 * @param src buffer to write
+                 * @param count number of samples
+                 * @return actual number of samples written
+                 */
+                size_t              push(const float *data, size_t count);
+
+                /**
+                 * Write the single sample to the ring buffer at current head position and advance position
+                 *
+                 * @param data sample to append
+                 * @return number of samples appended
+                 */
+                void                push(float data);
+
+                /**
                  * Read the data from the ring buffer at the specified offset relative to the current head pointer
                  * @param dst destination buffer to store the data
                  * @param count number of samples to read
@@ -97,7 +114,7 @@ namespace lsp
                  * @param offset offset behind the head
                  * @return data pointer at the head of buffer
                  */
-                float               read(size_t offset);
+                float               read(size_t offset) const;
 
                 /**
                  * Advance head by the specified amount of samples
@@ -144,6 +161,12 @@ namespace lsp
                 inline const float *head() const                { return &pData[nHead];     }
 
                 /**
+                 * Get current write position index
+                 * @return current write position
+                 */
+                inline size_t       position() const            { return nHead;             }
+
+                /**
                  * Get pointer to the tail
                  * @param offset tail offset relative to the head
                  */
@@ -178,6 +201,12 @@ namespace lsp
                 size_t              remaining(size_t offset) const;
 
                 /**
+                 * Fill the whole buffer with specified value
+                 * @param value value to fill
+                 */
+                void                fill(float value);
+
+                /**
                  * Dump data to the shift buffer
                  * @param v dumper
                  */
@@ -185,8 +214,5 @@ namespace lsp
         };
     } /* namespace dspu */
 } /* namespace lsp */
-
-
-
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_RAWRINGBUFFER_H_ */

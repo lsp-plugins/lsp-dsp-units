@@ -29,7 +29,10 @@ Set of modules provided:
     * Spectral tilt
   * Metering
     * Correlation meter
-    * Loudness meter
+    * Integrated Loudness meter (as defined by BS.1770-5 specification)
+    * Loudness meter (as defined by BS.1770-5 specification)
+    * Panorama meter
+    * True Peak meter (as defined by the BS.1770-5 specification)
   * Miscellaneous functions
     * Broadcasting related functions and constants
     * Signal envelope functions
@@ -45,6 +48,8 @@ Set of modules provided:
     * Sample
     * Sample player
     * Sample playbakc control
+  * Statistics computation
+    * Quantized statistics counter
   * Utilities
     * Chirp Processor
     * Convolver
@@ -57,6 +62,7 @@ Set of modules provided:
     * Impulse response taker
     * Latency detector
     * Meter history
+    * Meter history with scaling option
     * Oscillator
     * Oversampler
     * Randomizer

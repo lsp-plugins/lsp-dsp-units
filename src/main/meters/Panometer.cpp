@@ -3,7 +3,7 @@
  *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
- * Created on: 8 мар. 2024 г.
+ * Created on: 12 нояб. 2024 г.
  *
  * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,7 +20,8 @@
  */
 
 #include <lsp-plug.in/common/alloc.h>
-#include <lsp-plug.in/dsp-units/meters/Correlometer.h>
+#include <lsp-plug.in/dsp-units/meters/Panometer.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
@@ -28,44 +29,46 @@ namespace lsp
     {
         constexpr size_t BUFFER_SIZE        = 0x400;
 
-        Correlometer::Correlometer()
+        Panometer::Panometer()
         {
             construct();
         }
 
-        Correlometer::~Correlometer()
+        Panometer::~Panometer()
         {
             destroy();
         }
 
-        void Correlometer::construct()
+        void Panometer::construct()
         {
-            sCorr.v     = 0.0f;
-            sCorr.a     = 0.0f;
-            sCorr.b     = 0.0f;
-
             vInA        = NULL;
             vInB        = NULL;
+            enPanLaw    = PAN_LAW_EQUAL_POWER;
+            fValueA     = 0.0f;
+            fValueB     = 0.0f;
+            fNorm       = 0.0f;
+            fDefault    = 0.5f;
             nCapacity   = 0;
             nHead       = 0;
             nMaxPeriod  = 0;
             nPeriod     = 0;
             nWindow     = 0;
-            nFlags      = CF_UPDATE;
 
             pData       = NULL;
         }
 
-        void Correlometer::destroy()
+        void Panometer::destroy()
         {
-            free_aligned(pData);
-
-            vInA        = NULL;
-            vInB        = NULL;
-            pData       = NULL;
+            if (pData != NULL)
+            {
+                free_aligned(pData);
+                vInA        = NULL;
+                vInB        = NULL;
+                pData       = NULL;
+            }
         }
 
-        status_t Correlometer::init(size_t max_period)
+        status_t Panometer::init(size_t max_period)
         {
             destroy();
 
@@ -80,18 +83,14 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Commit state
-            sCorr.v     = 0.0f;
-            sCorr.a     = 0.0f;
-            sCorr.b     = 0.0f;
-
             vInA        = advance_ptr_bytes<float>(ptr, szof_buf);
             vInB        = advance_ptr_bytes<float>(ptr, szof_buf);
             nCapacity   = capacity;
             nHead       = 0;
             nMaxPeriod  = max_period;
             nPeriod     = 0;
-            nFlags      = 0;
 
+            free_aligned(pData);
             pData       = data;
 
             // Cleanup buffers (both vInA and vInB -> nCapacity * 2)
@@ -100,59 +99,61 @@ namespace lsp
             return STATUS_OK;
         }
 
-        void Correlometer::set_period(size_t period)
+        void Panometer::set_pan_law(pan_law_t law)
+        {
+            enPanLaw    = law;
+        }
+
+        void Panometer::set_default_pan(float dfl)
+        {
+            fDefault    = dfl;
+        }
+
+        void Panometer::set_period(size_t period)
         {
             period      = lsp_min(period, nMaxPeriod);
             if (period == nPeriod)
                 return;
 
             nPeriod     = period;
-            nFlags     |= CF_UPDATE;
+            nWindow     = period;
+            fValueA     = 0.0f;
+            fValueB     = 0.0f;
+            fNorm       = (period > 0) ? 1.0f / period : 1.0f;
         }
 
-        void Correlometer::update_settings()
-        {
-            if (nFlags == 0)
-                return;
-
-            nWindow     = nPeriod;
-            nFlags      = 0;
-        }
-
-        void Correlometer::clear()
+        void Panometer::clear()
         {
             dsp::fill_zero(vInA, nCapacity);
             dsp::fill_zero(vInB, nCapacity);
 
-            sCorr.v     = 0.0f;
-            sCorr.a     = 0.0f;
-            sCorr.b     = 0.0f;
-
             nHead       = nPeriod;
         }
 
-        void Correlometer::process(float *dst, const float *a, const float *b, size_t count)
+        void Panometer::process(float *dst, const float *a, const float *b, size_t count)
         {
-            update_settings();
-
             for (size_t offset=0; offset<count; )
             {
+                // Check that we need to reset the window
                 const size_t tail = (nHead + nCapacity - nPeriod) % nCapacity;
 
-                // Check that we need to reset the window
                 if (nWindow >= nPeriod)
                 {
-                    sCorr.v     = 0.0f;
-                    sCorr.a     = 0.0f;
-                    sCorr.b     = 0.0f;
+                    fValueA     = 0.0f;
+                    fValueB     = 0.0f;
 
                     if (nHead < tail)
                     {
-                        dsp::corr_init(&sCorr, &vInA[tail], &vInB[tail], nCapacity - tail);
-                        dsp::corr_init(&sCorr, vInA, vInB, nHead);
+                        fValueA     = dsp::h_sum(&vInA[tail], nCapacity - tail);
+                        fValueB     = dsp::h_sum(&vInB[tail], nCapacity - tail);
+                        fValueA    += dsp::h_sum(&vInA[0], nHead);
+                        fValueB    += dsp::h_sum(&vInB[0], nHead);
                     }
                     else
-                        dsp::corr_init(&sCorr, &vInA[tail], &vInB[tail], nPeriod);
+                    {
+                        fValueA     = dsp::h_sum(&vInA[tail], nPeriod);
+                        fValueB     = dsp::h_sum(&vInB[tail], nPeriod);
+                    }
                     nWindow     = 0;
                 }
 
@@ -165,42 +166,69 @@ namespace lsp
                 to_do = lsp_min(to_do, can_do);
 
                 // Fill buffers with data
-                dsp::copy(&vInA[nHead], &a[offset], to_do);
-                dsp::copy(&vInB[nHead], &b[offset], to_do);
+                float *ah   = &vInA[nHead];
+                float *bh   = &vInB[nHead];
+                float *at   = &vInA[tail];
+                float *bt   = &vInB[tail];
 
-                // Compute the correlation
-                dsp::corr_incr(
-                    &sCorr,
-                    &dst[offset],
-                    &vInA[nHead], &vInB[nHead],
-                    &vInA[tail], &vInB[tail],
-                    to_do);
+                dsp::sqr2(ah, &a[offset], to_do);
+                dsp::sqr2(bh, &b[offset], to_do);
+
+                // Estimate the actual pan value
+                float va    = fValueA;
+                float vb    = fValueB;
+                if (enPanLaw == PAN_LAW_LINEAR)
+                {
+                    for (size_t i=0; i<to_do; ++i)
+                    {
+                        va      = va + ah[i] - at[i];
+                        vb      = vb + bh[i] - bt[i];
+
+                        const float sl  = sqrtf(fabsf(va) * fNorm);
+                        const float sr  = sqrtf(fabsf(vb) * fNorm);
+                        const float den = sl + sr;
+                        dst[i]          = (den > 1e-18f) ? sr / den : fDefault;
+                    }
+                }
+                else
+                {
+                    for (size_t i=0; i<to_do; ++i)
+                    {
+                        va              = va + ah[i] - at[i];
+                        vb              = vb + bh[i] - bt[i];
+
+                        const float sl  = fabsf(va) * fNorm;
+                        const float sr  = fabsf(vb) * fNorm;
+
+                        const float den = sl + sr;
+                        dst[i]          = (den > 1e-36f) ? sr / den : fDefault;
+                    }
+                }
+                fValueA     = va;
+                fValueB     = vb;
 
                 // Update pointers and counters
                 nHead       = (nHead + to_do) % nCapacity;
                 nWindow    += to_do;
                 offset     += to_do;
+                dst        += to_do;
             }
         }
 
-        void Correlometer::dump(IStateDumper *v) const
+        void Panometer::dump(IStateDumper *v) const
         {
-            v->begin_object("sCorr", &sCorr, sizeof(dsp::correlation_t));
-            {
-                v->write("v", sCorr.v);
-                v->write("a", sCorr.a);
-                v->write("b", sCorr.b);
-            }
-            v->end_object();
-
             v->write("vInA", vInA);
             v->write("vInB", vInB);
+            v->write("enPanLaw", enPanLaw);
+            v->write("fValueA", fValueA);
+            v->write("fValueB", fValueB);
+            v->write("fNorm", fNorm);
+            v->write("fDefault", fDefault);
             v->write("nCapacity", nCapacity);
             v->write("nHead", nHead);
             v->write("nMaxPeriod", nMaxPeriod);
             v->write("nPeriod", nPeriod);
             v->write("nWindow", nWindow);
-            v->write("nFlags", nFlags);
 
             v->write("pData", pData);
         }

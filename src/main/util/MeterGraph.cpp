@@ -2,25 +2,26 @@
  * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
  *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
- * This file is part of lsp-plugins
+ * This file is part of lsp-dsp-units
  * Created on: 20 мая 2016 г.
  *
- * lsp-plugins is free software: you can redistribute it and/or modify
+ * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * lsp-plugins is distributed in the hope that it will be useful,
+ * lsp-dsp-units is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
+ * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/util/MeterGraph.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
@@ -43,7 +44,7 @@ namespace lsp
             fCurrent    = 0.0f;
             nCount      = 0;
             nPeriod     = 1;
-            bMinimize   = false;
+            enMethod    = MM_ABS_MAXIMUM;
         }
 
         void MeterGraph::destroy()
@@ -67,21 +68,31 @@ namespace lsp
 
         void MeterGraph::process(float sample)
         {
-            // Make sample positive
-            if (sample < 0.0f)
-                sample      = - sample;
+            // Update current sample
+            switch (enMethod)
+            {
+                case MM_SIGN_MINIMUM:
+                    if ((nCount == 0) || (fabsf(fCurrent) > fabsf(sample)))
+                        fCurrent    = sample;
+                    break;
 
-            if (bMinimize)
-            {
-                // Update current sample
-                if ((nCount == 0) || (fCurrent < sample))
-                    fCurrent    = sample;
-            }
-            else
-            {
-                // Update current sample
-                if ((nCount == 0) || (fCurrent > sample))
-                    fCurrent    = sample;
+                case MM_SIGN_MAXIMUM:
+                    if ((nCount == 0) || (fabsf(fCurrent) < fabsf(sample)))
+                        fCurrent    = sample;
+                    break;
+
+                case MM_ABS_MINIMUM:
+                    sample      = fabsf(sample);
+                    if ((nCount == 0) || (fCurrent > sample))
+                        fCurrent    = sample;
+                    break;
+
+                default:
+                case MM_ABS_MAXIMUM:
+                    sample      = fabsf(sample);
+                    if ((nCount == 0) || (fCurrent < sample))
+                        fCurrent    = sample;
+                    break;
             }
 
             // Increment number of samples processed
@@ -95,128 +106,120 @@ namespace lsp
 
         void MeterGraph::process(const float *s, size_t n)
         {
-            if (bMinimize)
+            while (n > 0)
             {
-                while (n > 0)
+                // Determine amount of samples to process
+                ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
+
+                // Process the samples
+                if (can_do > 0)
                 {
-                    // Determine amount of samples to process
-                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
-
-                    // Process the samples
-                    if (can_do > 0)
+                    // Process samples
+                    switch (enMethod)
                     {
-                        // Get maximum sample
-                        float sample        = dsp::abs_min(s, can_do);
-                        if ((nCount == 0) || (fCurrent > sample))
-                            fCurrent        = sample;
-
-                        // Update counters and pointers
-                        nCount             += can_do;
-                        n                  -= can_do;
-                        s                  += can_do;
+                        case MM_SIGN_MINIMUM:
+                        {
+                            const float sample  = dsp::sign_min(s, can_do);
+                            if ((nCount == 0) || (fabsf(fCurrent) > fabsf(sample)))
+                                fCurrent        = sample;
+                            break;
+                        }
+                        case MM_SIGN_MAXIMUM:
+                        {
+                            const float sample  = dsp::sign_max(s, can_do);
+                            if ((nCount == 0) || (fabsf(fCurrent) < fabsf(sample)))
+                                fCurrent        = sample;
+                            break;
+                        }
+                        case MM_ABS_MINIMUM:
+                        {
+                            const float sample  = dsp::abs_min(s, can_do);
+                            if ((nCount == 0) || (fCurrent > sample))
+                                fCurrent        = sample;
+                            break;
+                        }
+                        default:
+                        case MM_ABS_MAXIMUM:
+                        {
+                            const float sample  = dsp::abs_max(s, can_do);
+                            if ((nCount == 0) || (fCurrent > sample))
+                                fCurrent        = sample;
+                            break;
+                        }
                     }
 
-                    // Check that need to switch to next sample
-                    if (nCount >= nPeriod)
-                    {
-                        // Append current sample to buffer
-                        sBuffer.process(fCurrent);
-                        nCount      = 0;
-                    }
+                    // Update counters and pointers
+                    nCount             += can_do;
+                    n                  -= can_do;
+                    s                  += can_do;
                 }
-            }
-            else
-            {
-                while (n > 0)
+
+                // Check that need to switch to next sample
+                if (nCount >= nPeriod)
                 {
-                    // Determine amount of samples to process
-                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
-
-                    // Process the samples
-                    if (can_do > 0)
-                    {
-                        // Get maximum sample
-                        float sample        = dsp::abs_max(s, can_do);
-                        if ((nCount == 0) || (fCurrent < sample))
-                            fCurrent        = sample;
-
-                        // Update counters and pointers
-                        nCount             += can_do;
-                        n                  -= can_do;
-                        s                  += can_do;
-                    }
-
-                    // Check that need to switch to next sample
-                    if (nCount >= nPeriod)
-                    {
-                        // Append current sample to buffer and update counter
-                        sBuffer.process(fCurrent);
-                        nCount      = 0;
-                    }
+                    // Append current sample to buffer
+                    sBuffer.process(fCurrent);
+                    nCount      = 0;
                 }
             }
         }
 
         void MeterGraph::process(const float *s, float gain, size_t n)
         {
-            if (bMinimize)
+            while (n > 0)
             {
-                while (n > 0)
+                // Determine amount of samples to process
+                ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
+
+                // Process the samples
+                if (can_do > 0)
                 {
-                    // Determine amount of samples to process
-                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
-
-                    // Process the samples
-                    if (can_do > 0)
+                    // Process samples
+                    switch (enMethod)
                     {
-                        // Get maximum sample
-                        float sample        = dsp::abs_min(s, can_do) * gain;
-                        if ((nCount == 0) || (fCurrent > sample))
-                            fCurrent        = sample;
-
-                        // Update counters and pointers
-                        nCount             += can_do;
-                        n                  -= can_do;
-                        s                  += can_do;
+                        case MM_SIGN_MINIMUM:
+                        {
+                            const float sample  = dsp::sign_min(s, can_do) * gain;
+                            if ((nCount == 0) || (fabsf(fCurrent) > fabsf(sample)))
+                                fCurrent        = sample;
+                            break;
+                        }
+                        case MM_SIGN_MAXIMUM:
+                        {
+                            const float sample  = dsp::sign_max(s, can_do) * gain;
+                            if ((nCount == 0) || (fabsf(fCurrent) < fabsf(sample)))
+                                fCurrent        = sample;
+                            break;
+                        }
+                        case MM_ABS_MINIMUM:
+                        {
+                            const float sample  = dsp::abs_min(s, can_do) * gain;
+                            if ((nCount == 0) || (fCurrent > sample))
+                                fCurrent        = sample;
+                            break;
+                        }
+                        default:
+                        case MM_ABS_MAXIMUM:
+                        {
+                            const float sample  = dsp::abs_max(s, can_do) * gain;
+                            if ((nCount == 0) || (fCurrent > sample))
+                                fCurrent        = sample;
+                            break;
+                        }
                     }
 
-                    // Check that need to switch to next sample
-                    if (nCount >= nPeriod)
-                    {
-                        // Append current sample to buffer
-                        sBuffer.process(fCurrent);
-                        nCount      = 0;
-                    }
+                    // Update counters and pointers
+                    nCount             += can_do;
+                    n                  -= can_do;
+                    s                  += can_do;
                 }
-            }
-            else
-            {
-                while (n > 0)
+
+                // Check that need to switch to next sample
+                if (nCount >= nPeriod)
                 {
-                    // Determine amount of samples to process
-                    ssize_t can_do      = lsp_min(ssize_t(n), ssize_t(nPeriod - nCount));
-
-                    // Process the samples
-                    if (can_do > 0)
-                    {
-                        // Get maximum sample
-                        float sample        = dsp::abs_max(s, can_do) * gain;
-                        if ((nCount == 0) || (fCurrent < sample))
-                            fCurrent        = sample;
-
-                        // Update counters and pointers
-                        nCount             += can_do;
-                        n                  -= can_do;
-                        s                  += can_do;
-                    }
-
-                    // Check that need to switch to next sample
-                    if (nCount >= nPeriod)
-                    {
-                        // Append current sample to buffer and update counter
-                        sBuffer.process(fCurrent);
-                        nCount      = 0;
-                    }
+                    // Append current sample to buffer
+                    sBuffer.process(fCurrent);
+                    nCount      = 0;
                 }
             }
         }
@@ -227,7 +230,7 @@ namespace lsp
             v->write("fCurrent", fCurrent);
             v->write("nCount", nCount);
             v->write("nPeriod", nPeriod);
-            v->write("bMinimize", bMinimize);
+            v->write("enMethod", enMethod);
         }
     } /* namespace dspu */
 } /* namespace lsp */

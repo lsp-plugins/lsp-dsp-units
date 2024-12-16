@@ -3,7 +3,7 @@
  *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
- * Created on: 8 мар. 2024 г.
+ * Created on: 12 нояб. 2024 г.
  *
  * lsp-dsp-units is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSP_PLUG_IN_DSP_UNITS_METERS_CORRELOMETER_H_
-#define LSP_PLUG_IN_DSP_UNITS_METERS_CORRELOMETER_H_
+#ifndef LSP_PLUG_IN_DSP_UNITS_METERS_PANOMETER_H_
+#define LSP_PLUG_IN_DSP_UNITS_METERS_PANOMETER_H_
 
 #include <lsp-plug.in/dsp-units/version.h>
 
@@ -33,38 +33,51 @@ namespace lsp
 {
     namespace dspu
     {
+        /**
+         * Pan law
+         */
+        enum pan_law_t
+        {
+            /**
+             * Linear pan law between left and right channels
+             */
+            PAN_LAW_LINEAR,
+
+            /**
+             * Equal power pan law between left and right channels
+             */
+            PAN_LAW_EQUAL_POWER
+        };
 
         /**
-         * Corellometer. Computes normalized correlation between two signals.
+         * Panorama meter. Computes panorama between two signals.
          */
-        class LSP_DSP_UNITS_PUBLIC Correlometer
+        class LSP_DSP_UNITS_PUBLIC Panometer
         {
             private:
-                enum flags_t {
-                    CF_UPDATE       = 1 << 0    // Update the correlation function
-                };
-
-            private:
-                dsp::correlation_t  sCorr;      // Correlation function
-                float              *vInA;       // Input buffer 1
-                float              *vInB;       // Input buffer 2
+                float              *vInA;       // History of input buffer 1
+                float              *vInB;       // History of input buffer 2
+                pan_law_t           enPanLaw;   // Pan law
+                float               fValueA;    // Current mean square value for input 1
+                float               fValueB;    // Current mean square value for input 2
+                float               fNorm;      // Norming factor
+                float               fDefault;   // Default value
                 uint32_t            nCapacity;  // The overall capacity
                 uint32_t            nHead;      // Write position of the buffer
                 uint32_t            nMaxPeriod; // Maximum measurement period
                 uint32_t            nPeriod;    // Measurement period
                 uint32_t            nWindow;    // Number of samples processed before reset
-                uint32_t            nFlags;     // Flags
 
                 uint8_t            *pData;      // Pointer to the allocated data
 
             public:
-                Correlometer();
-                Correlometer(const Correlometer &) = delete;
-                Correlometer(Correlometer &&) = delete;
-                ~Correlometer();
+                Panometer();
+                Panometer(const Panometer &) = delete;
+                Panometer(Panometer &&) = delete;
+                ~Panometer();
 
-                Correlometer & operator = (const Correlometer &) = delete;
-                Correlometer && operator = (Correlometer &&) = delete;
+                Panometer & operator = (const Panometer &) = delete;
+                Panometer && operator = (Panometer &&) = delete;
 
                 /**
                  *  Construct object
@@ -84,6 +97,29 @@ namespace lsp
                 status_t        init(size_t max_period);
 
             public:
+                /**
+                 * Set pan law
+                 * @param law pan law
+                 */
+                void            set_pan_law(pan_law_t law);
+
+                /**
+                 * Get pan law
+                 * @return pan law
+                 */
+                inline pan_law_t pan_law() const                { return enPanLaw;      }
+
+                /**
+                 * Set default value for panorama if it is not possible to compute it
+                 * @param dfl default value for panorama
+                 */
+                void            set_default_pan(float dfl);
+
+                /**
+                 * Get default value for panorama if it is not possible to compute it
+                 * @return default value for panorama
+                 */
+                inline float    default_pan() const             { return fDefault;      }
 
                 /**
                  * Set the correlation computation period
@@ -95,18 +131,7 @@ namespace lsp
                  * Get the correlation computation period
                  * @return correlation computation period
                  */
-                inline size_t   period() const              { return nPeriod; }
-
-                /**
-                 * Check that crossover needs to call reconfigure() before processing
-                 * @return true if crossover needs to call reconfigure() before processing
-                 */
-                inline bool     needs_update() const            { return nFlags != 0; }
-
-                /** Reconfigure crossover after parameter update
-                 *
-                 */
-                void            update_settings();
+                inline size_t   period() const                  { return nPeriod;       }
 
                 /**
                  * Clear internal state
@@ -134,5 +159,4 @@ namespace lsp
 
 
 
-#endif /* LSP_PLUG_IN_DSP_UNITS_METERS_CORRELOMETER_H_ */
-
+#endif /* LSP_PLUG_IN_DSP_UNITS_METERS_PANOMETER_H_ */

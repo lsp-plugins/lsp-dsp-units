@@ -113,6 +113,26 @@ namespace lsp
             constexpr float LUFS_MEASURE_PERIOD_MS  = 400.0f;
 
             /**
+             * The period of the momentary loudness in milliseconds
+             */
+            constexpr float LUFS_MOMENTARY_PERIOD   = 400.0f;
+
+            /**
+             * The period of the short-term loudness in milliseconds
+             */
+            constexpr float LUFS_SHORT_TERM_PERIOD  = 3000.0f;
+
+            /**
+             * Absolute gating threshold for Integrated Loudness, LKFS
+             */
+            constexpr float LUFS_GATING_ABS_THRESH_LKFS  = -70.0f;
+
+            /**
+             * Relative gating threshold for Integrated Loudness, LKFS
+             */
+            constexpr float LUFS_GATING_REL_THRESH_LKFS  = -10.0f;
+
+            /**
              * Return the channel weighting coefficient accoding to BS.1770-4 recommendation
              * @param designation channel designation
              * @return channel weighting coefficient
