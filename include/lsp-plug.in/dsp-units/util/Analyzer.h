@@ -169,7 +169,7 @@ namespace lsp
 
                 /** Set shift gain for analysis
                  *
-                 * @param envelope envelope type
+                 * @param shift shift gain
                  */
                 void set_shift(float shift);
 
@@ -322,7 +322,7 @@ namespace lsp
 
                 /** Get list of frequencies
                  *
-                 * @param f frequency list
+                 * @param frq frequency list
                  * @param idx frequency indexes containing frequency numbers for future get_spectrum() call
                  * @param start start frequency
                  * @param stop stop frequency
@@ -333,7 +333,6 @@ namespace lsp
                 /** Read the frequencies of the analyzer
                  *
                  * @param frq target array to store frequency value
-                 * @param channel channel ID of input channel
                  * @param start start frequency
                  * @param stop end frequency
                  * @param count number of items to store in frq and amp arrays
@@ -355,7 +354,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
          };

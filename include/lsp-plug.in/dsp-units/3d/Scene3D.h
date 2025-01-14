@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 авг. 2021 г.
@@ -44,10 +44,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Scene3D
         {
-            private:
-                Scene3D & operator = (const Scene3D &);
-                Scene3D(const Scene3D &);
-
             protected:
                 lltl::parray<Object3D>      vObjects;
                 Allocator3D<obj_vertex_t>   vVertexes;      // Vertex allocator
@@ -69,16 +65,20 @@ namespace lsp
                  *
                  */
                 explicit Scene3D(size_t blk_size = 1024);
+                Scene3D(const Scene3D &) = delete;
+                Scene3D(Scene3D &&) = delete;
 
                 /** Destructor
                  *
                  */
                 ~Scene3D();
+            
+                Scene3D & operator = (const Scene3D &) = delete;
+                Scene3D & operator = (Scene3D &&) = delete;
 
             public:
                 /** Destroy scene
                  *
-                 * @param recursive destroy attached objects
                  */
                 void        destroy();
 
@@ -89,7 +89,7 @@ namespace lsp
 
                 /**
                  * Clone contents from another scene
-                 * @param src
+                 * @param src source scene to clone contents
                  */
                 status_t    clone_from(const Scene3D *src);
 
@@ -126,7 +126,7 @@ namespace lsp
 
                 /**
                  * Load scene from input stream
-                 * @param input stream
+                 * @param is input stream
                  * @param charset character set of file contents
                  * @param flags wrapping flags
                  * @return status of operation
@@ -135,7 +135,7 @@ namespace lsp
 
                 /**
                  * Load scene from input sequence
-                 * @param input sequence
+                 * @param is input sequence
                  * @param flags wrapping flags
                  * @return status of operation
                  */
@@ -279,7 +279,7 @@ namespace lsp
                  */
                 bool validate();
         };
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_3D_SCENE3D_H_ */

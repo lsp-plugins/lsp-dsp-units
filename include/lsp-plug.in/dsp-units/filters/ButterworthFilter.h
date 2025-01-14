@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
  *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 Sept 2021
@@ -45,10 +46,6 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC ButterworthFilter
         {
             private:
-                ButterworthFilter & operator = (const ButterworthFilter &);
-                ButterworthFilter(const ButterworthFilter &);
-
-            private:
                 size_t              nOrder;
                 float               fCutoffFreq;
                 size_t              nSampleRate;
@@ -59,7 +56,12 @@ namespace lsp
 
             public:
                 explicit ButterworthFilter();
+                ButterworthFilter(const ButterworthFilter &) = delete;
+                ButterworthFilter(ButterworthFilter &&) = delete;
                 ~ButterworthFilter();
+            
+                ButterworthFilter & operator = (const ButterworthFilter &) = delete;
+                ButterworthFilter & operator = (ButterworthFilter &&) = delete;
 
                 void construct();
                 void destroy();
@@ -119,12 +121,12 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };
 
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_BUTTER_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 авг. 2021 г.
@@ -40,10 +40,6 @@ namespace lsp
         {
             typedef struct LSP_DSP_UNITS_PUBLIC context_t
             {
-                private:
-                    context_t (const context_t &);
-                    context_t & operator = (const context_t &);
-
                 public:
                     Allocator3D<bsp::node_t>        node;
                     Allocator3D<bsp::triangle_t>    triangle;
@@ -51,7 +47,12 @@ namespace lsp
 
                 public:
                     explicit context_t();
+                    context_t (const context_t &) = delete;
+                    context_t (context_t &&) = delete;
                     ~context_t();
+                
+                    context_t & operator = (const context_t &) = delete;
+                    context_t & operator = (context_t &&) = delete;
 
                 protected:
                     status_t split(lltl::parray<bsp::node_t> &queue, bsp::node_t *task);
@@ -70,7 +71,6 @@ namespace lsp
                     /**
                      * Add object to context
                      * @param obj object to add
-                     * @param oid unique id to identify the object
                      * @param col object color
                      * @return status of operation
                      */
@@ -82,7 +82,6 @@ namespace lsp
                     /**
                      * Add object to context
                      * @param obj object to add
-                     * @param oid unique id to identify the object
                      * @param transform transformation matrix to apply to object
                      * @param col object color
                      * @return status of operation
@@ -120,8 +119,8 @@ namespace lsp
                     status_t build_mesh(lltl::darray<view::vertex3d_t> *dst, const dsp::point3d_t *pov);
 
             } context_t;
-        } // namespace bsp
-    } // namespace dspu
-} // namespace lsp
+        } /* namespace bsp */
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_3D_BSP_CONTEXT_H_ */
