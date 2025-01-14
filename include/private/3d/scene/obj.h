@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 10 авг. 2021 г.
@@ -38,10 +38,6 @@ namespace lsp
          */
         class ObjSceneHandler: public obj::IObjHandler
         {
-            private:
-                ObjSceneHandler(const ObjSceneHandler &);
-                ObjSceneHandler & operator = (const ObjSceneHandler &);
-
             protected:
                 typedef struct vertex_t
                 {
@@ -63,10 +59,15 @@ namespace lsp
                     pObject     = NULL;
                     nFaceID     = 0;
                 }
+                ObjSceneHandler(const ObjSceneHandler &) = delete;
+                ObjSceneHandler(ObjSceneHandler &&) = delete;
 
                 virtual ~ObjSceneHandler()
                 {
                 }
+
+                ObjSceneHandler & operator = (const ObjSceneHandler &) = delete;
+                ObjSceneHandler & operator = (ObjSceneHandler &&) = delete;
 
             public:
                 virtual status_t begin_object(const char *name)
@@ -128,15 +129,15 @@ namespace lsp
                     return pScene->add_normal(&n);
                 }
 
-                virtual status_t add_face(const obj::index_t *vv, const obj::index_t *vn, const obj::index_t *vt, size_t n)
+                virtual ssize_t add_face(const obj::index_t *vv, const obj::index_t *vn, const obj::index_t *vt, size_t n)
                 {
                     if ((pObject == NULL) || (n < 3))
-                        return STATUS_BAD_STATE;
+                        return -STATUS_BAD_STATE;
 
                     lltl::darray<vertex_t> vertex;
                     vertex_t *vx        = vertex.append_n(n);
                     if (vx == NULL)
-                        return STATUS_NO_MEM;
+                        return -STATUS_NO_MEM;
 
                     // Prepare structure
                     for (size_t i=0; i<n; ++i)
@@ -144,7 +145,7 @@ namespace lsp
                         vx[i].ip            = vv[i];
                         vx[i].p             = (vx[i].ip >= 0) ? pScene->vertex(vx[i].ip) : NULL;
                         if (vx[i].p == NULL)
-                            return STATUS_BAD_STATE;
+                            return -STATUS_BAD_STATE;
                         vx[i].in            = vn[i];
                         vx[i].n             = (vx[i].in >= 0) ? pScene->normal(vx[i].in) : NULL;
                     }
@@ -197,7 +198,7 @@ namespace lsp
 
                             // Need to eliminate point that lies on the line
                             if (!vertex.remove((index + remove) % n))
-                                return STATUS_BAD_STATE;
+                                return -STATUS_BAD_STATE;
 
                             // Rollback index and decrement counter
                             n--;
@@ -237,11 +238,11 @@ namespace lsp
     //                    );
                         status_t result = pObject->add_triangle(face_id, v1->ip, v2->ip, v3->ip, v1->in, v2->in, v3->in);
                         if (result != STATUS_OK)
-                            return result;
+                            return -result;
 
                         // Remove the middle point
                         if (!vertex.remove((index + 1) % n))
-                            return STATUS_BAD_STATE;
+                            return -STATUS_BAD_STATE;
 
                         if (index >= (--n))
                             index = 0;
@@ -265,10 +266,10 @@ namespace lsp
                             pObject->add_triangle(face_id, v1->ip, v3->ip, v2->ip, v1->in, v3->in, v2->in) :
                             pObject->add_triangle(face_id, v1->ip, v2->ip, v3->ip, v1->in, v2->in, v3->in);
                         if (result != STATUS_OK)
-                            return result;
+                            return -result;
                     }
 
-                    return STATUS_OK;
+                    return face_id;
                 }
         };
 
@@ -285,7 +286,8 @@ namespace lsp
             ObjSceneHandler handler(scene);
             return pp.parse_data(&handler, is, WRAP_NONE);
         }
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* PRIVATE_3D_SCENE_OBJ_H_ */
