@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
-#           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+# Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+#           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
 #
 # This file is part of lsp-dsp-units
 #
@@ -52,10 +52,15 @@ LSP_TEST_FW_URL_RW         := git@github.com:lsp-plugins/$(LSP_TEST_FW_NAME).git
 
 #------------------------------------------------------------------------------
 # Variables that describe system dependencies
-LIBPTHREAD_VERSION         := system
-LIBPTHREAD_NAME            := libpthread
-LIBPTHREAD_TYPE            := opt
-LIBPTHREAD_LDFLAGS         := -lpthread
+LIBAUDIOTOOLBOX_VERSION    := system
+LIBAUDIOTOOLBOX_NAME       := libaudiotoolbox
+LIBAUDIOTOOLBOX_TYPE       := opt
+LIBAUDIOTOOLBOX_LDFLAGS    := -framework AudioToolbox
+
+LIBCOREFOUNDATION_VERSION  := system
+LIBCOREFOUNDATION_NAME     := libcorefoundation
+LIBCOREFOUNDATION_TYPE     := opt
+LIBCOREFOUNDATION_LDFLAGS  := -framework CoreFoundation
 
 LIBDL_VERSION              := system
 LIBDL_NAME                 := libdl
@@ -67,27 +72,32 @@ LIBICONV_NAME              := libiconv
 LIBICONV_TYPE              := opt
 LIBICONV_LDFLAGS           := -liconv
 
+LIBMSACM_VERSION           := system
+LIBMSACM_NAME              := libmsacm
+LIBMSACM_TYPE              := opt
+LIBMSACM_LDFLAGS           := -lmsacm32
+
+LIBPTHREAD_VERSION         := system
+LIBPTHREAD_NAME            := libpthread
+LIBPTHREAD_TYPE            := opt
+LIBPTHREAD_LDFLAGS         := -lpthread
+
 LIBRT_VERSION              := system
 LIBRT_NAME                 := librt
 LIBRT_TYPE                 := opt
 LIBRT_LDFLAGS              := -lrt
-
-LIBSNDFILE_VERSION         := system
-LIBSNDFILE_NAME            := sndfile
-LIBSNDFILE_TYPE            := pkg
 
 LIBSHLWAPI_VERSION         := system
 LIBSHLWAPI_NAME            := libshlwapi
 LIBSHLWAPI_TYPE            := opt
 LIBSHLWAPI_LDFLAGS         := -lshlwapi
 
+LIBSNDFILE_VERSION         := system
+LIBSNDFILE_NAME            := sndfile
+LIBSNDFILE_TYPE            := pkg
+
 LIBWINMM_VERSION           := system
 LIBWINMM_NAME              := libwinmm
 LIBWINMM_TYPE              := opt
 LIBWINMM_LDFLAGS           := -lwinmm
-
-LIBMSACM_VERSION           := system
-LIBMSACM_NAME              := libmsacm
-LIBMSACM_TYPE              := opt
-LIBMSACM_LDFLAGS           := -lmsacm32
 
