@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 8 авг. 2023 г.
@@ -109,11 +109,11 @@ namespace lsp
 
             /**
              * Generate magnitude characteristics of the hipass crossover filter for FFT processing.
-             * @param gain the array to store output filter magintude for each frequency at the input
+             * @param mag the array to store output filter magintude for each frequency at the input
              * @param f0 the cut-off frequency of the filter, at which it gives -6 dB attenuation
              * @param slope the slope of the filter, attenuation in dB/octave. Negative value. If slope
              * is greater than -3 dB, it is considered to be no attenuation after -6 dB fall-off
-             * @param count the overall number of frequencies in the input array of frequencies
+             * @param rank the FFT rank of the filter
              */
             LSP_DSP_UNITS_PUBLIC
             void hipass_fft_set(float *mag, float f0, float slope, float sample_rate, size_t rank);
@@ -121,22 +121,22 @@ namespace lsp
             /**
              * Apply magnitude characteristics of the hipass crossover filter for FFT processing, usual
              * when building bandpass filter from low-pass and high-pass filters.
-             * @param gain the output filter gain for each frequency at the input, should be of 2^rank length.
+             * @param mag the array to store output filter magintude for each frequency at the input
              * @param f0 the cut-off frequency of the filter, at which it gives -6 dB attenuation
              * @param slope the slope of the filter, attenuation in dB/octave. Negative value. If slope
              * is greater than -3 dB, it is considered to be no attenuation after -6 dB fall-off
-             * @param count the overall number of frequencies in the input array of frequencies
+             * @param rank the FFT rank of the filter
              */
             LSP_DSP_UNITS_PUBLIC
             void hipass_fft_apply(float *mag, float f0, float slope, float sample_rate, size_t rank);
 
             /**
              * Generate magnitude characteristics of the lowpass crossover filter for FFT processing.
-             * @param gain the output filter gain for each frequency at the input, should be of 2^rank length.
+             * @param mag the array to store output filter magintude for each frequency at the input
              * @param f0 the cut-off frequency of the filter, at which it gives -6 dB attenuation
              * @param slope the slope of the filter, attenuation in dB/octave. Negative value. If slope
              * is greater than -3 dB, it is considered to be no attenuation after -6 dB fall-off
-             * @param count the overall number of frequencies in the input array of frequencies
+             * @param rank the FFT rank of the filter
              */
             LSP_DSP_UNITS_PUBLIC
             void lopass_fft_set(float *mag, float f0, float slope, float sample_rate, size_t rank);
@@ -144,11 +144,11 @@ namespace lsp
             /**
              * Apply magnitude characteristics of the lowpass crossover filter for FFT processing, usual
              * when building bandpass filter from low-pass and high-pass filters.
-             * @param gain the output filter gain for each frequency at the input, should be of 2^rank length.
+             * @param mag the array to store output filter magintude for each frequency at the input
              * @param f0 the cut-off frequency of the filter, at which it gives -6 dB attenuation
              * @param slope the slope of the filter, attenuation in dB/octave. Negative value. If slope
              * is greater than -3 dB, it is considered to be no attenuation after -6 dB fall-off
-             * @param count the overall number of frequencies in the input array of frequencies
+             * @param rank the FFT rank of the filter
              */
             LSP_DSP_UNITS_PUBLIC
             void lopass_fft_apply(float *mag, float f0, float slope, float sample_rate, size_t rank);

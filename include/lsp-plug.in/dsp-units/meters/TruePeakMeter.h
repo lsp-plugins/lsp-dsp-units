@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 окт. 2024 г.
@@ -121,7 +121,6 @@ namespace lsp
 
                 /**
                  * Process the input data and compute the maximum true peak value
-                 * @param channel the channel number to process
                  * @param src source buffer to process
                  * @param count number of samples to process
                  * @return maximum value of the true peak
@@ -136,7 +135,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

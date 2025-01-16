@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 27 Jun 2021
@@ -52,10 +52,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Velvet
         {
-            private:
-                Velvet & operator = (const Velvet &);
-                Velvet(const Velvet &);
-
             protected:
                 typedef struct crush_t
                 {
@@ -81,10 +77,15 @@ namespace lsp
 
             public:
                 explicit Velvet();
+                Velvet(const Velvet &) = delete;
+                Velvet(Velvet &&) = delete;
                 ~Velvet();
 
                 void construct();
                 void destroy();
+            
+                Velvet & operator = (const Velvet &) = delete;
+                Velvet & operator = (Velvet &&) = delete;
 
             protected:
 
@@ -109,7 +110,9 @@ namespace lsp
 
                 /** Initialise the velvet generator.
                  *
-                 * @param seed seed for the generator.
+                 * @param randseed seed for the generator
+                 * @param mlsnbits number of bits for MLS generatlr
+                 * @param mlsseed seed for the MLS generator.
                  */
                 void init(uint32_t randseed, uint8_t mlsnbits, MLS::mls_t mlsseed);
 
@@ -186,14 +189,13 @@ namespace lsp
                 /** Output velvet noise to a destination buffer overwriting its content.
                  *
                  * @param dst output wave destination
-                 * @param src input source, allowed to be NULLL
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, size_t count);
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

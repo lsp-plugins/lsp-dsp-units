@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 дек. 2020 г.
@@ -79,8 +79,8 @@ namespace lsp
             vDelay              = advance_ptr_bytes<float>(ptr, buf_sz * sizeof(float));
 
             nHead               = 0;
-            nCapacity           = buf_sz;
-            nMaxDelay           = max_size;
+            nCapacity           = uint32_t(buf_sz);
+            nMaxDelay           = uint32_t(max_size);
             pData               = data;
 
             dsp::fill_zero(vDelay, buf_sz);

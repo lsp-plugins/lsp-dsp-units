@@ -234,19 +234,19 @@ namespace lsp
 
             // Initialize buffer
             pHeader             = advance_ptr_bytes<sh_header_t>(ptr, params->nHdrBytes);
-            const uint32_t len  = params->nChannelBytes / sizeof(float);
+            const uint32_t len  = uint32_t(params->nChannelBytes / sizeof(float));
 
             pHeader->nMagic     = CPU_TO_BE(shared_stream_magic);   // Magic identifier 'STRM'
             pHeader->nVersion   = 1;                                // Version of the buffer
             pHeader->nFlags     = 0;                                // Clean up flags
-            pHeader->nChannels  = channels;                         // Number of channels
+            pHeader->nChannels  = uint32_t(channels);               // Number of channels
             pHeader->nLength    = len;                              // Length of the channel
             pHeader->nMaxBlkSize= 0;                                // Maximum block size written
             pHeader->nHead      = 0;                                // Position of the head of the buffer
             pHeader->nCounter   = 0;                                // Auto-incrementing counter for each change
 
             // Allocate channel information
-            nChannels           = channels;
+            nChannels           = uint32_t(channels);
             vChannels           = static_cast<channel_t *>(malloc(sizeof(channel_t) * nChannels));
             if (vChannels == NULL)
                 return STATUS_NO_MEM;
@@ -306,7 +306,7 @@ namespace lsp
             hdr             = NULL;
 
             // Allocate channel information
-            nChannels       = params.nChannels;
+            nChannels       = uint32_t(params.nChannels);
             vChannels       = static_cast<channel_t *>(malloc(sizeof(channel_t) * params.nChannels));
             if (vChannels == NULL)
                 return STATUS_NO_MEM;
@@ -372,7 +372,7 @@ namespace lsp
 
         size_t AudioStream::channels() const
         {
-            size_t channels = (pHeader != NULL) ? pHeader->nChannels : 0;
+            const uint32_t channels = (pHeader != NULL) ? pHeader->nChannels : 0;
             return lsp_min(nChannels, channels);
         }
 
@@ -393,7 +393,7 @@ namespace lsp
             if (bIO)
                 return STATUS_BAD_STATE;
 
-            nBlkSize        = block_size;
+            nBlkSize        = uint32_t(block_size);
 
             if (!bWriteMode)
             {
@@ -573,7 +573,7 @@ namespace lsp
                 return STATUS_BAD_STATE;
 
             // Estimate size of I/O block
-            size_t block_size = nBlkSize;
+            uint32_t block_size     = nBlkSize;
             if (block_size == 0)
             {
                 for (size_t i=0; i<nChannels; ++i)
@@ -606,7 +606,7 @@ namespace lsp
 
                 // Commit new position and statistics
                 pHeader->nMaxBlkSize    = lsp_max(hdr_blk_size, block_size);
-                pHeader->nCounter       = nCounter + block_size;
+                pHeader->nCounter       = uint32_t(nCounter + block_size);
                 pHeader->nHead          = (nHead + block_size) % length;
                 pHeader->nFlags         = flags | SS_UPDATED;
             }

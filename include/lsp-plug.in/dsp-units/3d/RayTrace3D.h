@@ -223,7 +223,7 @@ namespace lsp
 
                 /**
                  * Get the material for the corresponding object
-                 * @param material
+                 * @param material pointer to store materisl
                  * @param idx the index of the corresponding object
                  * @return pointer to material or NULL
                  */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 26 июля 2016 г.
@@ -281,7 +281,7 @@ namespace lsp
             {
                 size_t num_filters  = 0;
                 size_t freq_size    = half_size + 1;
-                dsp::lin_inter_set(vNewConv, 0, 0.0f, half_size, 0.5f * nSampleRate, 0, freq_size); // Compute frequencies
+                dsp::lin_inter_set(vNewConv, 0, 0.0f, int32_t(half_size), 0.5f * nSampleRate, 0, uint32_t(freq_size)); // Compute frequencies
 
                 // Build frequency chart for all filters
                 for (size_t i=0; i<nFilters; ++i)

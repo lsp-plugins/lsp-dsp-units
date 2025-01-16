@@ -421,7 +421,7 @@ namespace lsp
         {
             if (sr == nSampleRate)
                 return;
-            nSampleRate = sr;
+            nSampleRate = uint32_t(sr);
             bUpdate     = true;
         }
 
@@ -447,7 +447,7 @@ namespace lsp
             if (nMode == mode)
                 return;
 
-            nMode       = mode;
+            nMode       = uint32_t(mode);
             bUpdate     = true;
         }
 

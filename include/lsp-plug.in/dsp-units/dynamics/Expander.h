@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 нояб. 2016 г.
@@ -242,7 +242,7 @@ namespace lsp
                 /** Process one sample of sidechain signal
                  *
                  * @param s sidechain signal
-                 * @param out envelope signal of expander, may be NULL
+                 * @param env pointer to store sample of envelope signal of expander, may be NULL
                  * @return output signal gain to VCA
                  */
                 float process(float *env, float s);

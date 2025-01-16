@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 5 Apr 2017
@@ -34,10 +34,6 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC LatencyDetector
         {
-            private:
-                LatencyDetector & operator = (const LatencyDetector &);
-                LatencyDetector(const LatencyDetector &);
-
             protected:
 
                 // Input processor state enumerator
@@ -150,7 +146,12 @@ namespace lsp
 
             public:
                 explicit LatencyDetector();
+                LatencyDetector(const LatencyDetector &) = delete;
+                LatencyDetector(LatencyDetector &&) = delete;
                 ~LatencyDetector();
+            
+                LatencyDetector & operator = (const LatencyDetector &) = delete;
+                LatencyDetector & operator = (LatencyDetector &&) = delete;
 
                 /**
                  * Construct object
@@ -351,11 +352,11 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_UTIL_LATENCYDETECTOR_H_ */

@@ -266,7 +266,7 @@ namespace lsp
 
                 /**
                  * Check that the module needs settings update
-                 * @return
+                 * @return true if module needs for update() call before processing
                  */
                 inline bool     needs_update() const            { return nFlags & F_UPDATE; }
 
@@ -297,7 +297,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

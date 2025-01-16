@@ -143,7 +143,6 @@ namespace lsp
                  * Bind the buffer to corresponding channel.
                  * @param id channel index to bind
                  * @param in input buffer buffer to bind
-                 * @param out output buffer to store measured loudness of channel (optional)
                  * @return status of operation
                  */
                 status_t        bind(size_t id, const float *in);
@@ -253,7 +252,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

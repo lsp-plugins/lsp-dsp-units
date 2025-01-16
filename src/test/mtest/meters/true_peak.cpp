@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 17 окт. 2024 г.
@@ -42,7 +42,7 @@ MTEST_BEGIN("dspu.meters", true_peak)
         // Initialize meter
         dspu::TruePeakMeter tpm;
         tpm.init();
-        tpm.set_sample_rate(src.sample_rate());
+        tpm.set_sample_rate(uint32_t(src.sample_rate()));
         tpm.update_settings();
         const size_t latency = tpm.latency();
 

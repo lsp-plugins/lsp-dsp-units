@@ -138,7 +138,7 @@ namespace lsp
 
             pHeader->nMagic         = BE_TO_CPU(CATALOG_MAGIC);
             pHeader->nVersion       = 1;
-            pHeader->nSize          = entries;
+            pHeader->nSize          = uint32_t(entries);
             pHeader->nAllocated     = 0;
             pHeader->nChanges       = nChanges;
 
@@ -360,7 +360,7 @@ namespace lsp
             // Fill result
             if (record != NULL)
             {
-                record->index       = index;
+                record->index       = uint32_t(index);
                 fill_record(record, rec);
             }
 
@@ -476,7 +476,7 @@ namespace lsp
             // Find record
             ssize_t index = find_by_name(hash, name, name_len);
             if (index < 0)
-                return -index;
+                return -status_t(index);
 
             // Check that we need to return value
             if (record != NULL)
@@ -484,7 +484,7 @@ namespace lsp
                 const sh_record_t *rec = &vRecords[index];
 
                 Record tmp;
-                tmp.index       = index;
+                tmp.index       = uint32_t(index);
                 if ((res = fill_record(&tmp, rec)) != STATUS_OK)
                     return res;
 
@@ -530,9 +530,9 @@ namespace lsp
             if (index < 0)
             {
                 if (index != -STATUS_NOT_FOUND)
-                    return index;
+                    return status_t(index);
                 if ((index = find_empty()) < 0)
-                    return -index;
+                    return -status_t(index);
 
                 // Create new record
                 sh_record_t *rec    = &vRecords[index];
@@ -557,7 +557,7 @@ namespace lsp
                 const sh_record_t *rec = &vRecords[index];
 
                 Record tmp;
-                tmp.index       = index;
+                tmp.index       = uint32_t(index);
                 if ((res = fill_record(&tmp, rec)) != STATUS_OK)
                     return res;
 
@@ -656,7 +656,7 @@ namespace lsp
                 }
 
                 // Fill record
-                dst->index      = i;
+                dst->index      = uint32_t(i);
                 if ((res = fill_record(dst, rec)) != STATUS_OK)
                     return res;
             }
@@ -706,7 +706,7 @@ namespace lsp
 
         uint32_t Catalog::str_hash(const char *var, size_t len)
         {
-            uint32_t res = len * 1021;
+            uint32_t res = uint32_t(len * 1021);
             for (size_t i=0; i<len; ++i)
             {
                 uint64_t tmp    = uint64_t(res) * 97 + var[i];
@@ -748,7 +748,7 @@ namespace lsp
 
             ssize_t index       = find_by_name(hash, name, name_len);
             if (index < 0)
-                return -index;
+                return -status_t(index);
 
             // Reset keep-alive counter
             sh_record_t *rec    = &vRecords[index];

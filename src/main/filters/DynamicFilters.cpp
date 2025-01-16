@@ -333,7 +333,7 @@ namespace lsp
 
                 xc->t[0]        = sqrtf(sfg[i]); // gain
                 xc->t[1]        = 1.0f / xc->t[0]; // 1/gain
-                xc->t[2]        = dsp::irootf(xc->t[0], slope); // fg
+                xc->t[2]        = dsp::irootf(xc->t[0], uint32_t(slope)); // fg
                 xc->t[3]        = 1.0f / xc->t[2];  // 1 / fg
                 xc->b[0]        = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - xc->t[0] - xc->t[1]))); // k
 

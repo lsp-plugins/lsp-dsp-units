@@ -102,7 +102,7 @@ namespace lsp
         {
             system::time_t ts;
             system::get_time(&ts);
-            init(ts.seconds ^ ts.nanos);
+            init(uint32_t(ts.seconds ^ ts.nanos));
         }
 
         float Randomizer::generate_linear()

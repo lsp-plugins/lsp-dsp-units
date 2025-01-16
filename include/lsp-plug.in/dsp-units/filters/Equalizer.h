@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 26 июля 2016 г.
@@ -46,10 +46,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC Equalizer
         {
-            private:
-                Equalizer & operator = (const Equalizer &);
-                Equalizer(const Equalizer &);
-
             protected:
                 enum eq_flags_t
                 {
@@ -85,7 +81,12 @@ namespace lsp
 
             public:
                 explicit Equalizer();
+                Equalizer(const Equalizer &) = delete;
+                Equalizer(Equalizer &&) = delete;
                 ~Equalizer();
+            
+                Equalizer & operator = (const Equalizer &) = delete;
+                Equalizer & operator = (Equalizer &&) = delete;
 
                 /**
                  * Construct the object being part of memory chunk
@@ -95,7 +96,7 @@ namespace lsp
                 /** Initialize equalizer
                  *
                  * @param filters number of filters
-                 * @param fir FIR filter rank (impulse response size)
+                 * @param fir_rank FIR filter rank (impulse response size)
                  * @return true on success
                  */
                 bool                init(size_t filters, size_t fir_rank);
@@ -254,12 +255,6 @@ namespace lsp
                 size_t              ir_size() const;
 
                 /**
-                 * Dump the state
-                 * @param dumper dumper
-                 */
-                void                dump(IStateDumper *v) const;
-
-                /**
                  * Check that the smooth mode for FIR/FFT mode is enabled
                  * @return true if the smooth mode for FIR/FFT mode is enabled
                  */
@@ -272,6 +267,12 @@ namespace lsp
                  * @param smooth smooth mode flag
                  */
                 void                set_smooth(bool smooth);
+            
+                /**
+                 * Dump the state
+                 * @param v state dumper
+                 */
+                void                dump(IStateDumper *v) const;
         };
 
     } /* namespace dspu */

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 21 дек. 2016 г.
@@ -36,8 +36,7 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC Dither
         {
             private:
-                Dither &operator = (const Dither &);
-                Dither(const Dither &);
+
 
             protected:
                 size_t      nBits;
@@ -47,7 +46,12 @@ namespace lsp
 
             public:
                 explicit Dither();
+                Dither(const Dither &) = delete;
+                Dither(Dither &&) = delete;
                 ~Dither();
+            
+                Dither &operator = (const Dither &) = delete;
+                Dither &operator = (Dither &&) = delete;
 
                 /**
                  * Create object
@@ -81,7 +85,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

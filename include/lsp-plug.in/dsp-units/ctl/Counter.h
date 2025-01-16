@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 27 нояб. 2018 г.
@@ -31,10 +31,6 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC Counter
         {
-            private:
-                Counter & operator = (const Counter &);
-                Counter(const Counter &);
-
             protected:
                 enum flags_t
                 {
@@ -51,7 +47,12 @@ namespace lsp
 
             public:
                 explicit Counter();
+                Counter(const Counter &) = delete;
+                Counter(Counter &&) = delete;
                 ~Counter();
+            
+                Counter & operator = (const Counter &) = delete;
+                Counter & operator = (Counter &&) = delete;
 
                 /**
                  * Construct object
@@ -153,7 +154,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

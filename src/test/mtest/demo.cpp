@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 22 нояб. 2020 г.
@@ -117,7 +117,7 @@ MTEST_BEGIN("dspu", demo)
         for (int i=0; i<argc; ++i)
             args.add(const_cast<char *>(argv[i]));
 
-        MTEST_ASSERT(demo_main(args.size(), const_cast<const char **>(args.array())) == 0);
+        MTEST_ASSERT(demo_main(int(args.size()), const_cast<const char **>(args.array())) == 0);
     }
 
 MTEST_END

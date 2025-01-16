@@ -158,7 +158,7 @@ namespace lsp
         {
             if (sr == nSampleRate)
                 return;
-            nSampleRate = sr;
+            nSampleRate = uint32_t(sr);
             bUpdate     = true;
         }
 

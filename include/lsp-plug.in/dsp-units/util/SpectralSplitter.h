@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 6 авг. 2023 г.
@@ -53,7 +53,7 @@ namespace lsp
          * @param samples the pointer to the buffer containg processed samples
          * @param first the position of the first stample in the processed samples relative
          *   to the first sample in the source (unprocessed) buffer passed to the process() call
-         * @param rank the overall rank of the FFT transform (log2(size))
+         * @param count the overall number of samples in buffer            SpectralSplitter(const SpectralSplitter &) = delete;
          */
         typedef void (* spectral_splitter_sink_t)(
             void *object,
@@ -68,10 +68,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC SpectralSplitter
         {
-            private:
-                SpectralSplitter & operator = (const SpectralSplitter &);
-                SpectralSplitter(const SpectralSplitter &);
-
             protected:
                 typedef struct handler_t
                 {
@@ -103,7 +99,12 @@ namespace lsp
 
             public:
                 explicit SpectralSplitter();
+                SpectralSplitter(const SpectralSplitter &) = delete;
+                SpectralSplitter(SpectralSplitter &&) = delete;
                 ~SpectralSplitter();
+            
+                SpectralSplitter & operator = (const SpectralSplitter &) = delete;
+                SpectralSplitter & operator = (SpectralSplitter &&) = delete;
 
                 /**
                  * Construct object
@@ -241,7 +242,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

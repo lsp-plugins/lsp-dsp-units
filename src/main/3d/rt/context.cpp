@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 10 авг. 2021 г.
@@ -447,9 +447,15 @@ namespace lsp
                     // Update state
                     nin     = nout;
                     if (i & 1)
-                        in = buf1, out = buf2;
+                    {
+                        in = buf1;
+                        out = buf2;
+                    }
                     else
-                        in = buf2, out = buf1;
+                    {
+                        in = buf2;
+                        out = buf1;
+                    }
                 }
 
                 // Last step
