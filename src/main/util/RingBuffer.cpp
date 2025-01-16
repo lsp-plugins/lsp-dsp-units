@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 июн. 2023 г.
@@ -51,7 +51,7 @@ namespace lsp
                 return false;
 
             pData           = data;
-            nCapacity       = size;
+            nCapacity       = uint32_t(size);
             nHead           = 0;
 
             dsp::fill_zero(pData, size);
@@ -84,7 +84,7 @@ namespace lsp
                 size_t part2    = count - part1;
                 dsp::copy(&pData[nHead], data, part1);
                 dsp::copy(pData, &data[part1], part2);
-                nHead           = part2;
+                nHead           = uint32_t(part2);
             }
             else
             {

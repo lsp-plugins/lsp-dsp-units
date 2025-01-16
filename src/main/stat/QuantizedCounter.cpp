@@ -81,10 +81,10 @@ namespace lsp
             vHistory                = advance_ptr_bytes<float>(ptr, szof_history);
             vCounters               = advance_ptr_bytes<uint32_t>(ptr, szof_levels);
             nHead                   = 0;
-            nCapacity               = szof_history / sizeof(float);
+            nCapacity               = uint32_t(szof_history / sizeof(float));
             nCount                  = 0;
-            nMaxPeriod              = max_period;
-            nMaxLevels              = max_levels;
+            nMaxPeriod              = uint32_t(max_period);
+            nMaxLevels              = uint32_t(max_levels);
 
             dsp::fill_zero(vHistory, nCapacity);
             for (size_t i=0; i<max_levels + 2; ++i)
@@ -102,7 +102,7 @@ namespace lsp
             if (period == nPeriod)
                 return;
 
-            nPeriod         = period;
+            nPeriod         = uint32_t(period);
         }
 
         void QuantizedCounter::set_levels(size_t levels)
@@ -111,7 +111,7 @@ namespace lsp
             if (levels == nLevels)
                 return;
 
-            nLevels         = levels;
+            nLevels         = uint32_t(levels);
             bUpdate         = true;
         }
 
@@ -152,7 +152,7 @@ namespace lsp
                 (fMaxValue == max))
                 return;
 
-            nLevels         = levels;
+            nLevels         = uint32_t(levels);
             fMinValue       = min;
             fMaxValue       = max;
             bUpdate         = true;
@@ -229,7 +229,7 @@ namespace lsp
             size_t tail     = (nHead + nCapacity - nCount) % nCapacity;
             while (nCount > nPeriod)
             {
-                const size_t to_do  = lsp_min(nCount - nPeriod, nCapacity - tail);
+                const size_t to_do  = lsp_min(size_t(nCount - nPeriod), size_t(nCapacity - tail));
 
                 dec_counters(&vHistory[tail], to_do);
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 апр. 2024 г.
@@ -56,7 +56,6 @@ namespace lsp
                 /** Init buffer, all previously stored data will be lost
                  *
                  * @param size the requested size of buffer, in terms of optimization may be allocated a bit more data
-                 * @param gap number of zero samples initially stored in buffer, can not be greater than size
                  * @return status of operation
                  */
                 bool                init(size_t size);
@@ -80,14 +79,13 @@ namespace lsp
                  * Write the single sample to the ring buffer at current head position
                  *
                  * @param data sample to append
-                 * @return number of samples appended
                  */
                 void                write(float data);
 
                 /**
                  * Write data to the buffer at current head position and advance position
                  *
-                 * @param src buffer to write
+                 * @param data destination buffer to write
                  * @param count number of samples
                  * @return actual number of samples written
                  */
@@ -97,7 +95,6 @@ namespace lsp
                  * Write the single sample to the ring buffer at current head position and advance position
                  *
                  * @param data sample to append
-                 * @return number of samples appended
                  */
                 void                push(float data);
 

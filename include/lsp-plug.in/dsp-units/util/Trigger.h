@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 авг. 2021 г.
@@ -55,8 +55,7 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC Trigger
         {
             private:
-                Trigger & operator = (const Trigger &);
-                Trigger(const Trigger &);
+
 
             protected:
                 // To use with Manual and Single Mode
@@ -100,7 +99,12 @@ namespace lsp
 
             public:
                 explicit Trigger();
+                Trigger(const Trigger &) = delete;
+                Trigger(Trigger &&) = delete;
                 ~Trigger();
+            
+                Trigger & operator = (const Trigger &) = delete;
+                Trigger & operator = (Trigger &&) = delete;
 
                 void            construct();
                 void            destroy();
@@ -211,7 +215,7 @@ namespace lsp
 
                 /** Set the trigger threshold.
                  *
-                 * @param trigger threshold.
+                 * @param threshold trigger threshold.
                  */
                 inline void set_trigger_threshold(float threshold)
                 {
@@ -246,7 +250,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 05 окт 2024 г.
@@ -132,7 +132,6 @@ namespace lsp
                  * to read is passed in the init() method
                  *
                  * @param dst pointer to store data
-                 * @param offset negative offset from the current head
                  * @param count number of frames to read
                  */
                 void        read(float *dst, size_t count);
@@ -146,14 +145,15 @@ namespace lsp
                 /** Process multiple samples
                  *
                  * @param s array of samples
-                 * @param n number of samples to process
+                 * @param count number of samples to process
                  */
                 void        process(const float *s, size_t count);
 
                 /** Process multiple samples multiplied by specified value
                  *
                  * @param s array of samples
-                 * @param n number of samples to process
+                 * @param gain additional gain to apply
+                 * @param count number of samples to process
                  */
                 void        process(const float *s, float gain, size_t count);
 
