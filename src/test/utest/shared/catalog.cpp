@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 17 мая 2024 г.
@@ -31,7 +31,7 @@ UTEST_BEGIN("dspu.shared", catalog)
         LSPString id;
         dspu::Catalog cat;
 
-        UTEST_ASSERT(id.fmt_utf8("%s-catalog", full_name()));
+        UTEST_ASSERT(id.fmt_utf8("%s-cat", full_name()));
 
         printf("Testing Catalog single use: %s...\n", id.get_native());
 
