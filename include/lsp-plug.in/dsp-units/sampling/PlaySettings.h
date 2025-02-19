@@ -40,6 +40,7 @@ namespace lsp
                 size_t              nChannel;           // The audio channel of the sample
                 float               fVolume;            // The volume of the sample
                 bool                bReverse;           // Reverse playback
+                bool                bListen;            // Listen flag
                 size_t              nDelay;             // The delay before the playback should start (samples)
                 size_t              nStart;             // The start position of the playback
                 sample_loop_t       nLoopMode;          // Sample loop mode
@@ -308,6 +309,24 @@ namespace lsp
                 {
                     nLoopXFadeType  = type;
                     nLoopXFadeLength= length;
+                }
+
+                /**
+                 * Get the listen flag
+                 * @return listen flag
+                 */
+                inline bool         listen() const
+                {
+                    return bListen;
+                }
+
+                /**
+                 * Set listen flag
+                 * @param listen listen flag
+                 */
+                inline void         set_listen(bool listen)
+                {
+                    bListen         = listen;
                 }
         };
 

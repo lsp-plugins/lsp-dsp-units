@@ -43,6 +43,7 @@ namespace lsp
             nChannel        = 0;
             fVolume         = 1.0f;
             bReverse        = false;
+            bListen         = false;
             nDelay          = 0;
             nStart          = 0;
             nLoopMode       = SAMPLE_LOOP_NONE;
