@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 12 Jul 2017
@@ -256,9 +256,9 @@ namespace lsp
 
                 /** Allocate memory for the convolution result
                  *
-                 * @param size_t sampleRate sample rate of the convolution result
-                 * @param size_t nchannels number of channels of the convolution result
-                 * @param size_t count number of samples to be allocated
+                 * @param sampleRate sample rate of the convolution result
+                 * @param nchannels number of channels of the convolution result
+                 * @param count number of samples to be allocated
                  * @return status
                  */
                 status_t allocateConvolutionResult(size_t sampleRate, size_t nchannels, size_t count);
@@ -274,8 +274,8 @@ namespace lsp
 
                 /** Allocate memory for the nonlinear identification matrices
                  *
-                 * @param size_t order order of the Hammerstein model
-                 * @param size_t windowSize size of the window to isolate the higher order responses
+                 * @param order order of the Hammerstein model
+                 * @param windowSize size of the window to isolate the higher order responses
                  * @return status
                  */
                 status_t allocateIdentificationMatrices(size_t order, size_t windowSize);
@@ -287,15 +287,15 @@ namespace lsp
 
                 /** Convert from matrix subscript to allocated memory index for coefficients matrices
                  *
-                 *  @param size_t r row subscript
-                 *  @param size_t c column subscript
+                 *  @param r row subscript
+                 *  @param c column subscript
                  */
                 inline size_t sub2ind_Coeffs(size_t r, size_t c);
 
                 /** Convert from matrix subscript to allocated memory index for data matrices (Higher and Kernels)
                  *
-                 *  @param size_t r row subscript
-                 *  @param size_t c column subscript
+                 *  @param r row subscript
+                 *  @param c column subscript
                  */
                 inline size_t sub2ind_Data(size_t r, size_t c);
 
@@ -326,8 +326,8 @@ namespace lsp
 
                 /** Calculate a sample of a synchronized chirp wave
                  *
-                 * @param size_t sampleRate sample rate of the chirp wave
-                 * @param size_t chirpIdx index (sample number)
+                 * @param sampleRate sample rate of the chirp wave
+                 * @param chirpIdx index (sample number)
                  * @return sample number [chirpIdx] of the chirp wave
                  */
                 inline double calculate_chirp_sample(size_t sampleRate, size_t chirpIdx);
@@ -350,9 +350,9 @@ namespace lsp
 
                 /** Profile Convolution Result Background Noise (by looking at the negative times of the Convolution Result)
                  *
+                 * @param channel channel in the convolution result
                  * @param head sample of the convolution result at which start analysis [samples]
                  * @param count number of samples to process [samples]
-                 * @param limit number of negative time samples to use in the assessment [samples]
                  * @return status
                  */
                 status_t profile_background_noise(size_t channel, size_t head, size_t count);
@@ -863,7 +863,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

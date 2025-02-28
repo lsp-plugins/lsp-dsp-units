@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 марта 2016 г.
@@ -33,6 +33,13 @@ namespace lsp
 {
     namespace dspu
     {
+        enum
+        {
+            SAMPLER_PLAYBACK        = 1 << 0,
+            SAMPLER_LISTEN          = 1 << 1,
+            SAMPLER_ALL             = SAMPLER_PLAYBACK | SAMPLER_LISTEN
+        };
+
         class LSP_DSP_UNITS_PUBLIC SamplePlayer
         {
             protected:
@@ -73,7 +80,7 @@ namespace lsp
                 static Sample  *acquire_sample(Sample *s);
 
             protected:
-                void            do_process(float *dst, size_t samples);
+                void            do_process(float *dst, size_t samples, uint32_t flags);
 
             public:
                 explicit SamplePlayer();
@@ -146,20 +153,22 @@ namespace lsp
                  */
                 void unbind_all();
 
-                /** Process the audio data
+                /** Process the audio playback data, skip listening events
                  *
                  * @param dst destination buffer to store data
                  * @param src source buffer to read data
                  * @param samples amount of audio samples to process
+                 * @param flags indicates which playbacks to process
                  */
-                void process(float *dst, const float *src, size_t samples);
+                void process(float *dst, const float *src, size_t samples, uint32_t flags = SAMPLER_ALL);
 
-                /** Process the audio data
+                /** Process the audio playback data, skip listening events
                  *
                  * @param dst destination buffer to store data
                  * @param samples amount of audio samples to process
+                 * @param flags indicates which playbacks to process
                  */
-                void process(float *dst, size_t samples);
+                void process(float *dst, size_t samples, uint32_t flags = SAMPLER_ALL);
 
                 /** Trigger the playback of the sample
                  *
@@ -173,8 +182,6 @@ namespace lsp
 
                 /**
                  * Trigger the playback of the sample
-                 * @param id ID of the sample to play
-                 * @param channel ID of the sample's channel
                  * @param settings playback settings
                  * @return true if parameters are valid
                  */
@@ -186,19 +193,20 @@ namespace lsp
                  * @param channel ID of the sample's channel
                  * @param fadeout the fadeout length in samples for sample gain fadeout
                  * @param delay the delay (in samples) of the sample relatively to the next process() call
+                 * @param flags playback flags
                  * @return number of playbacks cancelled, negative value on error
                  */
-                ssize_t cancel_all(size_t id, size_t channel, size_t fadeout = 0, ssize_t delay = 0);
+                ssize_t cancel_all(size_t id, size_t channel, size_t fadeout = 0, ssize_t delay = 0, uint32_t flags = SAMPLER_ALL);
 
                 /** Reset the playback state of the player,
                  * force all playbacks to be stopped immediately
                  */
-                void stop();
+                void    stop();
 
             public:
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

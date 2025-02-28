@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 14 авг. 2016 г.
@@ -90,12 +90,12 @@ namespace lsp
             destroy();
 
             size_t fft_size         = 1 << max_rank;
-            nBufSize                = align_size(
+            nBufSize                = uint32_t(align_size(
                                             fft_size +
                                             size_t(float(max_sr * 2) / min_rate) +
                                             max_delay +
                                             DEFAULT_ALIGN,
-                                        DEFAULT_ALIGN);
+                                        DEFAULT_ALIGN));
             size_t allocate         = 5 * fft_size +                // vSigRe, vFftReIm (re + im), vWindow, vEnvelope
                                       channels * nBufSize +         // c->vBuffer
                                       channels * fft_size +         // c->vAmp
@@ -114,12 +114,12 @@ namespace lsp
                 return false;
             }
 
-            nChannels           = channels;
-            nMaxRank            = max_rank;
-            nRank               = max_rank;
-            nMaxSampleRate      = max_sr;
-            nMaxUserDelay       = max_delay;
-            fMinRate            = min_rate;
+            nChannels           = uint32_t(channels);
+            nMaxRank            = uint32_t(max_rank);
+            nRank               = uint32_t(max_rank);
+            nMaxSampleRate      = uint32_t(max_sr);
+            nMaxUserDelay       = uint32_t(max_delay);
+            fMinRate            = uint32_t(min_rate);
 
             // Clear buffers
             dsp::fill_zero(abuf, allocate);
@@ -167,7 +167,7 @@ namespace lsp
             if (nSampleRate == sr)
                 return;
 
-            nSampleRate     = sr;
+            nSampleRate     = uint32_t(sr);
             nReconfigure   |= R_ALL;
         }
 
@@ -186,7 +186,7 @@ namespace lsp
             if (nWindow == window)
                 return;
 
-            nWindow         = window;
+            nWindow         = uint32_t(window);
             nReconfigure   |= R_WINDOW;
         }
 
@@ -195,7 +195,7 @@ namespace lsp
             if (nEnvelope == envelope)
                 return;
 
-            nEnvelope       = envelope;
+            nEnvelope       = uint32_t(envelope);
             nReconfigure   |= R_ENVELOPE;
         }
 
@@ -223,7 +223,7 @@ namespace lsp
                 return false;
             else if (nRank == rank)
                 return true;
-            nRank           = rank;
+            nRank           = uint32_t(rank);
             nReconfigure   |= R_ALL;
             return true;
         }
@@ -253,7 +253,7 @@ namespace lsp
             if ((channel >= nChannels) || (delay > nMaxUserDelay))
                 return false;
 
-            vChannels[channel].nUserDelay   = delay;
+            vChannels[channel].nUserDelay   = uint32_t(delay);
 
             return true;
         }
@@ -265,7 +265,7 @@ namespace lsp
 
             size_t fft_size     = 1 << nRank;
             size_t fft_period   = float(nSampleRate) / fRate;
-            nStep               = fft_period / nChannels;
+            nStep               = uint32_t(fft_period / nChannels);
             nPeriod             = nStep * nChannels;
 
             // Update envelope
@@ -294,7 +294,7 @@ namespace lsp
             if (nReconfigure & R_COUNTERS)
             {
                 for (size_t i=0; i<nChannels; ++i)
-                    vChannels[i].nDelay     = i*nStep;
+                    vChannels[i].nDelay     = uint32_t(i*nStep);
             }
 
             // Clear reconfiguration flag and update strobe signal
@@ -485,7 +485,7 @@ namespace lsp
                     ix                  = fft_csize;
 
                 frq[i]          = f;
-                idx[i]          = ix;
+                idx[i]          = uint32_t(ix);
             }
         }
 

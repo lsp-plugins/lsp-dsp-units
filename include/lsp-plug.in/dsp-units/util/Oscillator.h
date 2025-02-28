@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 Mar 2017
@@ -56,10 +56,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC Oscillator
         {
-            private:
-                Oscillator & operator = (const Oscillator &);
-                Oscillator(const Oscillator &);
-
             protected:
                 typedef uint32_t phacc_t;
 
@@ -165,7 +161,12 @@ namespace lsp
 
             public:
                 explicit Oscillator();
+                Oscillator(const Oscillator &) = delete;
+                Oscillator(Oscillator &&) = delete;
                 ~Oscillator();
+            
+                Oscillator & operator = (const Oscillator &) = delete;
+                Oscillator & operator = (Oscillator &&) = delete;
 
                 /**
                  * Construct the oscillator
@@ -282,7 +283,7 @@ namespace lsp
 
                 /** Set the DC Reference
                  *
-                 * @param dcReference
+                 * @param dcReference DC reference
                  */
                 void set_dc_reference(dc_reference_t dcReference);
 
@@ -368,14 +369,13 @@ namespace lsp
                 /** Output wave to a destination buffer overwriting its content
                  *
                  * @param dst output wave destination
-                 * @param src input source, allowed to be NULLL
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, size_t count);
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

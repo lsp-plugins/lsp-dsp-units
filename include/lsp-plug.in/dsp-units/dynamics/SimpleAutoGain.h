@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 ноя. 2023 г.
@@ -168,7 +168,7 @@ namespace lsp
 
                 /**
                  * Check that the module needs settings update
-                 * @return
+                 * @return true if module needs to update() method being called before processing
                  */
                 inline bool     needs_update() const            { return nFlags & F_UPDATE; }
 
@@ -200,13 +200,13 @@ namespace lsp
                 /**
                  * Process simple measured gain sample and compute the output gain
                  * @param src measured gain
-                 * @param count number of samples to process
+                 * @return output gain adjustment
                  */
                 float           process(float src);
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

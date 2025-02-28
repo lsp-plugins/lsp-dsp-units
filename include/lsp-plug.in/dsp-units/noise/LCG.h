@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 Jun 2021
@@ -136,14 +136,13 @@ namespace lsp
                 /** Output sequence to a destination buffer overwriting its content
                  *
                  * @param dst output wave destination
-                 * @param src input source, allowed to be NULLL
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, size_t count);
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };

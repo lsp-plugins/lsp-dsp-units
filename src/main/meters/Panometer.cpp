@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 12 нояб. 2024 г.
@@ -85,9 +85,9 @@ namespace lsp
             // Commit state
             vInA        = advance_ptr_bytes<float>(ptr, szof_buf);
             vInB        = advance_ptr_bytes<float>(ptr, szof_buf);
-            nCapacity   = capacity;
+            nCapacity   = uint32_t(capacity);
             nHead       = 0;
-            nMaxPeriod  = max_period;
+            nMaxPeriod  = uint32_t(max_period);
             nPeriod     = 0;
 
             free_aligned(pData);
@@ -115,8 +115,8 @@ namespace lsp
             if (period == nPeriod)
                 return;
 
-            nPeriod     = period;
-            nWindow     = period;
+            nPeriod     = uint32_t(period);
+            nWindow     = uint32_t(period);
             fValueA     = 0.0f;
             fValueB     = 0.0f;
             fNorm       = (period > 0) ? 1.0f / period : 1.0f;
@@ -160,8 +160,8 @@ namespace lsp
                 const size_t can_do = nPeriod - nWindow;
                 size_t to_do = lsp_min(
                     count - offset,                             // Number of samples left in input buffers
-                    nCapacity - nMaxPeriod,                     // Number of free samples in the ring buffer
-                    nCapacity - nHead,                          // The number of samples before head goes out of ring buffer
+                    size_t(nCapacity - nMaxPeriod),             // Number of free samples in the ring buffer
+                    size_t(nCapacity - nHead),                  // The number of samples before head goes out of ring buffer
                     nCapacity - tail);                          // The number of samples before tail goes out of ring buffer
                 to_do = lsp_min(to_do, can_do);
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 25 нояб. 2016 г.
@@ -273,27 +273,27 @@ namespace lsp
 
             if (nMode == LM_HERM_THIN)
             {
-                sat->nAttack        = attack;
-                sat->nPlane         = attack;
+                sat->nAttack        = int32_t(attack);
+                sat->nPlane         = int32_t(attack);
             }
             else if (nMode == LM_HERM_TAIL)
             {
-                sat->nAttack        = (attack >> 1);
-                sat->nPlane         = attack;
+                sat->nAttack        = int32_t(attack / 2);
+                sat->nPlane         = int32_t(attack);
             }
             else if (nMode == LM_HERM_DUCK)
             {
-                sat->nAttack        = attack;
-                sat->nPlane         = (attack + (release >> 1));
+                sat->nAttack        = int32_t(attack);
+                sat->nPlane         = int32_t(attack + (release / 2));
             }
             else // LM_HERM_WIDE by default
             {
-                sat->nAttack        = (attack >> 1);
-                sat->nPlane         = (attack + (release >> 1));
+                sat->nAttack        = int32_t(attack / 2);
+                sat->nPlane         = int32_t(attack + (release / 2));
             }
 
-            sat->nRelease       = attack + release + 1;
-            sat->nMiddle        = attack;
+            sat->nRelease       = int32_t(attack + release + 1);
+            sat->nMiddle        = int32_t(attack);
 
             interpolation::hermite_cubic(sat->vAttack, -1.0f, 0.0f, 0.0f, sat->nAttack, 1.0f, 0.0f);
             interpolation::hermite_cubic(sat->vRelease, sat->nPlane, 1.0f, 0.0f, sat->nRelease, 0.0f, 0.0f);
@@ -312,29 +312,29 @@ namespace lsp
             else if (release < 8)
                 release             = 8;
 
-            if (nMode == LM_EXP_THIN)
+            if (nMode == LM_HERM_THIN)
             {
-                exp->nAttack        = attack;
-                exp->nPlane         = attack;
+                exp->nAttack        = int32_t(attack);
+                exp->nPlane         = int32_t(attack);
             }
-            else if (nMode == LM_EXP_TAIL)
+            else if (nMode == LM_HERM_TAIL)
             {
-                exp->nAttack        = (attack >> 1);
-                exp->nPlane         = attack;
+                exp->nAttack        = int32_t(attack / 2);
+                exp->nPlane         = int32_t(attack);
             }
-            else if (nMode == LM_EXP_DUCK)
+            else if (nMode == LM_HERM_DUCK)
             {
-                exp->nAttack        = attack;
-                exp->nPlane         = (attack + (release >> 1));
+                exp->nAttack        = int32_t(attack);
+                exp->nPlane         = int32_t(attack + (release / 2));
             }
-            else // LM_EXP_WIDE by default
+            else // LM_HERM_WIDE by default
             {
-                exp->nAttack        = (attack >> 1);
-                exp->nPlane         = (attack + (release >> 1));
+                exp->nAttack        = int32_t(attack / 2);
+                exp->nPlane         = int32_t(attack + (release / 2));
             }
 
-            exp->nRelease       = attack + release + 1;
-            exp->nMiddle        = attack;
+            exp->nRelease       = int32_t(attack + release + 1);
+            exp->nMiddle        = int32_t(attack);
 
             interpolation::exponent(exp->vAttack, -1.0f, 0.0f, exp->nAttack, 1.0f, 2.0f / attack);
             interpolation::exponent(exp->vRelease, exp->nPlane, 1.0f, exp->nRelease, 0.0f, 2.0f / release);
@@ -355,27 +355,27 @@ namespace lsp
 
             if (nMode == LM_LINE_THIN)
             {
-                line->nAttack       = attack;
-                line->nPlane        = attack;
+                line->nAttack       = int32_t(attack);
+                line->nPlane        = int32_t(attack);
             }
             else if (nMode == LM_LINE_TAIL)
             {
-                line->nAttack       = (attack >> 1);
-                line->nPlane        = attack;
+                line->nAttack       = int32_t(attack / 2);
+                line->nPlane        = int32_t(attack);
             }
             else if (nMode == LM_LINE_DUCK)
             {
-                line->nAttack       = attack;
-                line->nPlane        = (attack + (release >> 1));
+                line->nAttack       = int32_t(attack);
+                line->nPlane        = int32_t(attack + (release / 2));
             }
             else // LM_LINE_WIDE by default
             {
-                line->nAttack       = (attack >> 1);
-                line->nPlane        = (attack + (release >> 1));
+                line->nAttack       = int32_t(attack / 2);
+                line->nPlane        = int32_t(attack + (release / 2));
             }
 
-            line->nRelease      = attack + release + 1;
-            line->nMiddle       = attack;
+            line->nRelease      = int32_t(attack + release + 1);
+            line->nMiddle       = int32_t(attack);
 
             interpolation::linear(line->vAttack, -1.0f, 0.0f, line->nAttack, 1.0f);
             interpolation::linear(line->vRelease, line->nPlane, 1.0f, line->nRelease, 0.0f);

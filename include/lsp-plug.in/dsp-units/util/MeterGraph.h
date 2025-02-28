@@ -99,7 +99,7 @@ namespace lsp
                  */
                 inline void set_period(size_t period)
                 {
-                    nPeriod         = period;
+                    nPeriod         = uint32_t(period);
                 }
 
                 inline float period() const             { return nPeriod; }

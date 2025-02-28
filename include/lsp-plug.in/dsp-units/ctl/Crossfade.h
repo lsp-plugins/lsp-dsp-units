@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 22 янв. 2020 г.
@@ -31,10 +31,6 @@ namespace lsp
     {
         class LSP_DSP_UNITS_PUBLIC Crossfade
         {
-            private:
-                Crossfade & operator = (const Crossfade &);
-                Crossfade(const Crossfade &);
-
             protected:
                 size_t      nSamples;
                 size_t      nCounter;
@@ -43,7 +39,13 @@ namespace lsp
 
             public:
                 explicit Crossfade();
+
+                Crossfade(const Crossfade &) = delete;
+                Crossfade(Crossfade &&) = delete;
                 ~Crossfade();
+            
+                Crossfade & operator = (const Crossfade &) = delete;
+                Crossfade & operator = (Crossfade &&) = delete;
 
                 /**
                  * Construct object
@@ -98,7 +100,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

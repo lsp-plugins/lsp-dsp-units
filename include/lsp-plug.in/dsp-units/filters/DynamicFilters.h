@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 1 февр. 2018 г.
@@ -38,10 +38,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC DynamicFilters
         {
-            private:
-                DynamicFilters & operator = (const DynamicFilters &);
-                DynamicFilters(const DynamicFilters &);
-
             protected:
                 typedef struct filter_t
                 {
@@ -84,7 +80,12 @@ namespace lsp
 
             public:
                 explicit DynamicFilters();
+                DynamicFilters(const DynamicFilters &) = delete;
+                DynamicFilters(DynamicFilters &&) = delete;
                 ~DynamicFilters();
+            
+                DynamicFilters & operator = (const DynamicFilters &) = delete;
+                DynamicFilters & operator = (DynamicFilters &&) = delete;
 
                 /**
                  * Construct the object as a part of memory chunkk
@@ -93,8 +94,8 @@ namespace lsp
 
                 /** Initialize the dynamic filters set
                  *
-                 * @param filters
-                 * @return
+                 * @param filters maximum number of filters that can be used within the object
+                 * @return status of operation
                  */
                 status_t            init(size_t filters);
 
@@ -184,7 +185,8 @@ namespace lsp
             public:
                 void                dump(dspu::IStateDumper *v) const;
         };
-    }
+    
+    } /* namespace dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_FILTERS_DYNAMICFILTERS_H_ */

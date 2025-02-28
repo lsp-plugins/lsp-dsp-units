@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 13 марта 2016 г.
@@ -110,7 +110,7 @@ namespace lsp
                 return false;
 
             // Estimate the amount of data to allocate
-            size_t szof_buffer      = BUFFER_SIZE*sizeof(float);
+            size_t szof_buffer      = BUFFER_SIZE * sizeof(float);
             size_t szof_samples     = align_size(sizeof(Sample *) * max_samples, SAMPLER_ALIGN);
             size_t szof_playback    = align_size(sizeof(play_item_t) * max_playbacks, SAMPLER_ALIGN);
             size_t to_alloc         = szof_buffer + szof_samples + szof_playback;
@@ -128,12 +128,9 @@ namespace lsp
 
             // Update state
             lsp::swap(pData, data);
-            vBuffer             = reinterpret_cast<float *>(ptr);
-            ptr                += szof_buffer;
-            vSamples            = reinterpret_cast<Sample **>(ptr);
-            ptr                += szof_samples;
-            vPlayback           = reinterpret_cast<play_item_t *>(ptr);
-            ptr                += szof_playback;
+            vBuffer             = advance_ptr_bytes<float>(ptr, szof_buffer);
+            vSamples            = advance_ptr_bytes<Sample *>(ptr, szof_samples);
+            vPlayback           = advance_ptr_bytes<play_item_t>(ptr, szof_playback);
             lsp_assert( ptr <= end );
 
             nSamples            = max_samples;
@@ -305,39 +302,48 @@ namespace lsp
                 release_sample(vSamples[i]);
         }
 
-        void SamplePlayer::process(float *dst, const float *src, size_t samples)
+        void SamplePlayer::process(float *dst, const float *src, size_t samples, uint32_t flags)
         {
+            if (!(flags & SAMPLER_ALL))
+                return;
+
             if (src == NULL)
                 dsp::fill_zero(dst, samples);
             else
                 dsp::copy(dst, src, samples);
-            do_process(dst, samples);
+            do_process(dst, samples, flags);
         }
 
-        void SamplePlayer::process(float *dst, size_t samples)
+        void SamplePlayer::process(float *dst, size_t samples, uint32_t flags)
         {
+            if (!(flags & SAMPLER_ALL))
+                return;
+
             dsp::fill_zero(dst, samples);
-            do_process(dst, samples);
+            do_process(dst, samples, flags);
         }
 
-        void SamplePlayer::do_process(float *dst, size_t samples)
+        void SamplePlayer::do_process(float *dst, size_t samples, uint32_t flags)
         {
-            // Operate with not greater than BUFFER_SIZE parts
-            // Iterate over all active playbacks and apply changes to the output
-            for (play_item_t *pb = sActive.pHead; pb != NULL; )
+            for (size_t offset=0; offset<samples; )
             {
-                // The link of the playback can be changed, so we need
-                // to remember the pointer to the next playback in list first
-                play_item_t *next   = pb->pNext;
+                const size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
 
-                for (size_t offset=0; offset<samples;)
+                // Process playback in 'play' state
+                for (play_item_t *curr = sActive.pHead; curr != NULL; )
                 {
-                    size_t to_do    = lsp_min(samples - offset, BUFFER_SIZE);
+                    // The link of the playback can be changed, so we need
+                    // to remember the pointer to the next playback in list first
+                    play_item_t *pb     = curr;
+                    curr                = curr->pNext;
 
-                    // Prepare the buffer
+                    // Skip playback if flag does not match it's mode
+                    const uint32_t flag     = (pb->bListen) ? SAMPLER_LISTEN : SAMPLER_PLAYBACK;
+                    if (!(flags & flag))
+                        continue;
+
+                    // Process playback
                     dsp::fill_zero(vBuffer, to_do);
-
-                    // Apply playback to the temporary buffer and deploy temporary buffer to output
                     size_t processed    = playback::process_playback(vBuffer, pb, to_do);
                     if (processed <= 0)
                     {
@@ -348,19 +354,15 @@ namespace lsp
                         // Move to inactive
                         list_remove(&sActive, pb);
                         list_add_first(&sInactive, pb);
-                        break;
+                        continue;
                     }
 
                     // Deploy playback to the destination buffer
                     dsp::fmadd_k3(&dst[offset], vBuffer, pb->fVolume * fGain, processed);
+                }
 
-                    // Update pointers
-                    offset             += processed;
-                } // offset
-
-                // Move to the next playback
-                pb                  = next;
-            } // play_item_t
+                offset     += to_do;
+            }
         }
 
         bool SamplePlayer::play(size_t id, size_t channel, float volume, ssize_t delay)
@@ -409,10 +411,13 @@ namespace lsp
             return Playback(pb);
         }
 
-        ssize_t SamplePlayer::cancel_all(size_t id, size_t channel, size_t fadeout, ssize_t delay)
+        ssize_t SamplePlayer::cancel_all(size_t id, size_t channel, size_t fadeout, ssize_t delay, uint32_t flags)
         {
             // Check that ID of the sample is correct
             if (id >= nSamples)
+                return -1;
+
+            if (!(flags & SAMPLER_ALL))
                 return -1;
 
             // Stop all playbacks
@@ -421,6 +426,10 @@ namespace lsp
             for (play_item_t *pb = sActive.pHead; pb != NULL; pb = pb->pNext)
             {
                 // Cancel playback if not already cancelled
+                const uint32_t flag     = (pb->bListen) ? SAMPLER_LISTEN : SAMPLER_PLAYBACK;
+                if (!(flags & flag))
+                    continue;
+
                 if ((pb->nID == ssize_t(id)) &&
                     (pb->pSample != NULL))
                 {
@@ -471,6 +480,8 @@ namespace lsp
 
         void SamplePlayer::dump(IStateDumper *v) const
         {
+            v->write("vBuffer", vBuffer);
+
             v->begin_array("vSamples", vSamples, nSamples);
             {
                 for (size_t i=0; i<nSamples; ++i)

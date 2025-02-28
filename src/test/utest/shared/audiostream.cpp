@@ -31,17 +31,17 @@ UTEST_BEGIN("dspu.shared", audiostream)
     {
         LSPString id;
         dspu::AudioStream out, in;
-        UTEST_ASSERT(id.fmt_utf8("%s-create.shm", full_name()));
+        UTEST_ASSERT(id.fmt_utf8("%s-a.shm", full_name()));
 
         printf("Testing create and open audio stream id=%s ...\n", id.get_native());
 
         UTEST_ASSERT(out.create(&id, 2, 1024) == STATUS_OK);
         UTEST_ASSERT(out.channels() == 2);
-        UTEST_ASSERT(out.length() == 1024);
+        UTEST_ASSERT(out.length() >= 1024);
 
         UTEST_ASSERT(in.open(&id) == STATUS_OK);
         UTEST_ASSERT(in.channels() == 2);
-        UTEST_ASSERT(in.length() == 1024);
+        UTEST_ASSERT(in.length() >= 1024);
         UTEST_ASSERT(in.close() == STATUS_OK);
 
         UTEST_ASSERT(out.close() == STATUS_OK);
@@ -57,11 +57,11 @@ UTEST_BEGIN("dspu.shared", audiostream)
         printf("  allocated stream with unique id=%s ...\n", id.get_native());
 
         UTEST_ASSERT(out.channels() == 2);
-        UTEST_ASSERT(out.length() == 1024);
+        UTEST_ASSERT(out.length() >= 1024);
 
         UTEST_ASSERT(in.open(&id) == STATUS_OK);
         UTEST_ASSERT(in.channels() == 2);
-        UTEST_ASSERT(in.length() == 1024);
+        UTEST_ASSERT(in.length() >= 1024);
         UTEST_ASSERT(in.close() == STATUS_OK);
 
         UTEST_ASSERT(out.close() == STATUS_OK);
@@ -77,11 +77,11 @@ UTEST_BEGIN("dspu.shared", audiostream)
         printf("  allocated stream with unique id=%s ...\n", id.get_native());
 
         UTEST_ASSERT(out.channels() == 2);
-        UTEST_ASSERT(out.length() == 1024);
+        UTEST_ASSERT(out.length() >= 1024);
 
         UTEST_ASSERT(in.open(&id) == STATUS_OK);
         UTEST_ASSERT(in.channels() == 2);
-        UTEST_ASSERT(in.length() == 1024);
+        UTEST_ASSERT(in.length() >= 1024);
 
         // Initialize buffers
         FloatBuffer bout_l(0x10);

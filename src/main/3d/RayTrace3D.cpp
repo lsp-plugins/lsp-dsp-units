@@ -920,7 +920,8 @@ namespace lsp
                 dsp::calc_oriented_plane_pv(&spl, &v->s, p);
 
                 // Perform split
-                n_out = 0, n_in = 0;
+                n_out = 0;
+                n_in = 0;
                 dsp::split_triangle_raw(out, &n_out, in, &n_in, &spl, &src);
 
                 // Compute the area of triangle and ensure that it is greater than previous value
@@ -1761,7 +1762,8 @@ namespace lsp
         {
             const dsp::vector3d_t *pl;
             dsp::raw_triangle_t buf1[16], buf2[16], *in, *out;
-            size_t nin, nout;
+            size_t nin;
+            size_t nout = 0;
 
             // Cull each triangle of bounding box with four scissor planes
             for (size_t i=0, m = sizeof(bbox_map)/sizeof(size_t); i < m; i += 3)
@@ -1791,9 +1793,15 @@ namespace lsp
                     // Update state
                     nin     = nout;
                     if (j & 1)
-                        in = buf1, out = buf2;
+                    {
+                        in = buf1;
+                        out = buf2;
+                    }
                     else
-                        in = buf2, out = buf1;
+                    {
+                        in = buf2;
+                        out = buf1;
+                    }
                 }
 
                 if (nout)

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 03 авг. 2016 г.
@@ -255,7 +255,6 @@ namespace lsp
                 /**
                  * Get filter mode of the split point
                  * @param sp split point
-                 * @param mode mode for the split point or negative value on invalid index
                  */
                 ssize_t         get_mode(size_t sp) const;
 
@@ -367,7 +366,7 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper dumper
                  */
                 void            dump(IStateDumper *v) const;
         };

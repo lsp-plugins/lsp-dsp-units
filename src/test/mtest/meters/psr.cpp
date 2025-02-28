@@ -49,7 +49,7 @@ MTEST_BEGIN("dspu.meters", psr)
         for (size_t i=0; i<2; ++i)
         {
             tpm[i].init();
-            tpm[i].set_sample_rate(src.sample_rate());
+            tpm[i].set_sample_rate(uint32_t(src.sample_rate()));
             tpm[i].update_settings();
         }
 

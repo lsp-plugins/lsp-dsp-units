@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 05 окт 2024 г.
@@ -74,25 +74,25 @@ namespace lsp
             if (!sFrames.sBuffer.init(frames + FRAMES_GAP))
                 return false;
 
-            sHistory.nFrames        = subframes;
-            sHistory.nPeriod        = subsampling;
+            sHistory.nFrames        = uint32_t(subframes);
+            sHistory.nPeriod        = uint32_t(subsampling);
             sHistory.fCurrent       = 0;
             sHistory.nCount         = 0;
 
-            sFrames.nFrames         = frames;
+            sFrames.nFrames         = uint32_t(frames);
             sFrames.nPeriod         = 0;
             sFrames.fCurrent        = 0;
             sFrames.nCount          = 0;
 
             nPeriod                 = 0;
-            nMaxPeriod              = max_period;
+            nMaxPeriod              = uint32_t(max_period);
 
             return true;
         }
 
         void ScaledMeterGraph::set_period(size_t period)
         {
-            nPeriod                 = lsp_limit(period, sHistory.nPeriod, nMaxPeriod);
+            nPeriod                 = lsp_limit(uint32_t(period), sHistory.nPeriod, nMaxPeriod);
         }
 
         void ScaledMeterGraph::set_method(meter_method_t m)

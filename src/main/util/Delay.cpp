@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 06 дек. 2015 г.
@@ -61,7 +61,7 @@ namespace lsp
             nHead           = 0;
             nTail           = 0;
             nDelay          = 0;
-            nSize           = size;
+            nSize           = uint32_t(size);
 
             return true;
         }
@@ -442,7 +442,7 @@ namespace lsp
             }
 
             nTail           = (nHead + nSize - delay) % nSize;
-            nDelay          = delay;
+            nDelay          = uint32_t(delay);
         }
 
         void Delay::process_ramping(float *dst, const float *src, float gain, size_t delay, size_t count)
@@ -491,7 +491,7 @@ namespace lsp
             }
 
             nTail           = (nHead + nSize - delay) % nSize;
-            nDelay          = delay;
+            nDelay          = uint32_t(delay);
         }
 
         void Delay::process_ramping(float *dst, const float *src, const float *gain, size_t delay, size_t count)
@@ -541,7 +541,7 @@ namespace lsp
             }
 
             nTail           = (nHead + nSize - delay) % nSize;
-            nDelay          = delay;
+            nDelay          = uint32_t(delay);
         }
 
         float Delay::process(float src)
@@ -567,7 +567,7 @@ namespace lsp
         void Delay::set_delay(size_t delay)
         {
             delay      %= nSize;
-            nDelay      = delay;
+            nDelay      = uint32_t(delay);
             nTail       = (nHead + nSize - delay) % nSize;
         }
 

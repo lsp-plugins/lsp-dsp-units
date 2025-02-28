@@ -843,7 +843,7 @@ namespace lsp
                     size_t to_do    = lsp_min(count, ssize_t(BUFFER_FRAMES));
                     ssize_t nframes = in->read(buf, to_do);
                     if (nframes < 0)
-                        return -nframes;
+                        return -status_t(nframes);
 
                     // Unpack buffer
                     for (size_t i=0; i<fmt.channels; ++i)
@@ -880,7 +880,7 @@ namespace lsp
                     {
                         if (nframes == -STATUS_EOF)
                             break;
-                        return -nframes;
+                        return -status_t(nframes);
                     }
 
                     // Ensure that we have enough space
@@ -1392,7 +1392,7 @@ namespace lsp
             lspc::chunk_id_t *path_list = NULL;
             ssize_t path_count = fd.enumerate_chunks(LSPC_CHUNK_PATH, &path_list);
             if (path_count < 0)
-                return -path_count;
+                return -status_t(path_count);
             lsp_finally { free(path_list); };
 
             // Now iterate over all chunks and check it for match to the item

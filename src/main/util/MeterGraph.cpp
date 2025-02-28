@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 мая 2016 г.
@@ -62,7 +62,7 @@ namespace lsp
 
             fCurrent    = 0.0f;
             nCount      = 0;
-            nPeriod     = period;
+            nPeriod     = uint32_t(period);
             return true;
         }
 

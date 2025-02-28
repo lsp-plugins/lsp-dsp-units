@@ -1630,8 +1630,8 @@ namespace lsp
             size_t maxCount         = dataLength - head;
             count                   = (count > maxCount) ? maxCount : count;
 
-            ssize_t saved           = pConvResult->save_range(path, head, count);
-            return (saved < 0) ? -saved : STATUS_OK;
+            const ssize_t saved     = pConvResult->save_range(path, head, count);
+            return (saved < 0) ? -status_t(saved) : STATUS_OK;
         }
 
         status_t SyncChirpProcessor::save_linear_convolution(const char *path, ssize_t offset, size_t count)
@@ -1807,7 +1807,7 @@ namespace lsp
             prof.common.version     = 2;
             prof.common.size        = sizeof(lspc::chunk_audio_profile_t);
             prof.chunk_id           = audio_chunk_id;
-            prof.chirp_order        = sChirpParams.nOrder;
+            prof.chirp_order        = uint32_t(sChirpParams.nOrder);
             prof.alpha              = sChirpParams.fAlpha;
             prof.beta               = sChirpParams.beta;
             prof.gamma              = sChirpParams.gamma;

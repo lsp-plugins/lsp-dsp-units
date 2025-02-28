@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 дек. 2020 г.
@@ -79,7 +79,7 @@ namespace lsp
                  * @param out output buffer
                  * @param in input buffer
                  * @param delay the delay values
-                 * @param fback feedback gain values
+                 * @param fgain feedback gain values
                  * @param fdelay feedback delay values
                  * @param samples number of samples to process
                  */

@@ -341,7 +341,7 @@ namespace lsp
 
         /**
          * Compute the frequency of the note relying on the frequency of the A4 note
-         * @param note
+         * @param note the musical note MIDI code
          * @param a4 the frequency of the A4 note, typically 440 Hz
          * @return the frequency of the note
          */

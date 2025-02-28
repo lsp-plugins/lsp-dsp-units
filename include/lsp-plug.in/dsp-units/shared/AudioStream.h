@@ -142,7 +142,6 @@ namespace lsp
                  * @param id identifier of the named audio stream
                  * @param channels number of audio channels
                  * @param length length of each channel
-                 * @param persist use persistent shared memory segment
                  * @return status of operation
                  */
                 status_t        create(const char *id, size_t channels, size_t length);
@@ -152,7 +151,6 @@ namespace lsp
                  * @param id identifier of the named audio stream
                  * @param channels number of audio channels
                  * @param length length of each channel
-                 * @param persit use persistent shared memory segment
                  * @return status of operation
                  */
                 status_t        create(const LSPString *id, size_t channels, size_t length);
@@ -163,7 +161,6 @@ namespace lsp
                  * @param postfix postfix for the shared segment to add
                  * @param channels number of audio channels
                  * @param length length of each channel
-                 * @param persit use persistent shared memory segment
                  * @return status of operation
                  */
                 status_t        allocate(LSPString *name, const char *postfix, size_t channels, size_t length);
@@ -174,7 +171,6 @@ namespace lsp
                  * @param postfix postfix for the shared segment to add
                  * @param channels number of audio channels
                  * @param length length of each channel
-                 * @param persit use persistent shared memory segment
                  * @return status of operation
                  */
                 status_t        allocate(LSPString *name, const LSPString *postfix, size_t channels, size_t length);

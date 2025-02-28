@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 24 нояб. 2022 г.
@@ -63,6 +63,7 @@ namespace lsp
                 playback_state_t    enState;        // State of the playback
                 float               fVolume;        // The volume of the sample
                 bool                bReverse;       // The reverse playback flag
+                bool                bListen;        // Listen flag
                 ssize_t             nPosition;      // Current playback position
                 size_t              nFadeout;       // Fadeout length for cancelling
                 sample_loop_t       enLoopMode;     // Loop mode

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 31 May 2021
@@ -54,10 +54,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC NoiseGenerator
         {
-            private:
-                NoiseGenerator & operator = (const NoiseGenerator &);
-                NoiseGenerator(const NoiseGenerator &);
-
             protected:
                 enum update_t
                 {
@@ -124,7 +120,12 @@ namespace lsp
 
             public:
                 explicit NoiseGenerator();
+                NoiseGenerator(const NoiseGenerator &) = delete;
+                NoiseGenerator(NoiseGenerator &&) = delete;
                 ~NoiseGenerator();
+            
+                NoiseGenerator & operator = (const NoiseGenerator &) = delete;
+                NoiseGenerator & operator = (NoiseGenerator &&) = delete;
 
                 void construct();
                 void destroy();
@@ -137,7 +138,8 @@ namespace lsp
 
                 /** Initialize random generator.
                  *
-                 * @param rand_seed seed for the Randomizer generator.
+                 * @param mls_n_bits number of bits for MLS random generator.
+                 * @param mls_seed seed for the Randomizer generator.
                  * @param lcg_seed seed for the LCG generator.
                  */
                 void init(
@@ -193,13 +195,13 @@ namespace lsp
 
                 /** Set whether to crush the velvet generator.
                  *
-                 * @param true to crash.
+                 * @param crush true to crash.
                  */
                 void set_velvet_crush(bool crush);
 
                 /** Set the crushing probability for the velvet generator.
                  *
-                 * @param crushing probability.
+                 * @param prob crushing probability.
                  */
                 void set_velvet_crushing_probability(float prob);
 
@@ -211,7 +213,7 @@ namespace lsp
 
                 /** Set the noise color.
                  *
-                 * @param noise color specification.
+                 * @param color noise color specification.
                  */
                 void set_noise_color(ng_color_t color);
 
@@ -259,7 +261,6 @@ namespace lsp
                 /** Output noise to a destination buffer overwriting its content
                  *
                  * @param dst output wave destination
-                 * @param src input source, allowed to be NULLL
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, size_t count);
@@ -283,11 +284,12 @@ namespace lsp
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v state dumper
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_NOISE_GENERATOR_H_ */

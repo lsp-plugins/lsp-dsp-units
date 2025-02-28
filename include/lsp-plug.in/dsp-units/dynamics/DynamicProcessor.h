@@ -278,7 +278,7 @@ namespace lsp
                 /** Process one sample of sidechain signal
                  *
                  * @param s sidechain signal
-                 * @param out envelope signal of processor, may be NULL
+                 * @param env pointer to store sample of envelope signal of processor, may be NULL
                  * @return output signal gain to VCA
                  */
                 float process(float *env, float s);

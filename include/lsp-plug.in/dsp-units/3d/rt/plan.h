@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 авг. 2021 г.
@@ -38,16 +38,17 @@ namespace lsp
              */
             typedef struct LSP_DSP_UNITS_PUBLIC plan_t
             {
-                private:
-                    plan_t(const plan_t &);
-                    plan_t & operator = (const plan_t &);
-
                 public:
                     Allocator3D<rt::split_t>    items;
 
                 public:
                     explicit plan_t();
+                    plan_t(const plan_t &) = delete;
+                    plan_t(plan_t &&) = delete;
                     ~plan_t();
+                
+                    plan_t & operator = (const plan_t &) = delete;
+                    plan_t & operator = (plan_t &&) = delete;
 
                 public:
                     /**
@@ -98,7 +99,6 @@ namespace lsp
                     /**
                      * Add triangle to the plan
                      * @param pv three triangle points
-                     * @param sp the equation of split plane provided by triangle
                      * @return status of operation
                      */
                     status_t        add_triangle(const dsp::point3d_t *pv);
@@ -106,7 +106,6 @@ namespace lsp
                     /**
                      * Add triangle to the plan
                      * @param t triangle to add
-                     * @param sp the equation of split plane provided by triangle
                      * @return status of operation
                      */
                     status_t        add_triangle(const rtm::triangle_t *t);
@@ -114,23 +113,22 @@ namespace lsp
                     /**
                      * Add triangle to the plan
                      * @param pv three triangle points
-                     * @param sp the equation of split plane provided by triangle
                      * @return status of operation
                      */
                     rt::split_t    *add_edge(const dsp::point3d_t *pv);
 
                     /**
                      * Add triangle to the plan
-                     * @param pv three triangle points
-                     * @param sp the equation of split plane provided by triangle
+                     * @param p1 the first point of edge
+                     * @param p2 the second point of edge
                      * @return status of operation
                      */
                     rt::split_t    *add_edge(const dsp::point3d_t *p1, const dsp::point3d_t *p2);
 
             } plan_t;
-        } // namespace rt
-    } // namespace dspu
-} // namespace lsp
+        } /* namespace rt */
+    } /* namespace dspu */
+} /* namespace lsp */
 
 
 

@@ -70,7 +70,7 @@ namespace lsp
             if (nSampleRate == sample_rate)
                 return STATUS_OK;
 
-            nSampleRate         = sample_rate;
+            nSampleRate         = uint32_t(sample_rate);
             nFlags             |= F_UPDATE;
 
             return STATUS_OK;

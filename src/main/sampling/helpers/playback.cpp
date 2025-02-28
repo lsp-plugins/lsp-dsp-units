@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2022 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 24 нояб. 2022 г.
@@ -604,6 +604,7 @@ namespace lsp
                 pb->enState         = STATE_NONE;
                 pb->fVolume         = 0.0f;
                 pb->bReverse        = false;
+                pb->bListen         = false;
                 pb->nPosition       = -1;
                 pb->nFadeout        = -1;
                 pb->enLoopMode      = SAMPLE_LOOP_NONE;
@@ -628,6 +629,7 @@ namespace lsp
                 pb->enState         = STATE_NONE;
                 pb->fVolume         = 0.0f;
                 pb->bReverse        = false;
+                pb->bListen         = false;
                 pb->nPosition       = -1;
                 pb->nFadeout        = -1;
                 pb->enLoopMode      = SAMPLE_LOOP_NONE;
@@ -652,6 +654,7 @@ namespace lsp
                 pb->enState     = STATE_PLAY;
                 pb->fVolume     = settings->volume();
                 pb->bReverse    = settings->reverse();
+                pb->bListen     = settings->listen();
                 pb->nPosition   = -1;
                 pb->nFadeout    = 0;
                 pb->enLoopMode  = settings->loop_mode();
@@ -771,6 +774,8 @@ namespace lsp
                 v->write("nChannel", pb->nChannel);
                 v->write("enState", int(pb->enState));
                 v->write("fVolume", pb->fVolume);
+                v->write("bReverse", pb->bReverse);
+                v->write("bListen", pb->bListen);
                 v->write("nPosition", pb->nPosition);
                 v->write("nFadeout", pb->nFadeout);
                 v->write("enLoopMode", int(pb->enLoopMode));

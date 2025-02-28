@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 03 авг. 2016 г.
@@ -101,8 +101,8 @@ namespace lsp
 
             // Initialize fields, keep sample_rate unchanged
             nReconfigure        = R_ALL;
-            nSplits             = splits;
-            nBufSize            = buf_size;
+            nSplits             = uint32_t(splits);
+            nBufSize            = uint32_t(buf_size);
             nPlanSize           = 0;
 
             // Store allocated data pointer
@@ -192,7 +192,7 @@ namespace lsp
         {
             if (slope == CROSS_SLOPE_LR2)
                 return (type == FILTER_APF) ? 1 : 2;
-            return slope - 1;
+            return uint32_t(slope - 1);
         }
 
         void Crossover::set_slope(size_t sp, size_t slope)
@@ -312,7 +312,7 @@ namespace lsp
             if (nSampleRate == sr)
                 return;
 
-            nSampleRate     = sr;
+            nSampleRate     = uint32_t(sr);
             for (size_t i=0; i<nSplits; ++i)
             {
                 vSplit[i].sLPF.set_sample_rate(sr);

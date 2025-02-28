@@ -203,7 +203,7 @@ namespace lsp
             nMSCount                = -3;
 
             nSampleRate             = 0;
-            nChannels               = channels;
+            nChannels               = uint32_t(channels);
             nFlags                  = F_UPD_ALL;
             enWeight                = bs::WEIGHT_K;
 
@@ -299,9 +299,9 @@ namespace lsp
 
             // Update parameters
             fAvgCoeff               = 0.25f / float(blk_count);
-            nSampleRate             = sample_rate;
-            nBlockSize              = blk_count;
-            nMSSize                 = int_count;
+            nSampleRate             = uint32_t(sample_rate);
+            nBlockSize              = uint32_t(blk_count);
+            nMSSize                 = uint32_t(int_count);
             nFlags                  = F_UPD_ALL;
 
             // Clear all buffers

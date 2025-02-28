@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2021 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 авг. 2021 г.
@@ -31,7 +31,7 @@ namespace lsp
         BasicAllocator3D::BasicAllocator3D(size_t sz_of, size_t c_size)
         {
             nChunks         = 0;
-            nShift          = int_log2(c_size);
+            nShift          = int_log2(fixed_int(c_size));
             nMask           = (1 << nShift) - 1;
 
             nSizeOf         = sz_of;

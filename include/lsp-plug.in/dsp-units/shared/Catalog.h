@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 мая 2024 г.
@@ -173,7 +173,6 @@ namespace lsp
                  * @param magic record type
                  * @param name unique record name
                  * @param id associated shared segment identifier
-                 * @param lock lock the record flag
                  * @return record index or negative error code
                  */
                 ssize_t         publish(Record *record, uint32_t magic, const LSPString *name, const LSPString *id);

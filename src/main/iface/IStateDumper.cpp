@@ -69,35 +69,43 @@ namespace lsp
         {
         }
 
-        void IStateDumper::write(uint8_t value)
+        void IStateDumper::write(unsigned char value)
         {
         }
 
-        void IStateDumper::write(int8_t value)
+        void IStateDumper::write(signed char value)
         {
         }
 
-        void IStateDumper::write(uint16_t value)
+        void IStateDumper::write(unsigned short value)
         {
         }
 
-        void IStateDumper::write(int16_t value)
+        void IStateDumper::write(signed short value)
         {
         }
 
-        void IStateDumper::write(uint32_t value)
+        void IStateDumper::write(unsigned int value)
         {
         }
 
-        void IStateDumper::write(int32_t value)
+        void IStateDumper::write(signed int value)
         {
         }
 
-        void IStateDumper::write(uint64_t value)
+        void IStateDumper::write(unsigned long value)
         {
         }
 
-        void IStateDumper::write(int64_t value)
+        void IStateDumper::write(signed long value)
+        {
+        }
+
+        void IStateDumper::write(unsigned long long value)
+        {
+        }
+
+        void IStateDumper::write(signed long long value)
         {
         }
 
@@ -121,35 +129,43 @@ namespace lsp
         {
         }
 
-        void IStateDumper::write(const char *name, uint8_t value)
+        void IStateDumper::write(const char *name, unsigned char value)
         {
         }
 
-        void IStateDumper::write(const char *name, int8_t value)
+        void IStateDumper::write(const char *name, signed char value)
         {
         }
 
-        void IStateDumper::write(const char *name, uint16_t value)
+        void IStateDumper::write(const char *name, unsigned short value)
         {
         }
 
-        void IStateDumper::write(const char *name, int16_t value)
+        void IStateDumper::write(const char *name, signed short value)
         {
         }
 
-        void IStateDumper::write(const char *name, uint32_t value)
+        void IStateDumper::write(const char *name, unsigned int value)
         {
         }
 
-        void IStateDumper::write(const char *name, int32_t value)
+        void IStateDumper::write(const char *name, signed int value)
         {
         }
 
-        void IStateDumper::write(const char *name, uint64_t value)
+        void IStateDumper::write(const char *name, unsigned long value)
         {
         }
 
-        void IStateDumper::write(const char *name, int64_t value)
+        void IStateDumper::write(const char *name, signed long value)
+        {
+        }
+
+        void IStateDumper::write(const char *name, unsigned long long value)
+        {
+        }
+
+        void IStateDumper::write(const char *name, signed long long value)
         {
         }
 
@@ -169,37 +185,46 @@ namespace lsp
         {
         }
 
-        void IStateDumper::writev(const uint8_t *value, size_t count)
+        void IStateDumper::writev(const unsigned char *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const int8_t *value, size_t count)
+        void IStateDumper::writev(const signed char *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const uint16_t *value, size_t count)
+        void IStateDumper::writev(const unsigned short *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const int16_t *value, size_t count)
+        void IStateDumper::writev(const signed short *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const uint32_t *value, size_t count)
+        void IStateDumper::writev(const unsigned int *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const int32_t *value, size_t count)
+        void IStateDumper::writev(const signed int *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const uint64_t *value, size_t count)
+        void IStateDumper::writev(const unsigned long *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const int64_t *value, size_t count)
+        void IStateDumper::writev(const signed long *value, size_t count)
         {
         }
+
+        void IStateDumper::writev(const unsigned long long *value, size_t count)
+        {
+        }
+
+        void IStateDumper::writev(const signed long long *value, size_t count)
+        {
+        }
+
 
         void IStateDumper::writev(const float *value, size_t count)
         {
@@ -217,35 +242,43 @@ namespace lsp
         {
         }
 
-        void IStateDumper::writev(const char *name, const uint8_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const unsigned char *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const char *name, const int8_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const signed char *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const char *name, const uint16_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const unsigned short *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const char *name, const int16_t *value, size_t count)
-        {
-        }
-    
-        void IStateDumper::writev(const char *name, const uint32_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const signed short *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const char *name, const int32_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const unsigned int *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const char *name, const uint64_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const signed int *value, size_t count)
         {
         }
 
-        void IStateDumper::writev(const char *name, const int64_t *value, size_t count)
+        void IStateDumper::writev(const char *name, const unsigned long *value, size_t count)
+        {
+        }
+
+        void IStateDumper::writev(const char *name, const signed long *value, size_t count)
+        {
+        }
+
+        void IStateDumper::writev(const char *name, const unsigned long long *value, size_t count)
+        {
+        }
+
+        void IStateDumper::writev(const char *name, const signed long long *value, size_t count)
         {
         }
 

@@ -35,13 +35,14 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC IStateDumper
         {
-            private:
-                IStateDumper &operator = (const IStateDumper &);
-                IStateDumper(const IStateDumper &);
-
             public:
                 explicit IStateDumper();
+                IStateDumper(const IStateDumper &) = delete;
+                IStateDumper(IStateDumper &&) = delete;
                 virtual ~IStateDumper();
+
+                IStateDumper &operator = (const IStateDumper &) = delete;
+                IStateDumper &operator = (IStateDumper &&) = delete;
 
             public:
                 virtual void begin_object(const char *name, const void *ptr, size_t szof);
@@ -55,159 +56,167 @@ namespace lsp
                 virtual void write(const void *value);
                 virtual void write(const char *value);
                 virtual void write(bool value);
-                virtual void write(uint8_t value);
-                virtual void write(int8_t value);
-                virtual void write(uint16_t value);
-                virtual void write(int16_t value);
-                virtual void write(uint32_t value);
-                virtual void write(int32_t value);
-                virtual void write(uint64_t value);
-                virtual void write(int64_t value);
+                virtual void write(unsigned char value);
+                virtual void write(signed char value);
+                virtual void write(unsigned short value);
+                virtual void write(signed short value);
+                virtual void write(unsigned int value);
+                virtual void write(signed int value);
+                virtual void write(unsigned long value);
+                virtual void write(signed long value);
+                virtual void write(unsigned long long value);
+                virtual void write(signed long long value);
                 virtual void write(float value);
                 virtual void write(double value);
 
                 virtual void write(const char *name, const void *value);
                 virtual void write(const char *name, const char *value);
                 virtual void write(const char *name, bool value);
-                virtual void write(const char *name, uint8_t value);
-                virtual void write(const char *name, int8_t value);
-                virtual void write(const char *name, uint16_t value);
-                virtual void write(const char *name, int16_t value);
-                virtual void write(const char *name, uint32_t value);
-                virtual void write(const char *name, int32_t value);
-                virtual void write(const char *name, uint64_t value);
-                virtual void write(const char *name, int64_t value);
+                virtual void write(const char *name, unsigned char value);
+                virtual void write(const char *name, signed char value);
+                virtual void write(const char *name, unsigned short value);
+                virtual void write(const char *name, signed short value);
+                virtual void write(const char *name, unsigned int value);
+                virtual void write(const char *name, signed int value);
+                virtual void write(const char *name, unsigned long value);
+                virtual void write(const char *name, signed long value);
+                virtual void write(const char *name, unsigned long long value);
+                virtual void write(const char *name, signed long long value);
                 virtual void write(const char *name, float value);
                 virtual void write(const char *name, double value);
 
                 virtual void writev(const void * const *value, size_t count);
                 virtual void writev(const bool *value, size_t count);
-                virtual void writev(const uint8_t *value, size_t count);
-                virtual void writev(const int8_t *value, size_t count);
-                virtual void writev(const uint16_t *value, size_t count);
-                virtual void writev(const int16_t *value, size_t count);
-                virtual void writev(const uint32_t *value, size_t count);
-                virtual void writev(const int32_t *value, size_t count);
-                virtual void writev(const uint64_t *value, size_t count);
-                virtual void writev(const int64_t *value, size_t count);
+                virtual void writev(const unsigned char *value, size_t count);
+                virtual void writev(const signed char *value, size_t count);
+                virtual void writev(const unsigned short *value, size_t count);
+                virtual void writev(const signed short *value, size_t count);
+                virtual void writev(const unsigned int *value, size_t count);
+                virtual void writev(const signed int *value, size_t count);
+                virtual void writev(const unsigned long *value, size_t count);
+                virtual void writev(const signed long *value, size_t count);
+                virtual void writev(const unsigned long long *value, size_t count);
+                virtual void writev(const signed long long *value, size_t count);
                 virtual void writev(const float *value, size_t count);
                 virtual void writev(const double *value, size_t count);
 
                 virtual void writev(const char *name, const void * const *value, size_t count);
                 virtual void writev(const char *name, const bool *value, size_t count);
-                virtual void writev(const char *name, const uint8_t *value, size_t count);
-                virtual void writev(const char *name, const int8_t *value, size_t count);
-                virtual void writev(const char *name, const uint16_t *value, size_t count);
-                virtual void writev(const char *name, const int16_t *value, size_t count);
-                virtual void writev(const char *name, const uint32_t *value, size_t count);
-                virtual void writev(const char *name, const int32_t *value, size_t count);
-                virtual void writev(const char *name, const uint64_t *value, size_t count);
-                virtual void writev(const char *name, const int64_t *value, size_t count);
+                virtual void writev(const char *name, const unsigned char *value, size_t count);
+                virtual void writev(const char *name, const signed char *value, size_t count);
+                virtual void writev(const char *name, const unsigned short *value, size_t count);
+                virtual void writev(const char *name, const signed short *value, size_t count);
+                virtual void writev(const char *name, const unsigned int *value, size_t count);
+                virtual void writev(const char *name, const signed int *value, size_t count);
+                virtual void writev(const char *name, const unsigned long *value, size_t count);
+                virtual void writev(const char *name, const signed long *value, size_t count);
+                virtual void writev(const char *name, const unsigned long long *value, size_t count);
+                virtual void writev(const char *name, const signed long long *value, size_t count);
                 virtual void writev(const char *name, const float *value, size_t count);
                 virtual void writev(const char *name, const double *value, size_t count);
 
             public:
                 template <class T>
-                    inline void writev(const T * const * value, size_t count)
-                    {
-                        writev(reinterpret_cast<const void * const *>(value), count);
-                    }
+                inline void writev(const T * const * value, size_t count)
+                {
+                    writev(reinterpret_cast<const void * const *>(value), count);
+                }
 
                 template <class T>
-                    inline void writev(const char *name, const T * const * value, size_t count)
-                    {
-                        writev(name, reinterpret_cast<const void * const *>(value), count);
-                    }
+                inline void writev(const char *name, const T * const * value, size_t count)
+                {
+                    writev(name, reinterpret_cast<const void * const *>(value), count);
+                }
 
                 template <class T>
-                    inline void write_object(const T *value)
+                inline void write_object(const T *value)
+                {
+                    if (value != NULL)
                     {
-                        if (value != NULL)
+                        begin_object(value, sizeof(T));
+                        value->dump(this);
+                        end_object();
+                    }
+                    else
+                        write(value);
+                }
+
+                template <class T>
+                inline void write_object(const char *name, const T *value)
+                {
+                    if (value != NULL)
+                    {
+                        begin_object(name, value, sizeof(T));
+                        value->dump(this);
+                        end_object();
+                    }
+                    else
+                        write(name, value);
+                }
+
+                template <class T>
+                inline void write_object_array(const T *value, size_t count)
+                {
+                    if (value != NULL)
+                    {
+                        begin_array(value, count);
                         {
-                            begin_object(value, sizeof(T));
-                            value->dump(this);
-                            end_object();
+                            for (size_t i=0; i<count; ++i)
+                                write_object(&value[i]);
                         }
-                        else
-                            write(value);
+                        end_array();
                     }
+                    else
+                        write(value);
+                }
 
                 template <class T>
-                    inline void write_object(const char *name, const T *value)
+                inline void write_object_array(const char *name, const T *value, size_t count)
+                {
+                    if (value != NULL)
                     {
-                        if (value != NULL)
+                        begin_array(name, value, count);
                         {
-                            begin_object(name, value, sizeof(T));
-                            value->dump(this);
-                            end_object();
+                            for (size_t i=0; i<count; ++i)
+                                write_object(&value[i]);
                         }
-                        else
-                            write(name, value);
+                        end_array();
                     }
+                    else
+                        write(name, value);
+                }
 
                 template <class T>
-                    inline void write_object_array(const T *value, size_t count)
+                inline void write_object_array(const T * const *value, size_t count)
+                {
+                    if (value != NULL)
                     {
-                        if (value != NULL)
+                        begin_array(value, count);
                         {
-                            begin_array(value, count);
-                            {
-                                for (size_t i=0; i<count; ++i)
-                                    write_object(&value[i]);
-                            }
-                            end_array();
+                            for (size_t i=0; i<count; ++i)
+                                write_object(value[i]);
                         }
-                        else
-                            write(value);
+                        end_array();
                     }
+                    else
+                        write(value);
+                }
 
                 template <class T>
-                    inline void write_object_array(const char *name, const T *value, size_t count)
+                inline void write_object_array(const char *name, const T * const *value, size_t count)
+                {
+                    if (value != NULL)
                     {
-                        if (value != NULL)
+                        begin_array(name, value, count);
                         {
-                            begin_array(name, value, count);
-                            {
-                                for (size_t i=0; i<count; ++i)
-                                    write_object(&value[i]);
-                            }
-                            end_array();
+                            for (size_t i=0; i<count; ++i)
+                                write_object(value[i]);
                         }
-                        else
-                            write(name, value);
+                        end_array();
                     }
-
-                template <class T>
-                    inline void write_object_array(const T * const *value, size_t count)
-                    {
-                        if (value != NULL)
-                        {
-                            begin_array(value, count);
-                            {
-                                for (size_t i=0; i<count; ++i)
-                                    write_object(value[i]);
-                            }
-                            end_array();
-                        }
-                        else
-                            write(value);
-                    }
-
-                template <class T>
-                    inline void write_object_array(const char *name, const T * const *value, size_t count)
-                    {
-                        if (value != NULL)
-                        {
-                            begin_array(name, value, count);
-                            {
-                                for (size_t i=0; i<count; ++i)
-                                    write_object(value[i]);
-                            }
-                            end_array();
-                        }
-                        else
-                            write(name, value);
-                    }
+                    else
+                        write(name, value);
+                }
         };
 
     } /* namespace dspu */

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2021 Linux Studio Plugins Project <https://lsp-plug.in/>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
  *           (C) 2021 Stefano Tronci <stefano.tronci@protonmail.com>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 13 May 2021
@@ -59,10 +60,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC MLS
         {
-            private:
-                MLS & operator = (const MLS &);
-                MLS(const MLS &);
-
             public:
                 typedef umword_t mls_t;
 
@@ -82,7 +79,12 @@ namespace lsp
 
             public:
                 explicit MLS();
+                MLS(const MLS &) = delete;
+                MLS(MLS &&) = delete;
                 ~MLS();
+            
+                MLS & operator = (const MLS &) = delete;
+                MLS & operator = (MLS &&) = delete;
 
                 void construct();
                 void destroy();
@@ -161,19 +163,18 @@ namespace lsp
 
                 /** Output sequence to a destination buffer overwriting its content
                  *
-                 * @param dst output wave destination
-                 * @param src input source, allowed to be NULLL
+                 * @param dst destination buffer to process
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, size_t count);
 
                 /**
                  * Dump the state
-                 * @param dumper dumper
+                 * @param v module state dumper
                  */
                 void dump(IStateDumper *v) const;
         };
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_NOISE_MLS_H_ */
