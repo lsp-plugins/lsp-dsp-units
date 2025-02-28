@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.29 ===
+
+
 === 1.0.28 ===
 * Added 'listen' playback mode for the sampler in dspu::Sampler.
 * Added support of build for MacOS.
