@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.29 ===
-
+* Updated build scripts.
 
 === 1.0.28 ===
 * Added 'listen' playback mode for the sampler in dspu::Sampler.
