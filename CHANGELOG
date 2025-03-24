@@ -3,6 +3,10 @@
 *******************************************************************************
 
 === 1.0.29 ===
+* Implemented functions for quick computing of sine, cosine, logarithm and exponent
+  with precision loss.
+* Implemented linear, constant power, exponential and exponential with precision loss
+  interpolation functions.
 * Updated build scripts.
 
 === 1.0.28 ===
