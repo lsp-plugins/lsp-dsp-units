@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 12 мая 2017 г.
@@ -42,6 +42,7 @@ namespace lsp
     {
         static constexpr size_t BUFFER_FRAMES       = 0x1000;
         static constexpr size_t RESAMPLING_PERIODS  = 32;
+        static constexpr float  RESAMPLING_PI       = M_PI;
 
         namespace
         {
@@ -1017,7 +1018,8 @@ namespace lsp
             float rkf           = 1.0f / kf;
 
             // Prepare kernel for resampling
-            ssize_t k_periods   = RESAMPLING_PERIODS; // * (kf >> 1);
+            ssize_t k_periods   = RESAMPLING_PERIODS;
+            float r_periods     = 1.0f / float(k_periods);
             ssize_t k_base      = k_periods * kf;
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + 1;
@@ -1043,8 +1045,9 @@ namespace lsp
 
                 if ((t > -k_periods) && (t < k_periods))
                 {
-                    float t2    = M_PI * t;
-                    k[j]        = (t != 0) ? k_periods * sinf(t2) * sinf(t2 / k_periods) / (t2 * t2) : 1.0f;
+                    float t2    = RESAMPLING_PI * t;
+                    float t1    = t2 * r_periods;
+                    k[j]        = (t != 0) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
                 }
                 else
                     k[j]        = 0.0f;
@@ -1080,6 +1083,7 @@ namespace lsp
 
             // Prepare kernel for resampling
             ssize_t k_periods   = RESAMPLING_PERIODS; // Number of periods
+            float r_periods     = 1.0f / float(k_periods);
             ssize_t k_base      = k_periods * kf;
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + 1; // Centered impulse response
@@ -1113,8 +1117,9 @@ namespace lsp
 
                     if ((t > -k_periods) && (t < k_periods))
                     {
-                        const float t2  = M_PI * t;
-                        k[j]        = (t != 0.0f) ? k_periods * sinf(t2) * sinf(t2 / k_periods) / (t2 * t2) : 1.0f;
+                        const float t2  = RESAMPLING_PI * t;
+                        const float t1  = t2 * r_periods;
+                        k[j]        = (t != 0.0f) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
                     }
                     else
                         k[j]        = 0.0f;
@@ -1160,6 +1165,7 @@ namespace lsp
             // Prepare kernel for resampling
             ssize_t k_base      = RESAMPLING_PERIODS;
             ssize_t k_periods   = k_base * rkf; // Number of periods
+            float r_periods     = 1.0f / float(k_periods);
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + rkf + 1; // Centered impulse response
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
@@ -1191,8 +1197,9 @@ namespace lsp
 
                     if ((t > -k_periods) && (t < k_periods))
                     {
-                        const float t2  = M_PI * t;
-                        k[j]            = (t != 0.0f) ? k_periods * sinf(t2) * sinf(t2 / k_periods) / (t2 * t2) : 1.0f;
+                        const float t2  = RESAMPLING_PI * t;
+                        const float t1  = t2 * r_periods;
+                        k[j]            = (t != 0.0f) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
                     }
                     else
                         k[j]            = 0.0f;
