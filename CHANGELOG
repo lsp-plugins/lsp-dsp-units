@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.29 ===
+* Optimized complex resampling algorithm for dspu::Sample.
 * Implemented functions for quick computing of sine, cosine, logarithm and exponent
   with precision loss.
 * Implemented linear, constant power, exponential and exponential with precision loss
