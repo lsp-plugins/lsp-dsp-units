@@ -41,7 +41,8 @@ namespace lsp
     namespace dspu
     {
         static constexpr size_t BUFFER_FRAMES       = 0x1000;
-        static constexpr size_t RESAMPLING_PERIODS  = 32;
+        static constexpr float  RESAMPLING_KPERIODS = 32.0f;
+        static constexpr float  RESAMPLING_RPERIODS = 1.0f / RESAMPLING_KPERIODS;
         static constexpr float  RESAMPLING_PI       = M_PI;
 
         namespace
@@ -1018,9 +1019,7 @@ namespace lsp
             float rkf           = 1.0f / kf;
 
             // Prepare kernel for resampling
-            ssize_t k_periods   = RESAMPLING_PERIODS;
-            float r_periods     = 1.0f / float(k_periods);
-            ssize_t k_base      = k_periods * kf;
+            ssize_t k_base      = RESAMPLING_KPERIODS * kf;
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + 1;
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
@@ -1043,10 +1042,10 @@ namespace lsp
             {
                 float t         = (j - k_center) * rkf;
 
-                if ((t > -k_periods) && (t < k_periods))
+                if ((t > -RESAMPLING_KPERIODS) && (t < RESAMPLING_KPERIODS))
                 {
                     float t2    = RESAMPLING_PI * t;
-                    float t1    = t2 * r_periods;
+                    float t1    = t2 * RESAMPLING_RPERIODS;
                     k[j]        = (t != 0) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
                 }
                 else
@@ -1082,9 +1081,7 @@ namespace lsp
             float rkf           = float(src_step) / float(dst_step);
 
             // Prepare kernel for resampling
-            ssize_t k_periods   = RESAMPLING_PERIODS; // Number of periods
-            float r_periods     = 1.0f / float(k_periods);
-            ssize_t k_base      = k_periods * kf;
+            ssize_t k_base      = RESAMPLING_KPERIODS * kf;
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + 1; // Centered impulse response
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
@@ -1115,10 +1112,10 @@ namespace lsp
                 {
                     const float t   = (j - k_center - dt) * rkf;
 
-                    if ((t > -k_periods) && (t < k_periods))
+                    if ((t > -RESAMPLING_KPERIODS) && (t < RESAMPLING_KPERIODS))
                     {
                         const float t2  = RESAMPLING_PI * t;
-                        const float t1  = t2 * r_periods;
+                        const float t1  = t2 * RESAMPLING_RPERIODS;
                         k[j]        = (t != 0.0f) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
                     }
                     else
@@ -1163,10 +1160,8 @@ namespace lsp
             float rkf           = float(src_step) / float(dst_step);
 
             // Prepare kernel for resampling
-            ssize_t k_base      = RESAMPLING_PERIODS;
-            ssize_t k_periods   = k_base * rkf; // Number of periods
-            float r_periods     = 1.0f / float(k_periods);
-            ssize_t k_center    = k_base + 1;
+            float k_periods     = RESAMPLING_KPERIODS * rkf; // Number of periods
+            ssize_t k_center    = RESAMPLING_KPERIODS + 1.0f;
             ssize_t k_len       = (k_center << 1) + rkf + 1; // Centered impulse response
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
@@ -1198,7 +1193,7 @@ namespace lsp
                     if ((t > -k_periods) && (t < k_periods))
                     {
                         const float t2  = RESAMPLING_PI * t;
-                        const float t1  = t2 * r_periods;
+                        const float t1  = t2 * RESAMPLING_RPERIODS;
                         k[j]            = (t != 0.0f) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
                     }
                     else
