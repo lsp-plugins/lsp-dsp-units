@@ -1012,6 +1012,24 @@ namespace lsp
             return STATUS_OK;
         }
 
+        static void lanczos_kernel(float *dst, float k, float p, float t, float a, size_t count)
+        {
+            for (size_t j=0; j<count; ++j)
+            {
+                const float x   = j*k - p;
+                const float ax  = fabsf(x);
+
+                if (fabsf(x) < t)
+                {
+                    float x1        = RESAMPLING_PI * x;
+                    float x2        = x1 * a;
+                    dst[j]          = (ax >= 1e-10f) ? sinf(x1) * sinf(x2) / (x1 * x2) : 1.0f;
+                }
+                else
+                    dst[j]      = 0.0f;
+            }
+        }
+
         status_t Sample::fast_upsample(Sample *s, size_t new_sample_rate)
         {
             // Calculate parameters of transformation
@@ -1038,19 +1056,11 @@ namespace lsp
             s->set_sample_rate(new_sample_rate);
 
             // Generate Lanczos kernel
-            for (ssize_t j=0; j<k_size; ++j)
-            {
-                float t         = (j - k_center) * rkf;
-
-                if ((t > -RESAMPLING_KPERIODS) && (t < RESAMPLING_KPERIODS))
-                {
-                    float t2    = RESAMPLING_PI * t;
-                    float t1    = t2 * RESAMPLING_RPERIODS;
-                    k[j]        = (t != 0) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
-                }
-                else
-                    k[j]        = 0.0f;
-            }
+            lanczos_kernel(
+                k,
+                rkf, k_center * rkf,
+                RESAMPLING_KPERIODS, RESAMPLING_RPERIODS,
+                k_size);
 
             // Iterate each channel
             for (size_t c=0; c<nChannels; ++c)
@@ -1108,19 +1118,11 @@ namespace lsp
                 const float dt  = i*kf - p;
 
                 // Generate Lanczos kernel
-                for (ssize_t j=0; j<k_size; ++j)
-                {
-                    const float t   = (j - k_center - dt) * rkf;
-
-                    if ((t > -RESAMPLING_KPERIODS) && (t < RESAMPLING_KPERIODS))
-                    {
-                        const float t2  = RESAMPLING_PI * t;
-                        const float t1  = t2 * RESAMPLING_RPERIODS;
-                        k[j]        = (t != 0.0f) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
-                    }
-                    else
-                        k[j]        = 0.0f;
-                }
+                lanczos_kernel(
+                    k,
+                    rkf, (k_center + dt) * rkf,
+                    RESAMPLING_KPERIODS, RESAMPLING_RPERIODS,
+                    k_size);
 
                 for (size_t c=0; c<nChannels; ++c)
                 {
@@ -1186,19 +1188,11 @@ namespace lsp
                 const float dt  = i*kf - p; // Always positive, in range of [0..1]
 
                 // Generate Lanczos kernel
-                for (ssize_t j=0; j<k_size; ++j)
-                {
-                    const float t   = (j - k_center - dt) * rkf;
-
-                    if ((t > -k_periods) && (t < k_periods))
-                    {
-                        const float t2  = RESAMPLING_PI * t;
-                        const float t1  = t2 * RESAMPLING_RPERIODS;
-                        k[j]            = (t != 0.0f) ? sinf(t2) * sinf(t1) / (t2 * t1) : 1.0f;
-                    }
-                    else
-                        k[j]            = 0.0f;
-                }
+                lanczos_kernel(
+                    k,
+                    rkf, (k_center + dt) * rkf,
+                    k_periods, RESAMPLING_RPERIODS,
+                    k_size);
 
                 for (size_t c=0; c<nChannels; ++c)
                 {
