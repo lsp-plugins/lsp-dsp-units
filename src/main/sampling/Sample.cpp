@@ -1016,13 +1016,12 @@ namespace lsp
         {
             for (size_t j=0; j<count; ++j)
             {
-                const float x   = j*k - p;
-                const float ax  = fabsf(x);
+                const float x1  = j*k - p;
+                const float ax  = fabsf(x1);
 
-                if (fabsf(x) < t)
+                if (ax < t)
                 {
-                    float x1        = RESAMPLING_PI * x;
-                    float x2        = x1 * a;
+                    const float x2  = x1 * a;
                     dst[j]          = (ax >= 1e-10f) ? sinf(x1) * sinf(x2) / (x1 * x2) : 1.0f;
                 }
                 else
@@ -1034,7 +1033,7 @@ namespace lsp
         {
             // Calculate parameters of transformation
             ssize_t kf          = new_sample_rate / nSampleRate;
-            float rkf           = 1.0f / kf;
+            const float rkf     = RESAMPLING_PI / kf;
 
             // Prepare kernel for resampling
             ssize_t k_base      = RESAMPLING_KPERIODS * kf;
@@ -1059,7 +1058,7 @@ namespace lsp
             lanczos_kernel(
                 k,
                 rkf, k_center * rkf,
-                RESAMPLING_KPERIODS, RESAMPLING_RPERIODS,
+                RESAMPLING_KPERIODS * RESAMPLING_PI, RESAMPLING_RPERIODS,
                 k_size);
 
             // Iterate each channel
@@ -1088,7 +1087,7 @@ namespace lsp
             ssize_t src_step    = nSampleRate / gcd;
             ssize_t dst_step    = new_sample_rate / gcd;
             float kf            = float(dst_step) / float(src_step);
-            float rkf           = float(src_step) / float(dst_step);
+            const float rkf     = (RESAMPLING_PI * float(src_step)) / float(dst_step);
 
             // Prepare kernel for resampling
             ssize_t k_base      = RESAMPLING_KPERIODS * kf;
@@ -1115,13 +1114,13 @@ namespace lsp
             {
                 // calculate the offset between nearest samples
                 const ssize_t p = kf * i;
-                const float dt  = i*kf - p;
+                const float dt  = float(i)*kf - float(p);
 
                 // Generate Lanczos kernel
                 lanczos_kernel(
                     k,
                     rkf, (k_center + dt) * rkf,
-                    RESAMPLING_KPERIODS, RESAMPLING_RPERIODS,
+                    RESAMPLING_KPERIODS * RESAMPLING_PI, RESAMPLING_RPERIODS,
                     k_size);
 
                 for (size_t c=0; c<nChannels; ++c)
@@ -1159,10 +1158,10 @@ namespace lsp
             ssize_t src_step    = nSampleRate / gcd;
             ssize_t dst_step    = new_sample_rate / gcd;
             float kf            = float(dst_step) / float(src_step);
-            float rkf           = float(src_step) / float(dst_step);
+            const float rkf     = (RESAMPLING_PI * float(src_step)) / float(dst_step);
 
             // Prepare kernel for resampling
-            float k_periods     = RESAMPLING_KPERIODS * rkf; // Number of periods
+            float k_periods     = RESAMPLING_KPERIODS * RESAMPLING_PI * rkf; // Number of periods
             ssize_t k_center    = RESAMPLING_KPERIODS + 1.0f;
             ssize_t k_len       = (k_center << 1) + rkf + 1; // Centered impulse response
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
@@ -1185,7 +1184,7 @@ namespace lsp
             {
                 // calculate the offset between nearest samples
                 const ssize_t p = kf * i;
-                const float dt  = i*kf - p; // Always positive, in range of [0..1]
+                const float dt  = float(i)*kf - float(p); // Always positive, in range of [0..1]
 
                 // Generate Lanczos kernel
                 lanczos_kernel(
