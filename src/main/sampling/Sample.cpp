@@ -1012,23 +1012,6 @@ namespace lsp
             return STATUS_OK;
         }
 
-//        static void lanczos_kernel(float *dst, float k, float p, float t, float a, size_t count)
-//        {
-//            for (size_t j=0; j<count; ++j)
-//            {
-//                const float x1  = j*k - p;
-//                const float ax  = fabsf(x1);
-//
-//                if (ax < t)
-//                {
-//                    const float x2  = x1 * a;
-//                    dst[j]          = (ax >= 1e-10f) ? sinf(x1) * sinf(x2) / (x1 * x2) : 1.0f;
-//                }
-//                else
-//                    dst[j]      = 0.0f;
-//            }
-//        }
-
         status_t Sample::fast_upsample(Sample *s, size_t new_sample_rate)
         {
             // Calculate parameters of transformation
