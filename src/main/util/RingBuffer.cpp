@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/dsp/dsp.h>
+#include <lsp-plug.in/dsp-units/misc/quickmath.h>
 #include <lsp-plug.in/dsp-units/util/RingBuffer.h>
 #include <lsp-plug.in/stdlib/stdlib.h>
 
@@ -115,6 +116,15 @@ namespace lsp
 
             size_t index    = (nHead + nCapacity - offset - 1) % nCapacity;
             return pData[index];
+        }
+
+        float RingBuffer::lerp_get(float offset)
+        {
+            const ssize_t off = offset;
+            const float s1 = get(off);
+            const float s2 = get(off + 1);
+
+            return lerp(s1, s2, offset - float(off));
         }
 
         size_t RingBuffer::tail_offset(size_t offset) const

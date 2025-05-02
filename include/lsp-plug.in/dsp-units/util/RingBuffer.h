@@ -114,6 +114,14 @@ namespace lsp
                 float       get(size_t offset);
 
                 /**
+                 * Get the interpolated sample at the tail of the buffer specified by the offset.
+                 * The value is computed using linear interpolation
+                 * @param offset offset
+                 * @return data the sample at the tail of the buffer
+                 */
+                float       lerp_get(float offset);
+
+                /**
                  * Get offset of the head relative to the position
                  * @return position of the head relative to the beginning of the buffer
                  */
