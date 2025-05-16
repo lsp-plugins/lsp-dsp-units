@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 12 мая 2017 г.
@@ -41,7 +41,9 @@ namespace lsp
     namespace dspu
     {
         static constexpr size_t BUFFER_FRAMES       = 0x1000;
-        static constexpr size_t RESAMPLING_PERIODS  = 32;
+        static constexpr float  RESAMPLING_KPERIODS = 32.0f;
+        static constexpr float  RESAMPLING_RPERIODS = 1.0f / RESAMPLING_KPERIODS;
+        static constexpr float  RESAMPLING_PI       = M_PI;
 
         namespace
         {
@@ -1014,11 +1016,10 @@ namespace lsp
         {
             // Calculate parameters of transformation
             ssize_t kf          = new_sample_rate / nSampleRate;
-            float rkf           = 1.0f / kf;
+            const float rkf     = RESAMPLING_PI / kf;
 
             // Prepare kernel for resampling
-            ssize_t k_periods   = RESAMPLING_PERIODS; // * (kf >> 1);
-            ssize_t k_base      = k_periods * kf;
+            ssize_t k_base      = RESAMPLING_KPERIODS * kf;
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + 1;
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
@@ -1037,18 +1038,11 @@ namespace lsp
             s->set_sample_rate(new_sample_rate);
 
             // Generate Lanczos kernel
-            for (ssize_t j=0; j<k_size; ++j)
-            {
-                float t         = (j - k_center) * rkf;
-
-                if ((t > -k_periods) && (t < k_periods))
-                {
-                    float t2    = M_PI * t;
-                    k[j]        = (t != 0) ? k_periods * sinf(t2) * sinf(t2 / k_periods) / (t2 * t2) : 1.0f;
-                }
-                else
-                    k[j]        = 0.0f;
-            }
+            dsp::lanczos1(
+                k,
+                rkf, k_center * rkf,
+                RESAMPLING_KPERIODS * RESAMPLING_PI, RESAMPLING_RPERIODS,
+                k_size);
 
             // Iterate each channel
             for (size_t c=0; c<nChannels; ++c)
@@ -1076,11 +1070,10 @@ namespace lsp
             ssize_t src_step    = nSampleRate / gcd;
             ssize_t dst_step    = new_sample_rate / gcd;
             float kf            = float(dst_step) / float(src_step);
-            float rkf           = float(src_step) / float(dst_step);
+            const float rkf     = (RESAMPLING_PI * float(src_step)) / float(dst_step);
 
             // Prepare kernel for resampling
-            ssize_t k_periods   = RESAMPLING_PERIODS; // Number of periods
-            ssize_t k_base      = k_periods * kf;
+            ssize_t k_base      = RESAMPLING_KPERIODS * kf;
             ssize_t k_center    = k_base + 1;
             ssize_t k_len       = (k_center << 1) + 1; // Centered impulse response
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
@@ -1100,40 +1093,38 @@ namespace lsp
             s->set_sample_rate(new_sample_rate);
 
             // Iterate each channel
-            for (size_t c=0; c<nChannels; ++c)
+            for (ssize_t i=0; i<src_step; ++i)
             {
-                const float *src    = &vBuffer[c * nMaxLength];
-                float *dst          = &s->vBuffer[c * s->nMaxLength];
+                // calculate the offset between nearest samples
+                const ssize_t p = kf * i;
+                const float dt  = float(i)*kf - float(p);
 
-                for (ssize_t i=0; i<src_step; ++i)
+                // Generate Lanczos kernel
+                dsp::lanczos1(
+                    k,
+                    rkf, (k_center + dt) * rkf,
+                    RESAMPLING_KPERIODS * RESAMPLING_PI, RESAMPLING_RPERIODS,
+                    k_size);
+
+                for (size_t c=0; c<nChannels; ++c)
                 {
-                    // calculate the offset between nearest samples
-                    ssize_t p       = kf * i;
-                    float dt        = i*kf - p;
-
-                    // Generate Lanczos kernel
-                    for (ssize_t j=0; j<k_size; ++j)
-                    {
-                        float t         = (j - k_center - dt) * rkf;
-
-                        if ((t > -k_periods) && (t < k_periods))
-                        {
-                            float t2    = M_PI * t;
-                            k[j]        = (t != 0.0f) ? k_periods * sinf(t2) * sinf(t2 / k_periods) / (t2 * t2) : 1.0f;
-                        }
-                        else
-                            k[j]        = 0.0f;
-                    }
+                    const float *src    = &vBuffer[c * nMaxLength];
+                    float *dst          = &s->vBuffer[c * s->nMaxLength];
+                    ssize_t xp          = p;
 
                     // Perform convolutions
                     for (size_t j=i; j<nLength; j += src_step)
                     {
-                        dsp::fmadd_k3(&dst[p], k, src[j], k_size);
-                        p   += dst_step;
+                        dsp::fmadd_k3(&dst[xp], k, src[j], k_size);
+                        xp             += dst_step;
                     }
                 }
+            }
 
-                // Copy the data to the file content
+            // Copy the data to the file content
+            for (size_t c=0; c<nChannels; ++c)
+            {
+                float *dst          = &s->vBuffer[c * s->nMaxLength];
                 dsp::move(dst, &dst[k_center], s->nLength - k_center);
             }
 
@@ -1150,12 +1141,11 @@ namespace lsp
             ssize_t src_step    = nSampleRate / gcd;
             ssize_t dst_step    = new_sample_rate / gcd;
             float kf            = float(dst_step) / float(src_step);
-            float rkf           = float(src_step) / float(dst_step);
+            const float rkf     = (RESAMPLING_PI * float(src_step)) / float(dst_step);
 
             // Prepare kernel for resampling
-            ssize_t k_base      = RESAMPLING_PERIODS;
-            ssize_t k_periods   = k_base * rkf; // Number of periods
-            ssize_t k_center    = k_base + 1;
+            float k_periods     = RESAMPLING_KPERIODS * RESAMPLING_PI * rkf; // Number of periods
+            ssize_t k_center    = RESAMPLING_KPERIODS + 1.0f;
             ssize_t k_len       = (k_center << 1) + rkf + 1; // Centered impulse response
             ssize_t k_size      = align_size(k_len + 1, 4); // Additional sample for time offset
             float *k            = static_cast<float *>(malloc(sizeof(float) * k_size));
@@ -1173,40 +1163,38 @@ namespace lsp
             s->set_sample_rate(new_sample_rate);
 
             // Iterate each channel
-            for (size_t c=0; c<nChannels; ++c)
+            for (ssize_t i=0; i<src_step; ++i)
             {
-                const float *src    = &vBuffer[c * nMaxLength];
-                float *dst          = &s->vBuffer[c * s->nMaxLength];
+                // calculate the offset between nearest samples
+                const ssize_t p = kf * i;
+                const float dt  = float(i)*kf - float(p); // Always positive, in range of [0..1]
 
-                for (ssize_t i=0; i<src_step; ++i)
+                // Generate Lanczos kernel
+                dsp::lanczos1(
+                    k,
+                    rkf, (k_center + dt) * rkf,
+                    k_periods, RESAMPLING_RPERIODS,
+                    k_size);
+
+                for (size_t c=0; c<nChannels; ++c)
                 {
-                    // calculate the offset between nearest samples
-                    ssize_t p       = kf * i;
-                    float dt        = i*kf - p; // Always positive, in range of [0..1]
-
-                    // Generate Lanczos kernel
-                    for (ssize_t j=0; j<k_size; ++j)
-                    {
-                        float t         = (j - k_center - dt) * rkf;
-
-                        if ((t > -k_periods) && (t < k_periods))
-                        {
-                            float t2    = M_PI * t;
-                            k[j]        = (t != 0.0f) ? k_periods * sinf(t2) * sinf(t2 / k_periods) / (t2 * t2) : 1.0f;
-                        }
-                        else
-                            k[j]        = 0.0f;
-                    }
+                    const float *src    = &vBuffer[c * nMaxLength];
+                    float *dst          = &s->vBuffer[c * s->nMaxLength];
+                    ssize_t xp          = p;
 
                     // Perform convolutions
                     for (size_t j=i; j<nLength; j += src_step)
                     {
-                        dsp::fmadd_k3(&dst[p], k, src[j], k_size);
-                        p   += dst_step;
+                        dsp::fmadd_k3(&dst[xp], k, src[j], k_size);
+                        xp                 += dst_step;
                     }
                 }
+            }
 
-                // Copy the data to the file content
+            // Copy the data to the file content
+            for (size_t c=0; c<nChannels; ++c)
+            {
+                float *dst          = &s->vBuffer[c * s->nMaxLength];
                 dsp::move(dst, &dst[k_center], s->nLength - k_center);
             }
 

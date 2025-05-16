@@ -53,9 +53,17 @@
 #define GAIN_AMP_P_2_DB                     1.25896             /* +2 dB        */
 #define GAIN_AMP_P_1_DB                     1.12202             /* +1 dB        */
 #define GAIN_AMP_0_DB                       1.0                 /* 0 dB         */
+#define GAIN_AMP_M_1_DB                     0.89125             /* -1 dB        */
+#define GAIN_AMP_M_2_DB                     0.79433             /* -2 dB        */
 #define GAIN_AMP_M_3_DB                     0.707946            /* -3 dB        */
+#define GAIN_AMP_M_4_DB                     0.63096             /* -4 dB        */
+#define GAIN_AMP_M_5_DB                     0.56234             /* -5 dB        */
 #define GAIN_AMP_M_6_DB                     0.50118             /* -6 dB        */
+#define GAIN_AMP_M_7_DB                     0.44668             /* -7 dB        */
+#define GAIN_AMP_M_8_DB                     0.39811             /* -8 dB        */
 #define GAIN_AMP_M_9_DB                     0.354813            /* -9 dB        */
+#define GAIN_AMP_M_10_DB                    0.31623             /* -10 dB       */
+#define GAIN_AMP_M_11_DB                    0.28184             /* -11 dB       */
 #define GAIN_AMP_M_12_DB                    0.25119             /* -12 dB       */
 #define GAIN_AMP_M_18_DB                    0.12589             /* -18 dB       */
 #define GAIN_AMP_M_24_DB                    0.06310             /* -24 dB       */
