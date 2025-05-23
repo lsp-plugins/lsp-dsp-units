@@ -147,6 +147,11 @@ namespace lsp
                  * @param count number of samples to process
                  */
                 void            process(float *dst, const float *src, size_t count);
+
+                /**
+                 * Reset state: cleanup internal buffers
+                 */
+                void            reset();
     
                 /**
                  * Dump the state
