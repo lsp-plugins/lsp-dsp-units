@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 14 сент. 2016 г.
@@ -140,7 +140,7 @@ namespace lsp
                     pPreEq->reset();
             }
 
-            nFlags              = 0;
+            nFlags             &= ~(SCF_UPDATE | SCF_CLEAR);
         }
 
         void Sidechain::refresh_processing()
