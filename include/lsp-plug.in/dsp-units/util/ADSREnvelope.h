@@ -41,7 +41,11 @@ namespace lsp
                 enum function_t
                 {
                     ADSR_NONE,
-                    ADSR_LINE
+                    ADSR_LINE,
+                    ADSR_LINE2,
+                    ADSR_CUBIC,
+                    ADSR_QUADRO,
+                    ADSR_EXP,
                 };
 
             protected:
@@ -71,7 +75,6 @@ namespace lsp
 
                 struct gen_line_t
                 {
-                    float               fT1;
                     float               fT2;
                     float               fK1;
                     float               fB1;
@@ -79,10 +82,26 @@ namespace lsp
                     float               fB2;
                 };
 
+                struct gen_hermite_t
+                {
+                    float               fT0;
+                    float               fK[5];
+                };
+
+                struct gen_exp_t
+                {
+                    float               fT0;
+                    float               fKT;
+                    float               fA[2];
+                    float               fB[2];
+                };
+
                 union gen_params_t
                 {
                     gen_none_t          sNone;
                     gen_line_t          sLine;
+                    gen_hermite_t       sHermite;
+                    gen_exp_t           sExp;
                 };
 
                 typedef float (*generator_t)(float t, const gen_params_t *params);
@@ -106,6 +125,9 @@ namespace lsp
             protected:
                 static float        none_generator(float t, const gen_params_t *params);
                 static float        line_generator(float t, const gen_params_t *params);
+                static float        cubic_generator(float t, const gen_params_t *params);
+                static float        quadro_generator(float t, const gen_params_t *params);
+                static float        exp_generator(float t, const gen_params_t *params);
                 static inline float limit_range(float t, float prev);
                 static inline void  configure_curve(curve_t *curve, float x0, float x1, float y0, float y1);
 

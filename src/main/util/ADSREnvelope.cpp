@@ -20,6 +20,8 @@
  */
 
 #include <lsp-plug.in/dsp-units/util/ADSREnvelope.h>
+#include <lsp-plug.in/dsp-units/misc/interpolation.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
@@ -128,15 +130,94 @@ namespace lsp
                     curve->pGenerator       = line_generator;
                     gen_line_t *g           = &curve->sParams.sLine;
 
-                    g->fT1                  = x0;
                     g->fT2                  = 0.5f * (x0 + x1);
-                    const float cy          = y0 + curve->fCurve * (y1 - y0);
+                    const float cy          = y0 + (y1 - y0) * curve->fCurve;
 
                     g->fK1                  = (cy - y0) / (g->fT2 - x0);
-                    g->fB1                  = y0;
+                    g->fB1                  = y0 - g->fK1 * x0;
 
                     g->fK2                  = (y1 - cy) / (x1 - g->fT2);
-                    g->fB2                  = cy;
+                    g->fB2                  = cy - g->fK2 * g->fT2;
+                    break;
+                }
+
+                case ADSR_LINE2:
+                {
+                    curve->pGenerator       = line_generator;
+                    gen_line_t *g           = &curve->sParams.sLine;
+
+                    g->fT2                  = x0 + (x1 - x0) * curve->fCurve;
+                    const float cy          = y1 + (y0 - y1) * curve->fCurve;
+
+                    g->fK1                  = (cy - y0) / (g->fT2 - x0);
+                    g->fB1                  = y0 - g->fK1 * x0;
+
+                    g->fK2                  = (y1 - cy) / (x1 - g->fT2);
+                    g->fB2                  = cy - g->fK2 * g->fT2;
+                    break;
+                }
+
+                case ADSR_CUBIC:
+                {
+                    curve->pGenerator       = cubic_generator;
+                    gen_hermite_t *g        = &curve->sParams.sHermite;
+
+                    const float cx          = 0.5f * (x0 + x1);
+                    const float cy          = y0 + (y1 - y0) * curve->fCurve;
+                    const float k0          = (cy - y0) / (cx - x0);
+                    const float k1          = (y1 - cy) / (x1 - cx);
+
+                    g->fT0                  = x0;
+                    interpolation::hermite_cubic(g->fK, 0.0f, y0, k0, x1 - x0, y1, k1);
+
+                    break;
+                }
+
+                case ADSR_QUADRO:
+                {
+                    curve->pGenerator       = quadro_generator;
+                    gen_hermite_t *g        = &curve->sParams.sHermite;
+
+                    const float cx          = 0.5f * (x0 + x1);
+                    const float cy          = y0 + (y1 - y0) * (0.3f + curve->fCurve * 0.4f);
+
+                    g->fT0                  = x0;
+                    interpolation::hermite_quadro(
+                        g->fK,
+                        0.0f, y0, 0.0f,
+                        x1 - x0, y1, 0.0f,
+                        cx - x0, cy);
+
+                    break;
+                }
+
+                case ADSR_EXP:
+                {
+                    curve->pGenerator       = exp_generator;
+                    gen_exp_t *g            = &curve->sParams.sExp;
+
+                    const float kt          = (curve->fCurve - 0.5f);
+                    const float ndx         = 1.0f/(x1 - x0);
+
+                    g->fT0                  = x0;
+                    g->fKT                  = fabsf(kt) * 40.0f;
+
+                    const float ny          = expf(-g->fKT);
+                    if (kt >= 0.0f)
+                    {
+                        g->fA[0]            = y0;
+                        g->fA[1]            = (y1 - y0) * ny;
+                        g->fB[0]            = ndx;
+                        g->fB[1]            = 0.0f;
+                    }
+                    else
+                    {
+                        g->fA[0]            = y1;
+                        g->fA[1]            = (y0 - y1) * ny;
+                        g->fB[0]            = -ndx;
+                        g->fB[1]            = 1.0f;
+                    }
+
                     break;
                 }
 
@@ -213,7 +294,7 @@ namespace lsp
 
         float ADSREnvelope::do_process(float t)
         {
-            if ((t < 0.0f) || (t > 1.0f))
+            if ((t <= 0.0f) || (t >= 1.0f))
                 return 0.0f;
 
             // Attack
@@ -276,8 +357,29 @@ namespace lsp
         {
             const gen_line_t *line = &params->sLine;
             return (t < line->fT2) ?
-                (t - line->fT1) * line->fK1 + line->fB1 :
-                (t - line->fT2) * line->fK2 + line->fB2;
+                t * line->fK1 + line->fB1 :
+                t * line->fK2 + line->fB2;
+        }
+
+        float ADSREnvelope::cubic_generator(float t, const gen_params_t *params)
+        {
+            const gen_hermite_t *c = &params->sHermite;
+            t  -= c->fT0;
+            return ((c->fK[0] * t + c->fK[1]) * t + c->fK[2])*t + c->fK[3];
+        }
+
+        float ADSREnvelope::quadro_generator(float t, const gen_params_t *params)
+        {
+            const gen_hermite_t *c = &params->sHermite;
+            t  -= c->fT0;
+            return (((c->fK[0] * t + c->fK[1]) * t + c->fK[2])*t + c->fK[3])*t + c->fK[4];
+        }
+
+        float ADSREnvelope::exp_generator(float t, const gen_params_t *params)
+        {
+            const gen_exp_t *c = &params->sExp;
+            t  = (t - c->fT0) * c->fB[0] + c->fB[1];
+            return c->fA[0] + c->fA[1] * t * expf(t * c->fKT);
         }
 
         void ADSREnvelope::generate(float *dst, float start, float step, size_t count)
@@ -288,7 +390,7 @@ namespace lsp
             float t             = start;
 
             // Time before attack
-            for ( ; (t < 0.0f) && (i < count); t = start + i * step)
+            for ( ; (t <= 0.0f) && (i < count); t = start + i * step)
                 dst[i++]            = 0.0f;
 
             // Attack segment
@@ -322,7 +424,7 @@ namespace lsp
                 dst[i++]            = fSustainLevel;
 
             // Release segment
-            for ( ; (t <= 1.0f) && (i < count); t = start + i * step)
+            for ( ; (t < 1.0f) && (i < count); t = start + i * step)
                 dst[i++]            = cv->pGenerator(t, &cv->sParams);
 
             // Time after release
