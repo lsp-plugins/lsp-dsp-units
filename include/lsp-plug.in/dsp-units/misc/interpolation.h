@@ -62,6 +62,51 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void hermite_cubic(float *p, float x0, float y0, float k0, float x1, float y1, float k1);
 
+            /** Perform quadro Hermite interpolation.
+             *
+             * The resulting polynom equation is the following:
+             * y(x) = p[0]*x^4 + p[1]*x^3 + p[2]*x^2 + p[3]*x + p[4]
+             *
+             * @param p destination (4 floats) to store the final hermite polynom
+             * @param x0 x-coordinate of first point used for interpolation
+             * @param y0 y-coordinate of first point used for interpolation
+             * @param k0 the tangent angle of the line at first point
+             * @param x1 x-coordinate of second point used for interpolation
+             * @param y1 y-coordinate of second point used for interpolation
+             * @param k1 the tangent angle of the line at second point
+             * @param x2 x-coordinate of third point used for interpolation
+             * @param y2 y-coordinate of third point used for interpolation
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void hermite_quadro(
+                float *p,
+                float x0, float y0, float k0,
+                float x1, float y1, float k1,
+                float x2, float y2);
+
+            /** Perform penta Hermite interpolation.
+             *
+             * The resulting polynom equation is the following:
+             * y(x) = p[0]*x^5 + p[1]*x^4 + p[2]*x^3 + p[3]*x^2 + p[4]*x + p[5]
+             *
+             * @param p destination (4 floats) to store the final hermite polynom
+             * @param x0 x-coordinate of first point used for interpolation
+             * @param y0 y-coordinate of first point used for interpolation
+             * @param k0 the tangent angle of the line at first point
+             * @param x1 x-coordinate of second point used for interpolation
+             * @param y1 y-coordinate of second point used for interpolation
+             * @param k1 the tangent angle of the line at second point
+             * @param x2 x-coordinate of third point used for interpolation
+             * @param y2 y-coordinate of third point used for interpolation
+             * @param k2 the tangent angle of the line at third point
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void hermite_penta(
+                float *p,
+                float x0, float y0, float k0,
+                float x1, float y1, float k1,
+                float x2, float y2, float k2);
+
             /** Perform exponent interpolation
              *
              * @param p destination (3 floats) to store the formula: y(x) = p[0] + p[1] * exp(p[2] * x)

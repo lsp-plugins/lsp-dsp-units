@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.30 ===
-
+* Implemented ADSREnvelope class for ADSR envelope computation.
 
 === 1.0.29 ===
 * Optimized complex resampling algorithm for dspu::Sample.
