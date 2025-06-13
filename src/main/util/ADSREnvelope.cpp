@@ -390,65 +390,235 @@ namespace lsp
             float t             = start;
 
             // Time before attack
-            for ( ; (t <= 0.0f) && (i < count); t = start + i * step)
-                dst[i++]            = 0.0f;
+            for ( ; (t <= 0.0f) && (i < count); t = start + (++i) * step)
+                dst[i]              = 0.0f;
 
             // Attack segment
             const curve_t *cv   = &vCurve[P_ATTACK];
-            for ( ; (t < cv->fTime) && (i < count); t = start + i * step)
-                dst[i++]            = cv->pGenerator(t, &cv->sParams);
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]              = cv->pGenerator(t, &cv->sParams);
 
             // Hold segment
             if (nFlags & F_USE_HOLD)
             {
-                for ( ; (t < fHoldTime) && (i < count); t = start + i * step)
-                    dst[i++]            = 1.0f;
+                for ( ; (t < fHoldTime) && (i < count); t = start + (++i) * step)
+                    dst[i]              = 1.0f;
             }
 
             // Decay segment
             cv                  = &vCurve[P_DECAY];
-            for ( ; (t < cv->fTime) && (i < count); t = start + i * step)
-                dst[i++]            = cv->pGenerator(t, &cv->sParams);
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]              = cv->pGenerator(t, &cv->sParams);
 
             // Slope segment
             if (nFlags & F_USE_BREAK)
             {
                 cv                  = &vCurve[P_SLOPE];
-                for ( ; (t < cv->fTime) && (i < count); t = start + i * step)
-                    dst[i++]            = cv->pGenerator(t, &cv->sParams);
+                for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                    dst[i]              = cv->pGenerator(t, &cv->sParams);
             }
 
             // Sustain segment
             cv                  = &vCurve[P_RELEASE];
-            for ( ; (t < cv->fTime) && (i < count); t = start + i * step)
-                dst[i++]            = fSustainLevel;
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]              = fSustainLevel;
 
             // Release segment
-            for ( ; (t < 1.0f) && (i < count); t = start + i * step)
-                dst[i++]            = cv->pGenerator(t, &cv->sParams);
+            for ( ; (t < 1.0f) && (i < count); t = start + (++i) * step)
+                dst[i]              = cv->pGenerator(t, &cv->sParams);
 
             // Time after release
-            for ( ; (i < count); t = start + i * step)
-                dst[i++]            = 0.0f;
+            for ( ; (i < count); ++i)
+                dst[i]              = 0.0f;
         }
 
         void ADSREnvelope::generate_mul(float *dst, float start, float step, size_t count)
         {
             update_settings();
 
-            // TODO
+            size_t i            = 0;
+            float t             = start;
+
+            // Time before attack
+            for ( ; (t <= 0.0f) && (i < count); t = start + (++i) * step)
+                dst[i]              = 0.0f;
+
+            // Attack segment
+            const curve_t *cv   = &vCurve[P_ATTACK];
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]             *= cv->pGenerator(t, &cv->sParams);
+
+            // Hold segment
+            if (nFlags & F_USE_HOLD)
+            {
+                for ( ; (t < fHoldTime) && (i < count); t = start + (++i) * step)
+                    /* nothing */;
+            }
+
+            // Decay segment
+            cv                  = &vCurve[P_DECAY];
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]             *= cv->pGenerator(t, &cv->sParams);
+
+            // Slope segment
+            if (nFlags & F_USE_BREAK)
+            {
+                cv                  = &vCurve[P_SLOPE];
+                for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                    dst[i]             *= cv->pGenerator(t, &cv->sParams);
+            }
+
+            // Sustain segment
+            cv                  = &vCurve[P_RELEASE];
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]             *= fSustainLevel;
+
+            // Release segment
+            for ( ; (t < 1.0f) && (i < count); t = start + (++i) * step)
+                dst[i]             *= cv->pGenerator(t, &cv->sParams);
+
+            // Time after release
+            for ( ; (i < count); ++i)
+                dst[i]              = 0.0f;
         }
 
         void ADSREnvelope::generate_mul(float *dst, const float *src, float start, float step, size_t count)
         {
             update_settings();
 
-            // TODO
+            size_t i            = 0;
+            float t             = start;
+
+            // Time before attack
+            for ( ; (t <= 0.0f) && (i < count); t = start + (++i) * step)
+                dst[i]              = 0.0f;
+
+            // Attack segment
+            const curve_t *cv   = &vCurve[P_ATTACK];
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]              = src[i] * cv->pGenerator(t, &cv->sParams);
+
+            // Hold segment
+            if (nFlags & F_USE_HOLD)
+            {
+                for ( ; (t < fHoldTime) && (i < count); t = start + (++i) * step)
+                    dst[i]              = src[i];
+            }
+
+            // Decay segment
+            cv                  = &vCurve[P_DECAY];
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]              = src[i] * cv->pGenerator(t, &cv->sParams);
+
+            // Slope segment
+            if (nFlags & F_USE_BREAK)
+            {
+                cv                  = &vCurve[P_SLOPE];
+                for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                    dst[i]              = src[i] * cv->pGenerator(t, &cv->sParams);
+            }
+
+            // Sustain segment
+            cv                  = &vCurve[P_RELEASE];
+            for ( ; (t < cv->fTime) && (i < count); t = start + (++i) * step)
+                dst[i]              = src[i] * fSustainLevel;
+
+            // Release segment
+            for ( ; (t < 1.0f) && (i < count); t = start + (++i) * step)
+                dst[i]              = src[i] * cv->pGenerator(t, &cv->sParams);
+
+            // Time after release
+            for ( ; (i < count); ++i)
+                dst[i]              = 0.0f;
         }
 
         void ADSREnvelope::dump(IStateDumper *v) const
         {
-            // TODO
+            v->begin_array("vCurve", vCurve, P_TOTAL);
+            {
+                for (size_t i=0; i<P_TOTAL; ++i)
+                {
+                    const curve_t *c = &vCurve[i];
+
+                    v->begin_object(c, sizeof(curve_t));
+
+                    v->write("fTime", c->fTime);
+                    v->write("fCurve", c->fCurve);
+                    v->write("enFunction", c->enFunction);
+                    v->write("pGenerator", c->pGenerator);
+
+                    v->begin_object("sParams", &c->sParams, sizeof(gen_params_t));
+                    {
+                        switch (c->enFunction)
+                        {
+                            case ADSR_LINE:
+                            case ADSR_LINE2:
+                            {
+                                const gen_line_t *g = &c->sParams.sLine;
+                                v->begin_object("sLine", g, sizeof(gen_line_t));
+                                {
+                                    v->write("fT2", g->fT2);
+                                    v->write("fK1", g->fK1);
+                                    v->write("fB1", g->fB1);
+                                    v->write("fK2", g->fK2);
+                                    v->write("fB2", g->fB2);
+                                }
+                                v->end_object();
+                                break;
+                            }
+
+                            case ADSR_CUBIC:
+                            case ADSR_QUADRO:
+                            {
+                                const gen_hermite_t *g = &c->sParams.sHermite;
+                                v->begin_object("sHermite", g, sizeof(gen_hermite_t));
+                                {
+                                    v->write("fT0", g->fT0);
+                                    v->writev("fK", g->fK, (c->enFunction == ADSR_CUBIC) ? 4 : 5);
+                                }
+                                v->end_object();
+                                break;
+                            }
+
+                            case ADSR_EXP:
+                            {
+                                const gen_exp_t *g = &c->sParams.sExp;
+                                v->begin_object("sExp", g, sizeof(gen_exp_t));
+                                {
+                                    v->write("fT0", g->fT0);
+                                    v->write("fKT", g->fKT);
+                                    v->writev("fA", g->fA, 2);
+                                    v->writev("fB", g->fB, 2);
+                                }
+                                v->end_object();
+                                break;
+                            }
+
+                            default:
+                            case ADSR_NONE:
+                            {
+                                const gen_none_t *g = &c->sParams.sNone;
+                                v->begin_object("sNone", g, sizeof(gen_none_t));
+                                {
+                                    v->write("fT", g->fT);
+                                    v->write("fK", g->fK);
+                                    v->write("fB", g->fB);
+                                }
+                                v->end_object();
+                                break;
+                            }
+                        }
+                    }
+
+                    v->end_object();
+                }
+            }
+            v->end_array();
+
+            v->write("fHoldTime", fHoldTime);
+            v->write("fBreakLevel", fBreakLevel);
+            v->write("fSustainLevel", fSustainLevel);
+            v->write("nFlags", nFlags);
         }
 
     } /* namespace dspu */
