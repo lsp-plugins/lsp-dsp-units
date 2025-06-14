@@ -146,8 +146,8 @@ namespace lsp
                     curve->pGenerator       = line_generator;
                     gen_line_t *g           = &curve->sParams.sLine;
 
-                    g->fT2                  = x0 + (x1 - x0) * curve->fCurve;
-                    const float cy          = y1 + (y0 - y1) * curve->fCurve;
+                    g->fT2                  = x1 + (x0 - x1) * curve->fCurve;
+                    const float cy          = y0 + (y1 - y0) * curve->fCurve;
 
                     g->fK1                  = (cy - y0) / (g->fT2 - x0);
                     g->fB1                  = y0 - g->fK1 * x0;
@@ -196,7 +196,7 @@ namespace lsp
                     curve->pGenerator       = exp_generator;
                     gen_exp_t *g            = &curve->sParams.sExp;
 
-                    const float kt          = (curve->fCurve - 0.5f);
+                    const float kt          = 0.5f - curve->fCurve;
                     const float ndx         = 1.0f/(x1 - x0);
 
                     g->fT0                  = x0;
