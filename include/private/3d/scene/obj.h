@@ -26,6 +26,7 @@
 #include <lsp-plug.in/io/IInSequence.h>
 #include <lsp-plug.in/io/InMemoryStream.h>
 #include <lsp-plug.in/io/OutMemoryStream.h>
+#include <lsp-plug.in/common/debug.h>
 #include <lsp-plug.in/dsp-units/3d/Scene3D.h>
 #include <lsp-plug.in/fmt/obj/Decompressor.h>
 #include <lsp-plug.in/fmt/obj/IObjHandler.h>
@@ -36,6 +37,8 @@ namespace lsp
 {
     namespace dspu
     {
+        static constexpr float ONE_THIRD      = 1.0f / 3.0f;
+
         /**
          * Handler of the Wavefront OBJ file format
          */
@@ -55,6 +58,136 @@ namespace lsp
                 Object3D       *pObject;
                 ssize_t         nFaceID;
 
+            protected:
+//                static size_t   calc_intersections(lltl::darray<vertex_t> & vertex, size_t start, const dsp::vector3d_t *plane)
+//                {
+//                    size_t intersections = 0;
+//                    const size_t count = vertex.size();
+//                    const size_t limit = count - 3;
+//
+//                    for (size_t i=0; i<limit; ++i)
+//                    {
+//                        const dsp::point3d_t *p1 = vertex.uget((start + i) % count)->p;
+//                        const dsp::point3d_t *p2 = vertex.uget((start + i + 1) % count)->p;
+//
+//                        const size_t mask = dsp::colocation_x2_v1p2(plane, p1, p2);
+//                        switch (mask)
+//                        {
+//                            case 0x02: // 0010
+//                            case 0x08: // 1000
+//                                ++intersections;
+//                                break;
+//                            default:
+//                                break;
+//                        }
+//                    }
+//
+//                    return intersections;
+//                }
+
+                static bool     check_points_in_triangle(
+                    lltl::darray<vertex_t> & vertex,
+                    const vertex_t *p1,
+                    const vertex_t *p2,
+                    const vertex_t *p3)
+                {
+                    const size_t count = vertex.size();
+
+                    for (size_t i=0; i < count; ++i)
+                    {
+                        vertex_t *px = vertex.uget(i);
+                        if ((px->ip == p1->ip) || (px->ip == p2->ip) || (px->ip == p3->ip))
+                            continue;
+
+                        const float ck      = dsp::check_point3d_on_triangle_p3p(p1->p, p2->p, p3->p, px->p);
+                        if (ck >= 0.0f)
+                            return true;
+                    }
+
+                    return false;
+                }
+
+                static bool     check_point_in_poly(const dsp::point3d_t *p, lltl::darray<vertex_t> & vertex)
+                {
+                    const size_t count = vertex.size();
+
+                    const vertex_t *p1 = vertex.uget(0);
+                    const vertex_t *p2 = vertex.uget(1);
+                    const vertex_t *p3 = vertex.uget(2);
+
+                    float ck    = dsp::check_point3d_on_triangle_p3p(p1->p, p2->p, p3->p, p);
+                    bool inside = (ck >= 0.0f);
+
+                    for (size_t i=3; i < count; ++i)
+                    {
+                        p2          = p3;
+                        p3          = vertex.uget(i);
+
+                        ck          = dsp::check_point3d_on_triangle_p3p(p1->p, p2->p, p3->p, p);
+                        if (ck >= 0.0f)
+                            inside      = !inside;
+                    }
+
+                    return inside;
+                }
+
+                static bool     compute_normal(dsp::vector3d_t *n, lltl::darray<vertex_t> & vertex)
+                {
+                    // For triangle do simple stuff
+                    const size_t count = vertex.size();
+                    const vertex_t *p1;
+                    const vertex_t *p2 = vertex.uget(0);
+                    const vertex_t *p3 = vertex.uget(1);
+
+                    if (count <= 3)
+                    {
+                        p1              = vertex.uget(2);
+                        dsp::calc_normal3d_p3(n, p2->p, p3->p, p1->p);
+                        return true;
+                    }
+
+                    for (size_t i=0; i<count; ++i)
+                    {
+                        p1              = p2;
+                        p2              = p3;
+                        p3              = vertex.uget((i + 2) % count);
+
+                        if (check_points_in_triangle(vertex, p1, p2, p3))
+                            continue;
+
+                        // Compute middle point and test it
+                        dsp::point3d_t p;
+                        p.x     = (p1->p->x + p2->p->x + p3->p->x) * ONE_THIRD;
+                        p.y     = (p1->p->y + p2->p->y + p3->p->y) * ONE_THIRD;
+                        p.z     = (p1->p->z + p2->p->z + p3->p->z) * ONE_THIRD;
+
+                        if (check_point_in_poly(&p, vertex))
+                        {
+                            dsp::calc_normal3d_p3(n, p1->p, p2->p, p3->p);
+                            return true;
+                        }
+                    }
+
+                #ifdef LSP_TRACE
+                    for (size_t i=0; i<count; ++i)
+                    {
+                        const vertex_t *p = vertex.uget(i);
+                        lsp_trace("vertex[%d] = {%f, %f, %f}",
+                            int(i), p->p->x, p->p->y, p->p->z);
+                    }
+
+                    fprintf(stderr, "x;y;z;\n");
+                    for (size_t i=0; i<count; ++i)
+                    {
+                        const vertex_t *p = vertex.uget(i);
+                        fprintf(stderr, "%f;%f;%f\n",
+                            p->p->x, p->p->y, p->p->z);
+                    }
+                #endif
+
+                    return false;
+                }
+
             public:
                 explicit ObjSceneHandler(Scene3D *scene)
                 {
@@ -65,7 +198,7 @@ namespace lsp
                 ObjSceneHandler(const ObjSceneHandler &) = delete;
                 ObjSceneHandler(ObjSceneHandler &&) = delete;
 
-                virtual ~ObjSceneHandler()
+                virtual ~ObjSceneHandler() override
                 {
                 }
 
@@ -73,7 +206,7 @@ namespace lsp
                 ObjSceneHandler & operator = (ObjSceneHandler &&) = delete;
 
             public:
-                virtual status_t begin_object(const char *name)
+                virtual status_t begin_object(const char *name) override
                 {
                     if (pObject != NULL)
                         return STATUS_BAD_STATE;
@@ -86,7 +219,7 @@ namespace lsp
                     return (pObject != NULL) ? STATUS_OK : STATUS_NO_MEM;
                 }
 
-                virtual status_t begin_object(const LSPString *name)
+                virtual status_t begin_object(const LSPString *name) override
                 {
                     if (pObject != NULL)
                         return STATUS_BAD_STATE;
@@ -94,7 +227,7 @@ namespace lsp
                     return (pObject != NULL) ? STATUS_OK : STATUS_NO_MEM;
                 }
 
-                virtual status_t end_object()
+                virtual status_t end_object() override
                 {
                     if (pObject == NULL)
                         return STATUS_BAD_STATE;
@@ -104,7 +237,7 @@ namespace lsp
                     return STATUS_OK;
                 }
 
-                virtual status_t end_of_data()
+                virtual status_t end_of_data() override
                 {
                     if (pScene == NULL)
                         return STATUS_BAD_STATE;
@@ -112,7 +245,7 @@ namespace lsp
                     return STATUS_OK;
                 }
 
-                virtual ssize_t add_vertex(float x, float y, float z, float w)
+                virtual ssize_t add_vertex(float x, float y, float z, float w) override
                 {
                     dsp::point3d_t p;
                     p.x     = x;
@@ -122,7 +255,7 @@ namespace lsp
                     return pScene->add_vertex(&p);
                 }
 
-                virtual ssize_t add_normal(float nx, float ny, float nz, float nw)
+                virtual ssize_t add_normal(float nx, float ny, float nz, float nw) override
                 {
                     dsp::vector3d_t n;
                     n.dx    = nx;
@@ -132,50 +265,147 @@ namespace lsp
                     return pScene->add_normal(&n);
                 }
 
-                virtual ssize_t add_face(const obj::index_t *vv, const obj::index_t *vn, const obj::index_t *vt, size_t n)
+                virtual ssize_t add_face(const obj::index_t *vv, const obj::index_t *vn, const obj::index_t *vt, size_t count) override
                 {
-                    if ((pObject == NULL) || (n < 3))
+                    if ((pObject == NULL) || (count < 3))
                         return -STATUS_BAD_STATE;
 
                     lltl::darray<vertex_t> vertex;
-                    vertex_t *vx        = vertex.append_n(n);
+                    vertex_t *vx        = vertex.append_n(count);
                     if (vx == NULL)
                         return -STATUS_NO_MEM;
 
-                    // Prepare structure
-                    for (size_t i=0; i<n; ++i)
+                    // Prepare structure, eliminate duplicate sequential points
+                    size_t added        = 0;
+                    for (size_t i=0; i<count; ++i)
                     {
-                        vx[i].ip            = vv[i];
-                        vx[i].p             = (vx[i].ip >= 0) ? pScene->vertex(vx[i].ip) : NULL;
-                        if (vx[i].p == NULL)
+                        vertex_t *vc        = &vx[added];
+                        vc->ip              = vv[i];
+                        vc->p               = (vc->ip >= 0) ? pScene->vertex(vc->ip) : NULL;
+                        if (vc->p == NULL)
                             return -STATUS_BAD_STATE;
-                        vx[i].in            = vn[i];
-                        vx[i].n             = (vx[i].in >= 0) ? pScene->normal(vx[i].in) : NULL;
-                    }
+                        if (added > 0)
+                        {
+                            const vertex_t *vp  = &vx[added - 1];
+                            if (vp->ip == vc->ip)
+                                continue;
+                            const float distance = dsp::calc_sqr_distance_p2(vp->p, vc->p);
+                            if (distance < 1e-12f)
+                            {
+                                lsp_trace("square distance between {%f, %f, %f} and {%f %f %f} is %g",
+                                    vp->p->x, vp->p->y, vp->p->z,
+                                    vc->p->x, vc->p->y, vc->p->z,
+                                    distance);
+                                continue;
+                            }
+                        }
+                        vc->in              = vn[i];
+                        vc->n               = (vc->in >= 0) ? pScene->normal(vc->in) : NULL;
 
+                        ++added;
+                    }
+                    if (added < 3)
+                    {
+                    #ifdef LSP_TRACE
+                        lsp_trace("Invalid geometry:");
+                        for (size_t i=0; i<count; ++i)
+                        {
+                            const obj_vertex_t *p = pScene->vertex(vv[i]);
+                            lsp_trace("vertex[%d] = {%f, %f, %f}",
+                                int(i), p->x, p->y, p->z);
+                        }
+                    #endif
+                        return (count >= 3) ? STATUS_OK : -STATUS_CORRUPTED;
+                    }
+                    if (added < count)
+                    {
+                        vertex.pop_n(count - added);
+                        count               = added;
+                    }
                     ssize_t face_id     = nFaceID++;
 
                     // Calc default normals for vertexes without normals
                     vertex_t *v1, *v2, *v3;
                     obj_normal_t on;
+                    obj_normal_t *pon = NULL;
+
                     v1 = vertex.uget(0);
                     v2 = vertex.uget(1);
                     v3 = vertex.uget(2);
 
-                    dsp::calc_normal3d_p3(&on, v1->p, v2->p, v3->p);
-                    for (size_t i=0; i<n; ++i)
+                    // Ensure that we have at least one normal specified
+                    for (size_t i=0; i<count; ++i)
+                    {
+                        v1 = &vx[i];
+                        if (v1->n != NULL)
+                        {
+                            pon         = v1->n;
+                            break;
+                        }
+                    }
+
+                    // Ensure that all vertices have normals
+                    for (size_t i=0; i<count; ++i)
                     {
                         v1 = &vx[i];
                         if (v1->n == NULL)
-                            v1->n = &on;
+                        {
+                            if (pon == NULL)
+                            {
+                                if (!compute_normal(&on, vertex))
+                                    return - STATUS_CORRUPTED;
+                                pon     = &on;
+                            }
+                            v1->n   = pon;
+                        }
                     }
 
                     // Triangulation algorithm
                     size_t index = 0;
                     float ck = 0.0f;
+                    bool dump = false;
 
-                    while (n > 3)
+                    for (size_t n=count; n > 3; )
                     {
+                    #ifdef LSP_TRACE
+                        if (dump)
+                        {
+                            for (size_t i=0; i<count; ++i)
+                            {
+                                const obj_vertex_t *p = pScene->vertex(vv[i]);
+                                lsp_trace("vertex[%d] = {%f, %f, %f}",
+                                    int(i), p->x, p->y, p->z);
+                            }
+
+                            if (pon)
+                                lsp_trace("normal = {%f, %f, %f}",
+                                    pon->dx, pon->dy, pon->dz);
+
+                            fprintf(stderr, "x;y;z;\n");
+                            for (size_t i=0; i<count; ++i)
+                            {
+                                const obj_vertex_t *p = pScene->vertex(vv[i]);
+                                fprintf(stderr, "%f;%f;%f\n",
+                                    p->x, p->y, p->z);
+                            }
+
+                            for (size_t i=0; i<n; ++i)
+                            {
+                                const vertex_t *p = vertex.uget(i);
+                                lsp_trace("vertex[%d] = {%f, %f, %f}",
+                                    int(i), p->p->x, p->p->y, p->p->z);
+                            }
+
+                            fprintf(stderr, "x;y;z;\n");
+                            for (size_t i=0; i<n; ++i)
+                            {
+                                const vertex_t *p = vertex.uget(i);
+                                fprintf(stderr, "%f;%f;%f\n",
+                                    p->p->x, p->p->y, p->p->z);
+                            }
+                        }
+                    #endif
+
                         v1 = vertex.uget(index % n);
                         v2 = vertex.uget((index+1) % n);
                         v3 = vertex.uget((index+2) % n);
@@ -189,12 +419,12 @@ namespace lsp
 
                         // Check that it is an ear
                         ck = dsp::check_triplet3d_p3n(v1->p, v2->p, v3->p, v1->n);
-                        if (ck < 0.0f)
+                        if (ck < -1e-6f)
                         {
                             index = (index + 1) % n;
                             continue;
                         }
-                        else if (ck == 0.0f)
+                        else if (ck <= 1e-6f)
                         {
                             size_t longest = dsp::longest_edge3d_p3(v1->p, v2->p, v3->p);
                             size_t remove = (longest + 2) % 3;
@@ -209,23 +439,8 @@ namespace lsp
                             continue;
                         }
 
-                        // Now ensure that there are no other points inside the triangle
-                        int found = 0;
-                        for (size_t i=0; i<n; ++i)
-                        {
-                            vertex_t *vx = vertex.uget(i);
-                            if ((vx->ip == v1->ip) || (vx->ip == v2->ip) || (vx->ip == v3->ip))
-                                continue;
-
-                            ck  = dsp::check_point3d_on_triangle_p3p(v1->p, v2->p, v3->p, vx->p);
-                            if (ck >= 0.0f)
-                            {
-    //                            lsp_trace("point (%8.3f, %8.3f, %8.3f) has failed", vx->p->x, vx->p->y, vx->p->z);
-                                found ++;
-                                break;
-                            }
-                        }
-
+                        // Now ensure that there are no other points inside of the triangle
+                        const bool found = check_points_in_triangle(vertex, v1, v2, v3);
                         if (found)
                         {
                             index = (index + 1) % n;
