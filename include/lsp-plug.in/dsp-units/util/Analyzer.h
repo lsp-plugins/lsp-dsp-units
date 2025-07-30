@@ -327,8 +327,9 @@ namespace lsp
                  * @param start start frequency
                  * @param stop stop frequency
                  * @param count number of elements
+                 * @param linear use linear scale
                  */
-                void get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count);
+                void get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count, bool linear = false);
 
                 /** Read the frequencies of the analyzer
                  *
