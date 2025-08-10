@@ -57,11 +57,9 @@ namespace lsp
             MM_SIGN_MINIMUM,
 
             /**
-             * Varying extremum: (k % 2 == 0) ? max : min
-             *   where max = max(data[0..x])
-             *     and min = min(data[0..x])
+             * Peak value: data[0]
              */
-            MM_VAR_MINMAX,
+            MM_PEAK,
         };
 
         class LSP_DSP_UNITS_PUBLIC MeterGraph
@@ -70,7 +68,6 @@ namespace lsp
                 ShiftBuffer         sBuffer;
                 float               fCurrent;
                 uint32_t            nCount;
-                uint32_t            nSampleId;
                 uint32_t            nPeriod;
                 meter_method_t      enMethod;
 

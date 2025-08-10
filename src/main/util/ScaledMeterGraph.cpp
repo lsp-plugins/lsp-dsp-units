@@ -121,6 +121,11 @@ namespace lsp
                         sampler->fCurrent   = sample;
                     break;
 
+                case MM_PEAK:
+                    if (sampler->nCount == 0)
+                        sampler->fCurrent   = sample;
+                    break;
+
                 default:
                 case MM_ABS_MAXIMUM:
                     sample = fabsf(sample);
@@ -171,6 +176,12 @@ namespace lsp
                                 sampler->fCurrent   = sample;
                             break;
                         }
+                        case MM_PEAK:
+                        {
+                            if (sampler->nCount == 0)
+                                sampler->fCurrent   = src[offset];
+                            break;
+                        }
                         default:
                         case MM_ABS_MAXIMUM:
                         {
@@ -207,29 +218,35 @@ namespace lsp
                     {
                         case MM_SIGN_MINIMUM:
                         {
-                            const float sample  = dsp::sign_min(&src[offset], to_process);
+                            const float sample  = dsp::sign_min(&src[offset], to_process) * gain;
                             if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) > fabsf(sample)))
                                 sampler->fCurrent   = sample;
                             break;
                         }
                         case MM_SIGN_MAXIMUM:
                         {
-                            const float sample  = dsp::sign_max(&src[offset], to_process);
+                            const float sample  = dsp::sign_max(&src[offset], to_process) * gain;
                             if ((sampler->nCount == 0) || (fabsf(sampler->fCurrent) < fabsf(sample)))
                                 sampler->fCurrent   = sample;
                             break;
                         }
                         case MM_ABS_MINIMUM:
                         {
-                            const float sample  = dsp::abs_min(&src[offset], to_process);
+                            const float sample  = dsp::abs_min(&src[offset], to_process) * gain;
                             if ((sampler->nCount == 0) || (sampler->fCurrent > sample))
                                 sampler->fCurrent   = sample;
+                            break;
+                        }
+                        case MM_PEAK:
+                        {
+                            if (sampler->nCount == 0)
+                                sampler->fCurrent   = src[offset] * gain;
                             break;
                         }
                         default:
                         case MM_ABS_MAXIMUM:
                         {
-                            const float sample  = dsp::abs_max(&src[offset], to_process);
+                            const float sample  = dsp::abs_max(&src[offset], to_process) * gain;
                             if ((sampler->nCount == 0) || (sampler->fCurrent < sample))
                                 sampler->fCurrent   = sample;
                             break;

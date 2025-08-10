@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.30 ===
-* Added new algorithm to MeterGraph.
+* Added MM_PEAK algorithm to MeterGraph and ScaledMeterGraph.
 * Spectrum analyzer now allows to read linear-scaled frequencies and indices.
 * Implemented ADSREnvelope class for ADSR envelope computation.
 * Added MacOS CI builds.

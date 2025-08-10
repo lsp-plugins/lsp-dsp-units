@@ -44,7 +44,6 @@ namespace lsp
             fCurrent    = 0.0f;
             nCount      = 0;
             nPeriod     = 1;
-            nSampleId   = 0;
             enMethod    = MM_ABS_MAXIMUM;
         }
 
@@ -64,7 +63,6 @@ namespace lsp
             fCurrent    = 0.0f;
             nCount      = 0;
             nPeriod     = uint32_t(period);
-            nSampleId   = 0;
             return true;
         }
 
@@ -89,11 +87,9 @@ namespace lsp
                         fCurrent    = sample;
                     break;
 
-                case MM_VAR_MINMAX:
+                case MM_PEAK:
                     if (nCount == 0)
                         fCurrent    = sample;
-                    else
-                        fCurrent    = (nSampleId & 1) ? lsp_min(fCurrent, sample) : lsp_max(fCurrent, sample);
                     break;
 
                 default:
@@ -110,7 +106,6 @@ namespace lsp
                 // Append current sample to buffer
                 sBuffer.process(fCurrent);
                 nCount     = 0;
-                ++nSampleId;
             }
         }
 
@@ -148,24 +143,13 @@ namespace lsp
                                 fCurrent        = sample;
                             break;
                         }
-                        case MM_VAR_MINMAX:
+                        case MM_PEAK:
                         {
-                            if (nSampleId & 1)
-                            {
-                                // Minimum
-                                const float sample  = dsp::min(s, can_do);
-                                if ((nCount == 0) || (fCurrent > sample))
-                                    fCurrent            = sample;
-                            }
-                            else
-                            {
-                                // Maximum
-                                const float sample  = dsp::max(s, can_do);
-                                if ((nCount == 0) || (fCurrent < sample))
-                                    fCurrent            = sample;
-                            }
+                            if (nCount == 0)
+                                fCurrent            = s[0];
                             break;
                         }
+
                         default:
                         case MM_ABS_MAXIMUM:
                         {
@@ -188,7 +172,6 @@ namespace lsp
                     // Append current sample to buffer
                     sBuffer.process(fCurrent);
                     nCount      = 0;
-                    ++nSampleId;
                 }
             }
         }
@@ -227,22 +210,10 @@ namespace lsp
                                 fCurrent        = sample;
                             break;
                         }
-                        case MM_VAR_MINMAX:
+                        case MM_PEAK:
                         {
-                            if (nSampleId & 1)
-                            {
-                                // Minimum
-                                const float sample  = dsp::min(s, can_do) * gain;
-                                if ((nCount == 0) || (fCurrent > sample))
-                                    fCurrent            = sample;
-                            }
-                            else
-                            {
-                                // Maximum
-                                const float sample  = dsp::max(s, can_do) * gain;
-                                if ((nCount == 0) || (fCurrent < sample))
-                                    fCurrent            = sample;
-                            }
+                            if (nCount == 0)
+                                fCurrent            = s[0] * gain;
                             break;
                         }
                         default:
@@ -267,7 +238,6 @@ namespace lsp
                     // Append current sample to buffer
                     sBuffer.process(fCurrent);
                     nCount      = 0;
-                    ++nSampleId;
                 }
             }
         }
@@ -279,7 +249,6 @@ namespace lsp
             v->write("nCount", nCount);
             v->write("nPeriod", nPeriod);
             v->write("enMethod", enMethod);
-            v->write("nSampleId", nSampleId);
         }
     } /* namespace dspu */
 } /* namespace lsp */
