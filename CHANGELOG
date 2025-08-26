@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.31 ===
+
+
 === 1.0.30 ===
 * Added MM_PEAK algorithm to MeterGraph and ScaledMeterGraph.
 * Spectrum analyzer now allows to read linear-scaled frequencies and indices.
