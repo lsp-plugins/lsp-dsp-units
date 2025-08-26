@@ -21,7 +21,7 @@
 
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/dsp-units/3d/Scene3D.h>
-#include <lsp-plug.in/io/InStringSequence.h>
+#include <lsp-plug.in/io/InMemoryStream.h>
 
 UTEST_BEGIN("dspu.3d", scene_load)
 
@@ -49,8 +49,8 @@ UTEST_BEGIN("dspu.3d", scene_load)
             "vn 0 0 1\n"
             "f 5//2 6//2 7//2 8//2\n";
 
-        io::InStringSequence is;
-        UTEST_ASSERT(is.wrap(data, "UTF-8") == STATUS_OK);
+        io::InMemoryStream is;
+        is.wrap(data, strlen(data));
         UTEST_ASSERT(s.load(&is, WRAP_CLOSE) == STATUS_OK);
 
         // Validate scene

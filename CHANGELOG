@@ -2,6 +2,13 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.30 ===
+* Added MM_PEAK algorithm to MeterGraph and ScaledMeterGraph.
+* Spectrum analyzer now allows to read linear-scaled frequencies and indices.
+* Implemented ADSREnvelope class for ADSR envelope computation.
+* Added MacOS CI builds.
+* Updated module versions in dependencies.
+
 === 1.0.29 ===
 * Optimized complex resampling algorithm for dspu::Sample.
 * Implemented functions for quick computing of sine, cosine, logarithm and exponent

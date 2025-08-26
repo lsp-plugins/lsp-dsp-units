@@ -24,7 +24,10 @@
 
 #include <lsp-plug.in/io/IInStream.h>
 #include <lsp-plug.in/io/IInSequence.h>
+#include <lsp-plug.in/io/InMemoryStream.h>
+#include <lsp-plug.in/io/OutMemoryStream.h>
 #include <lsp-plug.in/dsp-units/3d/Scene3D.h>
+#include <lsp-plug.in/fmt/obj/Decompressor.h>
 #include <lsp-plug.in/fmt/obj/IObjHandler.h>
 #include <lsp-plug.in/fmt/obj/PushParser.h>
 #include <lsp-plug.in/lltl/darray.h>
@@ -275,16 +278,39 @@ namespace lsp
 
         status_t load_scene_from_obj(dspu::Scene3D *scene, io::IInStream *is, const char *charset)
         {
-            obj::PushParser pp;
-            ObjSceneHandler handler(scene);
-            return pp.parse_data(&handler, is, WRAP_NONE, charset);
-        }
+            // Load to memory
+            io::OutMemoryStream oms;
+            const wssize_t count = is->sink(&oms);
+            if (count < 0)
+                return status_t(-count);
 
-        status_t load_scene_from_obj(dspu::Scene3D *scene, io::IInSequence *is)
-        {
-            obj::PushParser pp;
+            status_t res = STATUS_OK;
             ObjSceneHandler handler(scene);
-            return pp.parse_data(&handler, is, WRAP_NONE);
+
+            // Try to load compressed object file first
+            {
+                io::InMemoryStream ims;
+                ims.wrap(oms.data(), oms.size());
+
+                obj::Decompressor dp;
+                if ((res = dp.parse_data(&handler, &ims)) == STATUS_OK)
+                    return res;
+                if ((res != STATUS_BAD_FORMAT) &&
+                    (res != STATUS_UNSUPPORTED_FORMAT))
+                    return res;
+            }
+
+            // Try to load non-compressed object file
+            {
+                io::InMemoryStream ims;
+                ims.wrap(oms.data(), oms.size());
+
+                obj::PushParser pp;
+                if ((res = pp.parse_data(&handler, &ims, WRAP_NONE, charset)) == STATUS_OK)
+                    return res;
+            }
+
+            return res;
         }
 
     } /* namespace dspu */

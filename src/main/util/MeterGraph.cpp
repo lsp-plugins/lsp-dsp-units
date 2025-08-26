@@ -87,6 +87,11 @@ namespace lsp
                         fCurrent    = sample;
                     break;
 
+                case MM_PEAK:
+                    if (nCount == 0)
+                        fCurrent    = sample;
+                    break;
+
                 default:
                 case MM_ABS_MAXIMUM:
                     sample      = fabsf(sample);
@@ -100,7 +105,7 @@ namespace lsp
             {
                 // Append current sample to buffer
                 sBuffer.process(fCurrent);
-                nCount      = 0;
+                nCount     = 0;
             }
         }
 
@@ -138,6 +143,13 @@ namespace lsp
                                 fCurrent        = sample;
                             break;
                         }
+                        case MM_PEAK:
+                        {
+                            if (nCount == 0)
+                                fCurrent            = s[0];
+                            break;
+                        }
+
                         default:
                         case MM_ABS_MAXIMUM:
                         {
@@ -196,6 +208,12 @@ namespace lsp
                             const float sample  = dsp::abs_min(s, can_do) * gain;
                             if ((nCount == 0) || (fCurrent > sample))
                                 fCurrent        = sample;
+                            break;
+                        }
+                        case MM_PEAK:
+                        {
+                            if (nCount == 0)
+                                fCurrent            = s[0] * gain;
                             break;
                         }
                         default:

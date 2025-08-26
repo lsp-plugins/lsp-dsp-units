@@ -58,7 +58,6 @@ namespace lsp
                 status_t do_clone(Scene3D *s);
 
                 status_t    load_internal(io::IInStream *is, size_t flags, const char *charset);
-                status_t    load_internal(io::IInSequence *is, size_t flags);
 
             public:
                 /** Default constructor
@@ -132,14 +131,6 @@ namespace lsp
                  * @return status of operation
                  */
                 status_t    load(io::IInStream *is, size_t flags = WRAP_NONE, const char *charset = NULL);
-
-                /**
-                 * Load scene from input sequence
-                 * @param is input sequence
-                 * @param flags wrapping flags
-                 * @return status of operation
-                 */
-                status_t    load(io::IInSequence *is, size_t flags = WRAP_NONE);
 
             public:
                 /**

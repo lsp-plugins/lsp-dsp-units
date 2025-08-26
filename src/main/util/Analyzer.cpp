@@ -468,24 +468,41 @@ namespace lsp
             return vChannels[channel].vData[idx] * vEnvelope[idx];
         }
 
-        void Analyzer::get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count)
+        void Analyzer::get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count, bool linear)
         {
-            size_t fft_size     = 1 << nRank;
-            size_t fft_csize    = (fft_size >> 1) + 1;
-            float scale         = float(fft_size) / float(nSampleRate);
+            const size_t fft_size   = 1 << nRank;
+            const size_t fft_csize  = (fft_size >> 1) + 1;
+            const float scale       = float(fft_size) / float(nSampleRate);
 
-            // Initialize list of frequencies
-            float norm          = logf(stop/start) / (count - 1);
-
-            for (size_t i=0; i<count; ++i)
+            // Initialize list of frequencies depending on the scale
+            if (linear)
             {
-                float f         = start * expf(i * norm);
-                size_t ix       = scale * f;
-                if (ix > fft_csize)
-                    ix                  = fft_csize;
+                const float norm    = (stop - start) / (count - 1);
+                for (size_t i=0; i<count; ++i)
+                {
+                    float f             = start + i * norm;
+                    size_t ix           = scale * f;
+                    if (ix > fft_csize)
+                        ix                  = fft_csize;
 
-                frq[i]          = f;
-                idx[i]          = uint32_t(ix);
+                    frq[i]              = f;
+                    idx[i]              = uint32_t(ix);
+                }
+            }
+            else
+            {
+                const float norm    = logf(stop/start) / (count - 1);
+
+                for (size_t i=0; i<count; ++i)
+                {
+                    float f             = start * expf(i * norm);
+                    size_t ix           = scale * f;
+                    if (ix > fft_csize)
+                        ix                  = fft_csize;
+
+                    frq[i]              = f;
+                    idx[i]              = uint32_t(ix);
+                }
             }
         }
 

@@ -495,29 +495,9 @@ namespace lsp
             return res;
         }
 
-        status_t Scene3D::load(io::IInSequence *is, size_t flags)
-        {
-            status_t res;
-            Scene3D tmp;
-            if ((res = tmp.load_internal(is, flags)) == STATUS_OK)
-                tmp.swap(this);
-            return res;
-        }
-
         status_t Scene3D::load_internal(io::IInStream *is, size_t flags, const char *charset)
         {
             status_t res = load_scene_from_obj(this, is, charset);
-            if (flags & WRAP_CLOSE)
-                res = update_status(res, is->close());
-            if (flags & WRAP_DELETE)
-                delete is;
-
-            return res;
-        }
-
-        status_t Scene3D::load_internal(io::IInSequence *is, size_t flags)
-        {
-            status_t res = load_scene_from_obj(this, is);
             if (flags & WRAP_CLOSE)
                 res = update_status(res, is->close());
             if (flags & WRAP_DELETE)

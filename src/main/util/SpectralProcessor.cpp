@@ -197,6 +197,12 @@ namespace lsp
             }
         }
 
+        void SpectralProcessor::reset()
+        {
+            size_t buf_size = 1 << nRank;
+            dsp::fill_zero(pOutBuf, buf_size*2);
+        }
+
         void SpectralProcessor::dump(IStateDumper *v) const
         {
             v->write("nRank", nRank);

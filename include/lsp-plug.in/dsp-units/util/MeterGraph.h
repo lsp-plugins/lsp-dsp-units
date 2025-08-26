@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 мая 2016 г.
@@ -32,10 +32,34 @@ namespace lsp
     {
         enum meter_method_t
         {
+            /**
+             * Absolute maximum: max(fabsf(data[0..x]))
+             */
             MM_ABS_MAXIMUM,
+
+            /**
+             * Absolute minimum: min(fabsf(data[0..x]))
+             */
             MM_ABS_MINIMUM,
+
+            /**
+             * Sign-dependent minimum: (fabsf(pos) >= fabsf(neg)) ? pos : neg
+             *   where pos = fabsf(max(data[0..x], 0.0))
+             *     and neg = fabsf(min(data[0..x], 0.0))
+             */
             MM_SIGN_MAXIMUM,
+
+            /**
+             * Sign-dependent minimum: (fabsf(pos) < fabsf(neg)) ? pos : neg
+             *   where pos = fabsf(max(data[0..x], 0.0))
+             *     and neg = fabsf(min(data[0..x], 0.0))
+             */
             MM_SIGN_MINIMUM,
+
+            /**
+             * Peak value: data[0]
+             */
+            MM_PEAK,
         };
 
         class LSP_DSP_UNITS_PUBLIC MeterGraph
