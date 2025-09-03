@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 1 июл. 2020 г.
@@ -114,7 +114,7 @@ namespace lsp
         void SpectralProcessor::update_settings()
         {
             // Distribute buffers
-            size_t buf_size = 1 << nRank;
+            const size_t buf_size   = 1 << nRank;
 
             pOutBuf         = &pWnd[buf_size];
             pInBuf          = &pOutBuf[buf_size];
@@ -199,7 +199,12 @@ namespace lsp
 
         void SpectralProcessor::reset()
         {
-            size_t buf_size = 1 << nRank;
+            if (bUpdate) // update_settings() will automaticaly clear the buffer
+                return;
+            if (pOutBuf == NULL)
+                return;
+
+            const size_t buf_size = 1 << nRank;
             dsp::fill_zero(pOutBuf, buf_size*2);
         }
 

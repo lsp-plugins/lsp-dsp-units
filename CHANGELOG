@@ -4,6 +4,7 @@
 
 === 1.0.31 ===
 * Updated and extended interface of dspu::RingBuffer.
+* Fixed crash in dspu::SpectralProcessor::clear method.
 
 === 1.0.30 ===
 * Added MM_PEAK algorithm to MeterGraph and ScaledMeterGraph.
