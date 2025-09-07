@@ -47,13 +47,16 @@ namespace lsp
 
         bool RingBuffer::init(size_t size, float fill)
         {
-            float *data     = static_cast<float *>(realloc(pData, size * sizeof(float)));
-            if (data == NULL)
-                return false;
+            if (size != nCapacity)
+            {
+                float *data     = static_cast<float *>(realloc(pData, size * sizeof(float)));
+                if (data == NULL)
+                    return false;
 
-            pData           = data;
-            nCapacity       = uint32_t(size);
-            nHead           = 0;
+                pData           = data;
+                nCapacity       = uint32_t(size);
+                nHead           = 0;
+            }
 
             dsp::fill(pData, fill, size);
             return true;
