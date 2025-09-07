@@ -52,15 +52,16 @@ namespace lsp
             sBuffer.destroy();
         }
 
-        bool MeterGraph::init(size_t frames, size_t period)
+        bool MeterGraph::init(size_t frames, size_t period, float default_value)
         {
             if (period <= 0)
                 return false;
 
-            if (!sBuffer.init(frames * 4, frames))
+            if (!sBuffer.init(frames, default_value))
                 return false;
 
             fCurrent    = 0.0f;
+            fDefault    = default_value;
             nCount      = 0;
             nPeriod     = uint32_t(period);
             return true;
@@ -104,7 +105,7 @@ namespace lsp
             if ((++nCount) >= nPeriod)
             {
                 // Append current sample to buffer
-                sBuffer.process(fCurrent);
+                sBuffer.append(fCurrent);
                 nCount     = 0;
             }
         }
@@ -170,7 +171,7 @@ namespace lsp
                 if (nCount >= nPeriod)
                 {
                     // Append current sample to buffer
-                    sBuffer.process(fCurrent);
+                    sBuffer.append(fCurrent);
                     nCount      = 0;
                 }
             }
@@ -236,16 +237,31 @@ namespace lsp
                 if (nCount >= nPeriod)
                 {
                     // Append current sample to buffer
-                    sBuffer.process(fCurrent);
+                    sBuffer.append(fCurrent);
                     nCount      = 0;
                 }
             }
+        }
+
+        void MeterGraph::read(float *dst, size_t count) const
+        {
+            const ssize_t capacity  = sBuffer.size();
+            const ssize_t delta     = ssize_t(count) - capacity;
+            if (delta > 0)
+            {
+                dsp::fill(dst, fDefault, delta);
+                dst                    += delta;
+                count                   = capacity;
+            }
+
+            sBuffer.get(dst, count - 1, count);
         }
 
         void MeterGraph::dump(IStateDumper *v) const
         {
             v->write_object("sBuffer", &sBuffer);
             v->write("fCurrent", fCurrent);
+            v->write("fDefault", fDefault);
             v->write("nCount", nCount);
             v->write("nPeriod", nPeriod);
             v->write("enMethod", enMethod);

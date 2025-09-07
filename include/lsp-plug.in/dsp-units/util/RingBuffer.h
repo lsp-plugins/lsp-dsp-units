@@ -56,9 +56,10 @@ namespace lsp
                 /** Init buffer, all previously stored data will be lost
                  *
                  * @param size the requested size of buffer, in terms of optimization may be allocated a bit more data
+                 * @param fill default value to use for filling the buffer
                  * @return status of operation
                  */
-                bool            init(size_t size);
+                bool            init(size_t size, float fill = 0.0f);
 
                 /** Destroy buffer
                  *
@@ -93,6 +94,12 @@ namespace lsp
                  * Clear buffer contents, fill all data with zero
                  */
                 void            clear();
+
+                /**
+                 * Clear buffer contents, fill all data with specified value
+                 * @param value value to fill
+                 */
+                void            fill(float value);
 
                 /**
                  * Get the pointer to the beginning of the entire buffer

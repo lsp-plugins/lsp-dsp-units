@@ -45,7 +45,7 @@ namespace lsp
             nHead       = 0;
         }
 
-        bool RingBuffer::init(size_t size)
+        bool RingBuffer::init(size_t size, float fill)
         {
             float *data     = static_cast<float *>(realloc(pData, size * sizeof(float)));
             if (data == NULL)
@@ -55,7 +55,7 @@ namespace lsp
             nCapacity       = uint32_t(size);
             nHead           = 0;
 
-            dsp::fill_zero(pData, size);
+            dsp::fill(pData, fill, size);
             return true;
         }
 
@@ -107,6 +107,13 @@ namespace lsp
             nHead           = 0;
             if (pData != NULL)
                 dsp::fill_zero(pData, nCapacity);
+        }
+
+        void RingBuffer::fill(float value)
+        {
+            nHead           = 0;
+            if (pData != NULL)
+                dsp::fill(pData, value, nCapacity);
         }
 
         float RingBuffer::get(size_t offset) const
