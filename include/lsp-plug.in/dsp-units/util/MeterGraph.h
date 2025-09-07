@@ -158,7 +158,12 @@ namespace lsp
                  *
                  * @param level level
                  */
-                inline void fill(float level)   { sBuffer.fill(level); }
+                inline void fill(float level)   { sBuffer.fill(level);  }
+
+                /**
+                 * Clear contents of the graph
+                 */
+                inline void clear()             { sBuffer.fill(0.0f);   }
 
                 /**
                  * Dump internal state
