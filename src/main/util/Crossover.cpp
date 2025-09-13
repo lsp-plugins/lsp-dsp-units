@@ -454,7 +454,7 @@ namespace lsp
 
             for (size_t sample=0; sample < samples; )
             {
-                size_t to_do        = lsp_min(samples - sample, nBufSize);
+                const size_t to_do  = lsp_min(samples - sample, nBufSize);
                 band_t *left        = &vBands[0];
                 const float *src    = in;
 
@@ -491,7 +491,7 @@ namespace lsp
 
                 // Update pointers
                 in                 += to_do;
-                sample             -= to_do;
+                sample             += to_do;
             }
         }
 
