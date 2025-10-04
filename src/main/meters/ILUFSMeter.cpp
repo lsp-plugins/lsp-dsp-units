@@ -82,7 +82,7 @@ namespace lsp
             nMSSize             = 0;
             nMSHead             = 0;
             nMSInt              = 0;
-            nMSCount            = -3;
+            nMSCount            = 0;
 
             nSampleRate         = 0;
             nChannels           = 0;
@@ -202,7 +202,7 @@ namespace lsp
             nMSSize                 = 0;
             nMSHead                 = 0;
             nMSInt                  = 0;
-            nMSCount                = -3;
+            nMSCount                = 0;
 
             nSampleRate             = 0;
             nChannels               = uint32_t(channels);
@@ -277,7 +277,7 @@ namespace lsp
             // Reset accumulated loudness and block counter if needed if switching from infinite mode to finite one
             if (fIntTime <= 0)
             {
-                nMSCount        = -3;   // The period has changed from finite to infinite
+                nMSCount        = 0;    // The period has changed from finite to infinite
                 clear_block_buffers();
             }
             else if (period <= 0.0f)    // The period has changed from infinite to finite
@@ -305,7 +305,7 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Store new pointers to buffers
-            vLoudness               = advance_ptr_bytes<float>(buf, int_count);
+            vLoudness               = advance_ptr_bytes<float>(buf, blk_count);
 
             // Update parameters
             fAvgCoeff               = 0.25f / float(blk_size);
@@ -323,34 +323,28 @@ namespace lsp
         float ILUFSMeter::compute_gated_loudness(float threshold) const
         {
             float loudness      = 0.0f;
-            if (nMSCount <= 0)
-                return loudness;
-
             size_t tail         = (nMSHead + nMSSize - nMSCount) % nMSSize;
-            size_t count        = 0;
+            size_t blocks       = 0;
 
-            for (ssize_t j=0; j<nMSCount; ++j)
+            for (size_t j=0; j<nMSCount; ++j)
             {
                 const float lj      = vLoudness[tail];
                 tail                = (tail + 1) % nMSSize;
                 if (lj <= GATING_ABS_THRESH)
                     continue;
 
-                ++count;
+                ++blocks;
                 loudness           += lj;
             }
 
-            return (count > 0) ? loudness / float(count) : 0.0f;
+            return (blocks) ? loudness / float(blocks) : 0.0f;
         }
 
         float ILUFSMeter::compute_infinite_loudness(float threshold) const
         {
             float loudness      = 0.0f;
-            if (nMSCount <= 0)
-                return loudness;
-
             const float mult    = 1.0 / float(nMSCount);
-            for (ssize_t j=0; j<nMSSize; ++j)
+            for (size_t j=0; j<nMSSize; ++j)
             {
                 const float lj      = vLoudness[j];
                 loudness           += mult * lj;
@@ -392,59 +386,78 @@ namespace lsp
                 // Perform metering if we exceed a quarter of a gating block size
                 if (nBlockOffset >= nBlockSize)
                 {
-                    // For each channel push new block to the history buffer
-                    // Compute the loudness of the gating block and store to the buffer
-                    float loudness      = 0.0f;
-                    for (size_t i=0; i<nChannels; ++i)
-                    {
-                        channel_t *c        = &vChannels[i];
-                        const float *blk    = &c->vBlock[0];
-                        const float s       = (blk[0] + blk[1] + blk[2] + blk[3]) * fAvgCoeff;
-
-                        loudness           += c->fWeight * s;
-                    }
-
-                    // Compute integrated loudness, two-stage
-                    // There is no necessity to apply the second stage if the loudness threshold
-                    // is less than absolute threshold
-                    if (fIntTime > 0.0f)
-                    {
-                        // Put the loudness value to the buffer
-                        vLoudness[nMSHead]      = loudness;
-                        nMSHead                 = (nMSHead + 1) % nMSSize;
-                        nMSCount                = lsp_min(nMSCount + 1, nMSInt);    // Increment number of blocks for processing
-
-                        // Two-stage loudness analysis.
-                        // 1. Compute absolute gating threshold
-                        loudness                = compute_gated_loudness(GATING_ABS_THRESH);
-                        const float thresh      = loudness * GATING_REL_THRESH;
-
-                        // 2. Compute relative gating loudness if relative threshold is greater than absolute
-                        if (thresh > GATING_ABS_THRESH)
-                            loudness                = compute_gated_loudness(thresh);
-                    }
-                    else
-                    {
-                        // Process block only if it is above gating threshold
-                        if (loudness > GATING_ABS_THRESH)
-                        {
-                            // Put the loudness value to the buffer
-                            vLoudness[nMSHead]     += loudness;
-                            nMSHead                 = (nMSHead + 1) % nMSSize;
-                            nMSCount               += 1;
-                        }
-
-                        // For the infinite mode we can not compute gated loudness because do not have enough data for it
-                        loudness                = compute_infinite_loudness(GATING_ABS_THRESH);
-                    }
-
-                    // Convert the loudness for output. Because we use amplitude decibels,
-                    // we need to extract square root
-                    fLoudness               = sqrtf(loudness);
-
                     // Reset block size and advance positions
                     nBlockOffset            = 0;
-                    nBlockPart              = (nBlockPart + 1) & 0x3;
+                    if ((++nBlockPart) >= 4)
+                    {
+                        nBlockPart              = 0;
+                        nFlags                 |= F_BLK_FULL;
+                    }
+
+                    // Process block if it is full
+                    if (nFlags & F_BLK_FULL)
+                    {
+                        // Compute the loudness of the gating block
+                        float loudness      = 0.0f;
+                        for (size_t i=0; i<nChannels; ++i)
+                        {
+                            channel_t *c        = &vChannels[i];
+                            const float *blk    = &c->vBlock[0];
+                            const float s       = (blk[0] + blk[1] + blk[2] + blk[3]) * fAvgCoeff;
+
+                            loudness           += c->fWeight * s;
+                        }
+
+                        // Compute integrated loudness, two-stage
+                        // There is no necessity to apply the second stage if the loudness threshold
+                        // is less than absolute threshold
+                        if (nMSInt > 0)
+                        {
+                            // Increment number of blocks for processing
+                            nMSCount                = lsp_min(nMSCount + 1, nMSInt);
+
+                            // Put the loudness value to the buffer
+                            vLoudness[nMSHead]      = loudness;
+                            nMSHead                 = (nMSHead + 1) % nMSSize;
+
+                            // Two-stage loudness analysis.
+                            // 1. Compute absolute gating threshold
+                            loudness                = compute_gated_loudness(GATING_ABS_THRESH);
+                            const float thresh      = loudness * GATING_REL_THRESH;
+
+                            // 2. Compute relative gating loudness if relative threshold is greater than absolute
+                            if (thresh > GATING_ABS_THRESH)
+                                loudness                = compute_gated_loudness(thresh);
+                        }
+                        else
+                        {
+                            // Process block only if it is above gating threshold
+                            if (loudness > GATING_ABS_THRESH)
+                            {
+                                // Increment number of blocks for processing
+                                // Apply floating-point overflow protection
+                                if (nMSCount >= 0x100)
+                                {
+                                    dsp::mul_k2(vLoudness, 0.5f, nMSSize);
+                                    nMSCount              >>= 1;
+                                }
+                                ++nMSCount;
+
+                                // Put the loudness value to the buffer
+                                vLoudness[nMSHead]     += loudness;
+                                nMSHead                 = (nMSHead + 1) % nMSSize;
+                            }
+
+                            // For the infinite mode we can not compute gated loudness because do not have enough data for it
+                            loudness                = (nMSCount > 0) ? compute_infinite_loudness(GATING_ABS_THRESH) : 0.0f;
+                        }
+
+                        // Convert the loudness for output. Because we use amplitude decibels,
+                        // we need to extract square root
+                        fLoudness               = sqrtf(loudness);
+                    }
+
+                    // Cleanup block contents
                     for (size_t i=0; i<nChannels; ++i)
                         vChannels[i].vBlock[nBlockPart]     = 0;
                 }
@@ -462,8 +475,9 @@ namespace lsp
             if (nFlags & F_UPD_TIME)
             {
                 // The Integration period consists of one full block and set of overlapping blocks.
+                const float int_time    = lsp_min(fIntTime, fMaxIntTime);
                 const size_t blk_count  = dspu::millis_to_samples(nSampleRate, fBlockPeriod * 0.25f); // 75% overlapping
-                nMSInt      = lsp_max((dspu::seconds_to_samples(nSampleRate, fIntTime) - blk_count*2 - 1) / blk_count, 1);
+                nMSInt      = (int_time > 0) ? lsp_max((dspu::seconds_to_samples(nSampleRate, int_time) - blk_count*2 - 1) / blk_count, 1) : 0;
                 nMSCount    = lsp_min(nMSCount, nMSInt);
             }
 
@@ -514,6 +528,7 @@ namespace lsp
                     c->vBlock[i]            = 0.0f;
             }
             dsp::fill_zero(vLoudness, nMSSize);
+            nFlags                 &= ~F_BLK_FULL;
         }
 
         void ILUFSMeter::clear()
@@ -521,7 +536,7 @@ namespace lsp
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
-                c->sFilter.clear();
+                c->sBank.reset();
             }
             clear_block_buffers();
 
@@ -531,8 +546,7 @@ namespace lsp
             nBlockPart              = 0;
 
             nMSHead                 = 0;
-            nMSInt                  = 0;
-            nMSCount                = -3;
+            nMSCount                = 0;
         }
 
         void ILUFSMeter::dump(IStateDumper *v) const

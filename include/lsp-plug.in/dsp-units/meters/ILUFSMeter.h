@@ -61,6 +61,7 @@ namespace lsp
                 {
                     F_UPD_FILTERS   = 1 << 0,
                     F_UPD_TIME      = 1 << 1,
+                    F_BLK_FULL      = 1 << 2,
 
                     F_UPD_ALL       = F_UPD_FILTERS | F_UPD_TIME
                 };
@@ -96,8 +97,8 @@ namespace lsp
                 uint32_t                nBlockPart;     // The index of the current value to update in the gating block
                 uint32_t                nMSSize;        // Overall number of blocks available in buffer
                 uint32_t                nMSHead;        // Current position to write new block to buffer
-                int32_t                 nMSInt;         // Number of blocks to integrate
-                int64_t                 nMSCount;       // Count of processed blocks
+                uint32_t                nMSInt;         // Number of blocks to integrate
+                uint32_t                nMSCount;       // Count of processed block parts
 
                 uint32_t                nSampleRate;    // Sample rate
                 uint32_t                nChannels;      // Number of channels
