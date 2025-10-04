@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 нояб. 2024 г.
@@ -97,7 +97,7 @@ namespace lsp
                 uint32_t                nMSSize;        // Overall number of blocks available in buffer
                 uint32_t                nMSHead;        // Current position to write new block to buffer
                 int32_t                 nMSInt;         // Number of blocks to integrate
-                int32_t                 nMSCount;       // Count of processed blocks
+                int64_t                 nMSCount;       // Count of processed blocks
 
                 uint32_t                nSampleRate;    // Sample rate
                 uint32_t                nChannels;      // Number of channels
@@ -136,7 +136,9 @@ namespace lsp
                 status_t        init(size_t channels, float max_int_time = 60, float block_period = dspu::bs::LUFS_MEASURE_PERIOD_MS);
 
             private:
-                float           compute_gated_loudness(float threshold);
+                float           compute_gated_loudness(float threshold) const;
+                inline float    compute_infinite_loudness(float threshold) const;
+                void            clear_block_buffers();
 
             public:
                 /**
