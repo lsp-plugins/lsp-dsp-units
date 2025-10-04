@@ -102,6 +102,18 @@ namespace lsp
         }
 
         /**
+         * Quick hyperbolic tangent function computation with precision loss
+         * @param x the argument
+         * @return hyperbolic tangent value
+         */
+        inline float quick_tanh(float x)
+        {
+            const float x2 = 2.0f * x;
+
+            return (quick_expf(x2) - 1.0f) / (quick_expf(x2) + 1.0f);
+        }
+
+        /**
          * Linear interpolation between two floating-point values
          * @param a the value at k = 0.0f
          * @param b the value at k = 1.0f

@@ -25,37 +25,328 @@
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/stdlib/math.h>
 
+// Epsilon value for TAP Tubewarmth
+#define LSP_DSP_SHAPING_TAP_EPS     0.000000001f
+
 namespace lsp
 {
-	namespace dspu
-	{
-		namespace shaping
-		{
+    namespace dspu
+    {
+        /**
+         * This header defines different kinds of shaping functions.
+         *
+         * Shaping functions are parametrised saturating input-output mapping functions.
+         * They accept any real number as input, but only return values in the [-1.0, +1.0] interval.
+         * These functions are also parametrised by one or more parameters that affect their shape.
+         */
+        namespace shaping
+        {
 
-			typedef struct sinusoidal_t
-			{
-				float slope;  // 0 < slope < M_PI / 2.0f
-			} sinusoidal_t;
+            /**
+             * Parameters for a sinusoidal shaping function.
+             * Modified from Function 1, page 204, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct sinusoidal_t
+            {
+                float slope;  // 0 < slope < M_PI / 2.0f
+            } sinusoidal_t;
 
-			typedef struct polynomial_t
-			{
-				float shape;  // 0 < shape <= 1
-			} polynomial_t;
+            /**
+             * Parameters for a polynomial shaping function.
+             * Function 2, page 204, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct polynomial_t
+            {
+                float shape;  // 0 < shape <= 1
+            } polynomial_t;
 
-			union shaping_t
-			{
-				sinusoidal_t sinusoidal;
-				polynomial_t polynomial;
-			};
+            /**
+             * Parameters for a hyperbolic shaping function.
+             * Function 3, page 204, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct hyperbolic_t
+            {
+                float shape; // shape > 0
+            } hyperbolic_t;
 
-			LSP_DSP_UNITS_PUBLIC
-			float sinusoidal(shaping_t *params, float value);
+            /**
+             * Parameters for an exponential shaping function.
+             * Function 4, page 205, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct exponential_t
+            {
+                float shape; // shape > 1
+            } exponential_t;
 
-			LSP_DSP_UNITS_PUBLIC
-			float polynomial(shaping_t *params, float value);
+            /**
+             * Parameters for a power shaping function.
+             * Function 5, page 205, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct power_t
+            {
+                float shape; // shape >= 1
+            } power_t;
 
-		} /* namespace shaping */
-	} /* dspu */
+            /**
+             * Parameters for a blinear shaping function.
+             * Function 6, page 205, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct bilinear_t
+            {
+                float shape; // shape >= 0
+            } bilinear_t;
+
+            /**
+             * Parameters for an asymmetric clip shaping function.
+             * Function 7, page 207, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct asymmetric_clip_t
+            {
+                float high_clip; // 0 <= high_clip <= 1
+                float low_clip; // 0 <= low_clip <= 1
+            } asymmetric_clip_t;
+
+            /**
+             * Parameters for an asymmetric softclip shaping function.
+             * Function 8, page 207, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct asymmetric_softclip_t
+            {
+                float high_limit; // 0 <= high_clip < 1
+                float low_limit; // 0 <= low_clip < 1
+            } asymmetric_softclip_t;
+
+            /**
+             * Parameters for a quarter circle shaping function.
+             * Modified from Function 9, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct quarter_circle_t
+            {
+                float radius; // radius > 0
+            } quarter_circle_t;
+
+            /**
+             * Parameters for a rectifier shaping function.
+             * Function 10, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct rectifier_t
+            {
+                float shape; // 0 <= shape <= 1
+            } rectifier_t;
+
+            enum round_fcn {
+                ROUND_FCN_FLOOR,
+                ROUND_FCN_CEIL,
+                ROUND_FCN_ROUND
+            };
+
+            /**
+             * Parameters for a bitcrush shaping function.
+             * Modified from Function 11, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             */
+            typedef struct bitcrush_t
+            {
+                float levels; // levels >= 1
+                round_fcn fcn;
+            } bitcrush_t;
+
+            /**
+             * Parameters for a TAP Tubewarmth stateful shaping function.
+             * From TAP Plugins: https://git.hq.sig7.se/tap-plugins.git
+             */
+            typedef struct tap_tubewarmth_t
+            {
+                // As in TAP Plugins: https://git.hq.sig7.se/tap-plugins.git, file tap_tubewarmth.c
+
+                // Amplitudes
+                float pwrq;
+                float srct;
+
+                // Positive samples coefficients
+                float ap;
+                float kpa;
+                float kpb;
+
+                // Negative samples coefficients
+                float an;
+                float kna;
+                float knb;
+
+                // State
+                float last_raw_output;
+                float last_raw_intermediate;
+            } tap_tubewarmth_t;
+
+            /**
+             * Parameters for shaping functions.
+             */
+            union shaping_t
+            {
+                sinusoidal_t sinusoidal;
+                polynomial_t polynomial;
+                hyperbolic_t hyperbolic;
+                exponential_t exponential;
+                power_t power;
+                bilinear_t bilinear;
+                asymmetric_clip_t asymmetric_clip;
+                asymmetric_softclip_t asymmetric_softclip;
+                quarter_circle_t quarter_circle;
+                rectifier_t rectifier;
+                bitcrush_t bitcrush;
+                tap_tubewarmth_t tap_tubewarmth;
+            };
+
+            /**
+             * Sinusoidal shaping function.
+             * Modified from Function 1, page 204, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float sinusoidal(shaping_t *params, float value);
+
+            /**
+             * Polynomial shaping function.
+             * Function 2, page 204, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float polynomial(shaping_t *params, float value);
+
+            /**
+             * Hyperbolic shaping function.
+             * Function 3, page 204, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float hyperbolic(shaping_t *params, float value);
+
+            /**
+             * Exponential shaping function.
+             * Function 4, page 205, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float exponential(shaping_t *params, float value);
+
+            /**
+             * Power shaping function.
+             * Function 5, page 205, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float power(shaping_t *params, float value);
+
+            /**
+             * Bilinear shaping function.
+             * Function 6, page 205, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float bilinear(shaping_t *params, float value);
+
+            /**
+             * Asymmetric clip shaping function.
+             * Function 7, page 207, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float asymmetric_clip(shaping_t *params, float value);
+
+            /**
+             * Asymmetric softclip shaping function.
+             * Function 8, page 207, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float asymmetric_softclip(shaping_t *params, float value);
+
+            /**
+             * Quarter circle shaping function.
+             * Modified from Function 9, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float quarter_circle(shaping_t *params, float value);
+
+            /**
+             * Rectifier shaping function.
+             * Function 10, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float rectifier(shaping_t *params, float value);
+
+            /**
+             * Bitcrush shaping function.
+             * Modified from Function 11, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float bitcrush(shaping_t *params, float value);
+
+            /**
+             * TAP Plugins gate function, building block for TAP Tubewarmth.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            inline float tap_gate(float value)
+            {
+                if ((value < -LSP_DSP_SHAPING_TAP_EPS) || (value > LSP_DSP_SHAPING_TAP_EPS))
+                    return value;
+                else
+                    return 0.0f;
+            }
+
+            /**
+             * TAP Plugins rectifying square root function, building block for TAP Tubewarmth.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            inline float tap_rect_sqrt(float value)
+            {
+               if (value > LSP_DSP_SHAPING_TAP_EPS)
+                   return sqrtf(value);
+               else if (value < -LSP_DSP_SHAPING_TAP_EPS)
+                   return sqrtf(-value);
+               else
+                   return 0.0f;
+            }
+
+            /**
+             * TAP tubewarmth stateful shaping function.
+             * As in TAP Plugins: https://git.hq.sig7.se/tap-plugins.git, file tap_tubewarmth.c
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float tap_tubewarmth(shaping_t *params, float value);
+        } /* namespace shaping */
+    } /* dspu */
 } /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_MISC_SHAPING_H_ */
