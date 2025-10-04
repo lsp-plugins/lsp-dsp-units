@@ -6,6 +6,7 @@
 * Updated and extended interface of dspu::RingBuffer.
 * Optimizations: dspu::MeterGraph now uses dspu::RingBuffer instead of dsp::ShiftBuffer.
 * Added support of infiniter LUFS measurement period by dspu::ILUFSMeter.
+* Added dspu::PeakMeter class for managing peak values.
 * Fixed crash in dspu::SpectralProcessor::clear method.
 
 === 1.0.30 ===
