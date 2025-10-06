@@ -23,6 +23,7 @@
 #include <lsp-plug.in/dsp-units/misc/shaping.h>
 #include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/test-fw/helpers.h>
+#include <lsp-plug.in/dsp-units/misc/quickmath.h>
 
 UTEST_BEGIN("dspu.misc", shaping)
 
@@ -31,6 +32,7 @@ UTEST_BEGIN("dspu.misc", shaping)
         dspu::shaping::shaping_t params;
 
         params.sinusoidal.slope = 0.5f * M_PI;
+        params.sinusoidal.radius = M_PI / (2.0f * params.sinusoidal.slope);
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::sinusoidal(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::sinusoidal(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::sinusoidal(&params, -1.0f), -1.0f));
@@ -38,6 +40,7 @@ UTEST_BEGIN("dspu.misc", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::sinusoidal(&params, -2.0f), -1.0f));
 
         params.polynomial.shape = 0.5f;
+        params.polynomial.radius = 1.0f - params.polynomial.shape;
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::polynomial(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::polynomial(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::polynomial(&params, -1.0f), -1.0f));
@@ -45,6 +48,7 @@ UTEST_BEGIN("dspu.misc", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::polynomial(&params, -2.0f), -1.0f));
 
         params.hyperbolic.shape = 0.5f;
+        params.hyperbolic.hyperbolic_shape = dspu::quick_tanh(params.hyperbolic.shape);
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::hyperbolic(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::hyperbolic(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::hyperbolic(&params, -1.0f), -1.0f));
@@ -52,6 +56,8 @@ UTEST_BEGIN("dspu.misc", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::hyperbolic(&params, -2.0f), -1.0f));
 
         params.exponential.shape = 2.0f;
+        params.exponential.log_shape = dspu::quick_logf(params.exponential.shape);
+        params.exponential.scale = params.exponential.shape / (params.exponential.shape - 1.0f);
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::exponential(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::exponential(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::exponential(&params, -1.0f), -1.0f));
@@ -82,6 +88,8 @@ UTEST_BEGIN("dspu.misc", shaping)
 
         params.asymmetric_softclip.high_limit = 0.75f;
         params.asymmetric_softclip.low_limit = 0.5f;
+        params.asymmetric_softclip.pos_scale = 1.0f / (1.0f - params.asymmetric_softclip.high_limit);
+        params.asymmetric_softclip.neg_scale = 1.0f / (1.0f - params.asymmetric_softclip.low_limit);
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::asymmetric_softclip(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::asymmetric_softclip(&params, 1.0f), params.asymmetric_clip.high_clip));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::asymmetric_softclip(&params, -1.0f), -params.asymmetric_clip.low_clip));
@@ -89,6 +97,7 @@ UTEST_BEGIN("dspu.misc", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::asymmetric_softclip(&params, -2.0f), -params.asymmetric_clip.low_clip));
 
         params.quarter_circle.radius = 1.0f;
+        params.quarter_circle.radius2 = 2.0f * params.quarter_circle.radius;
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quarter_circle(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quarter_circle(&params, params.quarter_circle.radius), params.quarter_circle.radius));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quarter_circle(&params, -params.quarter_circle.radius), -params.quarter_circle.radius));
@@ -102,19 +111,20 @@ UTEST_BEGIN("dspu.misc", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, 2.0f), 2.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, -2.0f), 2.0f));
 
-        params.bitcrush.levels = 3.0f;
-        params.bitcrush.fcn = dspu::shaping::ROUND_FCN_FLOOR;
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, 0.0f), 0.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, 1.0f), 1.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, -1.0f), -1.0f));
-        params.bitcrush.fcn = dspu::shaping::ROUND_FCN_CEIL;
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, 0.0f), 0.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, 1.0f), 1.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, -1.0f), -1.0f));
-        params.bitcrush.fcn = dspu::shaping::ROUND_FCN_ROUND;
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, 0.0f), 0.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, 1.0f), 1.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush(&params, -1.0f), -1.0f));
+        params.bitcrush_floor.levels = 3.0f;
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_floor(&params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_floor(&params, 1.0f), 1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_floor(&params, -1.0f), -1.0f));
+
+        params.bitcrush_ceil.levels = 3.0f;
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_ceil(&params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_ceil(&params, 1.0f), 1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_ceil(&params, -1.0f), -1.0f));
+
+        params.bitcrush_round.levels = 3.0f;
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, 1.0f), 1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, -1.0f), -1.0f));
     }
 
 UTEST_END;

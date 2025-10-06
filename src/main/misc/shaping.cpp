@@ -33,12 +33,10 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float sinusoidal(shaping_t *params, float value)
             {
-                const float radius = M_PI / (2.0f * params->sinusoidal.slope);
-
-                if (value >= radius)
+                if (value >= params->sinusoidal.radius)
                     return 1.0f;
 
-                if (value <= -radius)
+                if (value <= -params->sinusoidal.radius)
                     return -1.0f;
 
                 return quick_sinf(params->sinusoidal.slope * value);
@@ -47,21 +45,19 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float polynomial(shaping_t *params, float value)
             {
-                const float radius = 1.0f - params->polynomial.shape;
-
                 if (value >= 1.0f)
                     return 1.0f;
 
                 if (value <= -1.0f)
                     return -1.0f;
 
-                if ((value <= radius) || (value >= -radius))
+                if ((value <= params->polynomial.radius) || (value >= -params->polynomial.radius))
                     return (2.0f * value) / (2.0f - params->polynomial.shape);
 
                 float value2 = value * value;
                 float c_m_1_2 = (params->polynomial.shape - 1.0f) * (params->polynomial.shape - 1.0f);
 
-                if ((value > radius))
+                if ((value > params->polynomial.radius))
                     return (value2 - 2 * value + c_m_1_2) / (params->polynomial.shape * (params->polynomial.shape - 2.0f));
 
                 return (value2 + 2 * value + c_m_1_2) / (params->polynomial.shape * (2.0f - params->polynomial.shape));
@@ -76,7 +72,7 @@ namespace lsp
                 if (value <= -1.0f)
                     return -1.0f;
 
-                return quick_tanh(params->polynomial.shape * value) / quick_tanh(params->polynomial.shape);
+                return quick_tanh(params->hyperbolic.shape * value) / params->hyperbolic.hyperbolic_shape;
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -89,14 +85,13 @@ namespace lsp
                     return -1.0f;
 
                 // We must compute shape^value. We can use the fast functions to change the base into e.
-                const float log_shape = quick_logf(params->exponential.shape);
-                const float exp_arg_abs = log_shape * value;
-                const float prop = params->exponential.shape / (params->exponential.shape - 1.0f);
+                // log_shape serves this purpose.
+                const float exp_arg_abs = params->exponential.log_shape * value;
 
                 if (value > 0.0f)
-                    return prop * (1.0f - quick_expf(-exp_arg_abs));
+                    return params->exponential.scale * (1.0f - quick_expf(-exp_arg_abs));
 
-                return prop * (-1.0f + quick_expf(exp_arg_abs));
+                return params->exponential.scale * (-1.0f + quick_expf(exp_arg_abs));
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -158,17 +153,13 @@ namespace lsp
                 if (value == 0.0f)
                     return 0.0f;
 
-                const float pos_scale = 1.0f / (1.0f - params->asymmetric_softclip.high_limit);
-
                 // We compute value^pos_scale, but by changing base to e so that we use the quick functions.
                 if (value > 0.0f)
-                    return value - quick_expf(pos_scale * quick_logf(value)) / pos_scale;
-
-                const float neg_scale = 1.0f / (1.0f - params->asymmetric_softclip.low_limit);
+                    return value - quick_expf(params->asymmetric_softclip.pos_scale * quick_logf(value)) / params->asymmetric_softclip.pos_scale;
 
                 // We compute (-value)^neg_scale, but by changing base to e so that we use the quick functions.
                 // At this point we are sure value < 0, so -value > 0.
-                return value + quick_expf(neg_scale * quick_logf(-value)) / neg_scale;
+                return value + quick_expf(params->asymmetric_softclip.neg_scale * quick_logf(-value)) / params->asymmetric_softclip.neg_scale;
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -179,12 +170,10 @@ namespace lsp
                 if (value <= -params->quarter_circle.radius)
                     return -params->quarter_circle.radius;
 
-                const float radius2 = 2.0f * params->quarter_circle.radius;
-
                 if (value >= 0.0f)
-                    return sqrtf(value * (radius2 - value));
+                    return sqrtf(value * (params->quarter_circle.radius2 - value));
 
-                return -sqrtf(-value * (radius2 + value));
+                return -sqrtf(-value * (params->quarter_circle.radius2 + value));
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -197,19 +186,21 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            float bitcrush(shaping_t *params, float value)
+            float bitcrush_floor(shaping_t *params, float value)
             {
-                switch (params->bitcrush.fcn)
-                {
-                    case ROUND_FCN_FLOOR:
-                        return floorf(params->bitcrush.levels * value) / params->bitcrush.levels;
-                    case ROUND_FCN_CEIL:
-                        return ceilf(params->bitcrush.levels * value) / params->bitcrush.levels;
+                return floorf(params->bitcrush_floor.levels * value) / params->bitcrush_floor.levels;
+            }
 
-                    default:
-                    case ROUND_FCN_ROUND:
-                        return roundf(params->bitcrush.levels * value) / params->bitcrush.levels;
-                }
+            LSP_DSP_UNITS_PUBLIC
+            float bitcrush_ceil(shaping_t *params, float value)
+            {
+                return ceilf(params->bitcrush_ceil.levels * value) / params->bitcrush_ceil.levels;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float bitcrush_round(shaping_t *params, float value)
+            {
+                return roundf(params->bitcrush_round.levels * value) / params->bitcrush_round.levels;
             }
 
             LSP_DSP_UNITS_PUBLIC

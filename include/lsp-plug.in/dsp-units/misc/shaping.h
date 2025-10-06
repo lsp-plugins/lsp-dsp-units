@@ -49,6 +49,7 @@ namespace lsp
             typedef struct sinusoidal_t
             {
                 float slope;  // 0 < slope < M_PI / 2.0f
+                float radius; // M_PI / (2 * slope)
             } sinusoidal_t;
 
             /**
@@ -58,6 +59,7 @@ namespace lsp
             typedef struct polynomial_t
             {
                 float shape;  // 0 < shape <= 1
+                float radius; // 1 - shape
             } polynomial_t;
 
             /**
@@ -67,6 +69,7 @@ namespace lsp
             typedef struct hyperbolic_t
             {
                 float shape; // shape > 0
+                float hyperbolic_shape; // quick_tanh(shape)
             } hyperbolic_t;
 
             /**
@@ -76,6 +79,8 @@ namespace lsp
             typedef struct exponential_t
             {
                 float shape; // shape > 1
+                float log_shape; // quick_logf(shape)
+                float scale; // shape / (shape - 1)
             } exponential_t;
 
             /**
@@ -114,6 +119,8 @@ namespace lsp
             {
                 float high_limit; // 0 <= high_clip < 1
                 float low_limit; // 0 <= low_clip < 1
+                float pos_scale; // 1 / (1 - high_limit)
+                float neg_scale; // 1 / (1 - low_limit)
             } asymmetric_softclip_t;
 
             /**
@@ -123,6 +130,7 @@ namespace lsp
             typedef struct quarter_circle_t
             {
                 float radius; // radius > 0
+                float radius2; // 2 * radius
             } quarter_circle_t;
 
             /**
@@ -134,21 +142,25 @@ namespace lsp
                 float shape; // 0 <= shape <= 1
             } rectifier_t;
 
-            enum round_fcn {
-                ROUND_FCN_FLOOR,
-                ROUND_FCN_CEIL,
-                ROUND_FCN_ROUND
-            };
-
             /**
              * Parameters for a bitcrush shaping function.
              * Modified from Function 11, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * Floor, ceiling and round versions.
              */
-            typedef struct bitcrush_t
+            typedef struct bitcrush_floor_t
             {
                 float levels; // levels >= 1
-                round_fcn fcn;
-            } bitcrush_t;
+            } bitcrush_floor_t;
+
+            typedef struct bitcrush_ceil_t
+            {
+                float levels; // levels >= 1
+            } bitcrush_ceil_t;
+
+            typedef struct bitcrush_round_t
+            {
+                float levels; // levels >= 1
+            } bitcrush_round_t;
 
             /**
              * Parameters for a TAP Tubewarmth stateful shaping function.
@@ -192,7 +204,9 @@ namespace lsp
                 asymmetric_softclip_t asymmetric_softclip;
                 quarter_circle_t quarter_circle;
                 rectifier_t rectifier;
-                bitcrush_t bitcrush;
+                bitcrush_floor_t bitcrush_floor;
+                bitcrush_ceil_t bitcrush_ceil;
+                bitcrush_round_t bitcrush_round;
                 tap_tubewarmth_t tap_tubewarmth;
             };
 
@@ -297,14 +311,34 @@ namespace lsp
             float rectifier(shaping_t *params, float value);
 
             /**
-             * Bitcrush shaping function.
+             * Bitcrush floor shaping function.
              * Modified from Function 11, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
              * @param params shaping function parameters.
              * @param value argument for the shaping function.
              * @return shaping function output.
              */
             LSP_DSP_UNITS_PUBLIC
-            float bitcrush(shaping_t *params, float value);
+            float bitcrush_floor(shaping_t *params, float value);
+
+            /**
+             * Bitcrush ceil shaping function.
+             * Modified from Function 11, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float bitcrush_ceil(shaping_t *params, float value);
+
+            /**
+             * Bitcrush round shaping function.
+             * Modified from Function 11, page 209, Audio Processes, 1st Edition, ISBN: 978-1-138-10011-4.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float bitcrush_round(shaping_t *params, float value);
 
             /**
              * TAP Plugins gate function, building block for TAP Tubewarmth.
