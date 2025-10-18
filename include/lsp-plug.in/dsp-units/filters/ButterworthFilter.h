@@ -114,7 +114,7 @@ namespace lsp
                 /** Output sequence to a destination buffer overwriting its content
                  *
                  * @param dst output wave destination
-                 * @param src input source, allowed to be NULLL
+                 * @param src input source, allowed to be NULL
                  * @param count number of samples to process
                  */
                 void process_overwrite(float *dst, const float *src, size_t count);
