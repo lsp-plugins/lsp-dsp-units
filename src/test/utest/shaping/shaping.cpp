@@ -20,12 +20,12 @@
  */
 
 #include <lsp-plug.in/test-fw/utest.h>
-#include <lsp-plug.in/dsp-units/misc/shaping.h>
+#include <lsp-plug.in/dsp-units/shaping/shaping.h>
 #include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/dsp-units/misc/quickmath.h>
 
-UTEST_BEGIN("dspu.misc", shaping)
+UTEST_BEGIN("dspu.shaping", shaping)
 
     UTEST_MAIN
     {

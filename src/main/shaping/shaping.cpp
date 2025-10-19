@@ -19,7 +19,7 @@
  * along with lsp-dsp-units. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <lsp-plug.in/dsp-units/misc/shaping.h>
+#include <lsp-plug.in/dsp-units/shaping/shaping.h>
 #include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/dsp-units/misc/quickmath.h>
 
