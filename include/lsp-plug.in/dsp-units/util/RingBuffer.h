@@ -51,47 +51,58 @@ namespace lsp
                 /**
                  * Construct the buffer
                  */
-                void        construct();
+                void            construct();
 
                 /** Init buffer, all previously stored data will be lost
                  *
                  * @param size the requested size of buffer, in terms of optimization may be allocated a bit more data
+                 * @param fill default value to use for filling the buffer
                  * @return status of operation
                  */
-                bool        init(size_t size);
+                bool            init(size_t size, float fill = 0.0f);
 
                 /** Destroy buffer
                  *
                  */
-                void        destroy();
+                void            destroy();
 
             public:
-                /** Add data to the buffer
+                /**
+                 * Add data to the head of the buffer
                  *
                  * @param data data to append to the buffer
                  * @param count number of samples
                  * @return actual number of samples appended
                  */
-                size_t      append(const float *data, size_t count);
+                size_t          append(const float *data, size_t count);
 
-                /** Place the single sample to the ring buffer
+                /**
+                 * Place the single sample to the head of the buffer
                  *
                  * @param data sample to append
                  */
-                void        append(float data);
+                void            append(float data);
 
-                /** Return the number of items in the buffer
+                /**
+                 * Return the maximum number of samples can be stored in the buffer
                  *
                  * @return number of items in the buffer
                  */
-                inline size_t size() const              { return nCapacity;  };
+                inline size_t   size() const            { return nCapacity;  };
 
-                /** Clear buffer contents, fill all data with zero
-                 *
+                /**
+                 * Clear buffer contents, fill all data with zero
                  */
-                void        clear();
+                void            clear();
 
-                /** Get the pointer to the beginning of the entire buffer
+                /**
+                 * Clear buffer contents, fill all data with specified value
+                 * @param value value to fill
+                 */
+                void            fill(float value);
+
+                /**
+                 * Get the pointer to the beginning of the entire buffer
                  *
                  * @return data pointer at the head of buffer
                  */
@@ -104,14 +115,34 @@ namespace lsp
                  * @param count number of samples to read
                  * @return actual number of samples read
                  */
-                size_t      get(float *dst, size_t offset, size_t count);
+                size_t          get(float *dst, size_t offset, size_t count) const;
 
                 /**
                  * Get the sample at the tail of the buffer specified by the offset
                  * @param offset offset relative to the current buffer pointer
                  * @return data the sample at the tail of the buffer
                  */
-                float       get(size_t offset);
+                float           get(size_t offset) const;
+
+                /**
+                 * Read contents of the buffer starting from specified absolute position.
+                 * If number of samples exceed the buffer capacity, the read will loop through
+                 * the buffer desired number of times and copy wrapped contents.
+                 *
+                 * @param dst destination buffer
+                 * @param position absolute position to start read, should be less than capacity
+                 * @param count number of samples to read
+                 * @return actual number of samples read or 0 if start position is invalid
+                 */
+                size_t          read(float *dst, size_t position, size_t count) const;
+
+                /**
+                 * Read a single sample starting from specified absolute position
+                 *
+                 * @param position absolute position to read sample
+                 * @return read sample or 0.0f if position is out of buffer bounds
+                 */
+                float           read(size_t position) const;
 
                 /**
                  * Get the interpolated sample at the tail of the buffer specified by the offset.
@@ -119,26 +150,26 @@ namespace lsp
                  * @param offset offset
                  * @return data the sample at the tail of the buffer
                  */
-                float       lerp_get(float offset);
+                float           lerp_get(float offset) const;
 
                 /**
-                 * Get offset of the head relative to the position
+                 * Get absolute position of the head
                  * @return position of the head relative to the beginning of the buffer
                  */
-                inline      size_t head_offset() const  { return nHead; }
+                inline size_t   head_position() const  { return nHead; }
 
                 /**
-                 * Compute the tail offset in the buffer
+                 * Compute the absolute position of tail in the buffer
                  * @param offset the offset of the tail relative to the head
                  * @return position of the tail relative to the beginning of the buffer
                  */
-                size_t      tail_offset(size_t offset) const;
+                size_t          tail_position(size_t offset) const;
 
                 /**
                  * Dump data to the shift buffer
                  * @param v dumper
                  */
-                void        dump(IStateDumper *v) const;
+                void            dump(IStateDumper *v) const;
         };
     } /* namespace dspu */
 } /* namespace lsp */

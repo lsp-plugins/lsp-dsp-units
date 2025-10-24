@@ -24,7 +24,7 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
-#include <lsp-plug.in/dsp-units/util/ShiftBuffer.h>
+#include <lsp-plug.in/dsp-units/util/RingBuffer.h>
 
 namespace lsp
 {
@@ -65,8 +65,9 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC MeterGraph
         {
             protected:
-                ShiftBuffer         sBuffer;
+                RingBuffer          sBuffer;
                 float               fCurrent;
+                float               fDefault;
                 uint32_t            nCount;
                 uint32_t            nPeriod;
                 meter_method_t      enMethod;
@@ -85,13 +86,15 @@ namespace lsp
                  */
                 void        construct();
 
-                /** Initialize meter graph
+                /**
+                 * Initialize meter graph
                  *
                  * @param frames number of frames used for graph and needed to be stored in internal buffer
                  * @param period strobe period
+                 * @param default_value the default value used for the buffer
                  * @return true on success
                  */
-                bool        init(size_t frames, size_t period);
+                bool        init(size_t frames, size_t period, float default_value = 0.0f);
 
                 /** Destroy meter graph
                  *
@@ -105,60 +108,80 @@ namespace lsp
                  */
                 inline size_t get_frames() const        { return sBuffer.size(); }
 
+                /**
+                 * Get default value of the graph
+                 * @return default value of the graph
+                 */
+                inline float default_value() const      { return fDefault;      }
+
+                /**
+                 * Set default value of the graph
+                 * @note the contents of the buffer are not cleared, so you need to do it manually
+                 * @param value default value of the graph
+                 */
+                inline void set_default_value(float value)  { fDefault = value; }
+
                 /** Set metering method
                  *
                  * @param m metering method
                  */
                 inline void set_method(meter_method_t m) { enMethod = m; }
 
-                /** Get data stored in buffer
-                 *
-                 * @return pointer to the first element of the buffer
+                /**
+                 * Read contents of the MeterGraph
+                 * @param dst pointer to store contents
+                 * @param count number of samples to read
                  */
-                inline float *data()                    { return sBuffer.head();   }
+                void read(float *dst, size_t count) const;
 
-                /** Set strobe period
-                 *
+                /**
+                 * Set strobe period
                  * @param period strobe period
                  */
-                inline void set_period(size_t period)
-                {
-                    nPeriod         = uint32_t(period);
-                }
+                inline void set_period(size_t period)   { nPeriod = uint32_t(period); }
 
+                /**
+                 * Get strobe period
+                 * @return strobe period
+                 */
                 inline float period() const             { return nPeriod; }
 
-                /** Process single sample
-                 *
+                /**
+                 * Process single sample
                  * @param sample sample to process
                  */
                 void process(float sample);
 
-                /** Process multiple samples
-                 *
+                /**
+                 * Process multiple samples
                  * @param s array of samples
                  * @param n number of samples to process
                  */
                 void process(const float *s, size_t n);
 
-                /** Process multiple samples multiplied by specified value
-                 *
+                /**
+                 * Process multiple samples multiplied by specified value
                  * @param s array of samples
                  * @param n number of samples to process
                  */
                 void process(const float *s, float gain, size_t n);
 
-                /** Get current level
-                 *
+                /**
+                 * Get level of last frame
                  * @return current level
                  */
-                inline float level() const      { return sBuffer.last(); }
+                inline float level() const      { return sBuffer.get(0); }
 
-                /** Fill graph with specific level
-                 *
+                /**
+                 * Fill contents of the buffer with specific value
                  * @param level level
                  */
-                inline void fill(float level)   { sBuffer.fill(level); }
+                inline void fill(float level)   { sBuffer.fill(level);  }
+
+                /**
+                 * Clear contents of the graph using default value
+                 */
+                inline void clear()             { sBuffer.fill(fDefault);   }
 
                 /**
                  * Dump internal state

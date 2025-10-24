@@ -23,10 +23,10 @@
 #define LSP_PLUG_IN_DSP_UNITS_CONST_H_
 
 #define LSP_DSP_UNITS_DEFAULT_SAMPLE_RATE           48000               /* Default sample rate                              */
-#define LSP_DSP_UNITS_AIR_ADIABATIC_INDEX           1.4                 /* Adiabatic index for the Air                      */
-#define LSP_DSP_UNITS_AIR_MOLAR_MASS                28.98               /* Molar mass of the air [g/mol]                    */
-#define LSP_DSP_UNITS_GAS_CONSTANT                  8.3144598           /* Gas constant [ j/(mol * K) }                     */
-#define LSP_DSP_UNITS_TEMP_ABS_ZERO                 -273.15             /* Temperature of the absolute zero [ C ]           */
+#define LSP_DSP_UNITS_AIR_ADIABATIC_INDEX           1.4f                /* Adiabatic index for the Air                      */
+#define LSP_DSP_UNITS_AIR_MOLAR_MASS                28.98f              /* Molar mass of the air [g/mol]                    */
+#define LSP_DSP_UNITS_GAS_CONSTANT                  8.3144598f          /* Gas constant [ j/(mol * K) }                     */
+#define LSP_DSP_UNITS_TEMP_ABS_ZERO                 -273.15f            /* Temperature of the absolute zero [ C ]           */
 #define LSP_DSP_UNITS_SPEC_FREQ_MIN                 10.0f               /* Minimum frequency range [ Hz ]                   */
 #define LSP_DSP_UNITS_SPEC_FREQ_MAX                 24000.0f            /* Maximum frequency range [ Hz ]                   */
 #define LSP_DSP_UNITS_SOUND_SPEED_M_S               340.29f             /* The default sound speed [ m / s ]                */

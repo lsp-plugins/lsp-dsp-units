@@ -88,15 +88,15 @@ namespace lsp
         enum crossover_slope_t
         {
             CROSS_SLOPE_OFF     = 0,
-            CROSS_SLOPE_LR2     = 1,
-            CROSS_SLOPE_LR4     = 2,
-            CROSS_SLOPE_LR8     = 3,
-            CROSS_SLOPE_LR12    = 4,
-            CROSS_SLOPE_LR16    = 5,
-            CROSS_SLOPE_LR20    = 6,
-            CROSS_SLOPE_LR24    = 7,
-            CROSS_SLOPE_LR28    = 8,
-            CROSS_SLOPE_LR32    = 9,
+            CROSS_SLOPE_LR2     = 1,        //! 12 dB/ocave
+            CROSS_SLOPE_LR4     = 2,        //! 24 dB/ocave
+            CROSS_SLOPE_LR8     = 3,        //! 48 dB/ocave
+            CROSS_SLOPE_LR12    = 4,        //! 72 dB/ocave
+            CROSS_SLOPE_LR16    = 5,        //! 96 dB/ocave
+            CROSS_SLOPE_LR20    = 6,        //! 120 dB/ocave
+            CROSS_SLOPE_LR24    = 7,        //! 144 dB/ocave
+            CROSS_SLOPE_LR28    = 8,        //! 168 dB/ocave
+            CROSS_SLOPE_LR32    = 9,        //! 192 dB/ocave
         };
 
         /** Crossover, splits signal into bands, calls processing handler (if present)

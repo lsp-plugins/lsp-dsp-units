@@ -45,17 +45,20 @@ namespace lsp
             nHead       = 0;
         }
 
-        bool RingBuffer::init(size_t size)
+        bool RingBuffer::init(size_t size, float fill)
         {
-            float *data     = static_cast<float *>(realloc(pData, size * sizeof(float)));
-            if (data == NULL)
-                return false;
+            if (size != nCapacity)
+            {
+                float *data     = static_cast<float *>(realloc(pData, size * sizeof(float)));
+                if (data == NULL)
+                    return false;
 
-            pData           = data;
-            nCapacity       = uint32_t(size);
-            nHead           = 0;
+                pData           = data;
+                nCapacity       = uint32_t(size);
+                nHead           = 0;
+            }
 
-            dsp::fill_zero(pData, size);
+            dsp::fill(pData, fill, size);
             return true;
         }
 
@@ -109,7 +112,14 @@ namespace lsp
                 dsp::fill_zero(pData, nCapacity);
         }
 
-        float RingBuffer::get(size_t offset)
+        void RingBuffer::fill(float value)
+        {
+            nHead           = 0;
+            if (pData != NULL)
+                dsp::fill(pData, value, nCapacity);
+        }
+
+        float RingBuffer::get(size_t offset) const
         {
             if (offset >= nCapacity)
                 return 0.0f;
@@ -118,7 +128,7 @@ namespace lsp
             return pData[index];
         }
 
-        float RingBuffer::lerp_get(float offset)
+        float RingBuffer::lerp_get(float offset) const
         {
             const ssize_t off = offset;
             const float s1 = get(off);
@@ -127,14 +137,14 @@ namespace lsp
             return lerp(s1, s2, offset - float(off));
         }
 
-        size_t RingBuffer::tail_offset(size_t offset) const
+        size_t RingBuffer::tail_position(size_t offset) const
         {
             return (offset < nCapacity) ?
                 (nHead + nCapacity - offset - 1) % nCapacity :
                 nHead;
         }
 
-        size_t RingBuffer::get(float *dst, size_t offset, size_t count)
+        size_t RingBuffer::get(float *dst, size_t offset, size_t count) const
         {
             size_t to_read;
 
@@ -170,6 +180,32 @@ namespace lsp
                 dsp::fill_zero(&dst[to_read], count - to_read);
 
             return to_read;
+        }
+
+        size_t RingBuffer::read(float *dst, size_t position, size_t count) const
+        {
+            if (position >= nCapacity)
+                return 0;
+
+            // Copy head
+            size_t to_copy      = lsp_min(nCapacity - position, count);
+            dsp::copy(dst, &pData[position], to_copy);
+            position           += to_copy;
+
+            // Loop body (may repeat many times)
+            while (position < count)
+            {
+                to_copy             = lsp_min(nCapacity, count);
+                dsp::copy(dst, pData, to_copy);
+                position           += to_copy;
+            }
+
+            return count;
+        }
+
+        float RingBuffer::read(size_t position) const
+        {
+            return (position < nCapacity) ? pData[position] : 0.0f;
         }
 
         void RingBuffer::dump(IStateDumper *v) const
