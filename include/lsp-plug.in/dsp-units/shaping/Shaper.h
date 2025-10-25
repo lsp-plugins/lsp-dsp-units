@@ -45,21 +45,24 @@ namespace lsp
             SH_FCN_BITCRUSH_FLOOR,
             SH_FCN_BITCRUSH_CEIL,
             SH_FCN_BITCRUSH_ROUND,
-            SH_FCN_TAP_TUBEWARMTH
+            SH_FCN_TAP_TUBEWARMTH,
+
+            SH_FCN_DEFAULT = SH_FCN_HYPERBOLIC
         };
 
         class LSP_DSP_UNITS_PUBLIC Shaper
         {
             enum update_t
             {
-                UPD_SLOPE       = 1 << 0,
-                UPD_SHAPE       = 1 << 1,
-                UPD_HIGH_LEVEL  = 1 << 2,
-                UPD_LOW_LEVEL   = 1 << 3,
-                UPD_RADIUS      = 1 << 4,
-                UPD_LEVELS      = 1 << 5,
-                UPD_DRIVE       = 1 << 6,
-                UPD_BLEND       = 1 << 7,
+                UPD_FUNCTION    = 1 << 0,
+                UPD_SLOPE       = 1 << 1,
+                UPD_SHAPE       = 1 << 2,
+                UPD_HIGH_LEVEL  = 1 << 3,
+                UPD_LOW_LEVEL   = 1 << 4,
+                UPD_RADIUS      = 1 << 5,
+                UPD_LEVELS      = 1 << 6,
+                UPD_DRIVE       = 1 << 7,
+                UPD_BLEND       = 1 << 8,
 
                 UPD_ALL =
                         UPD_SLOPE |
@@ -141,7 +144,7 @@ namespace lsp
                 void destroy();
 
             protected:
-                void needs_update() const;
+                bool needs_update() const;
                 void update_settings();
 
             public:

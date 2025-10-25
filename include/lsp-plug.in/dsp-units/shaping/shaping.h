@@ -48,7 +48,7 @@ namespace lsp
              */
             typedef struct sinusoidal_t
             {
-                float slope;  // 0 < slope < M_PI / 2.0f
+                float slope;  // 0 < slope <= M_PI / 2.0f
                 float radius; // M_PI / (2 * slope)
             } sinusoidal_t;
 
@@ -117,8 +117,8 @@ namespace lsp
              */
             typedef struct asymmetric_softclip_t
             {
-                float high_limit; // 0 <= high_clip < 1
-                float low_limit; // 0 <= low_clip < 1
+                float high_limit; // 0 <= high_limit < 1
+                float low_limit; // 0 <= low_limit < 1
                 float pos_scale; // 1 / (1 - high_limit)
                 float neg_scale; // 1 / (1 - low_limit)
             } asymmetric_softclip_t;
@@ -129,7 +129,7 @@ namespace lsp
              */
             typedef struct quarter_circle_t
             {
-                float radius; // radius > 0
+                float radius; // radius >= 0
                 float radius2; // 2 * radius
             } quarter_circle_t;
 
@@ -169,8 +169,8 @@ namespace lsp
             typedef struct tap_tubewarmth_t
             {
                 // As in TAP Plugins: https://git.hq.sig7.se/tap-plugins.git, file tap_tubewarmth.c
-                float drive;  // -10 < drive < +10
-                float blend;  // 0.1 < blend < 10
+                float drive;  // -10 <= drive <= +10
+                float blend;  // 0.1 <= blend <= 10
 
                 // All parameters below are computed from drive, blend and sample rate.
 
