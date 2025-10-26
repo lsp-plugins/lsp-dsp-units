@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/dsp-units/shaping/Shaper.h>
 #include <lsp-plug.in/dsp-units/misc/quickmath.h>
+#include <lsp-plug.in/dsp/dsp.h>
 
 #define SINUSOIDAL_MIN_SLOPE                1e-3f   // Must be > 0
 #define SINUSOIDAL_MAX_SLOPE                M_PI_2
@@ -82,6 +83,10 @@ namespace lsp
         {
             enFunction      = SH_FCN_DEFAULT;
 
+            // Initialize all state trackers
+            sShaping.tap_tubewarmth.last_raw_output         = 0.0f;
+            sShaping.tap_tubewarmth.last_raw_intermediate   = 0.0f;
+
             fSlope          = 0.5f;
             fShape          = 0.5f;
             fHighLevel      = 1.0f;
@@ -125,7 +130,7 @@ namespace lsp
                 case SH_FCN_BITCRUSH_CEIL:          return nUpdateFlags & UPD_LEVELS;
                 case SH_FCN_BITCRUSH_ROUND:         return nUpdateFlags & UPD_LEVELS;
 
-                case SH_FCN_TAP_TUBEWARMTH:         return nUpdateFlags & (UPD_DRIVE | UPD_BLEND);
+                case SH_FCN_TAP_TUBEWARMTH:         return nUpdateFlags & (UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE);
             }
 
             return false;
@@ -136,6 +141,13 @@ namespace lsp
             if (!needs_update())
                 return;
 
+            // If the function is what changed we need to reset the state trackers for all stateful functions.
+            if (nUpdateFlags & UPD_FUNCTION)
+            {
+                sShaping.tap_tubewarmth.last_raw_output         = 0.0f;
+                sShaping.tap_tubewarmth.last_raw_intermediate   = 0.0f;
+            }
+
             nUpdateFlags = 0;
 
             switch (enFunction)
@@ -144,6 +156,7 @@ namespace lsp
                 {
                     sShaping.sinusoidal.slope = lsp_limit(0.5f * M_PI * fSlope, SINUSOIDAL_MIN_SLOPE, SINUSOIDAL_MAX_SLOPE);
                     sShaping.sinusoidal.radius = M_PI / (2.0f * sShaping.sinusoidal.slope);
+                    cbShaper = dspu::shaping::sinusoidal;
                 }
                 break;
 
@@ -151,6 +164,7 @@ namespace lsp
                 {
                     sShaping.polynomial.shape = lsp_max(fShape, POLYNOMIAL_MIN_SHAPE);
                     sShaping.polynomial.radius = 1.0f - sShaping.polynomial.shape;
+                    cbShaper = dspu::shaping::polynomial;
                 }
                 break;
 
@@ -158,6 +172,7 @@ namespace lsp
                 {
                     sShaping.hyperbolic.shape = HYPERBOLIC_MAX_SHAPE * fShape;
                     sShaping.hyperbolic.hyperbolic_shape = quick_tanh(sShaping.hyperbolic.shape);
+                    cbShaper = dspu::shaping::hyperbolic;
                 }
                 break;
 
@@ -166,24 +181,28 @@ namespace lsp
                     sShaping.exponential.shape = EXPONENTIAL_CONV_SLOPE * fShape + EXPONENTIAL_CONV_INTRC;
                     sShaping.exponential.log_shape = quick_logf(sShaping.exponential.shape);
                     sShaping.exponential.scale = sShaping.exponential.shape / (sShaping.exponential.shape - 1.0f);
+                    cbShaper = dspu::shaping::exponential;
                 }
                 break;
 
                 case SH_FCN_POWER:
                 {
                     sShaping.power.shape = POWER_CONV_SLOPE * fShape + POWER_CONV_INTRC;
+                    cbShaper = dspu::shaping::power;
                 }
                 break;
 
                 case SH_FCN_BILINEAR:
                 {
                     sShaping.bilinear.shape = BILINEAR_CONV_SLOPE * fShape + BILINEAR_CONV_INTRC;
+                    cbShaper =dspu::shaping::bilinear;
                 }
                 break;
 
                 case SH_FCN_RECTIFIER:
                 {
                     sShaping.rectifier.shape = fShape;
+                    cbShaper = dspu::shaping::rectifier;
                 }
                 break;
 
@@ -191,6 +210,7 @@ namespace lsp
                 {
                     sShaping.asymmetric_clip.high_clip = fHighLevel;
                     sShaping.asymmetric_clip.low_clip = fLowLevel;
+                    cbShaper = dspu::shaping::asymmetric_clip;
                 }
                 break;
 
@@ -200,6 +220,7 @@ namespace lsp
                     sShaping.asymmetric_softclip.low_limit = lsp_min(fLowLevel, ASYMMTERIC_SOFT_CLIP_MAX_LEVEL);
                     sShaping.asymmetric_softclip.pos_scale = 1.0f / (1.0f - sShaping.asymmetric_softclip.high_limit);
                     sShaping.asymmetric_softclip.neg_scale = 1.0f / (1.0f - sShaping.asymmetric_softclip.low_limit);
+                    cbShaper = dspu::shaping::asymmetric_softclip;
                 }
                 break;
 
@@ -207,24 +228,28 @@ namespace lsp
                 {
                     sShaping.quarter_circle.radius = QUARTER_CIRCLE_MAX_RADIUS * fRadius;
                     sShaping.quarter_circle.radius2 = 2.0f * sShaping.quarter_circle.radius;
+                    cbShaper = dspu::shaping::quarter_circle;
                 }
                 break;
 
                 case SH_FCN_BITCRUSH_FLOOR:
                 {
                     sShaping.bitcrush_floor.levels = BITCRUSH_CONV_SLOPE * fLevels + BITCRUSH_CONV_INTRC;
+                    cbShaper = dspu::shaping::bitcrush_floor;
                 }
                 break;
 
                 case SH_FCN_BITCRUSH_CEIL:
                 {
                     sShaping.bitcrush_ceil.levels = BITCRUSH_CONV_SLOPE * fLevels + BITCRUSH_CONV_INTRC;
+                    cbShaper = dspu::shaping::bitcrush_ceil;
                 }
                 break;
 
                 case SH_FCN_BITCRUSH_ROUND:
                 {
                     sShaping.bitcrush_round.levels = BITCRUSH_CONV_SLOPE * fLevels + BITCRUSH_CONV_INTRC;
+                    cbShaper = dspu::shaping::bitcrush_round;
                 }
                 break;
 
@@ -233,9 +258,44 @@ namespace lsp
                     sShaping.tap_tubewarmth.drive = TAP_TUBEWARMTH_BLEND_CONV_SLOPE * fDrive + TAP_TUBEWARMTH_DRIVE_CONV_INTRC;
                     sShaping.tap_tubewarmth.blend = TAP_TUBEWARMTH_BLEND_CONV_SLOPE * fBlend + TAP_TUBEWARMTH_DRIVE_CONV_INTRC;
 
-                    // TODO: Rest of TAP parameters calculation.
+                    float rd = 12.0f / sShaping.tap_tubewarmth.drive;
+                    float rbdr = (780.0f * rd) / (33.0f * (10.5f - sShaping.tap_tubewarmth.blend));
+
+                    sShaping.tap_tubewarmth.kpa = dspu::shaping::tap_rect_sqrt(2.0f * rd * rd - 1.0f) + 1.0f;
+                    sShaping.tap_tubewarmth.kpb = 0.5f * (2.0f - sShaping.tap_tubewarmth.kpa);
+                    sShaping.tap_tubewarmth.ap = 0.5f * (rd * rd - sShaping.tap_tubewarmth.kpa + 1.0f);
+
+                    float kc = sShaping.tap_tubewarmth.kpa / dspu::shaping::tap_rect_sqrt(
+                            dspu::shaping::tap_rect_sqrt(
+                                    2.0f * dspu::shaping::tap_rect_sqrt(2.0f * rd * rd - 1.0f) - 2.0f * rd *rd
+                                    )
+                            );
+                    float sq = kc * kc + 1.0f;
+
+                    sShaping.tap_tubewarmth.srct = (0.1f * nSampleRate) / (0.1f * nSampleRate + 1.0f);
+
+                    sShaping.tap_tubewarmth.knb = -rbdr / dspu::shaping::tap_rect_sqrt(sq);
+                    sShaping.tap_tubewarmth.kna = 2.0f * kc * rbdr / dspu::shaping::tap_rect_sqrt(sq);
+                    sShaping.tap_tubewarmth.an = rbdr * rbdr / sq;
+
+                    float imr = 2.0f * sShaping.tap_tubewarmth.knb * dspu::shaping::tap_rect_sqrt(
+                            2.0f * sShaping.tap_tubewarmth.kna + 4.0f * sShaping.tap_tubewarmth.an - 1.0f
+                            );
+
+                    sShaping.tap_tubewarmth.pwrq = 2.0f / (imr + 1.0f);
+
+                    cbShaper = dspu::shaping::tap_tubewarmth;
                 }
             }
+        }
+
+        void Shaper::set_sample_rate(size_t sr)
+        {
+            if (nSampleRate == sr)
+                return;
+
+            nSampleRate = sr;
+            nUpdateFlags |= UPD_SAMPLE_RATE;
         }
 
         void Shaper::set_slope(float slope)
@@ -300,6 +360,62 @@ namespace lsp
             if (fBlend == blend)
                 return;
             nUpdateFlags |= UPD_BLEND;
+        }
+
+        void Shaper::process_add(float *dst, const float *src, size_t count)
+        {
+            if (src == NULL)
+            {
+                // No inputs, interpret `src` as zeros: dst[i] = distortion(0) + 0 = distortion(0) (might be non-zero)
+                for (size_t n = 0; n < count; ++n)
+                {
+                    dst[n] = cbShaper(&sShaping, 0.0f);
+                }
+                return;
+            }
+
+            for (size_t n = 0; n < count; ++n)
+            {
+                dst[n] += cbShaper(&sShaping, src[n]);
+            }
+        }
+
+        void Shaper::process_mul(float *dst, const float *src, size_t count)
+        {
+            if (src == NULL)
+            {
+                // No inputs, interpret `src` as zeros: dst[i] = distortion(0) * 0 = 0
+                dsp::fill_zero(dst, count);
+                return;
+            }
+
+            for (size_t n = 0; n < count; ++n)
+            {
+                dst[n] *= cbShaper(&sShaping, src[n]);
+            }
+        }
+
+        void Shaper::process_overwrite(float *dst, const float *src, size_t count)
+        {
+            if (src == NULL)
+            {
+                // No inputs, interpret `src` as zeros: dst[i] = distortion(0) (might be non-zero)
+                for (size_t n = 0; n < count; ++n)
+                {
+                    dst[n] = cbShaper(&sShaping, 0.0f);
+                }
+                return;
+            }
+
+            for (size_t n = 0; n < count; ++n)
+            {
+                dst[n] = cbShaper(&sShaping, src[n]);
+            }
+        }
+
+        void Shaper::dump(IStateDumper *v) const
+        {
+
         }
 
     } /* namespace dspu */

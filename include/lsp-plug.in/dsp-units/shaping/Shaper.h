@@ -54,15 +54,16 @@ namespace lsp
         {
             enum update_t
             {
-                UPD_FUNCTION    = 1 << 0,
-                UPD_SLOPE       = 1 << 1,
-                UPD_SHAPE       = 1 << 2,
-                UPD_HIGH_LEVEL  = 1 << 3,
-                UPD_LOW_LEVEL   = 1 << 4,
-                UPD_RADIUS      = 1 << 5,
-                UPD_LEVELS      = 1 << 6,
-                UPD_DRIVE       = 1 << 7,
-                UPD_BLEND       = 1 << 8,
+                UPD_FUNCTION        = 1 << 0,
+                UPD_SLOPE           = 1 << 1,
+                UPD_SHAPE           = 1 << 2,
+                UPD_HIGH_LEVEL      = 1 << 3,
+                UPD_LOW_LEVEL       = 1 << 4,
+                UPD_RADIUS          = 1 << 5,
+                UPD_LEVELS          = 1 << 6,
+                UPD_DRIVE           = 1 << 7,
+                UPD_BLEND           = 1 << 8,
+                UPD_SAMPLE_RATE     = 1 << 9,
 
                 UPD_ALL =
                         UPD_SLOPE |
@@ -70,12 +71,13 @@ namespace lsp
                         UPD_HIGH_LEVEL | UPD_LOW_LEVEL |
                         UPD_RADIUS |
                         UPD_LEVELS |
-                        UPD_DRIVE | UPD_BLEND
+                        UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE
             };
 
             private:
                 sh_function_t               enFunction;
                 dspu::shaping::shaping_t    sShaping;
+                float (*cbShaper)(dspu::shaping::shaping_t*, float); // This is the shaping function, depends on enFunction
 
                 /**
                  * Parameters cross-section: These are in common among all shaping functions.
