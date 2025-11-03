@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.32 ===
+* Fixes in 3D object loading.
+
 === 1.0.31 ===
 * Updated and extended interface of dspu::RingBuffer.
 * Optimizations: dspu::MeterGraph now uses dspu::RingBuffer instead of dsp::ShiftBuffer.
