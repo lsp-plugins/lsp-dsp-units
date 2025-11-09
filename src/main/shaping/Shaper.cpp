@@ -23,47 +23,6 @@
 #include <lsp-plug.in/dsp-units/misc/quickmath.h>
 #include <lsp-plug.in/dsp/dsp.h>
 
-#define SINUSOIDAL_MIN_SLOPE                1e-3f   // Must be > 0
-#define SINUSOIDAL_MAX_SLOPE                M_PI_2
-
-#define POLYNOMIAL_MIN_SHAPE                1e-3f   // Must be > 0
-
-#define HYPERBOLIC_MAX_SHAPE                10.0f
-
-#define EXPONENTIAL_MIN_SHAPE               1.001f  // Must be > 1
-#define EXPONENTIAL_MAX_SHAPE               10.0f
-#define EXPONENTIAL_CONV_SLOPE              (EXPONENTIAL_MAX_SHAPE - EXPONENTIAL_MIN_SHAPE)
-#define EXPONENTIAL_CONV_INTRC              EXPONENTIAL_MIN_SHAPE
-
-#define POWER_MIN_SHAPE                     1.0f    // Must be >= 1
-#define POWER_MAX_SHAPE                     10.0f
-#define POWER_CONV_SLOPE                    (POWER_MAX_SHAPE - POWER_MIN_SHAPE)
-#define POWER_CONV_INTRC                    POWER_MIN_SHAPE
-
-#define BILINEAR_MIN_SHAPE                  0.0f    // Must be >= 0
-#define BILINEAR_MAX_SHAPE                  10.0f
-#define BILINEAR_CONV_SLOPE                 (BILINEAR_MAX_SHAPE - BILINEAR_MIN_SHAPE)
-#define BILINEAR_CONV_INTRC                 BILINEAR_MIN_SHAPE
-
-#define ASYMMTERIC_SOFT_CLIP_MAX_LEVEL      0.999f  // Must be < 1
-
-#define QUARTER_CIRCLE_MAX_RADIUS           10.0f
-
-#define BITCRUSH_MIN_LEVELS                 1.0f    // Must be >= 1
-#define BITCRUSH_MAX_LEVELS                 24.0f
-#define BITCRUSH_CONV_SLOPE                 (BITCRUSH_MAX_LEVELS - BITCRUSH_MIN_LEVELS)
-#define BITCRUSH_CONV_INTRC                 BITCRUSH_MIN_LEVELS
-
-#define TAP_TUBEWARMTH_MIN_DRIVE            -10.0f
-#define TAP_TUBEWARMTH_MAX_DRIVE            10.0f
-#define TAP_TUBEWARMTH_DRIVE_CONV_SLOPE     (TAP_TUBEWARMTH_MAX_DRIVE - TAP_TUBEWARMTH_MIN_DRIVE)
-#define TAP_TUBEWARMTH_DRIVE_CONV_INTRC     TAP_TUBEWARMTH_MIN_DRIVE
-
-#define TAP_TUBEWARMTH_MIN_BLEND            0.1f
-#define TAP_TUBEWARMTH_MAX_BLEND            10.0f
-#define TAP_TUBEWARMTH_BLEND_CONV_SLOPE     (TAP_TUBEWARMTH_MAX_BLEND - TAP_TUBEWARMTH_MIN_BLEND)
-#define TAP_TUBEWARMTH_BLEND_CONV_INTRC     TAP_TUBEWARMTH_MIN_BLEND
-
 namespace lsp
 {
     namespace dspu
@@ -154,7 +113,7 @@ namespace lsp
             {
                 case SH_FCN_SINUSOIDAL:
                 {
-                    sShaping.sinusoidal.slope = lsp_limit(0.5f * M_PI * fSlope, SINUSOIDAL_MIN_SLOPE, SINUSOIDAL_MAX_SLOPE);
+                    sShaping.sinusoidal.slope = lsp_limit(0.5f * M_PI * fSlope, fSinusoidal_min_slope, fSinusoidal_max_slope);
                     sShaping.sinusoidal.radius = M_PI / (2.0f * sShaping.sinusoidal.slope);
                     cbShaper = dspu::shaping::sinusoidal;
                 }
@@ -162,7 +121,7 @@ namespace lsp
 
                 case SH_FCN_POLYNOMIAL:
                 {
-                    sShaping.polynomial.shape = lsp_max(fShape, POLYNOMIAL_MIN_SHAPE);
+                    sShaping.polynomial.shape = lsp_max(fShape, fPolynomial_min_shape);
                     sShaping.polynomial.radius = 1.0f - sShaping.polynomial.shape;
                     cbShaper = dspu::shaping::polynomial;
                 }
@@ -170,7 +129,7 @@ namespace lsp
 
                 case SH_FCN_HYPERBOLIC:
                 {
-                    sShaping.hyperbolic.shape = HYPERBOLIC_MAX_SHAPE * fShape;
+                    sShaping.hyperbolic.shape = fHyperbolic_max_shape * fShape;
                     sShaping.hyperbolic.hyperbolic_shape = quick_tanh(sShaping.hyperbolic.shape);
                     cbShaper = dspu::shaping::hyperbolic;
                 }
@@ -178,7 +137,7 @@ namespace lsp
 
                 case SH_FCN_EXPONENTIAL:
                 {
-                    sShaping.exponential.shape = EXPONENTIAL_CONV_SLOPE * fShape + EXPONENTIAL_CONV_INTRC;
+                    sShaping.exponential.shape = fExponential_conv_slope * fShape + fExponential_conv_intrc;
                     sShaping.exponential.log_shape = quick_logf(sShaping.exponential.shape);
                     sShaping.exponential.scale = sShaping.exponential.shape / (sShaping.exponential.shape - 1.0f);
                     cbShaper = dspu::shaping::exponential;
@@ -187,14 +146,14 @@ namespace lsp
 
                 case SH_FCN_POWER:
                 {
-                    sShaping.power.shape = POWER_CONV_SLOPE * fShape + POWER_CONV_INTRC;
+                    sShaping.power.shape = fPower_conv_slope * fShape + fPower_conv_intrc;
                     cbShaper = dspu::shaping::power;
                 }
                 break;
 
                 case SH_FCN_BILINEAR:
                 {
-                    sShaping.bilinear.shape = BILINEAR_CONV_SLOPE * fShape + BILINEAR_CONV_INTRC;
+                    sShaping.bilinear.shape = fBilinear_conv_slope * fShape + fBilinear_conv_intrc;
                     cbShaper =dspu::shaping::bilinear;
                 }
                 break;
@@ -216,8 +175,8 @@ namespace lsp
 
                 case SH_FCN_ASYMMETRIC_SOFTCLIP:
                 {
-                    sShaping.asymmetric_softclip.high_limit = lsp_min(fHighLevel, ASYMMTERIC_SOFT_CLIP_MAX_LEVEL);
-                    sShaping.asymmetric_softclip.low_limit = lsp_min(fLowLevel, ASYMMTERIC_SOFT_CLIP_MAX_LEVEL);
+                    sShaping.asymmetric_softclip.high_limit = lsp_min(fHighLevel, fAsymmetric_soft_clip_max_level);
+                    sShaping.asymmetric_softclip.low_limit = lsp_min(fLowLevel, fAsymmetric_soft_clip_max_level);
                     sShaping.asymmetric_softclip.pos_scale = 1.0f / (1.0f - sShaping.asymmetric_softclip.high_limit);
                     sShaping.asymmetric_softclip.neg_scale = 1.0f / (1.0f - sShaping.asymmetric_softclip.low_limit);
                     cbShaper = dspu::shaping::asymmetric_softclip;
@@ -226,7 +185,7 @@ namespace lsp
 
                 case SH_FCN_QUARTER_CYCLE:
                 {
-                    sShaping.quarter_circle.radius = QUARTER_CIRCLE_MAX_RADIUS * fRadius;
+                    sShaping.quarter_circle.radius = fQuarter_circle_max_radius * fRadius;
                     sShaping.quarter_circle.radius2 = 2.0f * sShaping.quarter_circle.radius;
                     cbShaper = dspu::shaping::quarter_circle;
                 }
@@ -234,29 +193,29 @@ namespace lsp
 
                 case SH_FCN_BITCRUSH_FLOOR:
                 {
-                    sShaping.bitcrush_floor.levels = BITCRUSH_CONV_SLOPE * fLevels + BITCRUSH_CONV_INTRC;
+                    sShaping.bitcrush_floor.levels = fBitcrush_conv_slope * fLevels + fBitcrush_conv_intrc;
                     cbShaper = dspu::shaping::bitcrush_floor;
                 }
                 break;
 
                 case SH_FCN_BITCRUSH_CEIL:
                 {
-                    sShaping.bitcrush_ceil.levels = BITCRUSH_CONV_SLOPE * fLevels + BITCRUSH_CONV_INTRC;
+                    sShaping.bitcrush_ceil.levels = fBitcrush_conv_slope * fLevels + fBitcrush_conv_intrc;
                     cbShaper = dspu::shaping::bitcrush_ceil;
                 }
                 break;
 
                 case SH_FCN_BITCRUSH_ROUND:
                 {
-                    sShaping.bitcrush_round.levels = BITCRUSH_CONV_SLOPE * fLevels + BITCRUSH_CONV_INTRC;
+                    sShaping.bitcrush_round.levels = fBitcrush_conv_slope * fLevels + fBitcrush_conv_intrc;
                     cbShaper = dspu::shaping::bitcrush_round;
                 }
                 break;
 
                 case SH_FCN_TAP_TUBEWARMTH:
                 {
-                    sShaping.tap_tubewarmth.drive = TAP_TUBEWARMTH_BLEND_CONV_SLOPE * fDrive + TAP_TUBEWARMTH_DRIVE_CONV_INTRC;
-                    sShaping.tap_tubewarmth.blend = TAP_TUBEWARMTH_BLEND_CONV_SLOPE * fBlend + TAP_TUBEWARMTH_DRIVE_CONV_INTRC;
+                    sShaping.tap_tubewarmth.drive = fTap_tebewarmth_drive_conv_slope * fDrive + fTap_tubewarmth_drive_conv_intrc;
+                    sShaping.tap_tubewarmth.blend = fTap_tubewarmth_blend_conv_slope * fBlend + fTap_tubewarmth_blend_conv_intrc;
 
                     float rd = 12.0f / sShaping.tap_tubewarmth.drive;
                     float rbdr = (780.0f * rd) / (33.0f * (10.5f - sShaping.tap_tubewarmth.blend));
@@ -303,6 +262,8 @@ namespace lsp
             slope = lsp_limit(slope, 0.0f, 1.0f);
             if (fSlope == slope)
                 return;
+
+            fSlope = slope;
             nUpdateFlags |= UPD_SLOPE;
         }
 
@@ -311,6 +272,8 @@ namespace lsp
             shape = lsp_limit(shape, 0.0f, 1.0f);
             if (fShape == shape)
                 return;
+
+            fShape = shape;
             nUpdateFlags |= UPD_SHAPE;
         }
 
@@ -319,6 +282,8 @@ namespace lsp
             high_level = lsp_limit(high_level, 0.0f, 1.0f);
             if (fHighLevel == high_level)
                 return;
+
+            fHighLevel = high_level;
             nUpdateFlags |= UPD_HIGH_LEVEL;
         }
 
@@ -327,6 +292,8 @@ namespace lsp
             low_level = lsp_limit(low_level, 0.0f, 1.0f);
             if (fLowLevel == low_level)
                 return;
+
+            fLowLevel = low_level;
             nUpdateFlags |= UPD_LOW_LEVEL;
         }
 
@@ -335,6 +302,8 @@ namespace lsp
             radius = lsp_limit(radius, 0.0f, 1.0f);
             if (fRadius == radius)
                 return;
+
+            fRadius = radius;
             nUpdateFlags |= UPD_RADIUS;
         }
 
@@ -343,6 +312,8 @@ namespace lsp
             levels = lsp_limit(levels, 0.0f, 1.0f);
             if (fLevels == levels)
                 return;
+
+            fLevels = levels;
             nUpdateFlags |= UPD_LEVELS;
         }
 
@@ -351,6 +322,8 @@ namespace lsp
             drive = lsp_limit(drive, 0.0f, 1.0f);
             if (fDrive == drive)
                 return;
+
+            fDrive = drive;
             nUpdateFlags |= UPD_DRIVE;
         }
 
@@ -359,7 +332,18 @@ namespace lsp
             blend = lsp_limit(blend, 0.0f, 1.0f);
             if (fBlend == blend)
                 return;
+
+            fBlend = blend;
             nUpdateFlags |= UPD_BLEND;
+        }
+
+        void Shaper::set_function(sh_function_t function)
+        {
+            if (enFunction == function)
+                return;
+
+            enFunction = function;
+            nUpdateFlags |= UPD_FUNCTION;
         }
 
         void Shaper::process_add(float *dst, const float *src, size_t count)
@@ -415,7 +399,190 @@ namespace lsp
 
         void Shaper::dump(IStateDumper *v) const
         {
+            v->write("fSlope", fSlope);
+            v->write("fShape", fShape);
+            v->write("fHighLevel", fHighLevel);
+            v->write("fLowLevel", fLowLevel);
+            v->write("fRadius", fRadius);
+            v->write("fLevels", fLevels);
+            v->write("fDrive", fDrive);
+            v->write("fBlend", fBlend);
 
+            // Of course, static compile time constants cannot, and should not, be here. They are not even state!
+
+            v->write("enFunction", enFunction);
+
+            switch (enFunction)
+            {
+                case SH_FCN_SINUSOIDAL:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("slope", sShaping.sinusoidal.slope);
+                        v->write("radius", sShaping.sinusoidal.radius);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_POLYNOMIAL:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("shape", sShaping.polynomial.shape);
+                        v->write("radius", sShaping.polynomial.radius);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_HYPERBOLIC:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("shape", sShaping.hyperbolic.shape);
+                        v->write("hyperbolic_shape", sShaping.hyperbolic.hyperbolic_shape);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_EXPONENTIAL:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("shape", sShaping.exponential.shape);
+                        v->write("hyperbolic_shape", sShaping.exponential.log_shape);
+                        v->write("hyperbolic_shape", sShaping.exponential.scale);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_POWER:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("shape", sShaping.power.shape);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_BILINEAR:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("shape", sShaping.bilinear.shape);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_ASYMMETRIC_CLIP:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("high_clip", sShaping.asymmetric_clip.high_clip);
+                        v->write("low_clip", sShaping.asymmetric_clip.low_clip);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_ASYMMETRIC_SOFTCLIP:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("high_limit", sShaping.asymmetric_softclip.high_limit);
+                        v->write("low_limit", sShaping.asymmetric_softclip.low_limit);
+                        v->write("pos_scale", sShaping.asymmetric_softclip.pos_scale);
+                        v->write("neg_scale", sShaping.asymmetric_softclip.neg_scale);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_QUARTER_CYCLE:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("radius", sShaping.quarter_circle.radius);
+                        v->write("radius2", sShaping.quarter_circle.radius2);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_RECTIFIER:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("shape", sShaping.rectifier.shape);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_BITCRUSH_FLOOR:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("levels", sShaping.bitcrush_floor.levels);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_BITCRUSH_CEIL:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("levels", sShaping.bitcrush_ceil.levels);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_BITCRUSH_ROUND:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("levels", sShaping.bitcrush_round.levels);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_TAP_TUBEWARMTH:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("drive", sShaping.tap_tubewarmth.drive);
+                        v->write("blend", sShaping.tap_tubewarmth.blend);
+
+                        v->write("pwrq", sShaping.tap_tubewarmth.pwrq);
+                        v->write("srct", sShaping.tap_tubewarmth.srct);
+
+                        v->write("ap", sShaping.tap_tubewarmth.ap);
+                        v->write("kpa", sShaping.tap_tubewarmth.kpa);
+                        v->write("kpb", sShaping.tap_tubewarmth.kpb);
+
+                        v->write("an", sShaping.tap_tubewarmth.an);
+                        v->write("kna", sShaping.tap_tubewarmth.kna);
+                        v->write("knb", sShaping.tap_tubewarmth.knb);
+
+                        v->write("last_raw_output", sShaping.tap_tubewarmth.last_raw_output);
+                        v->write("last_raw_intermediate", sShaping.tap_tubewarmth.last_raw_intermediate);
+                    }
+                    v->end_object();
+                }
+                break;
+            }
+
+            v->write("cbShaper", cbShaper);
+            v->write("nSampleRate", nSampleRate);
+            v->write("nUpdateFlags", nUpdateFlags);
         }
 
     } /* namespace dspu */

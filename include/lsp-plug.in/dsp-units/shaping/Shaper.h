@@ -52,32 +52,35 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC Shaper
         {
-            enum update_t
-            {
-                UPD_FUNCTION        = 1 << 0,
-                UPD_SLOPE           = 1 << 1,
-                UPD_SHAPE           = 1 << 2,
-                UPD_HIGH_LEVEL      = 1 << 3,
-                UPD_LOW_LEVEL       = 1 << 4,
-                UPD_RADIUS          = 1 << 5,
-                UPD_LEVELS          = 1 << 6,
-                UPD_DRIVE           = 1 << 7,
-                UPD_BLEND           = 1 << 8,
-                UPD_SAMPLE_RATE     = 1 << 9,
+            protected:
+                enum update_t
+                {
+                    UPD_FUNCTION        = 1 << 0,
+                    UPD_SLOPE           = 1 << 1,
+                    UPD_SHAPE           = 1 << 2,
+                    UPD_HIGH_LEVEL      = 1 << 3,
+                    UPD_LOW_LEVEL       = 1 << 4,
+                    UPD_RADIUS          = 1 << 5,
+                    UPD_LEVELS          = 1 << 6,
+                    UPD_DRIVE           = 1 << 7,
+                    UPD_BLEND           = 1 << 8,
+                    UPD_SAMPLE_RATE     = 1 << 9,
 
-                UPD_ALL =
-                        UPD_SLOPE |
-                        UPD_SHAPE |
-                        UPD_HIGH_LEVEL | UPD_LOW_LEVEL |
-                        UPD_RADIUS |
-                        UPD_LEVELS |
-                        UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE
-            };
+                    UPD_ALL =
+                            UPD_SLOPE |
+                            UPD_SHAPE |
+                            UPD_HIGH_LEVEL | UPD_LOW_LEVEL |
+                            UPD_RADIUS |
+                            UPD_LEVELS |
+                            UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE
+                };
+
+                typedef float (*shaper_fcn_t)(dspu::shaping::shaping_t*, float);
 
             private:
-                sh_function_t               enFunction;
-                dspu::shaping::shaping_t    sShaping;
-                float (*cbShaper)(dspu::shaping::shaping_t*, float); // This is the shaping function, depends on enFunction
+                /**
+                 * Parametric Goodies.
+                 */
 
                 /**
                  * Parameters cross-section: These are in common among all shaping functions.
@@ -130,6 +133,68 @@ namespace lsp
                 float                       fDrive;
                 float                       fBlend;
 
+                /**
+                 * Linear scaling coefficients translating class parameters to functions parameters.
+                 */
+
+                // Sinusoidal
+                static constexpr float fSinusoidal_min_slope                {1e-3f};   // Must be > 0
+                static constexpr float fSinusoidal_max_slope                {M_PI_2};
+
+                // Polynomial
+                static constexpr float fPolynomial_min_shape                {1e-3f};   // Must be > 0
+
+                // Hyperbolic
+                static constexpr float fHyperbolic_max_shape                {10.0f};
+
+                // Exponential
+                static constexpr float fExponential_min_shape               {1.001f};  // Must be > 1
+                static constexpr float fExponential_max_shape               {10.0f};
+                static constexpr float fExponential_conv_slope              {fExponential_max_shape - fExponential_min_shape};
+                static constexpr float fExponential_conv_intrc              {fExponential_min_shape};
+
+                // Power
+                static constexpr float fPower_min_shape                     {1.0f};    // Must be >= 1
+                static constexpr float fPower_max_shape                     {10.0f};
+                static constexpr float fPower_conv_slope                    {fPower_max_shape - fPower_min_shape};
+                static constexpr float fPower_conv_intrc                    {fPower_min_shape};
+
+                // Bilinear
+                static constexpr float fBilinear_min_shape                  {0.0f};    // Must be >= 0
+                static constexpr float fBilinear_max_shape                  {10.0f};
+                static constexpr float fBilinear_conv_slope                 {fBilinear_max_shape - fBilinear_min_shape};
+                static constexpr float fBilinear_conv_intrc                 {fBilinear_min_shape};
+
+                // Asymmetric
+                static constexpr float fAsymmetric_soft_clip_max_level      {0.999f};  // Must be < 1
+
+                // Quarter Circle
+                static constexpr float fQuarter_circle_max_radius           {10.0f};
+
+                // Bitcrush
+                static constexpr float fBitcrush_min_levels                 {1.0f};    // Must be >= 1
+                static constexpr float fBitcrush_max_levels                 {24.0f};
+                static constexpr float fBitcrush_conv_slope                 {fBitcrush_max_levels - fBitcrush_min_levels};
+                static constexpr float fBitcrush_conv_intrc                 {fBitcrush_min_levels};
+
+                // TAP Tubewarmth
+                static constexpr float fTap_tubewarmth_min_drive            {-10.0f};
+                static constexpr float fTap_tubewarmth_max_drive            {10.0f};
+                static constexpr float fTap_tebewarmth_drive_conv_slope     {fTap_tubewarmth_max_drive - fTap_tubewarmth_min_drive};
+                static constexpr float fTap_tubewarmth_drive_conv_intrc     {fTap_tubewarmth_min_drive};
+
+                static constexpr float fTap_tubewarmth_min_blend            {0.1f};
+                static constexpr float fTap_tubewarmth_max_blend            {10.0f};
+                static constexpr float fTap_tubewarmth_blend_conv_slope     {fTap_tubewarmth_max_blend - fTap_tubewarmth_min_blend};
+                static constexpr float fTap_tubewarmth_blend_conv_intrc     {fTap_tubewarmth_min_blend};
+
+                /**
+                 * Operational Goodies.
+                 */
+
+                sh_function_t               enFunction;
+                dspu::shaping::shaping_t    sShaping;
+                shaper_fcn_t                cbShaper;  // This is the shaping function, depends on enFunction
                 size_t                      nSampleRate;
                 uint32_t                    nUpdateFlags;
 
@@ -209,6 +274,11 @@ namespace lsp
                  * @param blend blend
                  */
                 void set_blend(float blend);
+
+                /** Set the shaping function.
+                 * @param function function
+                 */
+                void set_function(sh_function_t function);
 
                 /** Output sequence to the destination buffer in additive mode
                  *
