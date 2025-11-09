@@ -125,6 +125,8 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, -1.0f), -1.0f));
+
+        // TODO: Add TAP Tubewarmth test.
     }
 
 UTEST_END;
