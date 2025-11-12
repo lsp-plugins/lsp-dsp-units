@@ -240,7 +240,7 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f         = M_PI / (n - 1);
+                float f         = M_PI / n;
                 for (size_t i=0; i<n; ++i)
                     dst[i]      = sinf(f * i);
             }
@@ -251,7 +251,7 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f         = M_PI / (n - 1);
+                float f         = M_PI / n;
                 for (size_t i=0; i<n; ++i)
                 {
                     float a     = sinf(f * i);
