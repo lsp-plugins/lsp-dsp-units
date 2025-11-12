@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 1 июл. 2020 г.
@@ -44,10 +44,6 @@ namespace lsp
          */
         class LSP_DSP_UNITS_PUBLIC SpectralProcessor
         {
-            private:
-                SpectralProcessor & operator = (const SpectralProcessor &);
-                SpectralProcessor(const SpectralProcessor &);
-
             protected:
                 size_t                      nRank;      // Current FFT rank
                 size_t                      nMaxRank;   // Maximum FFT rank
@@ -67,7 +63,12 @@ namespace lsp
 
             public:
                 explicit SpectralProcessor();
+                SpectralProcessor(const SpectralProcessor &) = delete;
+                SpectralProcessor(SpectralProcessor &&) = delete;
                 ~SpectralProcessor();
+
+                SpectralProcessor & operator = (const SpectralProcessor &) = delete;
+                SpectralProcessor & operator = (SpectralProcessor &&) = delete;
 
                 /**
                  * Construct object
