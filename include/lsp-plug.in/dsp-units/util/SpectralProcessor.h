@@ -149,9 +149,22 @@ namespace lsp
                 void            process(float *dst, const float *src, size_t count);
 
                 /**
+                 * Perform audio analysis without de-processing
+                 * @param src source buffer
+                 * @param count number of samples to process
+                 */
+                void            process(const float *src, size_t count);
+
+                /**
                  * Reset state: cleanup internal buffers
                  */
                 void            reset();
+
+                /**
+                 * Return number of samples remaining before the FFT transform operation occurs
+                 * @return number of samples remaining before the FFT transform occurs
+                 */
+                size_t          remaining() const;
     
                 /**
                  * Dump the state

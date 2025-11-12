@@ -150,8 +150,8 @@ namespace lsp
             if (bUpdate)
                 update_settings();
 
-            size_t buf_size     = 1 << nRank;
-            size_t frame_size   = 1 << (nRank - 1);
+            const size_t buf_size       = 1 << nRank;
+            const size_t frame_size     = 1 << (nRank - 1);
 
             while (count > 0)
             {
@@ -183,7 +183,7 @@ namespace lsp
                 }
 
                 // Estimate number of samples to process
-                size_t to_process   = lsp_min(frame_size - nOffset, count);
+                const size_t to_process     = lsp_min(frame_size - nOffset, count);
 
                 // Copy data
                 dsp::copy(&pInBuf[frame_size + nOffset], src, to_process);
@@ -195,6 +195,58 @@ namespace lsp
                 dst        += to_process;
                 src        += to_process;
             }
+        }
+
+        void SpectralProcessor::process(const float *src, size_t count)
+        {
+            // Check if we need to commit new settings
+            if (bUpdate)
+                update_settings();
+
+            const size_t buf_size       = 1 << nRank;
+            const size_t frame_size     = 1 << (nRank - 1);
+
+            while (count > 0)
+            {
+                // Need to perform transformations?
+                if (nOffset >= frame_size)
+                {
+                    if (pFunc != NULL)
+                    {
+                        // Perform FFT and processing
+                        dsp::pcomplex_r2c(pFftBuf, pInBuf, buf_size);       // Convert from real to packed complex
+                        dsp::packed_direct_fft(pFftBuf, pFftBuf, nRank);    // Perform direct FFT
+                        pFunc(pObject, pSubject, pFftBuf, nRank);           // Call the function
+                    }
+
+                    // Apply signal to buffer
+                    dsp::move(pOutBuf, &pOutBuf[frame_size], frame_size);   // Shift output buffer
+                    dsp::fill_zero(&pOutBuf[frame_size], frame_size);       // Fill tail of input buffer with zeros
+
+                    // Shift input buffer
+                    dsp::move(pInBuf, &pInBuf[frame_size], frame_size);     // Shift input buffer
+
+                    // Reset read/write offset
+                    nOffset     = 0;
+                }
+
+                // Estimate number of samples to process
+                const size_t to_process     = lsp_min(frame_size - nOffset, count);
+
+                // Copy data
+                dsp::copy(&pInBuf[frame_size + nOffset], src, to_process);
+
+                // Update pointers
+                nOffset    += to_process;
+                count      -= to_process;
+                src        += to_process;
+            }
+        }
+
+        size_t SpectralProcessor::remaining() const
+        {
+            const size_t frame_size     = 1 << (nRank - 1);
+            return frame_size - nOffset;
         }
 
         void SpectralProcessor::reset()

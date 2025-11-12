@@ -3,7 +3,7 @@
 *******************************************************************************
 
 === 1.0.33 ===
-
+* Spectral Processor now allows to analyze input signal without processing.
 
 === 1.0.32 ===
 * Fixes in 3D object loading.
