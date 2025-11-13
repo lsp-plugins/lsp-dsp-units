@@ -296,6 +296,36 @@ namespace lsp
 
             for (size_t offset = 0; offset < count; )
             {
+                // Estimate number of samples to process
+                const size_t to_process     = lsp_min(frame_size - nOffset, count - offset);
+
+                // Copy data between input and output buffers
+                if (to_process > 0)
+                {
+                    // Perform processing
+                    for (size_t i=0; i<nChannels; ++i)
+                    {
+                        channel_t *c = &vChannels[i];
+                        if (c->pIn != NULL)
+                        {
+                            dsp::copy(&c->pInBuf[frame_size + nOffset], c->pIn, to_process);
+                            c->pIn                 += to_process;
+                        }
+                        else
+                            dsp::fill_zero(&c->pInBuf[frame_size + nOffset], to_process);
+
+                        if (c->pOut != NULL)
+                        {
+                            dsp::copy(c->pOut, &c->pOutBuf[nOffset], to_process);
+                            c->pOut                += to_process;
+                        }
+                    }
+
+                    // Update pointers
+                    nOffset    += to_process;
+                    offset     += to_process;
+                }
+
                 // Need to perform transformations?
                 if (nOffset >= frame_size)
                 {
@@ -359,32 +389,6 @@ namespace lsp
                     // Reset read/write offset
                     nOffset     = 0;
                 }
-
-                // Estimate number of samples to process
-                const size_t to_process     = lsp_min(frame_size - nOffset, count - offset);
-
-                // Copy data between input and output buffers
-                for (size_t i=0; i<nChannels; ++i)
-                {
-                    channel_t *c = &vChannels[i];
-                    if (c->pIn != NULL)
-                    {
-                        dsp::copy(&c->pInBuf[frame_size + nOffset], c->pIn, to_process);
-                        c->pIn                 += to_process;
-                    }
-                    else
-                        dsp::fill_zero(&c->pInBuf[frame_size + nOffset], to_process);
-
-                    if (c->pOut != NULL)
-                    {
-                        dsp::copy(c->pOut, &c->pOutBuf[nOffset], to_process);
-                        c->pOut                += to_process;
-                    }
-                }
-
-                // Update pointers
-                nOffset    += to_process;
-                offset     += to_process;
             }
         }
 
