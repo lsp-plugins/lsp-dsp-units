@@ -40,7 +40,7 @@ namespace lsp
             SH_FCN_BILINEAR,
             SH_FCN_ASYMMETRIC_CLIP,
             SH_FCN_ASYMMETRIC_SOFTCLIP,
-            SH_FCN_QUARTER_CYCLE,
+            SH_FCN_QUARTER_CIRCLE,
             SH_FCN_RECTIFIER,
             SH_FCN_BITCRUSH_FLOOR,
             SH_FCN_BITCRUSH_CEIL,
@@ -149,7 +149,7 @@ namespace lsp
 
                 // Exponential
                 static constexpr float fExponential_min_shape               {1.001f};  // Must be > 1
-                static constexpr float fExponential_max_shape               {10.0f};
+                static constexpr float fExponential_max_shape               {1000.0f};
                 static constexpr float fExponential_conv_slope              {fExponential_max_shape - fExponential_min_shape};
                 static constexpr float fExponential_conv_intrc              {fExponential_min_shape};
 
@@ -161,7 +161,7 @@ namespace lsp
 
                 // Bilinear
                 static constexpr float fBilinear_min_shape                  {0.0f};    // Must be >= 0
-                static constexpr float fBilinear_max_shape                  {10.0f};
+                static constexpr float fBilinear_max_shape                  {20.0f};
                 static constexpr float fBilinear_conv_slope                 {fBilinear_max_shape - fBilinear_min_shape};
                 static constexpr float fBilinear_conv_intrc                 {fBilinear_min_shape};
 
@@ -169,7 +169,7 @@ namespace lsp
                 static constexpr float fAsymmetric_soft_clip_max_level      {0.999f};  // Must be < 1
 
                 // Quarter Circle
-                static constexpr float fQuarter_circle_max_radius           {10.0f};
+                static constexpr float fQuarter_circle_max_radius           {2.0f};
 
                 // Bitcrush
                 static constexpr float fBitcrush_min_levels                 {1.0f};    // Must be >= 1
@@ -178,7 +178,7 @@ namespace lsp
                 static constexpr float fBitcrush_conv_intrc                 {fBitcrush_min_levels};
 
                 // TAP Tubewarmth
-                static constexpr float fTap_tubewarmth_min_drive            {-10.0f};
+                static constexpr float fTap_tubewarmth_min_drive            {1e-3f}; // Must be > 0
                 static constexpr float fTap_tubewarmth_max_drive            {10.0f};
                 static constexpr float fTap_tebewarmth_drive_conv_slope     {fTap_tubewarmth_max_drive - fTap_tubewarmth_min_drive};
                 static constexpr float fTap_tubewarmth_drive_conv_intrc     {fTap_tubewarmth_min_drive};

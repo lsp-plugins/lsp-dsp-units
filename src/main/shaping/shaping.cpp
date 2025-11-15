@@ -51,7 +51,7 @@ namespace lsp
                 if (value <= -1.0f)
                     return -1.0f;
 
-                if ((value <= params->polynomial.radius) || (value >= -params->polynomial.radius))
+                if ((value <= params->polynomial.radius) && (value >= -params->polynomial.radius))
                     return (2.0f * value) / (2.0f - params->polynomial.shape);
 
                 float value2 = value * value;
@@ -143,10 +143,10 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float asymmetric_softclip(shaping_t *params, float value)
             {
-                if (value >= params->asymmetric_softclip.high_limit)
+                if (value >= 1.0f)
                     return params->asymmetric_softclip.high_limit;
 
-                if (value <= -params->asymmetric_softclip.low_limit)
+                if (value <= -1.0f)
                     return -params->asymmetric_softclip.low_limit;
 
                 // We return 0.0f if the input is 0.0f. Exact 0.0f input might lead to issues with quick_logf.
@@ -171,14 +171,26 @@ namespace lsp
                     return -params->quarter_circle.radius;
 
                 if (value >= 0.0f)
-                    return sqrtf(value * (params->quarter_circle.radius2 - value));
+                    return sqrtf(
+                        params->quarter_circle.radius2 -
+                        (value - params->quarter_circle.radius) * (value - params->quarter_circle.radius)
+                        );
 
-                return -sqrtf(-value * (params->quarter_circle.radius2 + value));
+                return -sqrtf(
+                    params->quarter_circle.radius2 -
+                    (-value - params->quarter_circle.radius) * (-value - params->quarter_circle.radius)
+                    );
             }
 
             LSP_DSP_UNITS_PUBLIC
             float rectifier(shaping_t *params, float value)
             {
+                if (value >= 1.0f)
+                    return 1.0f;
+
+                if (value <= -1.0f)
+                    return 1.0f - 2.0f * params->rectifier.shape;
+
                 if (value > -params->rectifier.shape)
                     return value;
 

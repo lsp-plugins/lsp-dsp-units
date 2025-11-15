@@ -57,6 +57,9 @@ namespace lsp
 
             nSampleRate     = 0;
             nUpdateFlags    = UPD_ALL;
+
+            // Update the settings with the defaults above.
+            update_settings();
         }
 
         void Shaper::destroy()
@@ -83,7 +86,7 @@ namespace lsp
                 case SH_FCN_ASYMMETRIC_CLIP:        return nUpdateFlags & (UPD_HIGH_LEVEL | UPD_LOW_LEVEL);
                 case SH_FCN_ASYMMETRIC_SOFTCLIP:    return nUpdateFlags & (UPD_HIGH_LEVEL | UPD_LOW_LEVEL);
 
-                case SH_FCN_QUARTER_CYCLE:          return nUpdateFlags & UPD_RADIUS;
+                case SH_FCN_QUARTER_CIRCLE:          return nUpdateFlags & UPD_RADIUS;
 
                 case SH_FCN_BITCRUSH_FLOOR:         return nUpdateFlags & UPD_LEVELS;
                 case SH_FCN_BITCRUSH_CEIL:          return nUpdateFlags & UPD_LEVELS;
@@ -183,10 +186,10 @@ namespace lsp
                 }
                 break;
 
-                case SH_FCN_QUARTER_CYCLE:
+                case SH_FCN_QUARTER_CIRCLE:
                 {
                     sShaping.quarter_circle.radius = fQuarter_circle_max_radius * fRadius;
-                    sShaping.quarter_circle.radius2 = 2.0f * sShaping.quarter_circle.radius;
+                    sShaping.quarter_circle.radius2 = sShaping.quarter_circle.radius * sShaping.quarter_circle.radius;
                     cbShaper = dspu::shaping::quarter_circle;
                 }
                 break;
@@ -348,6 +351,8 @@ namespace lsp
 
         void Shaper::process_add(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = distortion(0) + 0 = distortion(0) (might be non-zero)
@@ -366,6 +371,8 @@ namespace lsp
 
         void Shaper::process_mul(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = distortion(0) * 0 = 0
@@ -381,6 +388,8 @@ namespace lsp
 
         void Shaper::process_overwrite(float *dst, const float *src, size_t count)
         {
+            update_settings();
+
             if (src == NULL)
             {
                 // No inputs, interpret `src` as zeros: dst[i] = distortion(0) (might be non-zero)
@@ -503,7 +512,7 @@ namespace lsp
                 }
                 break;
 
-                case SH_FCN_QUARTER_CYCLE:
+                case SH_FCN_QUARTER_CIRCLE:
                 {
                     v->begin_object("sShaping", &sShaping, sizeof(sShaping));
                     {

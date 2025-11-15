@@ -97,7 +97,7 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::asymmetric_softclip(&params, -2.0f), -params.asymmetric_clip.low_clip));
 
         params.quarter_circle.radius = 1.0f;
-        params.quarter_circle.radius2 = 2.0f * params.quarter_circle.radius;
+        params.quarter_circle.radius2 = params.quarter_circle.radius * params.quarter_circle.radius;
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quarter_circle(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quarter_circle(&params, params.quarter_circle.radius), params.quarter_circle.radius));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quarter_circle(&params, -params.quarter_circle.radius), -params.quarter_circle.radius));
@@ -108,8 +108,8 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, -1.0f), 1.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, 2.0f), 2.0f));
-        UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, -2.0f), 2.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, 2.0f), 1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::rectifier(&params, -2.0f), 1.0f));
 
         params.bitcrush_floor.levels = 3.0f;
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_floor(&params, 0.0f), 0.0f));
