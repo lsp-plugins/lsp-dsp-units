@@ -40,18 +40,12 @@ namespace lsp
 
             static inline void basic_noise(float *dst, size_t n, float k)
             {
-                if (n <= 0)
+                if (n == 0)
                     return;
-
-                dst[0]              = 1.0f;
-                if (n <= 1)
-                    return;
-
-                ++dst;
-                --n;
 
                 dsp::lramp_set1(dst, 0.0f, FREQ_RANGE, n);
-                dsp::powcv1(dst, k, n);
+                dst[0] = 0.0f;
+                dsp::powvc1(&dst[1], k, n-1);
             }
 
             LSP_DSP_UNITS_PUBLIC
