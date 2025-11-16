@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 20 февр. 2016 г.
@@ -67,8 +67,9 @@ namespace lsp
 
             LSP_DSP_UNITS_PUBLIC
             void violet_noise(float *dst, size_t n);
-        }
-    }
-}
+
+        } /* namespace envelope */
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_MISC_ENVELOPE_H_ */

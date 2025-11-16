@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 20 февр. 2016 г.
@@ -19,6 +19,7 @@
  * along with lsp-plugins. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/misc/envelope.h>
 #include <lsp-plug.in/dsp-units/const.h>
 #include <lsp-plug.in/stdlib/math.h>
@@ -29,15 +30,58 @@ namespace lsp
     {
         namespace envelope
         {
-            static void basic_noise(float *dst, size_t n, float k)
+            static constexpr float FREQ_RANGE           = LSP_DSP_UNITS_SPEC_FREQ_MAX / LSP_DSP_UNITS_SPEC_FREQ_MIN;
+            static constexpr float PLUS_4_5_DB_CONST    = 4.5f / (20.0f * float(M_LOG10_2));
+            static constexpr float MINUS_4_5_DB_CONST   = -4.5f / (20.0f * float(M_LOG10_2));
+            static constexpr float BLUE_CONST           = logf(2.0f) / logf(4.0f);
+            static constexpr float VIOLET_CONST         = 1.0f;
+            static constexpr float BROWN_CONST          = -1.0f;
+            static constexpr float PINK_CONST           = logf(0.5f) / logf(4.0f);
+
+            static inline void basic_noise(float *dst, size_t n, float k)
             {
-                if (n == 0)
+                if (n <= 0)
                     return;
 
-                dst[0]      = 1.0f;
-                float kd    = (LSP_DSP_UNITS_SPEC_FREQ_MAX / LSP_DSP_UNITS_SPEC_FREQ_MIN) / n;
-                for (size_t i=1; i < n; ++i)
-                    dst[i]      = expf(k * logf(i * kd));
+                dst[0]              = 1.0f;
+                if (n <= 1)
+                    return;
+
+                ++dst;
+                --n;
+
+                dsp::lramp_set1(dst, 0.0f, FREQ_RANGE, n);
+                dsp::powcv1(dst, k, n);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void white_noise(float *dst, size_t n)
+            {
+                dsp::fill_one(dst, n);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void pink_noise(float *dst, size_t n)
+            {
+                basic_noise(dst, n, PINK_CONST);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void brown_noise(float *dst, size_t n)
+            {
+                basic_noise(dst, n, BROWN_CONST);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void blue_noise(float *dst, size_t n)
+            {
+                basic_noise(dst, n, BLUE_CONST);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void violet_noise(float *dst, size_t n)
+            {
+                basic_noise(dst, n, VIOLET_CONST);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -50,8 +94,8 @@ namespace lsp
                     case BROWN_NOISE:   brown_noise(dst, n);    return;
                     case BLUE_NOISE:    blue_noise(dst, n);     return;
                     case VIOLET_NOISE:  violet_noise(dst, n);   return;
-                    case PLUS_4_5_DB:   basic_noise(dst, n, 4.5 / (20.0 * M_LOG10_2));  return;
-                    case MINUS_4_5_DB:  basic_noise(dst, n, -4.5 / (20.0 * M_LOG10_2));  return;
+                    case PLUS_4_5_DB:   basic_noise(dst, n, PLUS_4_5_DB_CONST);     return;
+                    case MINUS_4_5_DB:  basic_noise(dst, n, MINUS_4_5_DB_CONST);    return;
                     default:
                         return;
                 }
@@ -67,44 +111,14 @@ namespace lsp
                     case BROWN_NOISE:   violet_noise(dst, n);   return;
                     case BLUE_NOISE:    pink_noise(dst, n);     return;
                     case VIOLET_NOISE:  brown_noise(dst, n);    return;
-                    case PLUS_4_5_DB:   basic_noise(dst, n, -4.5 / (20.0 * M_LOG10_2));  return;
-                    case MINUS_4_5_DB:  basic_noise(dst, n, 4.5 / (20.0 * M_LOG10_2));  return;
+                    case PLUS_4_5_DB:   basic_noise(dst, n, MINUS_4_5_DB_CONST);    return;
+                    case MINUS_4_5_DB:  basic_noise(dst, n, PLUS_4_5_DB_CONST);     return;
                     default:
                         return;
                 }
             }
 
-            LSP_DSP_UNITS_PUBLIC
-            void white_noise(float *dst, size_t n)
-            {
-                while (n--)
-                    *(dst++)        = 1.0f;
-            }
-
-            LSP_DSP_UNITS_PUBLIC
-            void pink_noise(float *dst, size_t n)
-            {
-                basic_noise(dst, n, logf(0.5) / logf(4));
-            }
-
-            LSP_DSP_UNITS_PUBLIC
-            void brown_noise(float *dst, size_t n)
-            {
-                basic_noise(dst, n, -1);
-            }
-
-            LSP_DSP_UNITS_PUBLIC
-            void blue_noise(float *dst, size_t n)
-            {
-                basic_noise(dst, n, logf(2) / logf(4));
-            }
-
-            LSP_DSP_UNITS_PUBLIC
-            void violet_noise(float *dst, size_t n)
-            {
-                basic_noise(dst, n, 1);
-            }
-        }
-    }
-}
+        } /* namespace envelope */
+    } /* namespace dspu */
+} /* namespace lsp */
 
