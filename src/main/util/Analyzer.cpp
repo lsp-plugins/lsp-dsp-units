@@ -466,7 +466,7 @@ namespace lsp
         void Analyzer::get_frequencies(float *frq, uint32_t *idx, float start, float stop, size_t count, bool linear)
         {
             const size_t fft_size   = 1 << nRank;
-            const size_t fft_csize  = (fft_size >> 1) + 1;
+            const size_t fft_width  = (fft_size >> 1);
             const float scale       = float(fft_size) / float(nSampleRate);
 
             // Initialize list of frequencies depending on the scale
@@ -475,13 +475,9 @@ namespace lsp
                 const float norm    = (stop - start) / (count - 1);
                 for (size_t i=0; i<count; ++i)
                 {
-                    float f             = start + i * norm;
-                    size_t ix           = scale * f;
-                    if (ix > fft_csize)
-                        ix                  = fft_csize;
-
-                    frq[i]              = f;
-                    idx[i]              = uint32_t(ix);
+                    const float f       = start + i * norm;
+                    frq[i]              = start + i * norm;
+                    idx[i]              = lsp_min(scale * f, fft_width);
                 }
             }
             else
@@ -490,13 +486,9 @@ namespace lsp
 
                 for (size_t i=0; i<count; ++i)
                 {
-                    float f             = start * expf(i * norm);
-                    size_t ix           = scale * f;
-                    if (ix > fft_csize)
-                        ix                  = fft_csize;
-
+                    const float f       = start * expf(i * norm);
                     frq[i]              = f;
-                    idx[i]              = uint32_t(ix);
+                    idx[i]              = lsp_min(scale * f, fft_width);
                 }
             }
         }
