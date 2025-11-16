@@ -47,26 +47,123 @@ namespace lsp
                 LAST = TOTAL - 1
             };
 
+            /**
+             * Generate noise envelope using linear frequency scale
+             * @param dst pointer to write envelope coefficients
+             * @param first the first frequency in the range, non-negative
+             * @param last the last frequency in the range, non-negative, greater than first
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
             LSP_DSP_UNITS_PUBLIC
-            void noise(float *dst, size_t n, envelope_t type);
+            void noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            /**
+             * Generate compensating (reverse) noise envelope using linear frequency scale
+             * @param dst pointer to write envelope coefficients
+             * @param first the first frequency in the range, non-negative
+             * @param last the last frequency in the range, non-negative, greater than first
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void reverse_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            /**
+             * Generate noise envelope using logarithmic frequency scale
+             * @param dst pointer to write envelope coefficients
+             * @param first the first frequency in the range, non-negative
+             * @param last the last frequency in the range, non-negative, greater than first
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            /**
+             * Generate compensating (reverse) noise envelope using logarithmic frequency scale
+             * @param dst pointer to write envelope coefficients
+             * @param first the first frequency in the range, non-negative
+             * @param last the last frequency in the range, non-negative, greater than first
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void reverse_noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            /**
+             * Generate noise envelope using frequency list
+             * @param dst pointer to write envelope coefficients
+             * @param freq list of frequencies, each frequency should be positive
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+            /**
+             * Generate compensating (reverse) noise envelope using frequency list
+             * @param dst pointer to write envelope coefficients
+             * @param freq list of frequencies, each frequency should be positive
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void reverse_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
 
             LSP_DSP_UNITS_PUBLIC
-            void reverse_noise(float *dst, size_t n, envelope_t type);
+            void white_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
 
             LSP_DSP_UNITS_PUBLIC
-            void white_noise(float *dst, size_t n);
+            void pink_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
 
             LSP_DSP_UNITS_PUBLIC
-            void pink_noise(float *dst, size_t n);
+            void brown_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
 
             LSP_DSP_UNITS_PUBLIC
-            void brown_noise(float *dst, size_t n);
+            void blue_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
 
             LSP_DSP_UNITS_PUBLIC
-            void blue_noise(float *dst, size_t n);
+            void violet_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
 
             LSP_DSP_UNITS_PUBLIC
-            void violet_noise(float *dst, size_t n);
+            void white_noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void pink_noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void brown_noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void blue_noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void violet_noise_log(float *dst, float first, float last, float center, size_t n, envelope_t type);
+
+
+            LSP_DSP_UNITS_PUBLIC
+            void white_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void pink_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void brown_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void blue_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void violet_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
 
         } /* namespace envelope */
     } /* namespace dspu */

@@ -94,7 +94,8 @@ namespace lsp
                                             DEFAULT_ALIGN,
                                         DEFAULT_ALIGN));
             const size_t buf_floats =
-                5 * fft_items +                 // vSigRe, vFftReIm (re + im), vWindow, vEnvelope
+                4 * fft_items +                 // vSigRe, vFftReIm (re + im), vWindow
+                fft_citems +                    // c->vEnvelope
                 channels * nBufSize +           // c->vBuffer
                 channels * fft_citems +         // c->vAmp
                 channels * fft_citems;          // c->vData
@@ -122,7 +123,7 @@ namespace lsp
             vSigRe                  = advance_ptr<float>(abuf, fft_items);
             vFftReIm                = advance_ptr<float>(abuf, fft_items * 2);
             vWindow                 = advance_ptr<float>(abuf, fft_items);
-            vEnvelope               = advance_ptr<float>(abuf, fft_items);
+            vEnvelope               = advance_ptr<float>(abuf, fft_citems);
 
             // Clear buffers
             dsp::fill_zero(vSigRe, buf_floats);
@@ -252,16 +253,21 @@ namespace lsp
             if (!nReconfigure)
                 return;
 
-            size_t fft_size     = 1 << nRank;
-            size_t fft_period   = float(nSampleRate) / fRate;
-            nStep               = uint32_t(fft_period / nChannels);
-            nPeriod             = nStep * nChannels;
+            const size_t fft_size       = 1 << nRank;
+            const size_t fft_csize      = (1 << (nRank - 1)) + 1;
+            const size_t fft_period     = float(nSampleRate) / fRate;
+            nStep                       = uint32_t(fft_period / nChannels);
+            nPeriod                     = nStep * nChannels;
 
             // Update envelope
             if (nReconfigure & R_ENVELOPE)
             {
-                envelope::reverse_noise(vEnvelope, fft_size, envelope::envelope_t(nEnvelope));
-                dsp::mul_k2(vEnvelope, fShift / fft_size, fft_size);
+                envelope::reverse_noise_lin(
+                    vEnvelope,
+                    0.0f, nSampleRate * 0.5f, LSP_DSP_UNITS_SPEC_FREQ_CENTER,
+                    fft_csize,
+                    envelope::envelope_t(nEnvelope));
+                dsp::mul_k2(vEnvelope, fShift / fft_size, fft_csize);
             }
 
             // Clear analysis

@@ -4,7 +4,8 @@
 
 === 1.0.33 ===
 * Spectral Processor now allows to analyze input signal without processing.
-* Optimized noise generation algorithm by using LSP DSP library.
+* Fixed noise envelope generation.
+* Optimized noise envelope generation algorithm by using LSP DSP library.
 * Optimized spectrum analyzer: reduced memory usage and memory copying.
 
 === 1.0.32 ===
