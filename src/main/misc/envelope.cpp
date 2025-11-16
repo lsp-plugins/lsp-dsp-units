@@ -44,8 +44,8 @@ namespace lsp
                     return;
 
                 dsp::lramp_set1(dst, 0.0f, FREQ_RANGE, n);
-                dst[0] = 0.0f;
-                dsp::powvc1(&dst[1], k, n-1);
+                dst[0] = 1.0f;
+                dsp::powvc1(dst, k, n);
             }
 
             LSP_DSP_UNITS_PUBLIC

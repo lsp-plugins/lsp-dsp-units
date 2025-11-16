@@ -76,12 +76,7 @@ namespace lsp
 
         void Analyzer::destroy()
         {
-            if (vChannels != NULL)
-            {
-                delete [] vChannels;
-                vChannels   = NULL;
-            }
-
+            vChannels   = NULL;
             free_aligned(vData);
         }
 
@@ -89,64 +84,58 @@ namespace lsp
         {
             destroy();
 
-            size_t fft_size         = 1 << max_rank;
+            const size_t szof_channels  = align_size(sizeof(channel_t) * channels, 64);
+            const size_t fft_items  = 1 << max_rank;
+            const size_t fft_citems = align_size((1 << (max_rank - 1)) + 1, 16);
             nBufSize                = uint32_t(align_size(
-                                            fft_size +
+                                            fft_items +
                                             size_t(float(max_sr * 2) / min_rate) +
                                             max_delay +
                                             DEFAULT_ALIGN,
                                         DEFAULT_ALIGN));
-            size_t allocate         = 5 * fft_size +                // vSigRe, vFftReIm (re + im), vWindow, vEnvelope
-                                      channels * nBufSize +         // c->vBuffer
-                                      channels * fft_size +         // c->vAmp
-                                      channels * fft_size;          // c->vData
+            const size_t buf_floats =
+                5 * fft_items +                 // vSigRe, vFftReIm (re + im), vWindow, vEnvelope
+                channels * nBufSize +           // c->vBuffer
+                channels * fft_citems +         // c->vAmp
+                channels * fft_citems;          // c->vData
+
+            const size_t allocate   =
+                szof_channels +
+                sizeof(float) * buf_floats;     // c->vData
 
             // Allocate data
-            float *abuf         = alloc_aligned<float>(vData, allocate);
+            uint8_t *abuf           = alloc_aligned<uint8_t>(vData, allocate);
             if (abuf == NULL)
                 return false;
 
             // Allocate channels
-            channel_t *clist    = new channel_t[channels];
-            if (clist == NULL)
-            {
-                delete [] abuf;
-                return false;
-            }
+            vChannels               = advance_ptr_bytes<channel_t>(abuf, szof_channels);
 
-            nChannels           = uint32_t(channels);
-            nMaxRank            = uint32_t(max_rank);
-            nRank               = uint32_t(max_rank);
-            nMaxSampleRate      = uint32_t(max_sr);
-            nMaxUserDelay       = uint32_t(max_delay);
-            fMinRate            = uint32_t(min_rate);
-
-            // Clear buffers
-            dsp::fill_zero(abuf, allocate);
+            nChannels               = uint32_t(channels);
+            nMaxRank                = uint32_t(max_rank);
+            nRank                   = uint32_t(max_rank);
+            nMaxSampleRate          = uint32_t(max_sr);
+            nMaxUserDelay           = uint32_t(max_delay);
+            fMinRate                = uint32_t(min_rate);
 
             // Initialize buffers
-            vSigRe              = abuf;
-            abuf               += fft_size;
-            vFftReIm            = abuf;
-            abuf               += fft_size * 2;
-            vWindow             = abuf;
-            abuf               += fft_size;
-            vEnvelope           = abuf;
-            abuf               += fft_size;
+            vSigRe                  = advance_ptr<float>(abuf, fft_items);
+            vFftReIm                = advance_ptr<float>(abuf, fft_items * 2);
+            vWindow                 = advance_ptr<float>(abuf, fft_items);
+            vEnvelope               = advance_ptr<float>(abuf, fft_items);
+
+            // Clear buffers
+            dsp::fill_zero(vSigRe, buf_floats);
 
             // Initialize channels
-            vChannels           = clist;
             for (size_t i=0; i<channels; ++i)
             {
                 channel_t *c        = &vChannels[i];
 
                 // FFT buffers
-                c->vBuffer          = abuf;
-                abuf               += nBufSize;
-                c->vAmp             = abuf;
-                abuf               += fft_size;
-                c->vData            = abuf;
-                abuf               += fft_size;
+                c->vBuffer          = advance_ptr<float>(abuf, nBufSize);
+                c->vAmp             = advance_ptr<float>(abuf, fft_citems);
+                c->vData            = advance_ptr<float>(abuf, fft_citems);
 
                 // Counters
                 c->nDelay           = 0;
@@ -327,7 +316,7 @@ namespace lsp
                     {
                         // Strobe trigger, copy buffers
                         for (size_t i=0; i<nChannels; ++i)
-                            dsp::copy(vChannels[i].vData, vChannels[i].vAmp, fft_size);
+                            dsp::copy(vChannels[i].vData, vChannels[i].vAmp, fft_csize);
                     }
 
                     // Regular channel, need to perform FFT if
@@ -366,7 +355,7 @@ namespace lsp
                             dsp::mix2(c->vAmp, vFftReIm, 1.0 - fTau, fTau, fft_csize);
                         }
                         else
-                            dsp::fill_zero(c->vAmp, fft_size);
+                            dsp::fill_zero(c->vAmp, fft_csize);
                     } // c->bFreeze
                 } // off == 0
 
