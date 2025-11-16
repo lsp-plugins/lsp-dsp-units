@@ -256,9 +256,9 @@ namespace lsp
             {
                 channel_t *c    = &vChannels[i];
 
-                c->pInBuf       = advance_ptr_bytes<float>(ptr, szof_buf);
-                c->pOutBuf      = advance_ptr_bytes<float>(ptr, szof_buf);
-                c->pFftBuf      = advance_ptr_bytes<float>(ptr, szof_fft_buf);
+                c->pInBuf       = advance_ptr<float>(ptr, szof_buf);
+                c->pOutBuf      = advance_ptr<float>(ptr, szof_buf);
+                c->pFftBuf      = advance_ptr<float>(ptr, szof_fft_buf);
             }
 
             // Clear buffers and initialize cosine window
@@ -302,7 +302,6 @@ namespace lsp
                 // Copy data between input and output buffers
                 if (to_process > 0)
                 {
-                    // Perform processing
                     for (size_t i=0; i<nChannels; ++i)
                     {
                         channel_t *c = &vChannels[i];
@@ -326,7 +325,7 @@ namespace lsp
                     offset     += to_process;
                 }
 
-                // Need to perform transformations?
+                // Process block if needed
                 if (nOffset >= frame_size)
                 {
                     if (pFunc != NULL)
@@ -384,6 +383,7 @@ namespace lsp
                         dsp::fill_zero(&c->pOutBuf[frame_size], frame_size);                    // Fill tail of input buffer with zeros
                         dsp::fmadd3(c->pOutBuf, c->pFftBuf, pWnd, buf_size);                    // Apply cosine window (-> squared cosine) and add to the output buffer
                         dsp::move(c->pInBuf, &c->pInBuf[frame_size], frame_size);               // Shift input buffer
+                        dsp::move(c->pInBuf, c->pInBuf, frame_size);               // Shift input buffer
                     }
 
                     // Reset read/write offset
