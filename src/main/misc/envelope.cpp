@@ -33,10 +33,10 @@ namespace lsp
             static constexpr float FREQ_RANGE           = LSP_DSP_UNITS_SPEC_FREQ_MAX / LSP_DSP_UNITS_SPEC_FREQ_MIN;
             static constexpr float PLUS_4_5_DB_CONST    = 4.5f / (20.0f * float(M_LOG10_2));
             static constexpr float MINUS_4_5_DB_CONST   = -4.5f / (20.0f * float(M_LOG10_2));
-            static constexpr float BLUE_CONST           = logf(2.0f) / logf(4.0f);
+            static constexpr float BLUE_CONST           = 0.5f; // logf(2.0f) / logf(4.0f);
             static constexpr float VIOLET_CONST         = 1.0f;
             static constexpr float BROWN_CONST          = -1.0f;
-            static constexpr float PINK_CONST           = logf(0.5f) / logf(4.0f);
+            static constexpr float PINK_CONST           = -0.5f; // logf(0.5f) / logf(4.0f);
 
             static inline void basic_noise(float *dst, size_t n, float k)
             {
