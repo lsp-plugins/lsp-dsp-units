@@ -358,7 +358,7 @@ namespace lsp
                             // Get complex argument
                             dsp::pcomplex_mod(vFftReIm, vFftReIm, fft_csize);
                             // Mix with the previous value
-                            dsp::mix2(c->vAmp, vFftReIm, 1.0 - fTau, fTau, fft_csize);
+                            dsp::mix2(c->vAmp, vFftReIm, 1.0f - fTau, fTau, fft_csize);
                         }
                         else
                             dsp::fill_zero(c->vAmp, fft_csize);
