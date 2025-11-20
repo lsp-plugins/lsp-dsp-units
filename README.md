@@ -62,6 +62,7 @@ Set of modules provided:
     * Impulse response taker
     * Latency detector
     * Meter history
+    * Multi-channel spectral processor
     * Meter history with scaling option
     * Oscillator
     * Oversampler
