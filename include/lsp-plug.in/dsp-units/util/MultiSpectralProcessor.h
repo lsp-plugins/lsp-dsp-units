@@ -212,6 +212,12 @@ namespace lsp
                 inline size_t   latency() const             { return 1 << nRank;        }
 
                 /**
+                 * Get frame size of the spectral processor
+                 * @return frame size of the spectral processor
+                 */
+                inline size_t   frame_size() const          { return 1 << (nRank - 1);  }
+
+                /**
                  * Perform audio processing
                  * @param count number of samples to process
                  */
