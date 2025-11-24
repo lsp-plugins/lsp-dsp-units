@@ -275,8 +275,8 @@ namespace lsp
             {
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    dsp::fill_zero(vChannels[i].vAmp, fft_size);
-                    dsp::fill_zero(vChannels[i].vData, fft_size);
+                    dsp::fill_zero(vChannels[i].vAmp, fft_csize);
+                    dsp::fill_zero(vChannels[i].vData, fft_csize);
                 }
             }
             // Update window
