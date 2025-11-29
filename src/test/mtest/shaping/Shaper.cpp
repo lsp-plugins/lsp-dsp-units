@@ -20,6 +20,7 @@
  */
 
 #include <lsp-plug.in/test-fw/mtest.h>
+#include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/fmt/lspc/File.h>
 #include <lsp-plug.in/dsp-units/shaping/Shaper.h>
 
@@ -40,119 +41,114 @@ MTEST_BEGIN("dspu.shaping", Shaper)
         FILE *fp = NULL;
         fp = fopen(filePath, "w");
 
-        if (fp == NULL)
-            return;
-
-        while (count--)
-            fprintf(fp, "%.30f\n", *(buf++));
-
-        if(fp)
-            fclose(fp);
+        test::dump_buffer(fp, description, buf, count);
     }
 
 MTEST_MAIN
 {
     size_t sample_rate = 48000u;
+    float duration = 1.0;
+    size_t n_samples = duration * sample_rate;
 
-    float *vInput   = new float[sample_rate];
-    float *vOutput  = new float[sample_rate];
+    float *vInput   = new float[n_samples];
+    float *vOutput  = new float[n_samples];
 
-    make_ramp(vInput, -2.0f, 2.0f, sample_rate);
+    make_ramp(vInput, -2.0f, 2.0f, n_samples);
 
     io::Path path;
 
     MTEST_ASSERT(path.fmt("%s/shaper-input-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Input", vInput, sample_rate);
+    write_buffer(path.as_native(), "Input", vInput, n_samples);
 
     dspu::Shaper shaper;
     shaper.set_sample_rate(sample_rate);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_SINUSOIDAL);
     shaper.set_slope(1.0f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-sinusoidal-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Sinusoidal", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Sinusoidal", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_POLYNOMIAL);
     shaper.set_shape(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-polynomial-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Polynomial", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Polynomial", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_HYPERBOLIC);
     shaper.set_shape(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-hyperbolic-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Hyperbolic", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Hyperbolic", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_EXPONENTIAL);
     shaper.set_shape(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-exponential-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Exponential", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Exponential", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_POWER);
     shaper.set_shape(0.1f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-power-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Power", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Power", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_BILINEAR);
     shaper.set_shape(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-bilinear-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Bilinear", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Bilinear", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_RECTIFIER);
     shaper.set_shape(0.0f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-rectifier-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Rectifier", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Rectifier", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_ASYMMETRIC_CLIP);
     shaper.set_high_level(0.75f);
     shaper.set_low_level(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-asymmetric-clip-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Asymmetric Clip", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Asymmetric Clip", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_ASYMMETRIC_SOFTCLIP);
     shaper.set_high_level(0.75f);
     shaper.set_low_level(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-asymmetric-softclip-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Asymmetric Softclip", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Asymmetric Softclip", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_QUARTER_CIRCLE);
     shaper.set_radius(0.5f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-quarter-circle-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Quarter Circle", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Quarter Circle", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_BITCRUSH_FLOOR);
     shaper.set_levels(8.0f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-bitcrush-floor-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Bitcrush Floor", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Bitcrush Floor", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_BITCRUSH_CEIL);
     shaper.set_levels(8.0f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-bitcrush-ceil-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Bitcrush Ceil", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Bitcrush Ceil", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_BITCRUSH_ROUND);
     shaper.set_levels(8.0f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-bitcrush-round-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "Bitcrush Round", vOutput, sample_rate);
+    write_buffer(path.as_native(), "Bitcrush Round", vOutput, n_samples);
 
     shaper.set_function(dspu::sh_function_t::SH_FCN_TAP_TUBEWARMTH);
     shaper.set_drive(0.0f);
     shaper.set_blend(0.0f);
-    shaper.process_overwrite(vOutput, vInput, sample_rate);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
     MTEST_ASSERT(path.fmt("%s/shaper-tap-tubewarmth-%s.csv", tempdir(), full_name()));
-    write_buffer(path.as_native(), "TAP Tubewarmth", vOutput, sample_rate);
+    write_buffer(path.as_native(), "TAP Tubewarmth", vOutput, n_samples);
 
     shaper.destroy();
 

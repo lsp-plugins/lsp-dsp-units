@@ -133,6 +133,7 @@ namespace lsp
                 float                       fDrive;
                 float                       fBlend;
 
+            public:
                 /**
                  * Linear scaling coefficients translating class parameters to functions parameters.
                  */
@@ -188,6 +189,7 @@ namespace lsp
                 static constexpr float fTap_tubewarmth_blend_conv_slope     {fTap_tubewarmth_max_blend - fTap_tubewarmth_min_blend};
                 static constexpr float fTap_tubewarmth_blend_conv_intrc     {fTap_tubewarmth_min_blend};
 
+            private:
                 /**
                  * Operational Goodies.
                  */
