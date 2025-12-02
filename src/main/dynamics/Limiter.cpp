@@ -157,7 +157,7 @@ namespace lsp
 
             nSampleRate     = sr;
             nLookahead      = millis_to_samples(nSampleRate, fLookahead);
-            nUpdate        |= UP_SR;
+            nUpdate        |= UP_SR | UP_ALR | UP_MODE;
         }
 
         float Limiter::set_lookahead(float lk_ahead)

@@ -3,6 +3,7 @@
 *******************************************************************************
 
 === 1.0.33 ===
+* Fixed out-of sync ALR for the Limiter module when changing the sample rate.
 * Implemented MultiSpectralProcessor class for multi-channel spectral processing.
 * Spectral Processor now allows to analyze input signal without processing.
 * Fixed noise envelope generation.
