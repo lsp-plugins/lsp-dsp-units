@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 08 апр. 2016 г.
@@ -29,15 +29,12 @@ namespace lsp
 {
     namespace dspu
     {
-        /** Simple toggle class
+        /**
+         * Simple toggle class that remembers tate until it will be reset.
          *
          */
         class LSP_DSP_UNITS_PUBLIC Toggle
         {
-            private:
-                Toggle &operator = (const Toggle &);
-                Toggle(const Toggle &);
-
             private:
                 enum state_t
                 {
@@ -51,7 +48,11 @@ namespace lsp
 
             public:
                 explicit Toggle();
+                Toggle(const Toggle &) = delete;
+                Toggle(Toggle &&) = delete;
                 ~Toggle();
+                Toggle & operator = (const Toggle &) = delete;
+                Toggle & operator = (Toggle &&) = delete;
 
                 /**
                  * Construct object
@@ -73,8 +74,9 @@ namespace lsp
                 /** Submit toggle state
                  *
                  * @param value toggle value [0..1]
+                 * @param true if toggle is in the On state.
                  */
-                void        submit(float value);
+                bool        submit(float value);
 
                 /** Check that there is pending request for the toggle
                  *
