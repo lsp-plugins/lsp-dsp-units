@@ -25,15 +25,15 @@
 #include <lsp-plug.in/dsp-units/misc/interpolation.h>
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/common/alloc.h>
-
-#define BUF_GRANULARITY         8192U
-#define GAIN_LOWERING           0.9886 /*0.891250938134 */
-#define MIN_LIMITER_RELEASE     5.0f
+#include <lsp-plug.in/stdlib/stdio.h>
 
 namespace lsp
 {
     namespace dspu
     {
+        static constexpr size_t BUF_GRANULARITY     = 8192;
+        static constexpr float GAIN_LOWERING        = 0.9886f; /*0.891250938134 */
+
         Limiter::Limiter()
         {
             construct();
@@ -64,6 +64,7 @@ namespace lsp
             sALR.fAttack    = 10.0f;
             sALR.fRelease   = 50.0f;
             sALR.fEnvelope  = 0.0f;
+            sALR.fKnee      = GAIN_AMP_M_5_DB;
             sALR.bEnable    = false;
 
             vGainBuf        = NULL;
@@ -213,6 +214,17 @@ namespace lsp
             sALR.bEnable    = enable;
             if (!enable)
                 sALR.fEnvelope  = 0.0f;
+            return old;
+        }
+
+        float Limiter::set_alr_knee(float knee)
+        {
+            const float old = sALR.fKnee;
+            if (knee == old)
+                return old;
+
+            sALR.fKnee      = (knee > 1.0f) ? 1.0f / knee : knee;
+            nUpdate        |= UP_ALR;
             return old;
         }
 
@@ -409,10 +421,45 @@ namespace lsp
             // Update automatic level regulation
             if (nUpdate & UP_ALR)
             {
-                float thresh        = fThreshold * fKnee * GAIN_AMP_M_6_DB;
-                sALR.fKS            = thresh * (M_SQRT2 - 1.0f);
-                sALR.fKE            = thresh;
-                sALR.fGain          = thresh * M_SQRT1_2;
+//                // This code was used to test curve matching between previous version of limiter and new one
+//                {
+//                    const float old_thresh  = fThreshold * fKnee * GAIN_AMP_M_6_DB;
+//                    const float old_ks      = old_thresh * (M_SQRT2 - 1.0f);
+//                    const float old_ke      = old_thresh;
+//                    const float old_gain    = old_thresh * M_SQRT1_2;
+//
+//                    const float thresh      = fThreshold * fKnee * GAIN_AMP_M_9_DB;
+//                    const float ks          = thresh * sALR.fKnee;
+//                    const float ke          = 2.0f * thresh - ks;
+//                    const float gain        = thresh;
+//
+//                    float old_poly[3], new_poly[3];
+//
+//                    interpolation::hermite_quadratic(old_poly, old_ks, old_ks, 1.0f, old_thresh, 0.0f);
+//                    interpolation::hermite_quadratic(new_poly, ks, ks, 1.0f, ke, 0.0f);
+//
+//                    FILE *fd = fopen("/tmp/test-hermite", "w");
+//                    fprintf(fd, "x;y1;y2;\n");
+//
+//                    for (int i=0; i<=1000; ++i)
+//                    {
+//                        const float x       = i * 0.001f;
+//                        const float y1      = (x < ks) ? x :
+//                                              (x > ke) ? gain :
+//                                              (new_poly[0]*x + new_poly[1])*x + new_poly[2];
+//                        const float y2      = (x < old_ks) ? x :
+//                                              (x > old_ke) ? old_gain :
+//                                              (old_poly[0]*x + old_poly[1])*x + old_poly[2];
+//
+//                        fprintf(fd, "%.3f;%.9f;%.9f;\n", x, y1, y2);
+//                    }
+//                    fclose(fd);
+//                }
+
+                const float thresh  = fThreshold * fKnee * GAIN_AMP_M_9_DB;
+                sALR.fKS            = thresh * sALR.fKnee;
+                sALR.fKE            = 2.0f * thresh - sALR.fKS;
+                sALR.fGain          = thresh;
                 interpolation::hermite_quadratic(sALR.vHermite, sALR.fKS, sALR.fKS, 1.0f, thresh, 0.0f);
 
                 float att           = millis_to_samples(nSampleRate, sALR.fAttack);
@@ -791,6 +838,7 @@ namespace lsp
                 v->write("fAttack", sALR.fAttack);
                 v->write("fRelease", sALR.fRelease);
                 v->write("fEnvelope", sALR.fEnvelope);
+                v->write("fKnee", sALR.fKnee);
                 v->write("bEnable", sALR.bEnable);
             }
             v->end_object();
