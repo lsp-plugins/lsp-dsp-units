@@ -460,13 +460,27 @@ namespace lsp
                 sALR.fKS            = thresh * sALR.fKnee;
                 sALR.fKE            = 2.0f * thresh - sALR.fKS;
                 sALR.fGain          = thresh;
-                interpolation::hermite_quadratic(sALR.vHermite, sALR.fKS, sALR.fKS, 1.0f, thresh, 0.0f);
+                interpolation::hermite_quadratic(sALR.vHermite, sALR.fKS, sALR.fKS, 1.0f, sALR.fKE, 0.0f);
 
                 float att           = millis_to_samples(nSampleRate, sALR.fAttack);
                 float rel           = millis_to_samples(nSampleRate, sALR.fRelease);
 
                 sALR.fTauAttack     = (att < 1.0f)  ? 1.0f : 1.0f - expf(logf(1.0f - M_SQRT1_2) / att);
                 sALR.fTauRelease    = (rel < 1.0f)  ? 1.0f : 1.0f - expf(logf(1.0f - M_SQRT1_2) / rel);
+
+//                FILE *fd = fopen("/tmp/test-hermite", "w");
+//                fprintf(fd, "x;y;\n");
+//
+//                for (int i=0; i<=1000; ++i)
+//                {
+//                    const float x       = i * 0.001f;
+//                    const float y       = (x < sALR.fKS) ? x :
+//                                          (x > sALR.fKE) ? sALR.fGain :
+//                                          (sALR.vHermite[0]*x + sALR.vHermite[1])*x + sALR.vHermite[2];
+//
+//                    fprintf(fd, "%.3f;%.9f;\n", x, y);
+//                }
+//                fclose(fd);
             }
 
             // Check that mode change has triggered
