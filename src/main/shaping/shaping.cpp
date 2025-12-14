@@ -216,6 +216,47 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
+            inline float continuous_a_law_compression(shaping_t *params, float value)
+            {
+                float magv = fabsf(value);
+
+                if (magv < params->continuous_a_law_compression.compression_reciprocal)
+                {
+                    return (params->continuous_a_law_compression.compression * value) * params->continuous_a_law_compression.scale;
+                }
+
+                return quick_signf(value) * (1.0f + quick_logf(params->continuous_a_law_compression.compression * magv)) * params->continuous_a_law_compression.scale;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_a_law_expansion(shaping_t *params, float value)
+            {
+                float magv = fabsf(value);
+
+                if (magv < params->continuous_a_law_expansion.radius)
+                {
+                    return value * params->continuous_a_law_expansion.radius_reciprocal * params->continuous_a_law_expansion.expansion_reciprocal;
+                }
+
+                float power = quick_expf(-1.0f + magv * params->continuous_a_law_expansion.radius_reciprocal);
+                return quick_signf(value) * power * params->continuous_a_law_expansion.expansion_reciprocal;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_mu_law_compression(shaping_t *params, float value)
+            {
+                return quick_signf(value) * quick_logf(1.0f + params->continuous_mu_law_compression.compression * fabsf(value)) * params->continuous_mu_law_compression.scale;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_mu_law_expansion(shaping_t *params, float value)
+            {
+                // We need to compute (1 - μ)^|value|. We convert to base e so that we can use quick_expf.
+                float power = quick_expf(fabsf(value) * quick_logf(1.0f + params->continuous_mu_law_expansion.expansion));
+                return quick_signf(value) * (power- 1.0f) * params->continuous_mu_law_expansion.expansion_reciprocal;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
             float tap_tubewarmth(shaping_t *params, float value)
             {
                 float raw_intermediate;

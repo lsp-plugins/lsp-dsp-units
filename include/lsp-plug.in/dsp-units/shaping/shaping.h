@@ -163,6 +163,49 @@ namespace lsp
             } bitcrush_round_t;
 
             /**
+             * Parameters for A-law compression.
+             * Continuous version of ITU-T G.711 as shown in https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             */
+            typedef struct continuous_a_law_compression_t
+            {
+                float compression; // > 0, this is A
+                float compression_reciprocal; // 1 / compression
+                float scale; // 1 / (1 + quick_logf(compression))
+            } continuous_a_law_compression_t;
+
+            /**
+             * Parameters for A-law expansion.
+             * Continuous version of ITU-T G.711 as shown in https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             */
+            typedef struct continuous_a_law_expansion_t
+            {
+                float expansion; // > 0, this is A
+                float expansion_reciprocal; // 1 / expansion
+                float radius; // 1 / (1 + quick_logf(expansion))
+                float radius_reciprocal; // 1 + quick_logf(expansion)
+            } continuous_a_law_expansion_t;
+
+            /**
+             * Parameters μ-law compression.
+             * Continuous version of ITU-T G.711 as shown in https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             */
+            typedef struct continuous_mu_law_compression_t
+            {
+                float compression; // > 0, this is μ
+                float scale; // 1 / quick_logf(1 + compression);
+            } continuous_mu_law_compression_t;
+
+            /**
+             * Parameters μ-law expansion.
+             * Continuous version of ITU-T G.711 as shown in https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             */
+            typedef struct continuous_mu_law_expansion_t
+            {
+                float expansion; // > 0, this is μ
+                float expansion_reciprocal; // 1 / expansion
+            } continuous_mu_law_expansion_t;
+
+            /**
              * Parameters for a TAP Tubewarmth stateful shaping function.
              * From TAP Plugins: https://git.hq.sig7.se/tap-plugins.git
              */
@@ -211,6 +254,10 @@ namespace lsp
                 bitcrush_floor_t bitcrush_floor;
                 bitcrush_ceil_t bitcrush_ceil;
                 bitcrush_round_t bitcrush_round;
+                continuous_a_law_compression_t continuous_a_law_compression;
+                continuous_a_law_expansion_t continuous_a_law_expansion;
+                continuous_mu_law_compression_t continuous_mu_law_compression;
+                continuous_mu_law_expansion_t continuous_mu_law_expansion;
                 tap_tubewarmth_t tap_tubewarmth;
             };
 
@@ -343,6 +390,44 @@ namespace lsp
              */
             LSP_DSP_UNITS_PUBLIC
             float bitcrush_round(shaping_t *params, float value);
+
+            /**
+             * Analog A-law compression as per https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             * (The A-law equations are wrong, correct version reported in https://en.wikipedia.org/wiki/A-law_algorithm).
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_a_law_compression(shaping_t *params, float value);
+
+            /**
+             * Analog A-law expansion as per https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             * (The A-law equations are wrong, correct version reported in https://en.wikipedia.org/wiki/A-law_algorithm).
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_a_law_expansion(shaping_t *params, float value);
+
+            /**
+             * Analog μ-law compression as per https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_mu_law_compression(shaping_t *params, float value);
+
+            /**
+             * Analog μ-law expansion as per https://www.cisco.com/c/en/us/support/docs/voice/h323/8123-waveform-coding.html.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            inline float continuous_mu_law_expansion(shaping_t *params, float value);
 
             /**
              * TAP Plugins gate function, building block for TAP Tubewarmth.

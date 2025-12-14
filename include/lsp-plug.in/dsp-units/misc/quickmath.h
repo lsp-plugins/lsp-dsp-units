@@ -37,6 +37,17 @@ namespace lsp
         static constexpr float      QMATH_LN2                   = M_LN2;
 
         /**
+         * Quick calculation of the sign of a floating point number.
+         * @param x the argument.
+         * @return 1.0f for positive, -1.0f for negative, 0.0f otherwise.
+         */
+        LSP_DSP_UNITS_PUBLIC
+        inline float quick_signf(float x)
+        {
+            return (x > 0.0f) - (x < 0.0f);
+        }
+
+        /**
          * Quick computation of sine value with precision loss
          * @param x the argument, for precise computation it should be within range [-M_PI/2, M_PI/2]
          * @return sine value
