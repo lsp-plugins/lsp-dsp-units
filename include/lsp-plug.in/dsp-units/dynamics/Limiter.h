@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 25 нояб. 2016 г.
@@ -54,10 +54,6 @@ namespace lsp
 
         class LSP_DSP_UNITS_PUBLIC Limiter
         {
-            private:
-                Limiter & operator = (const Limiter &);
-                Limiter(const Limiter &);
-
             protected:
                 typedef void (*apply_patch_t)(void *patch, float *dst, float amp);
 
@@ -84,6 +80,7 @@ namespace lsp
                     float       fAttack;        // Attack
                     float       fRelease;       // Release
                     float       fEnvelope;      // Envelope
+                    float       fKnee;          // Knee
                     bool        bEnable;        // Enable ALR
                 } alr_t;
 
@@ -173,7 +170,12 @@ namespace lsp
 
             public:
                 explicit Limiter();
+                Limiter(const Limiter &) = delete;
+                Limiter(Limiter &&) = delete;
                 ~Limiter();
+
+                Limiter & operator = (const Limiter &) = delete;
+                Limiter & operator = (Limiter &&) = delete;
 
                 /**
                  * Construct the object
@@ -349,6 +351,19 @@ namespace lsp
                  * @return previous value
                  */
                 bool                set_alr(bool enable);
+
+                /**
+                 * Set ALR knee
+                 * @param knee ALR knee in gain units
+                 * @return previous value of ALR knee
+                 */
+                float               set_alr_knee(float knee);
+
+                /**
+                 * Get ALR knee
+                 * @return ALR knee
+                 */
+                inline float        alr_knee() const                    { return sALR.fKnee;        }
 
                 /** Process sidechain signal by limiter
                  *

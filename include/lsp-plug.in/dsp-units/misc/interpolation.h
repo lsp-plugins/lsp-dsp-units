@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 23 сент. 2016 г.
@@ -31,10 +31,14 @@ namespace lsp
     {
         namespace interpolation
         {
-            /** Perform quadratic Hermite interpolation
+            /**
+             * Perform quadratic Hermite interpolation
              *
              * The resulting polynom equation is the following:
-             * y(x) = p[0]*x^2 + p[1]*x^ + p[2]
+             *   y(x) = p[0]*x^2 + p[1]*x^ + p[2]
+             *
+             * The y1 coordinate can be computed using the following formula:
+             *   y1 = y0 + 0.5*(k0 + k1)*(x1 - x0)
              *
              * @param p destination (3 floats) to store the final hermite polynom
              * @param x0 x-coordinate of first point used for interpolation
@@ -46,10 +50,11 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void hermite_quadratic(float *p, float x0, float y0, float k0, float x1, float k1);
 
-            /** Perform cubic Hermite interpolation.
+            /**
+             * Perform cubic Hermite interpolation.
              *
              * The resulting polynom equation is the following:
-             * y(x) = p[0]*x^3 + p[1]*x^2 + p[2]*x + p[3]
+             *   y(x) = p[0]*x^3 + p[1]*x^2 + p[2]*x + p[3]
              *
              * @param p destination (4 floats) to store the final hermite polynom
              * @param x0 x-coordinate of first point used for interpolation
@@ -62,7 +67,8 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void hermite_cubic(float *p, float x0, float y0, float k0, float x1, float y1, float k1);
 
-            /** Perform quadro Hermite interpolation.
+            /**
+             * Perform quadro Hermite interpolation.
              *
              * The resulting polynom equation is the following:
              * y(x) = p[0]*x^4 + p[1]*x^3 + p[2]*x^2 + p[3]*x + p[4]
@@ -84,7 +90,8 @@ namespace lsp
                 float x1, float y1, float k1,
                 float x2, float y2);
 
-            /** Perform penta Hermite interpolation.
+            /**
+             * Perform penta Hermite interpolation.
              *
              * The resulting polynom equation is the following:
              * y(x) = p[0]*x^5 + p[1]*x^4 + p[2]*x^3 + p[3]*x^2 + p[4]*x + p[5]
@@ -107,7 +114,8 @@ namespace lsp
                 float x1, float y1, float k1,
                 float x2, float y2, float k2);
 
-            /** Perform exponent interpolation
+            /**
+             * Perform exponent interpolation
              *
              * @param p destination (3 floats) to store the formula: y(x) = p[0] + p[1] * exp(p[2] * x)
              * @param x0 x-coordinate of first point used for interpolation
@@ -119,7 +127,8 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void exponent(float *p, float x0, float y0, float x1, float y1, float k);
 
-            /** Perform linear interpolation
+            /**
+             * Perform linear interpolation
              *
              * @param p destination (2 floats) to store the formula: y(x) = p[0]*x + p[1]
              * @param x0 x-coordinate of first point used for interpolation

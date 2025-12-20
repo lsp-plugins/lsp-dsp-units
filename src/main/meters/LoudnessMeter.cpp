@@ -49,6 +49,7 @@ namespace lsp
             fPeriod             = 0.0f;
             fMaxPeriod          = 0.0f;
             fAvgCoeff           = 1.0f;
+            fLoudness           = 0.0f;
 
             nPeriod             = 0;
             nMSRefresh          = 0;
@@ -165,6 +166,7 @@ namespace lsp
             fPeriod                 = lsp_min(max_period, dspu::bs::LUFS_MEASURE_PERIOD_MS);  // BS.1770-5: RMS measurement period
             fMaxPeriod              = max_period;
             fAvgCoeff               = 1.0f;
+            fLoudness               = 0.0f;
 
             nPeriod                 = 0;
             nMSRefresh              = 0;
@@ -271,6 +273,8 @@ namespace lsp
 
         void LoudnessMeter::clear()
         {
+            fLoudness               = 0;
+
             for (size_t i=0; i<nChannels; ++i)
             {
                 channel_t *c            = &vChannels[i];
@@ -416,6 +420,8 @@ namespace lsp
                 channel_t *c    = &vChannels[i];
                 if (!(c->nFlags & C_ENABLED))
                     continue;
+                if (c->vIn == NULL)
+                    continue;
 
                 // Apply the weighting filter
                 c->sFilter.process(c->vMS, &c->vIn[offset], samples);
@@ -463,8 +469,8 @@ namespace lsp
                 refresh_rms();
 
                 // Apply data
-                size_t to_do        = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
-                size_t mixed        = process_channels(offset, to_do);
+                const size_t to_do  = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
+                const size_t mixed  = process_channels(offset, to_do);
 
                 if (mixed == 0)
                     dsp::fill_zero(vBuffer, to_do);
@@ -474,6 +480,9 @@ namespace lsp
                 dsp::ssqrt1(vBuffer, to_do);
                 if (out != NULL)
                     dsp::copy(&out[offset], vBuffer, to_do);
+
+                // Remember last measured loudness
+                fLoudness           = vBuffer[to_do - 1];
 
                 // Post-process each channel individually: convert mean squares into
                 // RMS and perform the linking
@@ -590,6 +599,7 @@ namespace lsp
             v->write("fPeriod", fPeriod);
             v->write("fMaxPeriod", fMaxPeriod);
             v->write("fAvgCoeff", fAvgCoeff);
+            v->write("fLoudness", fLoudness);
 
             v->write("nSampleRate", nSampleRate);
             v->write("nPeriod", nPeriod);

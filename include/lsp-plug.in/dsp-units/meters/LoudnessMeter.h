@@ -92,6 +92,7 @@ namespace lsp
                 float                   fPeriod;        // Measuring period
                 float                   fMaxPeriod;     // Maximum measuring period
                 float                   fAvgCoeff;      // Averaging coefficient
+                float                   fLoudness;      // Currently measured loudness value
 
                 size_t                  nSampleRate;    // Sample rate
                 size_t                  nPeriod;        // Measuring period
@@ -243,7 +244,7 @@ namespace lsp
 
                 /**
                  * Process signal from channels and form the gain control signal
-                 * @param out buffer to store the overall loudness (optional)
+                 * @param out buffer to store the overall loudness (optional, may be BULL)
                  * @param count number of samples to process
                  */
                 void            process(float *out, size_t count);
@@ -266,6 +267,12 @@ namespace lsp
                  *
                  */
                 void            update_settings();
+
+                /**
+                 * Get currently measured loudness
+                 * @return currently measured loudness
+                 */
+                inline float    loudness() const                { return fLoudness;     }
 
                 /**
                  * Clear internal state

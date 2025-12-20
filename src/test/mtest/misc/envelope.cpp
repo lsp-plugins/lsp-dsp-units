@@ -56,7 +56,11 @@ MTEST_BEGIN("dspu.misc", envelope)
         float *ptr      = buf;
         for (size_t i=0; i<dspu::envelope::TOTAL; ++i)
         {
-            dspu::envelope::noise(ptr, points, dspu::envelope::envelope_t(i + dspu::envelope::FIRST));
+            dspu::envelope::noise_lin(
+                ptr,
+                LSP_DSP_UNITS_SPEC_FREQ_MIN, LSP_DSP_UNITS_SPEC_FREQ_MAX, LSP_DSP_UNITS_SPEC_FREQ_CENTER,
+                points,
+                dspu::envelope::envelope_t(i + dspu::envelope::FIRST));
 
             envelopes[i]    = ptr;
             ptr            += points;
