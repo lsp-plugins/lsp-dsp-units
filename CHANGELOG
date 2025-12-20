@@ -10,6 +10,7 @@
 * Fixed noise envelope generation.
 * Optimized noise envelope generation algorithm by using LSP DSP library.
 * Optimized spectrum analyzer: reduced memory usage and memory copying.
+* Updated module versions in dependencies.
 
 === 1.0.32 ===
 * Fixes in 3D object loading.
