@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.34 ===
+
+
 === 1.0.33 ===
 * Added varying ALR knee support by the dspu::Limiter module. 
 * Fixed out-of sync ALR for the Limiter module when changing the sample rate.
