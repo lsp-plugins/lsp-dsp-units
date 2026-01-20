@@ -22,6 +22,7 @@
 #include <lsp-plug.in/dsp-units/shaping/shaping.h>
 #include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/dsp-units/misc/quickmath.h>
+#include <lsp-plug.in/common/bits.h>
 
 namespace lsp
 {
@@ -216,7 +217,7 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            inline float continuous_a_law_compression(shaping_t *params, float value)
+            float continuous_a_law_compression(shaping_t *params, float value)
             {
                 float magv = fabsf(value);
 
@@ -229,7 +230,7 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            inline float continuous_a_law_expansion(shaping_t *params, float value)
+            float continuous_a_law_expansion(shaping_t *params, float value)
             {
                 float magv = fabsf(value);
 
@@ -243,17 +244,196 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
-            inline float continuous_mu_law_compression(shaping_t *params, float value)
+            float continuous_mu_law_compression(shaping_t *params, float value)
             {
                 return quick_signf(value) * quick_logf(1.0f + params->continuous_mu_law_compression.compression * fabsf(value)) * params->continuous_mu_law_compression.scale;
             }
 
             LSP_DSP_UNITS_PUBLIC
-            inline float continuous_mu_law_expansion(shaping_t *params, float value)
+            float continuous_mu_law_expansion(shaping_t *params, float value)
             {
                 // We need to compute (1 - μ)^|value|. We convert to base e so that we can use quick_expf.
                 float power = quick_expf(fabsf(value) * quick_logf(1.0f + params->continuous_mu_law_expansion.expansion));
                 return quick_signf(value) * (power- 1.0f) * params->continuous_mu_law_expansion.expansion_reciprocal;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            int16_t a_law_float_to_pcm(shaping_t *params, float value)
+            {
+                return lsp_limit(value, -1.0f, 1.0f) * params->quantized_a_law_compression.pcm_clip;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            uint8_t quantized_a_law_compression(int16_t value)
+            {
+                // Also see https://en.wikipedia.org/wiki/G.711#A-law
+
+                // We first find the sign flag.
+                uint8_t sign = 0x00;
+                if (value >= 0)
+                    sign = 0x80;
+
+                // Then, we compute the magnitude.
+                int16_t magnitude = value;
+                if (magnitude < 0)
+                    magnitude *= -1;
+
+                // Then, we find the segment value (column 3, page 3, https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-G.711-198811-I!!PDF-E&type=items).
+                // Essentially, we figure out in what power of 2 magnitude is.
+                uint8_t segment;
+                if (magnitude < 64)
+                    segment = 1;
+                else if (magnitude >= 4096)
+                    segment = 7;
+                else
+                    segment = int_log2(magnitude) - 4;
+
+                // The low nibble is easily constructed by shifting the magnitude by segment.
+                uint8_t low_nibble = (magnitude >> segment) & 0x000F;
+
+                // The high nibble is simply the segment number, except if magnitude < 32. In that case it is 0x00.
+                uint8_t high_nibble = 0x00;
+                if (magnitude >= 32)
+                    high_nibble = segment;
+
+                // Now we put everything together: high nibble, low nibble and we set the sign.
+                // (we should also XOR with 0b01010101 now but that is an useless operation for us, as we do no need to transmit this value).
+                return sign | (((high_nibble << 4) | low_nibble) & 0x7F);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float a_law_compressed_to_float(uint8_t value)
+            {
+                // Also see https://en.wikipedia.org/wiki/G.711#A-law
+
+                // Let's get the sign. It is in the leftmost bit).
+                float sign = -1.0f;
+                if (value & 0x80)
+                    sign = 1.0f;
+
+                // Let's get the magnitude. Basically, it is everything but the sign bit.
+                // We scale by the highest possible 7 bit value, 127.
+                float magnitude = static_cast<float>(value & 0x7F) / 127.0f;
+
+                // Ready to return:
+                return sign * magnitude;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float quatized_a_law_compression_shaper(shaping_t *params, float value)
+            {
+                return a_law_compressed_to_float(quantized_a_law_compression(a_law_float_to_pcm(params, value)));
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            int16_t mu_law_float_to_pcm(shaping_t *params, float value)
+            {
+                return lsp_limit(value, -1.0f, 1.0f) * params->quantized_mu_law_compression.pcm_clip;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            uint8_t quantized_mu_law_compression(shaping_t *params, int16_t value)
+            {
+                // Also see https://en.wikipedia.org/wiki/G.711#%CE%BC-law
+
+                // We first find the sign flag.
+                uint8_t sign = 0x00;
+                if (value >= 0)
+                    sign = 0x80;
+
+                // Then, we compute the magnitude.
+                int16_t magnitude = value;
+                if (magnitude < 0)
+                    magnitude *= -1;
+                // μ-law has to be biased:
+                magnitude += params->quantized_mu_law_compression.pcm_bias;
+
+                // Ensure we do not bump into illegal values after bias.
+                magnitude = lsp_limit(
+                        magnitude,
+                        -params->quantized_mu_law_compression.pcm_max_magnitude,
+                        params->quantized_mu_law_compression.pcm_max_magnitude
+                    );
+
+                // Then, we find the segment value (column 3, page 5, https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-G.711-198811-I!!PDF-E&type=items).
+                // Essentially, we figure out in what power of 2 magnitude is.
+                // Note how we already added the bias to the magnitude, so we need to add 33 to the levels in column 3, page 5.
+                uint8_t segment;
+                if (magnitude < 64)
+                    segment = 1;
+                else if (magnitude >= 8192)
+                    segment = 8;
+                else
+                    segment = int_log2(magnitude) - 4;
+
+                // The low nibble is easily constructed by shifting the magnitude by segment.
+                uint8_t low_nibble = (magnitude >> segment) & 0x000F;
+
+//                // The high nibble is simply 0x08 - segment.
+//                // Note that the table on Wikipedia would make you think it is segment -1.
+//                // But if that was the case, things would conflict with the actual ITU standard table.
+//                uint8_t high_nibble = 0x08 - segment;
+//
+//                // Now we put everything together: high nibble, low nibble and we set the sign.
+//                return sign | ((high_nibble << 4) | low_nibble);
+
+                // The high nibble is simply segment - 1.
+                uint8_t high_nibble = segment - 1;
+
+                // G.711 prescribes that the bits must be flipped (with except the sign bit).
+                return sign | (~(((high_nibble << 4) | low_nibble)) & 0x7F);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float mu_law_compressed_to_float(uint8_t value)
+            {
+                // Also see https://en.wikipedia.org/wiki/G.711#%CE%BC-law
+
+                // Let's get the sign. It is in the leftmost bit).
+                float sign = -1.0f;
+                if (value & 0x80)
+                    sign = 1.0f;
+
+//                // Let's get the magnitude. Basically, it is everything but the sign bit.
+//                // However, we need to reassemble as it is ordered weird.
+//                // Basically, G.711 forced us to take 0x08 - segment for the high nibble, which flips the numbers over.
+//                // In here we go back to segment and take segment - 1 for the high nibble, which orders it normally.
+//                // We scale by the highest possible 7 bit value, 127.
+//                float magnitude = static_cast<float>((((0x08 - ((value >> 4) & 0x07)) - 1) << 4) | (value & 0x0F)) / 127.0f;
+
+                // Let's get the magnitude. Basically, it is everything but the sign bit.
+                // However, remember that G.711 wanted us to flip the bits.
+                // We scale by the highest possible 7 bit value, 127.
+                float magnitude = static_cast<float>(~value & 0x7F) / 127.0f;
+
+                // Ready to return:
+                return sign * magnitude;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float quatized_mu_law_compression_shaper(shaping_t *params, float value)
+            {
+                return mu_law_compressed_to_float(quantized_mu_law_compression(params, mu_law_float_to_pcm(params, value)));
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float tap_gate(float value)
+            {
+                if ((value < -LSP_DSP_SHAPING_TAP_EPS) || (value > LSP_DSP_SHAPING_TAP_EPS))
+                    return value;
+                else
+                    return 0.0f;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float tap_rect_sqrt(float value)
+            {
+               if (value > LSP_DSP_SHAPING_TAP_EPS)
+                   return sqrtf(value);
+               else if (value < -LSP_DSP_SHAPING_TAP_EPS)
+                   return sqrtf(-value);
+               else
+                   return 0.0f;
             }
 
             LSP_DSP_UNITS_PUBLIC

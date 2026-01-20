@@ -27,6 +27,91 @@
 
 UTEST_BEGIN("dspu.shaping", shaping)
 
+    void test_a_law(dspu::shaping::shaping_t *params)
+    {
+        params->continuous_a_law_compression.compression = 87.6f;
+        params->continuous_a_law_compression.compression_reciprocal = 1.0f / params->continuous_a_law_compression.compression;
+        params->continuous_a_law_compression.scale = 1.0f / (1.0f + dspu::quick_logf(params->continuous_a_law_compression.compression));
+
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_compression(params, -1.0f), -1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_compression(params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_compression(params, 1.0f), 1.0f));
+
+        // Checking the results are the same as in Table 1a, columns 3 and 6, https://www.itu.int/rec/T-REC-G.711-198811-I/en.
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(0)      == 0b10000000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(1)      == 0b10000000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(64)     == 0b10100000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(128)    == 0b10110000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(256)    == 0b11000000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(512)    == 0b11010000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(1024)   == 0b11100000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(2048)   == 0b11110000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(3968)   == 0b11111111);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(4095)   == 0b11111111); // max PCM13 value.
+
+        // Checking the results are the same as in Table 1b, columns 3 and 6, https://www.itu.int/rec/T-REC-G.711-198811-I/en.
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-1)     == 0b00000000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-64)    == 0b00100000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-128)   == 0b00110000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-256)   == 0b01000000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-512)   == 0b01010000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-1024)  == 0b01100000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-2048)  == 0b01110000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-3968)  == 0b01111111);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-4095)  == 0b01111111); // min PCM13 value.
+
+        params->quantized_a_law_compression.pcm_n_bits = 13;
+        params->quantized_a_law_compression.pcm_clip = (1 << (params->quantized_a_law_compression.pcm_n_bits - 1)) - 1;
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, -1.0f), -1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, 1.0f), 1.0f));
+    }
+
+    void test_mu_law(dspu::shaping::shaping_t *params)
+    {
+        params->continuous_mu_law_compression.compression = 255.0f;
+        params->continuous_mu_law_compression.scale = 1.0f / dspu::quick_logf(1.0f + params->continuous_mu_law_compression.compression);
+
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_compression(params, -1.0f), -1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_compression(params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_compression(params, 1.0f), 1.0f));
+
+        params->quantized_mu_law_compression.pcm_n_bits = 14;
+        params->quantized_mu_law_compression.pcm_clip = (1 << (params->quantized_mu_law_compression.pcm_n_bits - 1)) - 1;
+        params->quantized_mu_law_compression.pcm_bias = 33;
+        params->quantized_mu_law_compression.pcm_max_magnitude = params->quantized_mu_law_compression.pcm_clip - params->quantized_mu_law_compression.pcm_bias;
+
+        // Checking the results are the same as in Table 2a, columns 3 and 6, https://www.itu.int/rec/T-REC-G.711-198811-I/en.
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 0)     == 0b11111111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 1)     == 0b11111110);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 31)    == 0b11101111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 95)    == 0b11011111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 223)   == 0b11001111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 479)   == 0b10111111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 991)   == 0b10101111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 2015)  == 0b10011111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 4063)  == 0b10001111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 7903)  == 0b10000000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 8158)  == 0b10000000); // max PCM14 value, minus the 33 bias.
+
+        // Checking the results are the same as in Table 2b, columns 3 and 6, https://www.itu.int/rec/T-REC-G.711-198811-I/en.
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -1)    == 0b01111110);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -31)   == 0b01101111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -95)   == 0b01011111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -223)  == 0b01001111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -479)  == 0b00111111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -991)  == 0b00101111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -2015) == 0b00011111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -4063) == 0b00001111);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -7647) == 0b00000001);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -7903) == 0b00000000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, -8158) == 0b00000000); // min PCM14 value, minus the 33 bias.
+
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_compression_shaper(params, -1.0f), -1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_compression_shaper(params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_compression_shaper(params, 1.0f), 1.0f));
+    }
+
     UTEST_MAIN
     {
         dspu::shaping::shaping_t params;
@@ -125,6 +210,9 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, 1.0f), 1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::bitcrush_round(&params, -1.0f), -1.0f));
+
+        test_a_law(&params);
+        test_mu_law(&params);
 
         // TODO: Add TAP Tubewarmth test.
     }
