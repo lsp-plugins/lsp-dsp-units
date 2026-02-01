@@ -60,8 +60,8 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-3968)  == 0b01111111);
         UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-4095)  == 0b01111111); // min PCM13 value.
 
-        params->quantized_a_law_compression.pcm_n_bits = 13;
-        params->quantized_a_law_compression.pcm_clip = (1 << (params->quantized_a_law_compression.pcm_n_bits - 1)) - 1;
+        params->quantized_a_law_companding.pcm_n_bits = 13;
+        params->quantized_a_law_companding.pcm_clip = (1 << (params->quantized_a_law_companding.pcm_n_bits - 1)) - 1;
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, -1.0f), -1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, 1.0f), 1.0f));
@@ -76,10 +76,10 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_compression(params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_compression(params, 1.0f), 1.0f));
 
-        params->quantized_mu_law_compression.pcm_n_bits = 14;
-        params->quantized_mu_law_compression.pcm_clip = (1 << (params->quantized_mu_law_compression.pcm_n_bits - 1)) - 1;
-        params->quantized_mu_law_compression.pcm_bias = 33;
-        params->quantized_mu_law_compression.pcm_max_magnitude = params->quantized_mu_law_compression.pcm_clip - params->quantized_mu_law_compression.pcm_bias;
+        params->quantized_mu_law_companding.pcm_n_bits = 14;
+        params->quantized_mu_law_companding.pcm_clip = (1 << (params->quantized_mu_law_companding.pcm_n_bits - 1)) - 1;
+        params->quantized_mu_law_companding.pcm_bias = 33;
+        params->quantized_mu_law_companding.pcm_max_magnitude = params->quantized_mu_law_companding.pcm_clip - params->quantized_mu_law_companding.pcm_bias;
 
         // Checking the results are the same as in Table 2a, columns 3 and 6, https://www.itu.int/rec/T-REC-G.711-198811-I/en.
         UTEST_ASSERT(dspu::shaping::quantized_mu_law_compression(params, 0)     == 0b11111111);

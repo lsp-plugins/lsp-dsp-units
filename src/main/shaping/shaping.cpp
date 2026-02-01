@@ -260,7 +260,7 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             int16_t a_law_float_to_pcm(shaping_t *params, float value)
             {
-                return lsp_limit(value, -1.0f, 1.0f) * params->quantized_a_law_compression.pcm_clip;
+                return lsp_limit(value, -1.0f, 1.0f) * params->quantized_a_law_companding.pcm_clip;
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -320,15 +320,72 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
+            uint8_t a_law_linear_encoding(float value)
+            {
+                uint8_t sign = 0x00;
+                if (value >= 0.0f)
+                    sign = 0x80;
+
+                // We scale by the highest possible 7 bit value, 127.
+                uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
+
+                // We return a value encoded just like A-law likes them:
+                return sign | magnitude;
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            int16_t quantized_a_law_expansion(uint8_t value)
+            {
+                // Also see https://en.wikipedia.org/wiki/G.711#A-law
+
+                // Let's get the sign. It is in the leftmost bit).
+                int16_t sign = 1;
+                if (value & 0x80)
+                    sign = -1;
+
+                // Let's get the exponent. This is bits 5 to 7.
+                int16_t exponent = value & 0x70;
+
+                // Lets get the mantissa. This is the first 4 bits.
+                int16_t mantissa = value & 0x0F;
+
+                // Let's construct the word. This is 1mmmm1, where m are the mantissa bits.
+                // Unless exponent == 0. In that case it is 0mmmm1.
+                int16_t word;
+                if (exponent == 0)
+                    word = 0x0001 | (mantissa << 1);
+                else
+                    word = 0x0021 | (mantissa << 1);
+
+                // We now shift the word by the amount set by exponent:
+                int16_t shift = lsp_max(0, exponent - 1);
+
+                // Ready!
+                return sign * (word << shift);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float a_law_expandend_to_float(shaping_t *params, int16_t value)
+            {
+                return static_cast<float>(value) / static_cast<float>(params->quantized_a_law_companding.pcm_clip);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
             float quatized_a_law_compression_shaper(shaping_t *params, float value)
             {
                 return a_law_compressed_to_float(quantized_a_law_compression(a_law_float_to_pcm(params, value)));
             }
 
             LSP_DSP_UNITS_PUBLIC
+            float quatized_a_law_expansion_shaper(shaping_t *params, float value)
+            {
+                return a_law_expandend_to_float(params, quantized_a_law_expansion(a_law_linear_encoding(value)));
+            }
+
+            LSP_DSP_UNITS_PUBLIC
             int16_t mu_law_float_to_pcm(shaping_t *params, float value)
             {
-                return lsp_limit(value, -1.0f, 1.0f) * params->quantized_mu_law_compression.pcm_clip;
+                return lsp_limit(value, -1.0f, 1.0f) * params->quantized_mu_law_companding.pcm_clip;
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -346,13 +403,13 @@ namespace lsp
                 if (magnitude < 0)
                     magnitude *= -1;
                 // μ-law has to be biased:
-                magnitude += params->quantized_mu_law_compression.pcm_bias;
+                magnitude += params->quantized_mu_law_companding.pcm_bias;
 
                 // Ensure we do not bump into illegal values after bias.
                 magnitude = lsp_limit(
                         magnitude,
-                        -params->quantized_mu_law_compression.pcm_max_magnitude,
-                        params->quantized_mu_law_compression.pcm_max_magnitude
+                        -params->quantized_mu_law_companding.pcm_max_magnitude,
+                        params->quantized_mu_law_companding.pcm_max_magnitude
                     );
 
                 // Then, we find the segment value (column 3, page 5, https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-G.711-198811-I!!PDF-E&type=items).
@@ -368,14 +425,6 @@ namespace lsp
 
                 // The low nibble is easily constructed by shifting the magnitude by segment.
                 uint8_t low_nibble = (magnitude >> segment) & 0x000F;
-
-//                // The high nibble is simply 0x08 - segment.
-//                // Note that the table on Wikipedia would make you think it is segment -1.
-//                // But if that was the case, things would conflict with the actual ITU standard table.
-//                uint8_t high_nibble = 0x08 - segment;
-//
-//                // Now we put everything together: high nibble, low nibble and we set the sign.
-//                return sign | ((high_nibble << 4) | low_nibble);
 
                 // The high nibble is simply segment - 1.
                 uint8_t high_nibble = segment - 1;
@@ -394,13 +443,6 @@ namespace lsp
                 if (value & 0x80)
                     sign = 1.0f;
 
-//                // Let's get the magnitude. Basically, it is everything but the sign bit.
-//                // However, we need to reassemble as it is ordered weird.
-//                // Basically, G.711 forced us to take 0x08 - segment for the high nibble, which flips the numbers over.
-//                // In here we go back to segment and take segment - 1 for the high nibble, which orders it normally.
-//                // We scale by the highest possible 7 bit value, 127.
-//                float magnitude = static_cast<float>((((0x08 - ((value >> 4) & 0x07)) - 1) << 4) | (value & 0x0F)) / 127.0f;
-
                 // Let's get the magnitude. Basically, it is everything but the sign bit.
                 // However, remember that G.711 wanted us to flip the bits.
                 // We scale by the highest possible 7 bit value, 127.
@@ -411,9 +453,62 @@ namespace lsp
             }
 
             LSP_DSP_UNITS_PUBLIC
+            float mu_law_linear_encoding(float value)
+            {
+                uint8_t sign = 0x00;
+                 if (value >= 0.0f)
+                     sign = 0x80;
+
+                 // We scale by the highest possible 7 bit value, 127.
+                 uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
+
+                 // We return a value encoded just like μ-law likes them:
+                 // G.711 prescribes that the bits must be flipped (with except the sign bit).
+                 return sign | (~magnitude & 0x7F);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            int16_t quantized_mu_law_expansion(uint8_t value)
+            {
+                // Also see https://en.wikipedia.org/wiki/G.711#A-law
+
+                 // Let's get the sign. It is in the leftmost bit).
+                 int16_t sign = 1;
+                 if (value & 0x80)
+                     sign = -1;
+
+                 // Let's get the exponent. This is bits 5 to 7.
+                 // Remember that G.711 wanted us to flip the bits.
+                 int16_t exponent = ~value & 0x70;
+
+                 // Lets get the mantissa. This is the first 4 bits.
+                 // Remember that G.711 wanted us to flip the bits.
+                 int16_t mantissa = ~value & 0x0F;
+
+                 // Let's construct the word. This is 1mmmm1, where m are the mantissa bits.
+                 int16_t word = 0x0021 | (mantissa << 1);
+
+                 // We now shift the word by exponent:
+                 // Ready!
+                 return sign * (word << exponent);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float mu_law_expandend_to_float(shaping_t *params, int16_t value)
+            {
+                return static_cast<float>(value) / static_cast<float>(params->quantized_mu_law_companding.pcm_clip);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
             float quatized_mu_law_compression_shaper(shaping_t *params, float value)
             {
                 return mu_law_compressed_to_float(quantized_mu_law_compression(params, mu_law_float_to_pcm(params, value)));
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            float quatized_mu_law_expansion_shaper(shaping_t *params, float value)
+            {
+                return mu_law_expandend_to_float(params, quantized_mu_law_expansion(mu_law_linear_encoding(value)));
             }
 
             LSP_DSP_UNITS_PUBLIC

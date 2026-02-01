@@ -206,24 +206,24 @@ namespace lsp
             } continuous_mu_law_expansion_t;
 
             /**
-             * Parameters for quantized A-law compression.
+             * Parameters for quantized A-law companding.
              * ITU-T G.711 as in https://www.itu.int/rec/recommendation.asp?lang=en&parent=T-REC-G.711-198811-I.
              */
-            typedef struct quantized_a_law_compression_t {
+            typedef struct quantized_a_law_companding_t {
                 uint8_t pcm_n_bits;  // 13 for G.711 compliance.
                 int16_t pcm_clip;  // (1 << (pcm_n_bits - 1)) - 1
-            } quantized_a_law_compression_t;
+            } quantized_a_law_companding_t;
 
             /**
-             * Parameters for quantized μ-law compression.
+             * Parameters for quantized μ-law companding.
              * ITU-T G.711 as in https://www.itu.int/rec/recommendation.asp?lang=en&parent=T-REC-G.711-198811-I.
              */
-            typedef struct quantized_mu_law_compression_t {
+            typedef struct quantized_mu_law_companding_t {
                 uint8_t pcm_n_bits;  // 14 for G.711 compliance.
                 int16_t pcm_clip;  // (1 << (pcm_n_bits - 1)) - 1
                 int16_t pcm_bias;  // 33 for G.711 compliance.
                 int16_t pcm_max_magnitude; // pcm_clip - pcm_bias
-            } quantized_mu_law_compression_t;
+            } quantized_mu_law_companding_t;
 
             /**
              * Parameters for a TAP Tubewarmth stateful shaping function.
@@ -278,8 +278,8 @@ namespace lsp
                 continuous_a_law_expansion_t continuous_a_law_expansion;
                 continuous_mu_law_compression_t continuous_mu_law_compression;
                 continuous_mu_law_expansion_t continuous_mu_law_expansion;
-                quantized_a_law_compression_t quantized_a_law_compression;
-                quantized_mu_law_compression_t quantized_mu_law_compression;
+                quantized_a_law_companding_t quantized_a_law_companding;
+                quantized_mu_law_companding_t quantized_mu_law_companding;
                 tap_tubewarmth_t tap_tubewarmth;
             };
 
@@ -477,6 +477,31 @@ namespace lsp
             float a_law_compressed_to_float(uint8_t value);
 
             /**
+             * Take a float value for input into A-law, but encoded it linearly without compression.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            uint8_t a_law_linear_encoding(float value);
+
+            /**
+             * Expand an 8 bit value into a PCM value using A-law expansion.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            int16_t quantized_a_law_expansion(uint8_t value);
+
+            /**
+             * Convert an A-law expanded value to a floating point usable for audio stream.
+             * @param params shaping function parameters.
+             * @param value A-law quatized expanded argument for the shaping function.
+             * @return value converted to float.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float a_law_expandend_to_float(shaping_t *params, int16_t value);
+
+            /**
              * Full float-to-float A-law compression shaping function, using G.711 under the hood. https://www.itu.int/rec/T-REC-G.711.
              * @param params shaping function parameters.
              * @param value argument for the shaping function.
@@ -484,6 +509,15 @@ namespace lsp
              */
             LSP_DSP_UNITS_PUBLIC
             float quatized_a_law_compression_shaper(shaping_t *params, float value);
+
+            /**
+             * Full float-to-float A-law expansion shaping function, using G.711 under the hood. https://www.itu.int/rec/T-REC-G.711.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float quatized_a_law_expansion_shaper(shaping_t *params, float value);
 
             /**
              * Convert a floating point number to a PCM value for input to μ-law.
@@ -513,6 +547,31 @@ namespace lsp
             float mu_law_compressed_to_float(uint8_t value);
 
             /**
+             * Take a float value for input into μ-law, but encoded it linearly without compression.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float mu_law_linear_encoding(float value);
+
+            /**
+             * Expand an 8 bit value into a PCM value using μ-law expansion.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            int16_t quantized_mu_law_expansion(uint8_t value);
+
+            /**
+             * Convert an μ-law expanded value to a floating point usable for audio stream.
+             * @param params shaping function parameters.
+             * @param value μ-law quatized expanded argument for the shaping function.
+             * @return value converted to float.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float mu_law_expandend_to_float(shaping_t *params, int16_t value);
+
+            /**
              * Full float-to-float μ-law compression shaping function, using G.711 under the hood. https://www.itu.int/rec/T-REC-G.711.
              * @param params shaping function parameters.
              * @param value argument for the shaping function.
@@ -520,6 +579,15 @@ namespace lsp
              */
             LSP_DSP_UNITS_PUBLIC
             float quatized_mu_law_compression_shaper(shaping_t *params, float value);
+
+            /**
+             * Full float-to-float μ-law expansion shaping function, using G.711 under the hood. https://www.itu.int/rec/T-REC-G.711.
+             * @param params shaping function parameters.
+             * @param value argument for the shaping function.
+             * @return shaping function output.
+             */
+            LSP_DSP_UNITS_PUBLIC
+            float quatized_mu_law_expansion_shaper(shaping_t *params, float value);
 
             /**
              * TAP Plugins gate function, building block for TAP Tubewarmth.
