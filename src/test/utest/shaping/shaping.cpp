@@ -29,6 +29,7 @@ UTEST_BEGIN("dspu.shaping", shaping)
 
     void test_a_law(dspu::shaping::shaping_t *params)
     {
+        // Compression --------------------------------------------------------------------------------------------------------------------
         params->continuous_a_law_compression.compression = 87.6f;
         params->continuous_a_law_compression.compression_reciprocal = 1.0f / params->continuous_a_law_compression.compression;
         params->continuous_a_law_compression.scale = 1.0f / (1.0f + dspu::quick_logf(params->continuous_a_law_compression.compression));
@@ -36,6 +37,9 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_compression(params, -1.0f), -1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_compression(params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_compression(params, 1.0f), 1.0f));
+
+        params->quantized_a_law_companding.pcm_n_bits = 13;
+        params->quantized_a_law_companding.pcm_clip = (1 << (params->quantized_a_law_companding.pcm_n_bits - 1)) - 1;
 
         // Checking the results are the same as in Table 1a, columns 3 and 6, https://www.itu.int/rec/T-REC-G.711-198811-I/en.
         UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(0)      == 0b10000000);
@@ -60,15 +64,54 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-3968)  == 0b01111111);
         UTEST_ASSERT(dspu::shaping::quantized_a_law_compression(-4095)  == 0b01111111); // min PCM13 value.
 
-        params->quantized_a_law_companding.pcm_n_bits = 13;
-        params->quantized_a_law_companding.pcm_clip = (1 << (params->quantized_a_law_companding.pcm_n_bits - 1)) - 1;
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, -1.0f), -1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_compression_shaper(params, 1.0f), 1.0f));
+
+        // Expansion ---------------------------------------------------------------------------------------------------------------------
+        params->continuous_a_law_expansion.expansion = 87.7f;
+        params->continuous_a_law_expansion.expansion_reciprocal = 1.0f / params->continuous_a_law_expansion.expansion;
+        params->continuous_a_law_expansion.radius = 1.0f / (1.0f + dspu::quick_logf(params->continuous_a_law_expansion.expansion));
+        params->continuous_a_law_expansion.radius_reciprocal = 1.0f + dspu::quick_logf(params->continuous_a_law_expansion.expansion);
+
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_expansion(params, -1.0f), -1.0f, 1e-3));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_expansion(params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_a_law_expansion(params, 1.0f), 1.0f, 1e-3));
+
+        params->quantized_a_law_companding.pcm_n_bits = 13;
+        params->quantized_a_law_companding.pcm_clip = (1 << (params->quantized_a_law_companding.pcm_n_bits - 1)) - 1;
+
+        // Checking that the patterns in https://en.wikipedia.org/wiki/G.711#A-law are correct.
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b10001010) == +0b0000000010101);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b10011010) == +0b0000000110101);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b10101010) == +0b0000001101010);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b10111010) == +0b0000011010100);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b11001010) == +0b0000110101000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b11011010) == +0b0001101010000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b11101010) == +0b0011010100000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b11111010) == +0b0110101000000);
+
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b00001010) == -0b0000000010101);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b00011010) == -0b0000000110101);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b00101010) == -0b0000001101010);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b00111010) == -0b0000011010100);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b01001010) == -0b0000110101000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b01011010) == -0b0001101010000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b01101010) == -0b0011010100000);
+        UTEST_ASSERT(dspu::shaping::quantized_a_law_expansion(0b01111010) == -0b0110101000000);
+
+        // The maximum expanded value is 0b0111111000000 = 4032, so the peak of the quantized expander is 4032 / pcm_clip
+        float expanded_peak = 4032.0f / static_cast<float>(params->quantized_a_law_companding.pcm_clip);
+        // The minimum expanded value is 0b0000000000001 = 1, so the minimum of the quantized expander is 1 / pcm_clip
+        float expanded_min = 1.0f / static_cast<float>(params->quantized_a_law_companding.pcm_clip);
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_expansion_shaper(params, -1.0f), -expanded_peak));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_expansion_shaper(params, 0.0f), expanded_min));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_a_law_expansion_shaper(params, 1.0f), expanded_peak));
     }
 
     void test_mu_law(dspu::shaping::shaping_t *params)
     {
+        // Compression --------------------------------------------------------------------------------------------------------------------
         params->continuous_mu_law_compression.compression = 255.0f;
         params->continuous_mu_law_compression.scale = 1.0f / dspu::quick_logf(1.0f + params->continuous_mu_law_compression.compression);
 
@@ -110,6 +153,47 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_compression_shaper(params, -1.0f), -1.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_compression_shaper(params, 0.0f), 0.0f));
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_compression_shaper(params, 1.0f), 1.0f));
+
+        // Expansion ---------------------------------------------------------------------------------------------------------------------
+        params->continuous_mu_law_expansion.expansion = 255.0f;
+        params->continuous_mu_law_expansion.expansion_reciprocal = 1.0f / params->continuous_mu_law_expansion.expansion;
+
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_expansion(params, -1.0f), -1.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_expansion(params, 0.0f), 0.0f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::continuous_mu_law_expansion(params, 1.0f), 1.0f));
+
+        params->quantized_mu_law_companding.pcm_n_bits = 14;
+        params->quantized_mu_law_companding.pcm_clip = (1 << (params->quantized_mu_law_companding.pcm_n_bits - 1)) - 1;
+        params->quantized_mu_law_companding.pcm_bias = 33;
+        params->quantized_mu_law_companding.pcm_max_magnitude = params->quantized_mu_law_companding.pcm_clip - params->quantized_mu_law_companding.pcm_bias;
+
+        // Checking that the patterns in https://en.wikipedia.org/wiki/G.711#%CE%BC-law are correct.
+        // Things get a bit weird because the first 7 bits are flipped in μ-law.
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b11110101) == +0b00000000110101);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b11100101) == +0b00000001101010);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b11010101) == +0b00000011010100);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b11000101) == +0b00000110101000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b10110101) == +0b00001101010000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b10100101) == +0b00011010100000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b10010101) == +0b00110101000000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b10000101) == +0b01101010000000);
+
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b01110101) == -0b00000000110101);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b01100101) == -0b00000001101010);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b01010101) == -0b00000011010100);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b01000101) == -0b00000110101000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b00110101) == -0b00001101010000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b00100101) == -0b00011010100000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b00010101) == -0b00110101000000);
+        UTEST_ASSERT(dspu::shaping::quantized_mu_law_expansion(0b00000101) == -0b01101010000000);
+
+        // The maximum expanded value is 0b01111110000000 = 8064, so the peak of the quantized expander is 8064 / pcm_clip
+        float expanded_peak = 8064.0f / static_cast<float>(params->quantized_mu_law_companding.pcm_clip);
+        // The minimum expanded value is 0b00000000100001 = 33, so the minimum of the quantized expander is 33 / pcm_clip
+        float expanded_min = 33.0f / static_cast<float>(params->quantized_mu_law_companding.pcm_clip);
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_expansion_shaper(params, -1.0f), -expanded_peak));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_expansion_shaper(params, 0.0f), expanded_min));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_expansion_shaper(params, 1.0f), expanded_peak));
     }
 
     UTEST_MAIN

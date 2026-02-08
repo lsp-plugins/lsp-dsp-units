@@ -329,7 +329,7 @@ namespace lsp
                 // We scale by the highest possible 7 bit value, 127.
                 uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
 
-                // We return a value encoded just like A-law likes them:
+                // We return a value encoded in a A-law fashion:
                 return sign | magnitude;
             }
 
@@ -337,14 +337,16 @@ namespace lsp
             int16_t quantized_a_law_expansion(uint8_t value)
             {
                 // Also see https://en.wikipedia.org/wiki/G.711#A-law
+                // However, note that here we use int16_t's 2 complement to represent signed values,
+                // as that makes it easier down the line (converting to float) and is less ambiguous.
 
                 // Let's get the sign. It is in the leftmost bit).
-                int16_t sign = 1;
+                int16_t sign = -1;
                 if (value & 0x80)
-                    sign = -1;
+                    sign = 1;
 
                 // Let's get the exponent. This is bits 5 to 7.
-                int16_t exponent = value & 0x70;
+                int16_t exponent = (value & 0x70) >> 4;
 
                 // Lets get the mantissa. This is the first 4 bits.
                 int16_t mantissa = value & 0x0F;
@@ -357,11 +359,8 @@ namespace lsp
                 else
                     word = 0x0021 | (mantissa << 1);
 
-                // We now shift the word by the amount set by exponent:
-                int16_t shift = lsp_max(0, exponent - 1);
-
-                // Ready!
-                return sign * (word << shift);
+                // We now shift the word by the amount set by exponent and set the sign.
+                return sign * (word << lsp_max(0, exponent - 1));
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -429,7 +428,7 @@ namespace lsp
                 // The high nibble is simply segment - 1.
                 uint8_t high_nibble = segment - 1;
 
-                // G.711 prescribes that the bits must be flipped (with except the sign bit).
+                // G.711 prescribes that the bits must be flipped (with the exception of the sign bit).
                 return sign | (~(((high_nibble << 4) | low_nibble)) & 0x7F);
             }
 
@@ -462,24 +461,26 @@ namespace lsp
                  // We scale by the highest possible 7 bit value, 127.
                  uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
 
-                 // We return a value encoded just like μ-law likes them:
-                 // G.711 prescribes that the bits must be flipped (with except the sign bit).
+                 // We return a value encoded in a  μ-law fashion.
+                 // G.711 prescribes that the bits must be flipped (with the exception of the sign bit).
                  return sign | (~magnitude & 0x7F);
             }
 
             LSP_DSP_UNITS_PUBLIC
             int16_t quantized_mu_law_expansion(uint8_t value)
             {
-                // Also see https://en.wikipedia.org/wiki/G.711#A-law
+                // Also see https://en.wikipedia.org/wiki/G.711#%CE%BC-law
+                // However, note that here we use int16_t's 2 complement to represent signed values,
+                // as that makes it easier down the line (converting to float) and is less ambiguous.
 
                  // Let's get the sign. It is in the leftmost bit).
-                 int16_t sign = 1;
+                 int16_t sign = -1;
                  if (value & 0x80)
-                     sign = -1;
+                     sign = 1;
 
                  // Let's get the exponent. This is bits 5 to 7.
                  // Remember that G.711 wanted us to flip the bits.
-                 int16_t exponent = ~value & 0x70;
+                 int16_t exponent = (~value & 0x70) >> 4;
 
                  // Lets get the mantissa. This is the first 4 bits.
                  // Remember that G.711 wanted us to flip the bits.
@@ -488,8 +489,7 @@ namespace lsp
                  // Let's construct the word. This is 1mmmm1, where m are the mantissa bits.
                  int16_t word = 0x0021 | (mantissa << 1);
 
-                 // We now shift the word by exponent:
-                 // Ready!
+                 // We now shift the word by exponent and set the sign.
                  return sign * (word << exponent);
             }
 
