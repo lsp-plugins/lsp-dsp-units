@@ -31,6 +31,9 @@ namespace lsp
         namespace shaping
         {
 
+            // Reciprocal of the maximum 7 bit value. Useful for after-encoding scaling.
+            constexpr float seven_bit_max_recp = 1.0f / 127.0f;
+
             LSP_DSP_UNITS_PUBLIC
             float sinusoidal(shaping_t *params, float value)
             {
@@ -268,33 +271,28 @@ namespace lsp
             {
                 // Also see https://en.wikipedia.org/wiki/G.711#A-law
 
-                // We first find the sign flag.
-                uint8_t sign = 0x00;
-                if (value >= 0)
-                    sign = 0x80;
+                // We first find the sign flag. The line below is the same as this, but branch-less.
+                // uint8_t sign = 0x00;
+                // if (value >= 0)
+                //     sign = 0x80;
+                // It will work if value is in [-(2^(N-1) - 1), +(2^(N-1) - 1)],
+                // with N <= 16 the number of PCM bits, meaning ±32767 if N=16.
+                // (the clipping happens in a_law_float_to_pcm).
+                uint8_t sign = uint8_t((uint16_t(-(value + 1)) >> 15) << 7);
 
                 // Then, we compute the magnitude.
-                int16_t magnitude = value;
-                if (magnitude < 0)
-                    magnitude *= -1;
+                // value is in two's complement, so we do this bitwise-magick to prevent branching:
+                // https://stackoverflow.com/a/12041874
+                int16_t mask = value >> 15;
+                int16_t magnitude = (value ^ mask) - mask;
 
                 // Then, we find the segment value (column 3, page 3, https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-G.711-198811-I!!PDF-E&type=items).
                 // Essentially, we figure out in what power of 2 magnitude is.
-                uint8_t segment;
-                if (magnitude < 64)
-                    segment = 1;
-                else if (magnitude >= 4096)
-                    segment = 7;
-                else
-                    segment = int_log2(magnitude) - 4;
-
+                uint8_t segment = int_log2(lsp_limit(magnitude, 32, 4096)) - 4;
+                // The high nibble is simply the segment number, except if magnitude < 32. In that case it is 0x00 (this forces a branch).
+                uint8_t high_nibble = (magnitude >= 32) ? segment : 0x00;
                 // The low nibble is easily constructed by shifting the magnitude by segment.
                 uint8_t low_nibble = (magnitude >> segment) & 0x000F;
-
-                // The high nibble is simply the segment number, except if magnitude < 32. In that case it is 0x00.
-                uint8_t high_nibble = 0x00;
-                if (magnitude >= 32)
-                    high_nibble = segment;
 
                 // Now we put everything together: high nibble, low nibble and we set the sign.
                 // (we should also XOR with 0b01010101 now but that is an useless operation for us, as we do no need to transmit this value).
@@ -307,13 +305,16 @@ namespace lsp
                 // Also see https://en.wikipedia.org/wiki/G.711#A-law
 
                 // Let's get the sign. It is in the leftmost bit).
-                float sign = -1.0f;
-                if (value & 0x80)
-                    sign = 1.0f;
+                // The line below is this, but branch-less.
+                // float sign = (value & 0x80) ? 1.0f : -1.0f;
+                float sign = 2.0f * ((value & 0x80) >> 7) - 1.0f;
 
                 // Let's get the magnitude. Basically, it is everything but the sign bit.
                 // We scale by the highest possible 7 bit value, 127.
-                float magnitude = static_cast<float>(value & 0x7F) / 127.0f;
+                // Since max PCM13 (+4095) is encoded to +127,
+                // and min PCM13 (-4095) is encoded to -127,
+                // we do not need a 0.5f bias. This way we get PCM13 -> 0 -> 0.0f.
+                float magnitude = static_cast<float>(value & 0x7F) * seven_bit_max_recp;
 
                 // Ready to return:
                 return sign * magnitude;
@@ -322,9 +323,9 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             uint8_t a_law_linear_encoding(float value)
             {
-                uint8_t sign = 0x00;
-                if (value >= 0.0f)
-                    sign = 0x80;
+                // This is the same as the line below, but branch-less:
+                 uint8_t sign = (value >= 0.0f) ? 0x80 : 0x00;
+//                uint8_t sign = 0x40 * uint8_t(2.0f + (0.0f < value) - (value < 0.0f));
 
                 // We scale by the highest possible 7 bit value, 127.
                 uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
@@ -341,9 +342,9 @@ namespace lsp
                 // as that makes it easier down the line (converting to float) and is less ambiguous.
 
                 // Let's get the sign. It is in the leftmost bit).
-                int16_t sign = -1;
-                if (value & 0x80)
-                    sign = 1;
+                // The line below is this, but branch-less.
+                // int16_t sign = (value & 0x80) ? 1 : -1;
+                int16_t sign = 2 * ((value & 0x80) >> 7) - 1;
 
                 // Let's get the exponent. This is bits 5 to 7.
                 int16_t exponent = (value & 0x70) >> 4;
@@ -392,21 +393,24 @@ namespace lsp
             {
                 // Also see https://en.wikipedia.org/wiki/G.711#%CE%BC-law
 
-                // We first find the sign flag.
-                uint8_t sign = 0x00;
-                if (value >= 0)
-                    sign = 0x80;
+                // We first find the sign flag. The line below is the same as this, but branch-less.
+                // uint8_t sign = 0x00;
+                // if (value >= 0)
+                //     sign = 0x80;
+                // It will work if value is in [-(2^(N-1) - 1), +(2^(N-1) - 1)],
+                // with N <= 16 the number of PCM bits, meaning ±32767 if N=16.
+                // (the clipping happens in a_law_float_to_pcm).
+                uint8_t sign = uint8_t((uint16_t(-(value + 1)) >> 15) << 7);
 
                 // Then, we compute the magnitude.
-                int16_t magnitude = value;
-                if (magnitude < 0)
-                    magnitude *= -1;
-                // μ-law has to be biased:
-                magnitude += params->quantized_mu_law_companding.pcm_bias;
-
-                // Ensure we do not bump into illegal values after bias.
+                // value is in two's complement, so we do this bitwise-magick to prevent branching:
+                // https://stackoverflow.com/a/12041874
+                int16_t mask = value >> 15;
+                int16_t magnitude = (value ^ mask) - mask;
+                // μ-law has to be biased.
+                // We also ensure we do not bump into illegal values after bias.
                 magnitude = lsp_limit(
-                        magnitude,
+                        magnitude + params->quantized_mu_law_companding.pcm_bias,
                         -params->quantized_mu_law_companding.pcm_max_magnitude,
                         params->quantized_mu_law_companding.pcm_max_magnitude
                     );
@@ -414,17 +418,9 @@ namespace lsp
                 // Then, we find the segment value (column 3, page 5, https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-G.711-198811-I!!PDF-E&type=items).
                 // Essentially, we figure out in what power of 2 magnitude is.
                 // Note how we already added the bias to the magnitude, so we need to add 33 to the levels in column 3, page 5.
-                uint8_t segment;
-                if (magnitude < 64)
-                    segment = 1;
-                else if (magnitude >= 8192)
-                    segment = 8;
-                else
-                    segment = int_log2(magnitude) - 4;
-
+                uint8_t segment = int_log2(lsp_limit(magnitude, 32, 8192)) - 4;
                 // The low nibble is easily constructed by shifting the magnitude by segment.
                 uint8_t low_nibble = (magnitude >> segment) & 0x000F;
-
                 // The high nibble is simply segment - 1.
                 uint8_t high_nibble = segment - 1;
 
@@ -438,14 +434,17 @@ namespace lsp
                 // Also see https://en.wikipedia.org/wiki/G.711#%CE%BC-law
 
                 // Let's get the sign. It is in the leftmost bit).
-                float sign = -1.0f;
-                if (value & 0x80)
-                    sign = 1.0f;
+                // The line below is this, but branch-less.
+                // float sign = (value & 0x80) ? 1.0f : -1.0f;
+                float sign = 2.0f * ((value & 0x80) >> 7) - 1.0f;
 
                 // Let's get the magnitude. Basically, it is everything but the sign bit.
                 // However, remember that G.711 wanted us to flip the bits.
                 // We scale by the highest possible 7 bit value, 127.
-                float magnitude = static_cast<float>(~value & 0x7F) / 127.0f;
+                // Since max PCM14 (+8158) is encoded to +127 (remember bitwise not),
+                // and min PCM14 (-8158) is encoded to -127 (remember bitwise not),
+                // we do not need a 0.5f bias. This way we get PCM14 -> 0 -> 0.0f.
+                float magnitude = static_cast<float>(~value & 0x7F) * seven_bit_max_recp;
 
                 // Ready to return:
                 return sign * magnitude;
@@ -454,16 +453,16 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float mu_law_linear_encoding(float value)
             {
-                uint8_t sign = 0x00;
-                 if (value >= 0.0f)
-                     sign = 0x80;
+                // This is the same as the line below, but branch-less:
+                 uint8_t sign = (value >= 0.0f) ? 0x80 : 0x00;
+//                uint8_t sign = 0x40 * uint8_t(2.0f + (0.0f < value) - (value < 0.0f));
 
-                 // We scale by the highest possible 7 bit value, 127.
-                 uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
+                // We scale by the highest possible 7 bit value, 127.
+                uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
 
-                 // We return a value encoded in a  μ-law fashion.
-                 // G.711 prescribes that the bits must be flipped (with the exception of the sign bit).
-                 return sign | (~magnitude & 0x7F);
+                // We return a value encoded in a  μ-law fashion.
+                // G.711 prescribes that the bits must be flipped (with the exception of the sign bit).
+                return sign | (~magnitude & 0x7F);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -474,9 +473,9 @@ namespace lsp
                 // as that makes it easier down the line (converting to float) and is less ambiguous.
 
                  // Let's get the sign. It is in the leftmost bit).
-                 int16_t sign = -1;
-                 if (value & 0x80)
-                     sign = 1;
+//               // The line below is this, but branch-less.
+                // int16_t sign = (value & 0x80) ? 1 : -1;
+                 int16_t sign = 2 * ((value & 0x80) >> 7) - 1;
 
                  // Let's get the exponent. This is bits 5 to 7.
                  // Remember that G.711 wanted us to flip the bits.
