@@ -31,8 +31,10 @@ namespace lsp
         namespace shaping
         {
 
+            // The maximum 7 bit value. Useful for after-encoding scaling.
+            constexpr float seven_bit_max = 127.0f;
             // Reciprocal of the maximum 7 bit value. Useful for after-encoding scaling.
-            constexpr float seven_bit_max_recp = 1.0f / 127.0f;
+            constexpr float seven_bit_max_recp = 1.0f / seven_bit_max;
 
             LSP_DSP_UNITS_PUBLIC
             float sinusoidal(shaping_t *params, float value)
@@ -324,11 +326,12 @@ namespace lsp
             uint8_t a_law_linear_encoding(float value)
             {
                 // This is the same as the line below, but branch-less:
-                 uint8_t sign = (value >= 0.0f) ? 0x80 : 0x00;
-//                uint8_t sign = 0x40 * uint8_t(2.0f + (0.0f < value) - (value < 0.0f));
+                // uint8_t sign = (value >= 0.0f) ? 0x80 : 0x00;
+                // (inspired by https://stackoverflow.com/a/4609795)
+                uint8_t sign = 0x40 * uint8_t(((0.0f <= value) - (value < 0.0f)) + 1);
 
                 // We scale by the highest possible 7 bit value, 127.
-                uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
+                uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * seven_bit_max);
 
                 // We return a value encoded in a A-law fashion:
                 return sign | magnitude;
@@ -454,11 +457,12 @@ namespace lsp
             float mu_law_linear_encoding(float value)
             {
                 // This is the same as the line below, but branch-less:
-                 uint8_t sign = (value >= 0.0f) ? 0x80 : 0x00;
-//                uint8_t sign = 0x40 * uint8_t(2.0f + (0.0f < value) - (value < 0.0f));
+                // uint8_t sign = (value >= 0.0f) ? 0x80 : 0x00;
+                // (inspired by https://stackoverflow.com/a/4609795)
+                uint8_t sign = 0x40 * uint8_t(((0.0f <= value) - (value < 0.0f)) + 1);
 
                 // We scale by the highest possible 7 bit value, 127.
-                uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * 127.0f);
+                uint8_t magnitude = static_cast<uint8_t>(lsp_min(fabs(value), 1.0f) * seven_bit_max);
 
                 // We return a value encoded in a  μ-law fashion.
                 // G.711 prescribes that the bits must be flipped (with the exception of the sign bit).
