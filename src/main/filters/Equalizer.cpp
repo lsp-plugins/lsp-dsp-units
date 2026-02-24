@@ -64,10 +64,22 @@ namespace lsp
 
         bool Equalizer::init(size_t filters, size_t fir_rank)
         {
+            // Check if we do not need to do something
+            if ((nFilters == filters) && (nFirRank == fir_rank))
+            {
+                reset();
+                return true;
+            }
+
+            // Destroy previous data
             destroy();
 
             // Initialize filter bank
-            sBank.init(filters * FILTER_CHAINS_MAX);
+            if (!sBank.init(filters * FILTER_CHAINS_MAX))
+            {
+                destroy();
+                return false;
+            }
 
             // Initialize filters
             nSampleRate     = 0;
