@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 28 июня 2016 г.
@@ -32,6 +32,9 @@ namespace lsp
 {
     namespace dspu
     {
+        constexpr float C_PI                = M_PI;
+        constexpr float C_PI_MUL_2          = M_PI * 2.0;
+        constexpr float C_PI_DIV_2          = M_PI_2;
 
         Filter::Filter()
         {
@@ -198,7 +201,7 @@ namespace lsp
 
         float Filter::bilinear_relative(float f1, float f2)
         {
-            float nf    = M_PI / float(nSampleRate);
+            const float nf  = C_PI / float(nSampleRate);
             return tanf(f1 * nf) / tanf(f2 * nf);
         }
 
@@ -505,13 +508,13 @@ namespace lsp
             {
                 case FM_BILINEAR:
                 {
-                    float nf    = M_PI / float(nSampleRate);
-                    float kf    = 1.0/tanf(sParams.fFreq * nf);
-                    float lf    = nSampleRate * 0.499;
+                    const float nf  = C_PI / float(nSampleRate);
+                    const float kf  = 1.0f / tanf(sParams.fFreq * nf);
+                    const float lf  = nSampleRate * 0.499f;
 
                     while (count > 0)
                     {
-                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE);
+                        const size_t to_do  = lsp_min(count, STACK_BUF_SIZE);
 
                         // Compute transfer function
                         for (size_t i=0; i<to_do; ++i)
@@ -534,11 +537,11 @@ namespace lsp
 
                 case FM_MATCHED:
                 {
-                    float kf    = 1.0 / sParams.fFreq;
+                    const float kf  = 1.0f / sParams.fFreq;
 
                     while (count > 0)
                     {
-                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE);
+                        const size_t to_do  = lsp_min(count, STACK_BUF_SIZE);
 
                         // Compute transfer function
                         dsp::mul_k3(freqs, f, kf, to_do);
@@ -558,12 +561,12 @@ namespace lsp
                 case FM_APO:
                 {
                     // Calculating normalized frequency, wrapped for maximal accuracy:
-                    float kf    = 2.0 * M_PI / float(nSampleRate);
-                    float lf    = nSampleRate * 0.5f;
+                    const float kf  = C_PI_MUL_2 / float(nSampleRate);
+                    const float lf  = nSampleRate * 0.5f;
 
                     while (count > 0)
                     {
-                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE >> 1);
+                        const size_t to_do  = lsp_min(count, STACK_BUF_SIZE >> 1);
 
                         // Compute transfer function
                         float *df       = freqs;
@@ -605,13 +608,13 @@ namespace lsp
             {
                 case FM_BILINEAR:
                 {
-                    float nf    = M_PI / float(nSampleRate);
-                    float kf    = 1.0/tanf(sParams.fFreq * nf);
-                    float lf    = nSampleRate * 0.499;
+                    const float nf  = C_PI / float(nSampleRate);
+                    const float kf  = 1.0f / tanf(sParams.fFreq * nf);
+                    const float lf  = nSampleRate * 0.499f;
 
                     while (count > 0)
                     {
-                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE);
+                        const size_t to_do  = lsp_min(count, STACK_BUF_SIZE);
 
                         // Compute transfer function
                         for (size_t i=0; i<to_do; ++i)
@@ -624,7 +627,7 @@ namespace lsp
                             dsp::filter_transfer_apply_pc(c, &vItems[i], freqs, to_do);
 
                         // Update pointers
-                        c          += to_do*2;
+                        c          += to_do * 2;
                         f          += to_do;
                         count      -= to_do;
                     }
@@ -634,11 +637,11 @@ namespace lsp
 
                 case FM_MATCHED:
                 {
-                    float kf    = 1.0 / sParams.fFreq;
+                    float kf    = 1.0f / sParams.fFreq;
 
                     while (count > 0)
                     {
-                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE);
+                        const size_t to_do  = lsp_min(count, STACK_BUF_SIZE);
 
                         // Compute transfer function
                         dsp::mul_k3(freqs, f, kf, to_do);
@@ -658,12 +661,12 @@ namespace lsp
                 case FM_APO:
                 {
                     // Calculating normalized frequency, wrapped for maximal accuracy:
-                    float kf    = 2.0 * M_PI / float(nSampleRate);
-                    float lf    = nSampleRate * 0.5f;
+                    const float kf  = C_PI_MUL_2 / float(nSampleRate);
+                    const float lf  = nSampleRate * 0.5f;
 
                     while (count > 0)
                     {
-                        size_t to_do    = lsp_min(count, STACK_BUF_SIZE >> 1);
+                        const size_t to_do  = lsp_min(count, STACK_BUF_SIZE >> 1);
 
                         // Compute transfer function
                         float *df       = freqs;
@@ -1103,7 +1106,7 @@ namespace lsp
 
                     for (size_t j=i; j < fp->nSlope; j += 2)
                     {
-                        float theta     = ((j - i + 1)*M_PI_2)/fp->nSlope;
+                        float theta     = ((j - i + 1)*C_PI_DIV_2)/fp->nSlope;
                         float tsin      = sinf(theta);
                         float tcos      = sqrtf(1.0 - tsin*tsin);
                         float kf        = tsin*tsin + k*k * tcos*tcos;
@@ -1150,7 +1153,7 @@ namespace lsp
 
                     for (size_t j=i; j < fp->nSlope; j += 2)
                     {
-                        float theta     = ((j - i + 1)*M_PI_2)/fp->nSlope;
+                        float theta     = ((j - i + 1)*C_PI_DIV_2)/fp->nSlope;
                         float tsin      = sinf(theta);
                         float tcos      = sqrtf(1.0 - tsin*tsin);
                         float kf        = tsin*tsin + k*k * tcos*tcos;
@@ -1186,7 +1189,7 @@ namespace lsp
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
-                        float theta         = ((2*j + 1)*M_PI_2)/(2*fp->nSlope);
+                        float theta         = ((2*j + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
                         float tcos          = sqrtf(1.0 - tsin*tsin);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
@@ -1231,7 +1234,7 @@ namespace lsp
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
-                        float theta         = ((2*j + 1)*M_PI_2)/float(slope);
+                        float theta         = ((2*j + 1)*C_PI_DIV_2)/float(slope);
                         float tsin          = sinf(theta);
                         float tcos          = sqrtf(1.0f - tsin*tsin);
 
@@ -1293,7 +1296,7 @@ namespace lsp
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
-                        float theta         = ((2*j + 1)*M_PI_2)/(2*fp->nSlope);
+                        float theta         = ((2*j + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
                         float tcos          = sqrtf(1.0 - tsin*tsin);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
@@ -1303,23 +1306,23 @@ namespace lsp
                             // First cascade
                             c                   = add_cascade();
 
-                            c->t[0]             = 1.0;
-                            c->t[1]             = 2.0 * k * tcos * fg / kf;
-                            c->t[2]             = 1.0 * fg * fg / kf;
+                            c->t[0]             = 1.0f;
+                            c->t[1]             = 2.0f * k * tcos * fg / kf;
+                            c->t[2]             = 1.0f * fg * fg / kf;
 
-                            c->b[0]             = 1.0;
-                            c->b[1]             = 2.0 * k * tcos / kf;
-                            c->b[2]             = 1.0 / kf;
+                            c->b[0]             = 1.0f;
+                            c->b[1]             = 2.0f * k * tcos / kf;
+                            c->b[2]             = 1.0f / kf;
 
                             // Second cascade
                             c                   = add_cascade();
 
-                            c->t[0]             = 1.0;
-                            c->t[1]             = 2.0 * k * tcos / fg;
+                            c->t[0]             = 1.0f;
+                            c->t[1]             = 2.0f * k * tcos / fg;
                             c->t[2]             = kf / (fg * fg);
 
-                            c->b[0]             = 1.0;
-                            c->b[1]             = 2.0 * k * tcos;
+                            c->b[0]             = 1.0f;
+                            c->b[1]             = 2.0f * k * tcos;
                             c->b[2]             = kf;
                         }
                         else
@@ -1327,23 +1330,23 @@ namespace lsp
                             // First cascade
                             c                   = add_cascade();
 
-                            c->t[0]             = 1.0;
-                            c->t[1]             = 2.0 * k * tcos / kf;
-                            c->t[2]             = 1.0 / kf;
+                            c->t[0]             = 1.0f;
+                            c->t[1]             = 2.0f * k * tcos / kf;
+                            c->t[2]             = 1.0f / kf;
 
-                            c->b[0]             = 1.0;
-                            c->b[1]             = 2.0 * k * tcos / (fg * kf);
-                            c->b[2]             = 1.0 / (fg * fg * kf);
+                            c->b[0]             = 1.0f;
+                            c->b[1]             = 2.0f * k * tcos / (fg * kf);
+                            c->b[2]             = 1.0f / (fg * fg * kf);
 
                             // Second cascade
                             c                   = add_cascade();
 
-                            c->t[0]             = 1.0;
-                            c->t[1]             = 2.0 * k * tcos;
+                            c->t[0]             = 1.0f;
+                            c->t[1]             = 2.0f * k * tcos;
                             c->t[2]             = kf;
 
-                            c->b[0]             = 1.0;
-                            c->b[1]             = 2.0 * k * tcos * fg;
+                            c->b[0]             = 1.0f;
+                            c->b[1]             = 2.0f * k * tcos * fg;
                             c->b[2]             = kf * fg * fg;
                         }
                     }
@@ -1358,7 +1361,7 @@ namespace lsp
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
-                        float theta         = ((2*j + 1)*M_PI_2)/(2*fp->nSlope);
+                        float theta         = ((2*j + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
                         float tcos          = sqrtf(1.0 - tsin*tsin);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
@@ -1366,19 +1369,19 @@ namespace lsp
                         // Hi-pass cascade
                         c                   = add_cascade();
 
-                        c->t[2]             = (j == 0) ? fp->fGain : 1.0;
+                        c->t[2]             = (j == 0) ? fp->fGain : 1.0f;
 
-                        c->b[0]             = 1.0 / kf;
-                        c->b[1]             = 2.0 * k * tcos / kf;
-                        c->b[2]             = 1.0;
+                        c->b[0]             = 1.0f / kf;
+                        c->b[1]             = 2.0f * k * tcos / kf;
+                        c->b[2]             = 1.0f;
 
                         // Lo-pass cascade
                         c                   = add_cascade();
 
-                        c->t[0]             = 1.0;
+                        c->t[0]             = 1.0f;
 
-                        c->b[0]             = 1.0;
-                        c->b[1]             = 2.0 * k * tcos * f2 / kf;
+                        c->b[0]             = 1.0f;
+                        c->b[1]             = 2.0f * k * tcos * f2 / kf;
                         c->b[2]             = f2 * f2 / kf;
                     }
 
@@ -1431,29 +1434,29 @@ namespace lsp
                     // Emit 2x butterworth filters
                     for (size_t j=0; j < i; j += 2)
                     {
-                        float theta     = ((j+1) * M_PI_2)/i;
+                        float theta     = ((j + 1) * C_PI_DIV_2)/i;
                         float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0 - tsin*tsin);
+                        float tcos      = sqrtf(1.0f - tsin*tsin);
                         float kf        = tsin*tsin + k*k * tcos*tcos;
 
                         c1              = add_cascade();
                         c2              = add_cascade();
 
                         // Top part
-                        float xeta      = ((j+0.5) * M_PI)/i;
-                        c1->t[0]        = 1.0;
-                        c1->t[1]        = -2.0 * cosf(xeta);
-                        c1->t[2]        = 1.0;
+                        float xeta      = ((j + 0.5f) * C_PI)/i;
+                        c1->t[0]        = 1.0f;
+                        c1->t[1]        = -2.0f * cosf(xeta);
+                        c1->t[2]        = 1.0f;
 
-                        xeta            = ((j+1.5) * M_PI)/i;
-                        c2->t[0]        = 1.0;
-                        c2->t[1]        = -2.0 * cosf(xeta);
-                        c2->t[2]        = 1.0;
+                        xeta            = ((j + 1.5f) * C_PI)/i;
+                        c2->t[0]        = 1.0f;
+                        c2->t[1]        = -2.0f * cosf(xeta);
+                        c2->t[2]        = 1.0f;
 
                         // Bottom part
-                        c1->b[0]        = 1.0 / kf;
-                        c1->b[1]        = 2.0 * k * tcos / kf;
-                        c1->b[2]        = 1.0;
+                        c1->b[0]        = 1.0f / kf;
+                        c1->b[1]        = 2.0f * k * tcos / kf;
+                        c1->b[2]        = 1.0f;
 
                         c2->b[0]        = c1->b[0];
                         c2->b[1]        = c1->b[1];
@@ -1488,7 +1491,7 @@ namespace lsp
             float a0, a1, a2;
             float b0, b1, b2;
 
-            float omega    = 2.0f * M_PI * fp->fFreq / float(nSampleRate);
+            float omega    = C_PI_MUL_2 * fp->fFreq / float(nSampleRate);
             float cs       = sinf(omega);
             float cc       = cosf(omega); // Have to use trig functions for both to have correct sign
             float Q        = (fp->fQuality > MIN_APO_Q) ? fp->fQuality : MIN_APO_Q;
@@ -1623,11 +1626,12 @@ namespace lsp
                 return;
 
             // Storing with appropriate normalisation and sign as required by biquad_process_x1().
-            f->b0   = a0 / b0;
-            f->b1   = a1 / b0;
-            f->b2   = a2 / b0;
-            f->a1   = -b1 / b0;
-            f->a2   = -b2 / b0;
+            const float rb0 = 1.0f / b0;
+            f->b0   = a0 * rb0;
+            f->b1   = a1 * rb0;
+            f->b2   = a2 * rb0;
+            f->a1   = -b1 * rb0;
+            f->a2   = -b2 * rb0;
             f->p0   = 0.0f;
             f->p1   = 0.0f;
             f->p2   = 0.0f;
@@ -1637,21 +1641,21 @@ namespace lsp
             c->t[0] = f->b0;
             c->t[1] = f->b1;
             c->t[2] = f->b2;
-            c->b[0] = 1.0;
+            c->b[0] = 1.0f;
             c->b[1] = -f->a1;
             c->b[2] = -f->a2;
         }
 
         void Filter::normalize(dsp::biquad_x1_t *f, float frequency, float gain)
         {
-            float xf        = 2.0 * M_PI * lsp_min(frequency, nSampleRate * 0.5f) / float(nSampleRate);
+            float xf        = C_PI_MUL_2 * lsp_min(frequency, nSampleRate * 0.5f) / float(nSampleRate);
 
             float cw        = cosf(xf);
             float sw        = sinf(xf);
 
             // These equations are valid since sw has valid sign
             float c2w       = cw * cw - sw * sw;    // cos(2 * w)
-            float s2w       = 2.0 * sw * cw;        // sin(2 * w)
+            float s2w       = 2.0f * sw * cw;        // sin(2 * w)
 
             float alpha     = f->b0 + f->b1 * cw + f->b2 * c2w;
             float beta      = f->b1 * sw + f->b2 * s2w;
@@ -2115,7 +2119,7 @@ namespace lsp
                         constexpr float Vb  = 1.25872093023f; // power(Vh, 0,4996667741545416);
                         constexpr float f0  = 1681.974450955533f;
                         constexpr float Q   = 0.7071752369554196f;
-                        float K             = tanf(M_PI * f0 * T);
+                        float K             = tanf(C_PI * f0 * T);
                         float K2            = K*K;
                         float KQ            = K / Q;
 
@@ -2148,7 +2152,7 @@ namespace lsp
                     {
                         constexpr float f0  = 38.13547087602444f;
                         constexpr float Q   = 0.5003270373238773f;
-                        float K             = tanf(M_PI * f0 * T);
+                        float K             = tanf(C_PI * f0 * T);
                         float K2            = K*K;
                         float KQ            = K / Q;
 
@@ -2220,7 +2224,7 @@ namespace lsp
 
         void Filter::bilinear_transform()
         {
-            double kf       = 1.0/tanf(sParams.fFreq * M_PI / float(nSampleRate));
+            double kf       = 1.0f / tanf(sParams.fFreq * C_PI / float(nSampleRate));
             double kf2      = kf * kf;
             double T[4], B[4], N;
             size_t chains   = 0;
@@ -2288,7 +2292,7 @@ namespace lsp
         {
             float T[4], B[4], A[2], I[2];
             float f         = sParams.fFreq;
-            float TD        = 2.0*M_PI / nSampleRate;
+            float TD        = C_PI_MUL_2 / nSampleRate;
             size_t chains   = 0;
 
             // Iterate each cascade
@@ -2371,7 +2375,7 @@ namespace lsp
                     // For the normalized continuous transfer function it will be always 0.1
 
                     // Calculate the discrete transfer function part at specified frequency
-                    double w    = M_PI * 0.2f * sParams.fFreq / nSampleRate;
+                    double w    = C_PI * 0.2f * sParams.fFreq / nSampleRate;
                     double re   = P[0]*cos(2.0*w) + P[1]*cos(w) + P[2];
                     double im   = P[0]*sin(2.0*w) + P[1]*sin(w);
                     A[i]        = sqrt(re*re + im*im);
