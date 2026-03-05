@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 26 июля 2016 г.
@@ -111,18 +111,12 @@ namespace lsp
                 dsp::fill_zero(ptr, allocate);
 
                 // Assign pointers
-                vInBuffer           = ptr;
-                ptr                += fft_size;             // nFirSize * 2
-                vOutBuffer          = ptr;
-                ptr                += fft_size;             // nFirSize * 2
-                vConv               = ptr;
-                ptr                += conv_size;            // nFirSize * 4
-                vNewConv            = ptr;
-                ptr                += conv_size;            // nFirSize * 4
-                vFft                = ptr;
-                ptr                += conv_size;            // nFirSize * 4
-                vTemp               = ptr;
-                ptr                += tmp_size;             // nFirSize * 4
+                vInBuffer           = advance_ptr<float>(ptr, fft_size);        // nFirSize * 2
+                vOutBuffer          = advance_ptr<float>(ptr, fft_size);        // nFirSize * 2
+                vConv               = advance_ptr<float>(ptr, conv_size);       // nFirSize * 4
+                vNewConv            = advance_ptr<float>(ptr, conv_size);       // nFirSize * 4
+                vFft                = advance_ptr<float>(ptr, conv_size);       // nFirSize * 4
+                vTemp               = advance_ptr<float>(ptr, tmp_size);        // nFirSize * 4
             }
             else
             {
