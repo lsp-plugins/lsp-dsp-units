@@ -44,22 +44,24 @@ namespace lsp
         {
             sBank.construct();
 
-            vFilters        = NULL;
-            nFilters        = 0;
-            nSampleRate     = 0;
-            nFirSize        = 0;
-            nFirRank        = 0;
-            nLatency        = 0;
-            nBufSize        = 0;
-            nMode           = EQM_BYPASS;
-            vInBuffer       = NULL;
-            vOutBuffer      = NULL;
-            vConv           = NULL;
-            vNewConv        = NULL;
-            vFft            = NULL;
-            vTemp           = NULL;
-            pData           = NULL;
-            nFlags          = EF_REBUILD | EF_CLEAR;
+            vFilters            = NULL;
+            nFilters            = 0;
+            nSampleRate         = 0;
+            nActualSampleRate   = 0;
+            nFirSize            = 0;
+            nFirRank            = 0;
+            nLatency            = 0;
+            nBufSize            = 0;
+            nMode               = EQM_BYPASS;
+
+            vInBuffer           = NULL;
+            vOutBuffer          = NULL;
+            vConv               = NULL;
+            vNewConv            = NULL;
+            vFft                = NULL;
+            vTemp               = NULL;
+            pData               = NULL;
+            nFlags              = EF_REBUILD | EF_CLEAR;
         }
 
         bool Equalizer::init(size_t filters, size_t fir_rank)
@@ -196,6 +198,8 @@ namespace lsp
                 vFilters[i].get_params(&fp);
                 vFilters[i].update(nSampleRate, &fp);
             }
+
+            nFlags     |= EF_REBUILD | EF_CLEAR;
         }
 
         bool Equalizer::configuration_changed() const
@@ -287,7 +291,9 @@ namespace lsp
             {
                 size_t num_filters  = 0;
                 size_t freq_size    = half_size + 1;
-                dsp::lin_inter_set(vNewConv, 0, 0.0f, int32_t(half_size), 0.5f * nSampleRate, 0, uint32_t(freq_size)); // Compute frequencies
+                const uint32_t sr   = actual_sample_rate();
+
+                dsp::lin_inter_set(vNewConv, 0, 0.0f, int32_t(half_size), 0.5f * sr, 0, uint32_t(freq_size)); // Compute frequencies
 
                 // Build frequency chart for all filters
                 for (size_t i=0; i<nFilters; ++i)
@@ -357,6 +363,15 @@ namespace lsp
                 return;
             nMode       = mode;
             nFlags     |= EF_REBUILD | EF_CLEAR;
+        }
+
+        void Equalizer::set_actual_sample_rate(size_t sample_rate)
+        {
+            if (nActualSampleRate == sample_rate)
+                return;
+            nActualSampleRate   = sample_rate;
+            if ((nMode == EQM_IIR) || (nMode == EQM_SPM))
+                nFlags     |= EF_REBUILD;
         }
 
         bool Equalizer::freq_chart(size_t id, float *re, float *im, const float *f, size_t count)
