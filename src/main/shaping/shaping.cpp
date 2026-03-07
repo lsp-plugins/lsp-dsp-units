@@ -280,7 +280,7 @@ namespace lsp
                 // It will work if value is in [-(2^(N-1) - 1), +(2^(N-1) - 1)],
                 // with N <= 16 the number of PCM bits, meaning ±32767 if N=16.
                 // (the clipping happens in a_law_float_to_pcm).
-                uint8_t sign = uint8_t((uint16_t(-(value + 1)) >> 15) << 7);
+                uint8_t sign = uint8_t((uint16_t(-(value + 1)) & 0x8000) >> 8);
 
                 // Then, we compute the magnitude.
                 // value is in two's complement, so we do this bitwise-magick to prevent branching:
@@ -306,10 +306,10 @@ namespace lsp
             {
                 // Also see https://en.wikipedia.org/wiki/G.711#A-law
 
-                // Let's get the sign. It is in the leftmost bit).
+                // Let's get the sign. It is in the leftmost bit.
                 // The line below is this, but branch-less.
                 // float sign = (value & 0x80) ? 1.0f : -1.0f;
-                float sign = 2.0f * ((value & 0x80) >> 7) - 1.0f;
+                float sign = ((value & 0x80) >> 6) - 1.0f;
 
                 // Let's get the magnitude. Basically, it is everything but the sign bit.
                 // We scale by the highest possible 7 bit value, 127.
@@ -403,7 +403,7 @@ namespace lsp
                 // It will work if value is in [-(2^(N-1) - 1), +(2^(N-1) - 1)],
                 // with N <= 16 the number of PCM bits, meaning ±32767 if N=16.
                 // (the clipping happens in a_law_float_to_pcm).
-                uint8_t sign = uint8_t((uint16_t(-(value + 1)) >> 15) << 7);
+                uint8_t sign = uint8_t((uint16_t(-(value + 1)) & 0x8000) >> 8);
 
                 // Then, we compute the magnitude.
                 // value is in two's complement, so we do this bitwise-magick to prevent branching:
@@ -436,10 +436,10 @@ namespace lsp
             {
                 // Also see https://en.wikipedia.org/wiki/G.711#%CE%BC-law
 
-                // Let's get the sign. It is in the leftmost bit).
+                // Let's get the sign. It is in the leftmost bit.
                 // The line below is this, but branch-less.
                 // float sign = (value & 0x80) ? 1.0f : -1.0f;
-                float sign = 2.0f * ((value & 0x80) >> 7) - 1.0f;
+                float sign = ((value & 0x80) >> 6) - 1.0f;
 
                 // Let's get the magnitude. Basically, it is everything but the sign bit.
                 // However, remember that G.711 wanted us to flip the bits.
