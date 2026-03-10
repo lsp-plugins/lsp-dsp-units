@@ -5,6 +5,7 @@
 === 1.0.34 ===
 * Some small optimizations of equalizers (preventing extra calculations with doubles).
 * Added support of decramping by dspu::Equalizer module.
+* Fixed bug in dynamic delay which can yield to crackling sound when using feedback.
 
 === 1.0.33 ===
 * Added varying ALR knee support by the dspu::Limiter module. 
