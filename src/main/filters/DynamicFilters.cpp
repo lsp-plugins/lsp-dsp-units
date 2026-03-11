@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 1 февр. 2018 г.
@@ -32,6 +32,10 @@ namespace lsp
 {
     namespace dspu
     {
+        constexpr float C_PI                = M_PI;
+        constexpr float C_PI_MUL_2          = M_PI * 2.0;
+        constexpr float C_PI_DIV_2          = M_PI_2;
+
         // Normal analog filter that does not affect any changes to the signal
         const dsp::f_cascade_t DynamicFilters::sNormal =
         {
@@ -165,7 +169,7 @@ namespace lsp
             // Tranform second frequency
             if (fp->nType & 1) // Bilinear transform
             {
-                float nf    = M_PI / float(nSampleRate);
+                float nf    = C_PI / float(nSampleRate);
                 fp->fFreq2  = tanf(fp->fFreq * nf) / tanf(fp->fFreq2 * nf);
             }
             else // Matched transform
@@ -218,8 +222,8 @@ namespace lsp
             float kf =
                     (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
                     (f->sParams.nType & 1) ?
-                    1.0/tanf(f->sParams.fFreq * M_PI / float(nSampleRate)) : // bilinear transform coefficient
-                    2.0*M_PI / nSampleRate; // Matched transfomr coefficient
+                    1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
+                    C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
 
             // Filter memory
             while (samples > 0)
@@ -379,7 +383,7 @@ namespace lsp
             for (size_t j=0; j<nc; ++j)
             {
                 ppc             = &pc[j];
-                ppc->theta      = ((((cj+j)&(~3)) + 2)*M_PI_2) / float(slope);
+                ppc->theta      = ((((cj+j)&(~3)) + 2)*C_PI_DIV_2) / float(slope);
                 ppc->tcos       = cosf(ppc->theta);
                 ppc->tcos2      = ppc->tcos * ppc->tcos;
                 ppc->tsin2      = 1.0f - ppc->tcos2;
@@ -547,7 +551,7 @@ namespace lsp
                 dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                 // Pre-calculate filter parameters
-                float theta         = (((cj & (~1)) + 1)*M_PI_2)/(2*fp->nSlope); // The number of cascades is just doubled
+                float theta         = (((cj & (~1)) + 1)*C_PI_DIV_2)/(2*fp->nSlope); // The number of cascades is just doubled
                 float tcos          = cosf(theta);
                 float tcos2         = tcos * tcos;      // cos^2
                 float tsin2         = 1.0f - tcos2;     // sin^2
@@ -695,12 +699,12 @@ namespace lsp
                         for (size_t i=0; i<samples; ++i)
                         {
                             // Transfer function
-                            c->b[0]             = 1.0;
-                            c->b[1]             = 2.0 / (1.0 + fp->fQuality);
-                            c->b[2]             = 1.0;
+                            c->b[0]             = 1.0f;
+                            c->b[1]             = 2.0f / (1.0f + fp->fQuality);
+                            c->b[2]             = 1.0f;
 
                             c->t[0]             = (ftype == FLT_BT_RLC_LOPASS) ? 1.0f : 0.0f;
-                            c->t[1]             = 0.0;
+                            c->t[1]             = 0.0f;
                             c->t[2]             = (ftype != FLT_BT_RLC_LOPASS) ? 1.0f : 0.0f;
 
                             // Move to next cascade
@@ -751,8 +755,8 @@ namespace lsp
 
                             // Transfer function
                             t[0]                = fg;
-                            t[1]                = 2.0 / (1.0 + fp->fQuality);
-                            t[2]                = 1.0 / fg;
+                            t[1]                = 2.0f / (1.0f + fp->fQuality);
+                            t[2]                = 1.0f / fg;
 
                             b[0]                = t[2]; // 1.0 / fg
                             b[1]                = t[1]; // 2.0 / (1.0 + fp->fQuality)
@@ -812,11 +816,11 @@ namespace lsp
 
                                 // Create transfer function
                                 t[0]                = fg;
-                                t[1]                = 2.0 * kf / (1.0 + fp->fQuality);
+                                t[1]                = 2.0f * kf / (1.0f + fp->fQuality);
                                 t[2]                = kf*kf / fg;
 
-                                b[0]                = 1.0 / fg;
-                                b[1]                = 2.0 * kf / (1.0 + fp->fQuality);
+                                b[0]                = 1.0f / fg;
+                                b[1]                = 2.0f * kf / (1.0f + fp->fQuality);
                                 b[2]                = fg * kf * kf;
 
                                 if ((cj>>1) == 0)
@@ -845,8 +849,8 @@ namespace lsp
 
                                 // Create transfer function
                                 t[0]                = fg;
-                                t[1]                = 2.0 / (1.0 + fp->fQuality);
-                                t[2]                = 1.0 / fg;
+                                t[1]                = 2.0f / (1.0f + fp->fQuality);
+                                t[2]                = 1.0f / fg;
 
                                 b[0]                = t[2]; // 1.0 / fg
                                 b[1]                = t[1]; // 2.0 / (1.0 + fp->fQuality)
@@ -877,8 +881,8 @@ namespace lsp
                     if (nc <= 0)
                         return nc;
 
-                    float f2                = 1.0 / fp->fFreq2;
-                    float k                 = (1.0 + f2)/(1.0 + fp->fQuality);
+                    float f2                = 1.0f / fp->fFreq2;
+                    float k                 = (1.0f + f2)/(1.0f + fp->fQuality);
 
                     // Intialize pointers
                     for (size_t j=0; j < nc; j++)
@@ -887,13 +891,13 @@ namespace lsp
 
                         for (size_t i=0; i<samples; ++i)
                         {
-                            c->t[0]             = 0.0;
-                            c->t[1]             = (cj == 0) ? expf(fp->nSlope * logf(k)) * sfg[i] : 1.0;
-                            c->t[2]             = 0.0;
+                            c->t[0]             = 0.0f;
+                            c->t[1]             = (cj == 0) ? expf(fp->nSlope * logf(k)) * sfg[i] : 1.0f;
+                            c->t[2]             = 0.0f;
 
                             c->b[0]             = f2;
                             c->b[1]             = k;
-                            c->b[2]             = 1.0;
+                            c->b[2]             = 1.0f;
 
                             // Move to next cascade
                             c                  += nc;
@@ -922,17 +926,17 @@ namespace lsp
                             float fg            = expf(logf(sfg[i])/fp->nSlope);
                             float angle         = atanf(fg);
                             float tsin          = sinf(angle);
-                            float tcos          = sqrtf(1.0 - tsin*tsin);
-                            float k             = 2.0 * (1.0/fg + fg) / (1.0 + (2.0 * fp->fQuality) / fp->nSlope);
+                            float tcos          = sqrtf(1.0f - tsin*tsin);
+                            float k             = 2.0f * (1.0f/fg + fg) / (1.0f + (2.0f * fp->fQuality) / fp->nSlope);
 
                             // Create transfer function
-                            c->t[0]             = 1.0;
+                            c->t[0]             = 1.0f;
                             c->t[1]             = k * tsin;
-                            c->t[2]             = 1.0;
+                            c->t[2]             = 1.0f;
 
-                            c->b[0]             = 1.0;
+                            c->b[0]             = 1.0f;
                             c->b[1]             = k * tcos;
-                            c->b[2]             = 1.0;
+                            c->b[2]             = 1.0f;
 
                             // Move to next cascade
                             c                  += nc;
@@ -957,23 +961,23 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float k             = 2.0 / (1.0 + fp->fQuality);
+                        float k             = 2.0f / (1.0f + fp->fQuality);
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
                         {
                             float angle         = atanf(expf(logf(sfg[i]) / fp->nSlope));
                             float tsin          = sinf(angle);
-                            float tcos          = sqrtf(1.0 - tsin*tsin);
+                            float tcos          = sqrtf(1.0f - tsin*tsin);
 
                             // Create transfer function
-                            c->t[0]             = 1.0;
+                            c->t[0]             = 1.0f;
                             c->t[1]             = k * tsin;
-                            c->t[2]             = 1.0;
+                            c->t[2]             = 1.0f;
 
-                            c->b[0]             = 1.0;
+                            c->b[0]             = 1.0f;
                             c->b[1]             = k * tcos;
-                            c->b[2]             = 1.0;
+                            c->b[2]             = 1.0f;
 
                             // Move to next cascade
                             c                  += nc;
@@ -994,19 +998,19 @@ namespace lsp
 
                     nc                  = 1;
                     dsp::f_cascade_t *c = dst;       // target cascade pointer
-                    float k             = 2.0 / (1.0 + fp->fQuality);
+                    float k             = 2.0f / (1.0f + fp->fQuality);
 
                     // Generate cascades
                     for (size_t i=0; i<samples; ++i)
                     {
                         // Create transfer function
                         c->t[0]             = sfg[i];
-                        c->t[1]             = 0.0;
+                        c->t[1]             = 0.0f;
                         c->t[2]             = sfg[i];
 
-                        c->b[0]             = 1.0;
+                        c->b[0]             = 1.0f;
                         c->b[1]             = k;
-                        c->b[2]             = 1.0;
+                        c->b[2]             = 1.0f;
 
                         // Move to next cascade
                         c++;
@@ -1099,13 +1103,13 @@ namespace lsp
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
                         {
-                            c->b[0]     = 1.0;
-                            c->b[1]     = 1.0;
-                            c->b[2]     = 0.0;
+                            c->b[0]     = 1.0f;
+                            c->b[1]     = 1.0f;
+                            c->b[2]     = 0.0f;
 
-                            c->t[0]     = (ftype == FLT_BT_BWC_LOPASS) ? sfg[i] : 0.0;
-                            c->t[1]     = (ftype == FLT_BT_BWC_LOPASS) ? 0.0 : sfg[i];
-                            c->t[2]     = 0.0;
+                            c->t[0]     = (ftype == FLT_BT_BWC_LOPASS) ? sfg[i] : 0.0f;
+                            c->t[1]     = (ftype == FLT_BT_BWC_LOPASS) ? 0.0f : sfg[i];
+                            c->t[2]     = 0.0f;
 
                             // Move to next cascade
                             c                  += nc;
@@ -1124,10 +1128,10 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta     = ((2*(cj - (fp->nSlope & 1)) + 1)*M_PI_2)/fp->nSlope;
+                        float theta     = ((2*(cj - (fp->nSlope & 1)) + 1)*C_PI_DIV_2)/fp->nSlope;
                         float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0 - tsin*tsin);
-                        float kf1       = 1.0 / (tsin*tsin + k*k * tcos*tcos);
+                        float tcos      = sqrtf(1.0f - tsin*tsin);
+                        float kf1       = 1.0f / (tsin*tsin + k*k * tcos*tcos);
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
@@ -1135,22 +1139,22 @@ namespace lsp
                             // Tranfer function
                             if (ftype == FLT_BT_BWC_HIPASS)
                             {
-                                c->t[0]         = 0.0;
-                                c->t[1]         = 0.0;
-                                c->t[2]         = (cj == 0) ? sfg[i] : 1.0;
+                                c->t[0]         = 0.0f;
+                                c->t[1]         = 0.0f;
+                                c->t[2]         = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]         = kf1;
-                                c->b[1]         = 2.0 * k * tcos * kf1;
-                                c->b[2]         = 1.0;
+                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[2]         = 1.0f;
                             }
                             else
                             {
-                                c->t[0]         = (cj == 0) ? sfg[i] : 1.0;
-                                c->t[1]         = 0.0;
-                                c->t[2]         = 0.0;
+                                c->t[0]         = (cj == 0) ? sfg[i] : 1.0f;
+                                c->t[1]         = 0.0f;
+                                c->t[2]         = 0.0f;
 
-                                c->b[0]         = 1.0;
-                                c->b[1]         = 2.0 * k * tcos * kf1;
+                                c->b[0]         = 1.0f;
+                                c->b[1]         = 2.0f * k * tcos * kf1;
                                 c->b[2]         = kf1;
                             }
 
@@ -1179,16 +1183,16 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta         = ((2*cj + 1)*M_PI_2)/(2*fp->nSlope);
+                        float theta         = ((2*cj + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
                         {
                             float gain          = sqrtf(sfg[i]);
-                            float fg            = expf(logf(gain)/(2.0*fp->nSlope));
-                            float k             = 1.0 / (1.0 + fp->fQuality * (1.0 - expf(2.0 - gain - 1.0/gain)));
+                            float fg            = expf(logf(gain)/(2.0f * fp->nSlope));
+                            float k             = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain - 1.0f/gain)));
                             float kf            = tsin*tsin + k*k * tcos*tcos;
 
                             float *t            = (ftype == FLT_BT_BWC_HISHELF) ? c->t : c->b;
@@ -1196,7 +1200,7 @@ namespace lsp
 
                             // Transfer function
                             t[0]                = kf / fg;
-                            t[1]                = 2.0 * k * tcos;
+                            t[1]                = 2.0f * k * tcos;
                             t[2]                = fg;
 
                             b[0]                = t[2]; // fg
@@ -1245,7 +1249,7 @@ namespace lsp
 
                         // Pre-calculate filter parameters
                         float rc_slope      = 1.0f / slope;
-                        float theta         = (((cj&(~1)) + 1)*M_PI_2) * rc_slope;
+                        float theta         = (((cj&(~1)) + 1)*C_PI_DIV_2) * rc_slope;
                         float tcos          = cosf(theta);
                         float tcos2         = tcos * tcos;      // cos^2
                         float tsin2         = 1.0f - tcos2;     // sin^2
@@ -1262,7 +1266,7 @@ namespace lsp
                             // Generate cascades
                             for (size_t i=0; i<samples; ++i)
                             {
-                                gain                = (ftype == FLT_BT_BWC_LADDERPASS) ? sqrtf(sfg[i]) : sqrtf(1.0/sfg[i]);
+                                gain                = (ftype == FLT_BT_BWC_LADDERPASS) ? sqrtf(sfg[i]) : sqrtf(1.0f/sfg[i]);
                                 fg                  = expf(logf(gain) * rc_slope);
                                 k                   = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain - 1.0f/gain)));
                                 kf                  = tsin2 + k*k * tcos2;
@@ -1356,10 +1360,10 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta         = (((cj&(~1)) + 1)*M_PI_2)/(slope);
+                        float theta         = (((cj&(~1)) + 1)*C_PI_DIV_2)/(slope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
-                        float k             = 1.0f / (1.0 + fp->fQuality);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float k             = 1.0f / (1.0f + fp->fQuality);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
 
                         if (cj & 1) // Second cascade
@@ -1370,24 +1374,24 @@ namespace lsp
                                 float fg            = expf(logf(sfg[i])/slope);
 
                                 // Transfer function
-                                if (sfg[i] >= 1.0)
+                                if (sfg[i] >= 1.0f)
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos / fg;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos / fg;
                                     c->t[2]             = kf / (fg * fg);
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos;
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos;
                                     c->b[2]             = kf;
                                 }
                                 else
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos;
                                     c->t[2]             = kf;
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos * fg;
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos * fg;
                                     c->b[2]             = kf * fg * fg;
                                 }
 
@@ -1403,25 +1407,25 @@ namespace lsp
                                 float fg            = expf(logf(sfg[i])/slope);
 
                                 // Transfer function
-                                if (sfg[i] >= 1.0)
+                                if (sfg[i] >= 1.0f)
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos * fg / kf;
-                                    c->t[2]             = 1.0 * fg * fg / kf;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos * fg / kf;
+                                    c->t[2]             = 1.0f * fg * fg / kf;
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos / kf;
-                                    c->b[2]             = 1.0 / kf;
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos / kf;
+                                    c->b[2]             = 1.0f / kf;
                                 }
                                 else
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos / kf;
-                                    c->t[2]             = 1.0 / kf;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos / kf;
+                                    c->t[2]             = 1.0f / kf;
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos / (fg * kf);
-                                    c->b[2]             = 1.0 / (fg * fg * kf);
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos / (fg * kf);
+                                    c->b[2]             = 1.0f / (fg * fg * kf);
 
                                 }
 
@@ -1454,22 +1458,22 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta         = (((cj&(~1)) + 1)*M_PI_2)/slope;
+                        float theta         = (((cj&(~1)) + 1)*C_PI_DIV_2)/slope;
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
-                        float kf1           = 1.0/(tsin*tsin + k*k * tcos*tcos);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float kf1           = 1.0f/(tsin*tsin + k*k * tcos*tcos);
 
                         if (cj & 1) // Hi-pass cascade
                         {
                             for (size_t i=0; i<samples; ++i)
                             {
                                 // Transfer function
-                                c->t[0]             = 1.0;
-                                c->t[1]             = 0.0;
-                                c->t[2]             = 0.0;
+                                c->t[0]             = 1.0f;
+                                c->t[1]             = 0.0f;
+                                c->t[2]             = 0.0f;
 
-                                c->b[0]             = 1.0;
-                                c->b[1]             = 2.0 * k * tcos * f2 * kf1;
+                                c->b[0]             = 1.0f;
+                                c->b[1]             = 2.0f * k * tcos * f2 * kf1;
                                 c->b[2]             = f2 * f2 * kf1;
 
                                 // Move to next cascade
@@ -1481,13 +1485,13 @@ namespace lsp
                             for (size_t i=0; i<samples; ++i)
                             {
                                 // Transfer function
-                                c->t[0]             = 0.0;
-                                c->t[1]             = 0.0;
-                                c->t[2]             = (cj == 0) ? sfg[i] : 1.0;
+                                c->t[0]             = 0.0f;
+                                c->t[1]             = 0.0f;
+                                c->t[2]             = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]             = kf1;
-                                c->b[1]             = 2.0 * k * tcos * kf1;
-                                c->b[2]             = 1.0;
+                                c->b[1]             = 2.0f * k * tcos * kf1;
+                                c->b[2]             = 1.0f;
 
                                 // Move to next cascade
                                 c                  += nc;
@@ -1517,10 +1521,10 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta     = (((cj & (~1)) + 1)*M_PI_2)/(fp->nSlope*2); // The number of cascades is just doubled
+                        float theta     = (((cj & (~1)) + 1)*C_PI_DIV_2)/(fp->nSlope*2); // The number of cascades is just doubled
                         float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0 - tsin*tsin);
-                        float kf1       = 1.0 / (tsin*tsin + k*k * tcos*tcos);
+                        float tcos      = sqrtf(1.0f - tsin*tsin);
+                        float kf1       = 1.0f / (tsin*tsin + k*k * tcos*tcos);
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
@@ -1528,22 +1532,22 @@ namespace lsp
                             // Tranfer function
                             if (ftype == FLT_BT_LRX_HIPASS)
                             {
-                                c->t[0]         = 0.0;
-                                c->t[1]         = 0.0;
-                                c->t[2]         = (cj == 0) ? sfg[i] : 1.0;
+                                c->t[0]         = 0.0f;
+                                c->t[1]         = 0.0f;
+                                c->t[2]         = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]         = kf1;
-                                c->b[1]         = 2.0 * k * tcos * kf1;
-                                c->b[2]         = 1.0;
+                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[2]         = 1.0f;
                             }
                             else
                             {
-                                c->t[0]         = (cj == 0) ? sfg[i] : 1.0;
-                                c->t[1]         = 0.0;
-                                c->t[2]         = 0.0;
+                                c->t[0]         = (cj == 0) ? sfg[i] : 1.0f;
+                                c->t[1]         = 0.0f;
+                                c->t[2]         = 0.0f;
 
-                                c->b[0]         = 1.0;
-                                c->b[1]         = 2.0 * k * tcos * kf1;
+                                c->b[0]         = 1.0f;
+                                c->b[1]         = 2.0f * k * tcos * kf1;
                                 c->b[2]         = kf1;
                             }
 
@@ -1580,10 +1584,10 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta         = (((cj&(~3)) + 2)*M_PI_2)/(slope);
+                        float theta         = (((cj&(~3)) + 2)*C_PI_DIV_2)/(slope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
-                        float k             = 1.0f / (1.0 + fp->fQuality);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float k             = 1.0f / (1.0f + fp->fQuality);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
 
                         if (cj & 1) // Second cascade
@@ -1596,22 +1600,22 @@ namespace lsp
                                 // Transfer function
                                 if (sfg[i] >= 1.0)
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos / fg;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos / fg;
                                     c->t[2]             = kf / (fg * fg);
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos;
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos;
                                     c->b[2]             = kf;
                                 }
                                 else
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos;
                                     c->t[2]             = kf;
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos * fg;
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos * fg;
                                     c->b[2]             = kf * fg * fg;
                                 }
 
@@ -1629,23 +1633,23 @@ namespace lsp
                                 // Transfer function
                                 if (sfg[i] >= 1.0)
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos * fg / kf;
-                                    c->t[2]             = 1.0 * fg * fg / kf;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos * fg / kf;
+                                    c->t[2]             = 1.0f * fg * fg / kf;
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos / kf;
-                                    c->b[2]             = 1.0 / kf;
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos / kf;
+                                    c->b[2]             = 1.0f / kf;
                                 }
                                 else
                                 {
-                                    c->t[0]             = 1.0;
-                                    c->t[1]             = 2.0 * k * tcos / kf;
-                                    c->t[2]             = 1.0 / kf;
+                                    c->t[0]             = 1.0f;
+                                    c->t[1]             = 2.0f * k * tcos / kf;
+                                    c->t[2]             = 1.0f / kf;
 
-                                    c->b[0]             = 1.0;
-                                    c->b[1]             = 2.0 * k * tcos / (fg * kf);
-                                    c->b[2]             = 1.0 / (fg * fg * kf);
+                                    c->b[0]             = 1.0f;
+                                    c->b[1]             = 2.0f * k * tcos / (fg * kf);
+                                    c->b[2]             = 1.0f / (fg * fg * kf);
 
                                 }
 
@@ -1678,22 +1682,22 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta         = (((cj&(~3)) + 2)*M_PI_2)/slope;
+                        float theta         = (((cj&(~3)) + 2)*C_PI_DIV_2)/slope;
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
-                        float kf1           = 1.0/(tsin*tsin + k*k * tcos*tcos);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float kf1           = 1.0f/(tsin*tsin + k*k * tcos*tcos);
 
                         if (cj & 1) // Hi-pass cascade
                         {
                             for (size_t i=0; i<samples; ++i)
                             {
                                 // Transfer function
-                                c->t[0]             = 1.0;
-                                c->t[1]             = 0.0;
-                                c->t[2]             = 0.0;
+                                c->t[0]             = 1.0f;
+                                c->t[1]             = 0.0f;
+                                c->t[2]             = 0.0f;
 
-                                c->b[0]             = 1.0;
-                                c->b[1]             = 2.0 * k * tcos * f2 * kf1;
+                                c->b[0]             = 1.0f;
+                                c->b[1]             = 2.0f * k * tcos * f2 * kf1;
                                 c->b[2]             = f2 * f2 * kf1;
 
                                 // Move to next cascade
@@ -1705,13 +1709,13 @@ namespace lsp
                             for (size_t i=0; i<samples; ++i)
                             {
                                 // Transfer function
-                                c->t[0]             = 0.0;
-                                c->t[1]             = 0.0;
-                                c->t[2]             = (cj == 0) ? sfg[i] : 1.0;
+                                c->t[0]             = 0.0f;
+                                c->t[1]             = 0.0f;
+                                c->t[2]             = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]             = kf1;
-                                c->b[1]             = 2.0 * k * tcos * kf1;
-                                c->b[2]             = 1.0;
+                                c->b[1]             = 2.0f * k * tcos * kf1;
+                                c->b[2]             = 1.0f;
 
                                 // Move to next cascade
                                 c                  += nc;
@@ -1797,8 +1801,8 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = M_PI / float(nSampleRate);
-                float kf    = 1.0/tanf(fp->fFreq * nf);
+                float nf    = C_PI / float(nSampleRate);
+                float kf    = 1.0f/tanf(fp->fFreq * nf);
                 float lf    = nSampleRate * 0.499f;
 
                 // Process frequency chart
@@ -1835,7 +1839,7 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0 / fp->fFreq;
+                float kf        = 1.0f / fp->fFreq;
 
                 while (count > 0)
                 {
@@ -1896,7 +1900,7 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = M_PI / float(nSampleRate);
+                float nf    = C_PI / float(nSampleRate);
                 float kf    = 1.0/tanf(fp->fFreq * nf);
                 float lf    = nSampleRate * 0.499f;
 
@@ -1933,7 +1937,7 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0 / fp->fFreq;
+                float kf        = 1.0f / fp->fFreq;
 
                 // Process frequency chart
                 while (count > 0)

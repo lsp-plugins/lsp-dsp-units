@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 дек. 2020 г.
@@ -99,15 +99,15 @@ namespace lsp
             for (size_t i=0; i < samples; ++i)
             {
                 ssize_t shift   = lsp_limit(ssize_t(delay[i]), 0, nMaxDelay);   // Delay
-                ssize_t tail    = nHead - shift;
+                ssize_t tail    = ssize_t(nHead) - shift;
                 if (tail < 0)
                     tail           += nCapacity;
                 size_t feed     = tail  + lsp_limit(fdelay[i], 0, shift);       // Feedback delay
-                if (feed > nCapacity)
+                if (feed >= nCapacity)
                     feed           -= nCapacity;
 
                 vDelay[nHead]   = in[i];            // Save input sample to buffer
-                float s         = vDelay[tail];     // Read delayed sample
+                const float s   = vDelay[tail];     // Read delayed sample
                 vDelay[feed]   += s * fgain[i];     // Add feedback to the buffer
                 out[i]          = vDelay[tail];     // Read the final sample to output buffer
 
