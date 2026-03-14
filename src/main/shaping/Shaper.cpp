@@ -46,17 +46,20 @@ namespace lsp
             sShaping.tap_tubewarmth.last_raw_output         = 0.0f;
             sShaping.tap_tubewarmth.last_raw_intermediate   = 0.0f;
 
-            fSlope          = 0.5f;
-            fShape          = 0.5f;
-            fHighLevel      = 1.0f;
-            fLowLevel       = 1.0f;
-            fRadius         = 1.0f;
-            fLevels         = 0.5f;
-            fDrive          = 0.5f;
-            fBlend          = 0.5f;
+            fSlope                  = 0.5f;
+            fShape                  = 0.5f;
+            fHighLevel              = 1.0f;
+            fLowLevel               = 1.0f;
+            fRadius                 = 1.0f;
+            fLevels                 = 0.5f;
+            fContinuosCompanding    = 0.5f;
+            fQuantizedCompanding    = 0.5f;
+            fBias                   = 0.5f;
+            fDrive                  = 0.5f;
+            fBlend                  = 0.5f;
 
-            nSampleRate     = 0;
-            nUpdateFlags    = UPD_ALL;
+            nSampleRate             = 0;
+            nUpdateFlags            = UPD_ALL;
 
             // Update the settings with the defaults above.
             update_settings();
@@ -74,25 +77,35 @@ namespace lsp
 
             switch (enFunction)
             {
-                case SH_FCN_SINUSOIDAL:             return nUpdateFlags & UPD_SLOPE;
+                case SH_FCN_SINUSOIDAL:                     return nUpdateFlags & UPD_SLOPE;
 
-                case SH_FCN_POLYNOMIAL:             return nUpdateFlags & UPD_SHAPE;
-                case SH_FCN_HYPERBOLIC:             return nUpdateFlags & UPD_SHAPE;
-                case SH_FCN_EXPONENTIAL:            return nUpdateFlags & UPD_SHAPE;
-                case SH_FCN_POWER:                  return nUpdateFlags & UPD_SHAPE;
-                case SH_FCN_BILINEAR:               return nUpdateFlags & UPD_SHAPE;
-                case SH_FCN_RECTIFIER:              return nUpdateFlags & UPD_SHAPE;
+                case SH_FCN_POLYNOMIAL:                     return nUpdateFlags & UPD_SHAPE;
+                case SH_FCN_HYPERBOLIC:                     return nUpdateFlags & UPD_SHAPE;
+                case SH_FCN_EXPONENTIAL:                    return nUpdateFlags & UPD_SHAPE;
+                case SH_FCN_POWER:                          return nUpdateFlags & UPD_SHAPE;
+                case SH_FCN_BILINEAR:                       return nUpdateFlags & UPD_SHAPE;
+                case SH_FCN_RECTIFIER:                      return nUpdateFlags & UPD_SHAPE;
 
-                case SH_FCN_ASYMMETRIC_CLIP:        return nUpdateFlags & (UPD_HIGH_LEVEL | UPD_LOW_LEVEL);
-                case SH_FCN_ASYMMETRIC_SOFTCLIP:    return nUpdateFlags & (UPD_HIGH_LEVEL | UPD_LOW_LEVEL);
+                case SH_FCN_ASYMMETRIC_CLIP:                return nUpdateFlags & (UPD_HIGH_LEVEL | UPD_LOW_LEVEL);
+                case SH_FCN_ASYMMETRIC_SOFTCLIP:            return nUpdateFlags & (UPD_HIGH_LEVEL | UPD_LOW_LEVEL);
 
-                case SH_FCN_QUARTER_CIRCLE:          return nUpdateFlags & UPD_RADIUS;
+                case SH_FCN_QUARTER_CIRCLE:                 return nUpdateFlags & UPD_RADIUS;
 
-                case SH_FCN_BITCRUSH_FLOOR:         return nUpdateFlags & UPD_LEVELS;
-                case SH_FCN_BITCRUSH_CEIL:          return nUpdateFlags & UPD_LEVELS;
-                case SH_FCN_BITCRUSH_ROUND:         return nUpdateFlags & UPD_LEVELS;
+                case SH_FCN_BITCRUSH_FLOOR:                 return nUpdateFlags & UPD_LEVELS;
+                case SH_FCN_BITCRUSH_CEIL:                  return nUpdateFlags & UPD_LEVELS;
+                case SH_FCN_BITCRUSH_ROUND:                 return nUpdateFlags & UPD_LEVELS;
 
-                case SH_FCN_TAP_TUBEWARMTH:         return nUpdateFlags & (UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE);
+                case SH_FCN_CONTINUOUS_A_LAW_COMPRESSION:   return nUpdateFlags & UPD_CONTINUOUS_COMPANDING;
+                case SH_FCN_CONTINUOUS_A_LAW_EXPANSION:     return nUpdateFlags & UPD_CONTINUOUS_COMPANDING;
+                case SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION:  return nUpdateFlags & UPD_CONTINUOUS_COMPANDING;
+                case SH_FCN_CONTINUOUS_MU_LAW_EXPANSION:    return nUpdateFlags & UPD_CONTINUOUS_COMPANDING;
+
+                case SH_FCN_QUANTIZED_A_LAW_COMPRESSION:    return nUpdateFlags & UPD_QUANTIZED_COMPANDING;
+                case SH_FCN_QUANTIZED_A_LAW_EXPANSION:      return nUpdateFlags & UPD_QUANTIZED_COMPANDING;
+                case SH_FCN_QUANTIZED_MU_LAW_COMPRESSION:   return nUpdateFlags & (UPD_QUANTIZED_COMPANDING | UPD_BIAS);
+                case SH_FCN_QUANTIZED_MU_LAW_EXPANSION:     return nUpdateFlags & (UPD_QUANTIZED_COMPANDING | UPD_BIAS);
+
+                case SH_FCN_TAP_TUBEWARMTH:                 return nUpdateFlags & (UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE);
             }
 
             return false;
@@ -215,6 +228,55 @@ namespace lsp
                 }
                 break;
 
+                case SH_FCN_CONTINUOUS_A_LAW_COMPRESSION:
+                {
+                    sShaping.continuous_a_law_compression.compression = fALaw_conv_slope * fContinuosCompanding + fALaw_conv_intrc;
+                    sShaping.continuous_a_law_compression.compression_reciprocal = 1.0f / sShaping.continuous_a_law_compression.compression;
+                    sShaping.continuous_a_law_compression.scale = 1.0f / (1.0f + quick_logf(sShaping.continuous_a_law_compression.compression));
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_A_LAW_EXPANSION:
+                {
+                    sShaping.continuous_a_law_expansion.expansion = fALaw_conv_slope * fContinuosCompanding + fALaw_conv_intrc;
+                    sShaping.continuous_a_law_expansion.expansion_reciprocal = 1.0f / sShaping.continuous_a_law_expansion.expansion;
+                    sShaping.continuous_a_law_expansion.radius = 1.0f / (1.0f + quick_logf(sShaping.continuous_a_law_expansion.expansion));
+                    sShaping.continuous_a_law_expansion.radius_reciprocal = 1.0f + quick_logf(sShaping.continuous_a_law_expansion.expansion);
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION:
+                {
+                    sShaping.continuous_mu_law_compression.compression = fMuLaw_conv_slope * fContinuosCompanding * fMuLaw_conv_intrc;
+                    sShaping.continuous_mu_law_compression.scale = 1.0f / quick_logf(1.0f + sShaping.continuous_mu_law_compression.compression);
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_MU_LAW_EXPANSION:
+                {
+                    sShaping.continuous_mu_law_expansion.expansion = fMuLaw_conv_slope * fContinuosCompanding * fMuLaw_conv_intrc;
+                    sShaping.continuous_mu_law_expansion.expansion_reciprocal = 1.0f / sShaping.continuous_mu_law_expansion.expansion;
+                }
+                break;
+
+                case SH_FCN_QUANTIZED_A_LAW_COMPRESSION:
+                case SH_FCN_QUANTIZED_A_LAW_EXPANSION:
+                {
+                    sShaping.quantized_a_law_companding.pcm_n_bits = fCompanding_conv_slope * fQuantizedCompanding + fCompanding_conf_itrc;
+                    sShaping.quantized_a_law_companding.pcm_clip = (1 << (sShaping.quantized_a_law_companding.pcm_n_bits - 1)) - 1;
+                }
+                break;
+
+                case SH_FCN_QUANTIZED_MU_LAW_COMPRESSION:
+                case SH_FCN_QUANTIZED_MU_LAW_EXPANSION:
+                {
+                    sShaping.quantized_mu_law_companding.pcm_n_bits = fCompanding_conv_slope * fQuantizedCompanding + fCompanding_conf_itrc;
+                    sShaping.quantized_mu_law_companding.pcm_clip = (1 << (sShaping.quantized_a_law_companding.pcm_n_bits - 1)) - 1;
+                    sShaping.quantized_mu_law_companding.pcm_bias = fMuLaw_bias_conv_slope * fBias + fMuLaw_bias_conv_itrc;
+                    sShaping.quantized_mu_law_companding.pcm_max_magnitude = sShaping.quantized_mu_law_companding.pcm_clip - sShaping.quantized_mu_law_companding.pcm_bias;
+                }
+                break;
+
                 case SH_FCN_TAP_TUBEWARMTH:
                 {
                     sShaping.tap_tubewarmth.drive = fTap_tebewarmth_drive_conv_slope * fDrive + fTap_tubewarmth_drive_conv_intrc;
@@ -320,6 +382,36 @@ namespace lsp
             nUpdateFlags |= UPD_LEVELS;
         }
 
+        void Shaper::set_continuous_companding(float cmp)
+        {
+            cmp = lsp_limit(cmp, 0.0f, 1.0f);
+            if (fContinuosCompanding == cmp)
+                return;
+
+            fContinuosCompanding = cmp;
+            nUpdateFlags |= UPD_CONTINUOUS_COMPANDING;
+        }
+
+        void Shaper::set_quantized_companding(float cmp)
+        {
+            cmp = lsp_limit(cmp, 0.0f, 1.0f);
+            if (fQuantizedCompanding == cmp)
+                return;
+
+            fQuantizedCompanding = cmp;
+            nUpdateFlags |= UPD_QUANTIZED_COMPANDING;
+        }
+
+        void Shaper::set_bias(float bias)
+        {
+            bias = lsp_limit(bias, 0.0f, 1.0f);
+            if (fBias == bias)
+                return;
+
+            fBias = bias;
+            nUpdateFlags |= UPD_BIAS;
+        }
+
         void Shaper::set_drive(float drive)
         {
             drive = lsp_limit(drive, 0.0f, 1.0f);
@@ -414,6 +506,9 @@ namespace lsp
             v->write("fLowLevel", fLowLevel);
             v->write("fRadius", fRadius);
             v->write("fLevels", fLevels);
+            v->write("fContinuosCompanding", fContinuosCompanding);
+            v->write("fQuantizedCompanding", fQuantizedCompanding);
+            v->write("fBias", fBias);
             v->write("fDrive", fDrive);
             v->write("fBlend", fBlend);
 
@@ -558,6 +653,79 @@ namespace lsp
                     v->begin_object("sShaping", &sShaping, sizeof(sShaping));
                     {
                         v->write("levels", sShaping.bitcrush_round.levels);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_A_LAW_COMPRESSION:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("compression", sShaping.continuous_a_law_compression.compression);
+                        v->write("compression_reciprocal", sShaping.continuous_a_law_compression.compression_reciprocal);
+                        v->write("scale", sShaping.continuous_a_law_compression.scale);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_A_LAW_EXPANSION:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("expansion", sShaping.continuous_a_law_expansion.expansion);
+                        v->write("expansion_reciprocal", sShaping.continuous_a_law_expansion.expansion_reciprocal);
+                        v->write("radius", sShaping.continuous_a_law_expansion.radius);
+                        v->write("radius_reciprocal", sShaping.continuous_a_law_expansion.radius_reciprocal);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("compression", sShaping.continuous_mu_law_compression.compression);
+                        v->write("scale", sShaping.continuous_mu_law_compression.scale);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_CONTINUOUS_MU_LAW_EXPANSION:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("expansion", sShaping.continuous_mu_law_expansion.expansion);
+                        v->write("expansion_reciprocal", sShaping.continuous_mu_law_expansion.expansion_reciprocal);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_QUANTIZED_A_LAW_COMPRESSION:
+                case SH_FCN_QUANTIZED_A_LAW_EXPANSION:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("pcm_n_bits", sShaping.quantized_a_law_companding.pcm_n_bits);
+                        v->write("pcm_clip", sShaping.quantized_a_law_companding.pcm_clip);
+                    }
+                    v->end_object();
+                }
+                break;
+
+                case SH_FCN_QUANTIZED_MU_LAW_COMPRESSION:
+                case SH_FCN_QUANTIZED_MU_LAW_EXPANSION:
+                {
+                    v->begin_object("sShaping", &sShaping, sizeof(sShaping));
+                    {
+                        v->write("pcm_n_bits", sShaping.quantized_mu_law_companding.pcm_n_bits);
+                        v->write("pcm_clip", sShaping.quantized_mu_law_companding.pcm_clip);
+                        v->write("pcm_bias", sShaping.quantized_mu_law_companding.pcm_bias);
+                        v->write("pcm_max_magnitude", sShaping.quantized_mu_law_companding.pcm_max_magnitude);
                     }
                     v->end_object();
                 }

@@ -45,6 +45,14 @@ namespace lsp
             SH_FCN_BITCRUSH_FLOOR,
             SH_FCN_BITCRUSH_CEIL,
             SH_FCN_BITCRUSH_ROUND,
+            SH_FCN_CONTINUOUS_A_LAW_COMPRESSION,
+            SH_FCN_CONTINUOUS_A_LAW_EXPANSION,
+            SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION,
+            SH_FCN_CONTINUOUS_MU_LAW_EXPANSION,
+            SH_FCN_QUANTIZED_A_LAW_COMPRESSION,
+            SH_FCN_QUANTIZED_A_LAW_EXPANSION,
+            SH_FCN_QUANTIZED_MU_LAW_COMPRESSION,
+            SH_FCN_QUANTIZED_MU_LAW_EXPANSION,
             SH_FCN_TAP_TUBEWARMTH,
 
             SH_FCN_DEFAULT = SH_FCN_HYPERBOLIC
@@ -55,16 +63,19 @@ namespace lsp
             protected:
                 enum update_t
                 {
-                    UPD_FUNCTION        = 1 << 0,
-                    UPD_SLOPE           = 1 << 1,
-                    UPD_SHAPE           = 1 << 2,
-                    UPD_HIGH_LEVEL      = 1 << 3,
-                    UPD_LOW_LEVEL       = 1 << 4,
-                    UPD_RADIUS          = 1 << 5,
-                    UPD_LEVELS          = 1 << 6,
-                    UPD_DRIVE           = 1 << 7,
-                    UPD_BLEND           = 1 << 8,
-                    UPD_SAMPLE_RATE     = 1 << 9,
+                    UPD_FUNCTION                = 1 << 0,
+                    UPD_SLOPE                   = 1 << 1,
+                    UPD_SHAPE                   = 1 << 2,
+                    UPD_HIGH_LEVEL              = 1 << 3,
+                    UPD_LOW_LEVEL               = 1 << 4,
+                    UPD_RADIUS                  = 1 << 5,
+                    UPD_LEVELS                  = 1 << 6,
+                    UPD_CONTINUOUS_COMPANDING   = 1 << 7,
+                    UPD_QUANTIZED_COMPANDING    = 1 << 8,
+                    UPD_BIAS                    = 1 << 9,
+                    UPD_DRIVE                   = 1 << 10,
+                    UPD_BLEND                   = 1 << 11,
+                    UPD_SAMPLE_RATE             = 1 << 12,
 
                     UPD_ALL =
                             UPD_SLOPE |
@@ -72,6 +83,7 @@ namespace lsp
                             UPD_HIGH_LEVEL | UPD_LOW_LEVEL |
                             UPD_RADIUS |
                             UPD_LEVELS |
+                            UPD_CONTINUOUS_COMPANDING | UPD_QUANTIZED_COMPANDING | UPD_BIAS |
                             UPD_DRIVE | UPD_BLEND | UPD_SAMPLE_RATE
                 };
 
@@ -126,6 +138,28 @@ namespace lsp
                  */
                 float                       fLevels;
 
+                /** [0, 1], The following functions need a rescaled and/or shifted version of this:
+                 * - SH_FCN_CONTINUOUS_A_LAW_COMPRESSION
+                 * - SH_FCN_CONTINUOUS_A_LAW_EXPANSION
+                 * - SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION
+                 * - SH_FCN_CONTINUOUS_MU_LAW_EXPANSION
+                 */
+                float                       fContinuosCompanding;
+
+                /** [0, 1], The following functions need a rescaled and/or shifted version of this:
+                 * - SH_FCN_QUANTIZED_A_LAW_COMPRESSION
+                 * - SH_FCN_QUANTIZED_A_LAW_EXPANSION
+                 * - SH_FCN_QUANTIZED_MU_LAW_COMPRESSION
+                 * - SH_FCN_QUANTIZED_MU_LAW_EXPANSION
+                 */
+                float                       fQuantizedCompanding;
+
+                /** [0, 1], The following functions need a rescaled and/or shifted version of this:
+                 * - SH_FCN_QUANTIZED_MU_LAW_COMPRESSION
+                 * - SH_FCN_QUANTIZED_MU_LAW_EXPANSION
+                 */
+                float                       fBias;
+
                 /**
                  * [0, 1], The following functions need a rescaled and/or shifted version of these:
                  * - SH_FCN_TAP_TUBEWARMTH
@@ -177,6 +211,34 @@ namespace lsp
                 static constexpr float fBitcrush_max_levels                 {24.0f};
                 static constexpr float fBitcrush_conv_slope                 {fBitcrush_max_levels - fBitcrush_min_levels};
                 static constexpr float fBitcrush_conv_intrc                 {fBitcrush_min_levels};
+
+                // Continuous A-law Companding
+
+                static constexpr float fALaw_min_companding                 {50.0f}; // Must be in (0, 87.6)
+                static constexpr float fALaw_dfl_companding                 {87.6f}; // The default value when fContinuosCompanding = 0.5f
+                static constexpr float fALaw_max_companding                 {2.0f * fALaw_dfl_companding - fALaw_min_companding};
+                static constexpr float fALaw_conv_slope                     {fALaw_max_companding - fALaw_min_companding };
+                static constexpr float fALaw_conv_intrc                     {fALaw_min_companding};
+
+                // Continuous μ-law Companding
+                static constexpr float fMuLaw_min_companding                {15.0f}; // Must be in (-1, 255)
+                static constexpr float fMuLaw_dfl_companding                {255.0f}; // The default value when fContinuosCompanding = 0.5f
+                static constexpr float fMuLaw_max_companding                {2.0f * fMuLaw_dfl_companding - fMuLaw_min_companding};
+                static constexpr float fMuLaw_conv_slope                    {fMuLaw_max_companding - fMuLaw_min_companding };
+                static constexpr float fMuLaw_conv_intrc                    {fMuLaw_min_companding};
+
+                // Quantized Companding
+                static constexpr float fCompanding_min_bits                 {9.0f};
+                static constexpr float fCompanding_max_bits                 {16.0f};
+                static constexpr float fCompanding_conv_slope               {fCompanding_max_bits - fCompanding_min_bits};
+                static constexpr float fCompanding_conf_itrc                {fCompanding_min_bits};
+
+                // μ-law bias
+                static constexpr float fMuLaw_min_bias                      {0.0f}; // Must be in [0, 33)
+                static constexpr float fMuLaw_dfl_bias                      {33.0f}; // The default value when fBias = 0.5f
+                static constexpr float fMuLaw_max_bias                      {2.0f * fMuLaw_dfl_bias - fMuLaw_min_bias};
+                static constexpr float fMuLaw_bias_conv_slope               {fMuLaw_max_bias - fMuLaw_min_bias};
+                static constexpr float fMuLaw_bias_conv_itrc                {fMuLaw_min_bias};
 
                 // TAP Tubewarmth
                 static constexpr float fTap_tubewarmth_min_drive            {1e-3f}; // Must be > 0
@@ -264,6 +326,24 @@ namespace lsp
                  * @param levels levels
                  */
                 void set_levels(float levels);
+
+                /** Set the continuous companding parameter.
+                 *
+                 * @param cmp compading parameter
+                 */
+                void set_continuous_companding(float cmp);
+
+                /** Set the quantized companding parameter.
+                 *
+                 * @param cmp companding parameter.
+                 */
+                void set_quantized_companding(float cmp);
+
+                /** Set the bias parameter.
+                 *
+                 * @param bias bias.
+                 */
+                void set_bias(float bias);
 
                 /** Set the drive.
                  *
