@@ -237,6 +237,18 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float continuous_a_law_expansion(shaping_t *params, float value)
             {
+                /**
+                 *   The code below is correct, but it means that the output will grow very fast if |value| > 1.
+                 *   For example, if value = 2 then the gain is 238.
+                 *   It is best to limit the gain to 1, which is reached when |value| = 1.
+                 *   This also matches the quantized implementation.
+                 */
+                if (value >= 1.0f)
+                    return 1.0f;
+
+                if (value <= -1.0f)
+                    return -1.0f;
+
                 float magv = fabsf(value);
 
                 if (magv < params->continuous_a_law_expansion.radius)
@@ -257,6 +269,18 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float continuous_mu_law_expansion(shaping_t *params, float value)
             {
+                /**
+                 *   The code below is correct, but it means that the output will grow very fast if |value| > 1.
+                 *   For example, if value = 2 then the gain is 3602.
+                 *   It is best to limit the gain to 1, which is reached when |value| = 1.
+                 *   This also matches the quantized implementation.
+                 */
+                if (value >= 1.0f)
+                    return 1.0f;
+
+                if (value <= -1.0f)
+                    return -1.0f;
+
                 // We need to compute (1 - μ)^|value|. We convert to base e so that we can use quick_expf.
                 float power = quick_expf(fabsf(value) * quick_logf(1.0f + params->continuous_mu_law_expansion.expansion));
                 return quick_signf(value) * (power- 1.0f) * params->continuous_mu_law_expansion.expansion_reciprocal;

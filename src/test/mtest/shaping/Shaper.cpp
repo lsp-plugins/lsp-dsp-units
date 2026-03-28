@@ -143,6 +143,54 @@ MTEST_MAIN
     MTEST_ASSERT(path.fmt("%s/shaper-bitcrush-round-%s.csv", tempdir(), full_name()));
     write_buffer(path.as_native(), "Bitcrush Round", vOutput, n_samples);
 
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_A_LAW_COMPRESSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-continuous-a-law-compression-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Continuous A-law Compression", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_A_LAW_EXPANSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-continuous-a-law-expansion-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Continuous A-law Expansion", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-continuous-mu-law-compression-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Continuous μ-law Compression", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_MU_LAW_EXPANSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-continuous-mu-law-expansion-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Continuous μ-law Expansion", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_A_LAW_COMPRESSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-quantized-a-law-compression-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Quantized A-law Compression", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_A_LAW_EXPANSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-quantized-a-law-expansion-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Quantized A-law Expansion", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_MU_LAW_COMPRESSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-quantized-mu-law-compression-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Quantized μ-law Compression", vOutput, n_samples);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_MU_LAW_EXPANSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    MTEST_ASSERT(path.fmt("%s/shaper-quantized-mu-law-expansion-%s.csv", tempdir(), full_name()));
+    write_buffer(path.as_native(), "Quantized μ-law Expansion", vOutput, n_samples);
+
     shaper.set_function(dspu::sh_function_t::SH_FCN_TAP_TUBEWARMTH);
     shaper.set_drive(0.0f);
     shaper.set_blend(0.0f);

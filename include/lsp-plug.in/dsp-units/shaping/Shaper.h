@@ -213,7 +213,6 @@ namespace lsp
                 static constexpr float fBitcrush_conv_intrc                 {fBitcrush_min_levels};
 
                 // Continuous A-law Companding
-
                 static constexpr float fALaw_min_companding                 {50.0f}; // Must be in (0, 87.6)
                 static constexpr float fALaw_dfl_companding                 {87.6f}; // The default value when fContinuosCompanding = 0.5f
                 static constexpr float fALaw_max_companding                 {2.0f * fALaw_dfl_companding - fALaw_min_companding};
@@ -227,11 +226,19 @@ namespace lsp
                 static constexpr float fMuLaw_conv_slope                    {fMuLaw_max_companding - fMuLaw_min_companding };
                 static constexpr float fMuLaw_conv_intrc                    {fMuLaw_min_companding};
 
-                // Quantized Companding
-                static constexpr float fCompanding_min_bits                 {9.0f};
-                static constexpr float fCompanding_max_bits                 {16.0f};
-                static constexpr float fCompanding_conv_slope               {fCompanding_max_bits - fCompanding_min_bits};
-                static constexpr float fCompanding_conf_itrc                {fCompanding_min_bits};
+                // Quantized A-law Companding
+                static constexpr float fALawCompanding_min_bits             {10.0f};
+                static constexpr float fALawCompanding_dfl_bits             {13.0f};
+                static constexpr float fALawCompanding_max_bits             {2.0f * fALawCompanding_dfl_bits - fALawCompanding_min_bits};
+                static constexpr float fALawCompanding_conv_slope           {fALawCompanding_max_bits - fALawCompanding_min_bits};
+                static constexpr float fALawCompanding_conv_itrc            {fALawCompanding_min_bits};
+
+                // Quantized μ-law Companding
+                static constexpr float fMuLawCompanding_min_bits            {12.0f};
+                static constexpr float fMuLawCompanding_dfl_bits            {14.0f};
+                static constexpr float fMuLawCompanding_max_bits            {2.0f * fMuLawCompanding_dfl_bits - fMuLawCompanding_min_bits};
+                static constexpr float fMuLawCompanding_conv_slope          {fMuLawCompanding_max_bits - fMuLawCompanding_min_bits};
+                static constexpr float fMuLawCompanding_conv_itrc           {fMuLawCompanding_min_bits};
 
                 // μ-law bias
                 static constexpr float fMuLaw_min_bias                      {0.0f}; // Must be in [0, 33)
