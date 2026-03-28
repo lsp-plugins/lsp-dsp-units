@@ -213,39 +213,39 @@ namespace lsp
                 static constexpr float fBitcrush_conv_intrc                 {fBitcrush_min_levels};
 
                 // Continuous A-law Companding
-                static constexpr float fALaw_min_companding                 {50.0f}; // Must be in (0, 87.6)
-                static constexpr float fALaw_dfl_companding                 {87.6f}; // The default value when fContinuosCompanding = 0.5f
-                static constexpr float fALaw_max_companding                 {2.0f * fALaw_dfl_companding - fALaw_min_companding};
-                static constexpr float fALaw_conv_slope                     {fALaw_max_companding - fALaw_min_companding };
-                static constexpr float fALaw_conv_intrc                     {fALaw_min_companding};
+                static constexpr float fC_A_law_min_companding              {50.0f}; // Must be in (0, 87.6)
+                static constexpr float fC_A_law_dfl_companding              {87.6f}; // The default value when fContinuosCompanding = 0.5f
+                static constexpr float fC_A_law_max_companding              {2.0f * fC_A_law_dfl_companding - fC_A_law_min_companding};
+                static constexpr float fC_A_law_conv_slope                  {fC_A_law_max_companding - fC_A_law_min_companding };
+                static constexpr float fC_A_law_conv_intrc                  {fC_A_law_min_companding};
 
                 // Continuous μ-law Companding
-                static constexpr float fMuLaw_min_companding                {15.0f}; // Must be in (-1, 255)
-                static constexpr float fMuLaw_dfl_companding                {255.0f}; // The default value when fContinuosCompanding = 0.5f
-                static constexpr float fMuLaw_max_companding                {2.0f * fMuLaw_dfl_companding - fMuLaw_min_companding};
-                static constexpr float fMuLaw_conv_slope                    {fMuLaw_max_companding - fMuLaw_min_companding };
-                static constexpr float fMuLaw_conv_intrc                    {fMuLaw_min_companding};
+                static constexpr float fC_Mu_law_min_companding             {15.0f}; // Must be in (-1, 255)
+                static constexpr float fC_Mu_law_dfl_companding             {255.0f}; // The default value when fContinuosCompanding = 0.5f
+                static constexpr float fC_Mu_law_max_companding             {2.0f * fC_Mu_law_dfl_companding - fC_Mu_law_min_companding};
+                static constexpr float fC_Mu_law_conv_slope                 {fC_Mu_law_max_companding - fC_Mu_law_min_companding };
+                static constexpr float fC_Mu_law_conv_intrc                 {fC_Mu_law_min_companding};
 
                 // Quantized A-law Companding
-                static constexpr float fALawCompanding_min_bits             {10.0f};
-                static constexpr float fALawCompanding_dfl_bits             {13.0f};
-                static constexpr float fALawCompanding_max_bits             {2.0f * fALawCompanding_dfl_bits - fALawCompanding_min_bits};
-                static constexpr float fALawCompanding_conv_slope           {fALawCompanding_max_bits - fALawCompanding_min_bits};
-                static constexpr float fALawCompanding_conv_itrc            {fALawCompanding_min_bits};
+                static constexpr float fQ_A_law_min_companding              {10.0f};
+                static constexpr float fQ_A_law_dfl_companding              {13.0f};
+                static constexpr float fQ_A_law_max_companding              {2.0f * fQ_A_law_dfl_companding - fQ_A_law_min_companding};
+                static constexpr float fQ_A_law_conv_slope                  {fQ_A_law_max_companding - fQ_A_law_min_companding};
+                static constexpr float fQ_A_law_conv_intrc                  {fQ_A_law_min_companding};
 
                 // Quantized μ-law Companding
-                static constexpr float fMuLawCompanding_min_bits            {12.0f};
-                static constexpr float fMuLawCompanding_dfl_bits            {14.0f};
-                static constexpr float fMuLawCompanding_max_bits            {2.0f * fMuLawCompanding_dfl_bits - fMuLawCompanding_min_bits};
-                static constexpr float fMuLawCompanding_conv_slope          {fMuLawCompanding_max_bits - fMuLawCompanding_min_bits};
-                static constexpr float fMuLawCompanding_conv_itrc           {fMuLawCompanding_min_bits};
+                static constexpr float fQ_Mu_Law_min_companding             {12.0f};
+                static constexpr float fQ_Mu_law_dfl_companding             {14.0f};
+                static constexpr float fQ_Mu_law_max_companding             {2.0f * fQ_Mu_law_dfl_companding - fQ_Mu_Law_min_companding};
+                static constexpr float fQ_Mu_law_conv_slope                 {fQ_Mu_law_max_companding - fQ_Mu_Law_min_companding};
+                static constexpr float fQ_Mu_law_conv_itrc                  {fQ_Mu_Law_min_companding};
 
                 // μ-law bias
-                static constexpr float fMuLaw_min_bias                      {0.0f}; // Must be in [0, 33)
-                static constexpr float fMuLaw_dfl_bias                      {33.0f}; // The default value when fBias = 0.5f
-                static constexpr float fMuLaw_max_bias                      {2.0f * fMuLaw_dfl_bias - fMuLaw_min_bias};
-                static constexpr float fMuLaw_bias_conv_slope               {fMuLaw_max_bias - fMuLaw_min_bias};
-                static constexpr float fMuLaw_bias_conv_itrc                {fMuLaw_min_bias};
+                static constexpr float fQ_Mu_law_min_bias                   {0.0f}; // Must be in [0, 33)
+                static constexpr float fQ_Mu_law_dfl_bias                   {33.0f}; // The default value when fBias = 0.5f
+                static constexpr float fQ_Mu_law_max_bias                   {2.0f * fQ_Mu_law_dfl_bias - fQ_Mu_law_min_bias};
+                static constexpr float fQ_Mu_law_bias_conv_slope            {fQ_Mu_law_max_bias - fQ_Mu_law_min_bias};
+                static constexpr float fQ_Mu_law_bias_conv_itrc             {fQ_Mu_law_min_bias};
 
                 // TAP Tubewarmth
                 static constexpr float fTap_tubewarmth_min_drive            {1e-3f}; // Must be > 0

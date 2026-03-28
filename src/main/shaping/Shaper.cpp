@@ -230,7 +230,7 @@ namespace lsp
 
                 case SH_FCN_CONTINUOUS_A_LAW_COMPRESSION:
                 {
-                    sShaping.continuous_a_law_compression.compression = fALaw_conv_slope * fContinuosCompanding + fALaw_conv_intrc;
+                    sShaping.continuous_a_law_compression.compression = fC_A_law_conv_slope * fContinuosCompanding + fC_A_law_conv_intrc;
                     sShaping.continuous_a_law_compression.compression_reciprocal = 1.0f / sShaping.continuous_a_law_compression.compression;
                     sShaping.continuous_a_law_compression.scale = 1.0f / (1.0f + quick_logf(sShaping.continuous_a_law_compression.compression));
                     cbShaper = dspu::shaping::continuous_a_law_compression;
@@ -239,7 +239,7 @@ namespace lsp
 
                 case SH_FCN_CONTINUOUS_A_LAW_EXPANSION:
                 {
-                    sShaping.continuous_a_law_expansion.expansion = fALaw_conv_slope * fContinuosCompanding + fALaw_conv_intrc;
+                    sShaping.continuous_a_law_expansion.expansion = fC_A_law_conv_slope * fContinuosCompanding + fC_A_law_conv_intrc;
                     sShaping.continuous_a_law_expansion.expansion_reciprocal = 1.0f / sShaping.continuous_a_law_expansion.expansion;
                     sShaping.continuous_a_law_expansion.radius = 1.0f / (1.0f + quick_logf(sShaping.continuous_a_law_expansion.expansion));
                     sShaping.continuous_a_law_expansion.radius_reciprocal = 1.0f + quick_logf(sShaping.continuous_a_law_expansion.expansion);
@@ -249,7 +249,7 @@ namespace lsp
 
                 case SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION:
                 {
-                    sShaping.continuous_mu_law_compression.compression = fMuLaw_conv_slope * fContinuosCompanding + fMuLaw_conv_intrc;
+                    sShaping.continuous_mu_law_compression.compression = fC_Mu_law_conv_slope * fContinuosCompanding + fC_Mu_law_conv_intrc;
                     sShaping.continuous_mu_law_compression.scale = 1.0f / quick_logf(1.0f + sShaping.continuous_mu_law_compression.compression);
                     cbShaper = dspu::shaping::continuous_mu_law_compression;
                 }
@@ -257,7 +257,7 @@ namespace lsp
 
                 case SH_FCN_CONTINUOUS_MU_LAW_EXPANSION:
                 {
-                    sShaping.continuous_mu_law_expansion.expansion = fMuLaw_conv_slope * fContinuosCompanding + fMuLaw_conv_intrc;
+                    sShaping.continuous_mu_law_expansion.expansion = fC_Mu_law_conv_slope * fContinuosCompanding + fC_Mu_law_conv_intrc;
                     sShaping.continuous_mu_law_expansion.expansion_reciprocal = 1.0f / sShaping.continuous_mu_law_expansion.expansion;
                     cbShaper = dspu::shaping::continuous_mu_law_expansion;
                 }
@@ -266,7 +266,7 @@ namespace lsp
                 case SH_FCN_QUANTIZED_A_LAW_COMPRESSION:
                 case SH_FCN_QUANTIZED_A_LAW_EXPANSION:
                 {
-                    sShaping.quantized_a_law_companding.pcm_n_bits = fALawCompanding_conv_slope * fQuantizedCompanding + fALawCompanding_conv_itrc;
+                    sShaping.quantized_a_law_companding.pcm_n_bits = fQ_A_law_conv_slope * fQuantizedCompanding + fQ_A_law_conv_intrc;
                     sShaping.quantized_a_law_companding.pcm_clip = (1 << (sShaping.quantized_a_law_companding.pcm_n_bits - 1)) - 1;
 
                     cbShaper = dspu::shaping::quatized_a_law_compression_shaper;
@@ -278,9 +278,9 @@ namespace lsp
                 case SH_FCN_QUANTIZED_MU_LAW_COMPRESSION:
                 case SH_FCN_QUANTIZED_MU_LAW_EXPANSION:
                 {
-                    sShaping.quantized_mu_law_companding.pcm_n_bits = fMuLawCompanding_conv_slope * fQuantizedCompanding + fMuLawCompanding_conv_itrc;
+                    sShaping.quantized_mu_law_companding.pcm_n_bits = fQ_Mu_law_conv_slope * fQuantizedCompanding + fQ_Mu_law_conv_itrc;
                     sShaping.quantized_mu_law_companding.pcm_clip = (1 << (sShaping.quantized_mu_law_companding.pcm_n_bits - 1)) - 1;
-                    sShaping.quantized_mu_law_companding.pcm_bias = fMuLaw_bias_conv_slope * fBias + fMuLaw_bias_conv_itrc;
+                    sShaping.quantized_mu_law_companding.pcm_bias = fQ_Mu_law_bias_conv_slope * fBias + fQ_Mu_law_bias_conv_itrc;
                     sShaping.quantized_mu_law_companding.pcm_max_magnitude = sShaping.quantized_mu_law_companding.pcm_clip - sShaping.quantized_mu_law_companding.pcm_bias;
 
                     cbShaper = dspu::shaping::quatized_mu_law_compression_shaper;
