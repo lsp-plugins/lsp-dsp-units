@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.36 ===
+
+
 === 1.0.35 ===
 * Sidechain optimizations: Sidechain now uses ring buffer instead of shift buffer.
   This allows to reduce the number of memory copies and memory consumption. 
