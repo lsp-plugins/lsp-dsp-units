@@ -5,6 +5,7 @@
 === 1.0.35 ===
 * Sidechain optimizations: Sidechain now uses ring buffer instead of shift buffer.
   This allows to reduce the number of memory copies and memory consumption. 
+* Updated module versions in dependencies.
 
 === 1.0.34 ===
 * Some small optimizations of equalizers (preventing extra calculations with doubles).
