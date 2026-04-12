@@ -227,6 +227,13 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float continuous_a_law_compression(shaping_t *params, float value)
             {
+                // Clip to make behavior consistent with quantized counterpart.
+                if (value >= 1.0f)
+                    return 1.0f;
+
+                if (value <= -1.0f)
+                    return -1.0f;
+
                 float magv = fabsf(value);
 
                 if (magv < params->continuous_a_law_compression.compression_reciprocal)
@@ -266,6 +273,13 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             float continuous_mu_law_compression(shaping_t *params, float value)
             {
+                // Clip to make behavior consistent with quantized counterpart.
+                if (value >= 1.0f)
+                    return 1.0f;
+
+                if (value <= -1.0f)
+                    return -1.0f;
+
                 return quick_signf(value) * quick_logf(1.0f + params->continuous_mu_law_compression.compression * fabsf(value)) * params->continuous_mu_law_compression.scale;
             }
 
