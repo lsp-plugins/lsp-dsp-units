@@ -249,11 +249,11 @@ namespace lsp
 
                 // TAP Tubewarmth
                 static constexpr float fTap_tubewarmth_min_drive            {1e-3f}; // Must be > 0
-                static constexpr float fTap_tubewarmth_max_drive            {10.0f};
+                static constexpr float fTap_tubewarmth_max_drive            {11.9f};
                 static constexpr float fTap_tebewarmth_drive_conv_slope     {fTap_tubewarmth_max_drive - fTap_tubewarmth_min_drive};
                 static constexpr float fTap_tubewarmth_drive_conv_intrc     {fTap_tubewarmth_min_drive};
 
-                static constexpr float fTap_tubewarmth_min_blend            {0.1f};
+                static constexpr float fTap_tubewarmth_min_blend            {-13.0f};
                 static constexpr float fTap_tubewarmth_max_blend            {10.0f};
                 static constexpr float fTap_tubewarmth_blend_conv_slope     {fTap_tubewarmth_max_blend - fTap_tubewarmth_min_blend};
                 static constexpr float fTap_tubewarmth_blend_conv_intrc     {fTap_tubewarmth_min_blend};

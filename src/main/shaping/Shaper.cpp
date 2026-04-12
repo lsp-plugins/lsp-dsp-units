@@ -55,7 +55,7 @@ namespace lsp
             fContinuosCompanding    = 0.5f;
             fQuantizedCompanding    = 0.5f;
             fBias                   = 0.5f;
-            fDrive                  = 0.5f;
+            fDrive                  = 0.0f;
             fBlend                  = 0.5f;
 
             nSampleRate             = 0;
@@ -297,24 +297,22 @@ namespace lsp
                     float rd = 12.0f / sShaping.tap_tubewarmth.drive;
                     float rbdr = (780.0f * rd) / (33.0f * (10.5f - sShaping.tap_tubewarmth.blend));
 
-                    sShaping.tap_tubewarmth.kpa = dspu::shaping::tap_rect_sqrt(2.0f * rd * rd - 1.0f) + 1.0f;
+                    float rect = dspu::shaping::tap_rect_sqrt(2.0f * rd * rd - 1.0f);
+                    sShaping.tap_tubewarmth.kpa = rect + 1.0f;
                     sShaping.tap_tubewarmth.kpb = 0.5f * (2.0f - sShaping.tap_tubewarmth.kpa);
                     sShaping.tap_tubewarmth.ap = 0.5f * (rd * rd - sShaping.tap_tubewarmth.kpa + 1.0f);
 
-                    float kc = sShaping.tap_tubewarmth.kpa / dspu::shaping::tap_rect_sqrt(
-                            dspu::shaping::tap_rect_sqrt(
-                                    2.0f * dspu::shaping::tap_rect_sqrt(2.0f * rd * rd - 1.0f) - 2.0f * rd *rd
-                                    )
-                            );
+                    float kc = sShaping.tap_tubewarmth.kpa / dspu::shaping::tap_rect_sqrt(2.0f * rect - 2.0f * rd *rd);
                     float sq = kc * kc + 1.0f;
 
                     sShaping.tap_tubewarmth.srct = (0.1f * nSampleRate) / (0.1f * nSampleRate + 1.0f);
 
-                    sShaping.tap_tubewarmth.knb = -rbdr / dspu::shaping::tap_rect_sqrt(sq);
-                    sShaping.tap_tubewarmth.kna = 2.0f * kc * rbdr / dspu::shaping::tap_rect_sqrt(sq);
+                    float sq_rect = dspu::shaping::tap_rect_sqrt(sq);
+                    sShaping.tap_tubewarmth.knb = -rbdr / sq_rect;
+                    sShaping.tap_tubewarmth.kna = 2.0f * kc * rbdr / sq_rect;
                     sShaping.tap_tubewarmth.an = rbdr * rbdr / sq;
 
-                    float imr = 2.0f * sShaping.tap_tubewarmth.knb * dspu::shaping::tap_rect_sqrt(
+                    float imr = 2.0f * sShaping.tap_tubewarmth.knb + dspu::shaping::tap_rect_sqrt(
                             2.0f * sShaping.tap_tubewarmth.kna + 4.0f * sShaping.tap_tubewarmth.an - 1.0f
                             );
 

@@ -24,6 +24,9 @@
 #include <lsp-plug.in/dsp-units/misc/quickmath.h>
 #include <lsp-plug.in/common/bits.h>
 
+// Epsilon value for TAP Tubewarmth
+#define LSP_DSP_SHAPING_TAP_EPS     0.00000001f
+
 namespace lsp
 {
     namespace dspu
