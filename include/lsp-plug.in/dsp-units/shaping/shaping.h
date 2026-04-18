@@ -229,8 +229,8 @@ namespace lsp
             typedef struct tap_tubewarmth_t
             {
                 // As in TAP Plugins: https://git.hq.sig7.se/tap-plugins.git, file tap_tubewarmth.c
-                float drive;  // -10 <= drive <= +10
-                float blend;  // 0.1 <= blend <= 10
+                float drive;  // 0 < drive < 12
+                float blend;  // -13 <= blend < 10.5
 
                 // All parameters below are computed from drive, blend and sample rate.
 

@@ -142,7 +142,56 @@ UTEST_MAIN
     shaper.process_overwrite(vOutput, vInput, n_samples);
     basic_range_test(vOutput, n_samples, ramp_start, ramp_end);
 
-    // TODO: Add TAP Tubewarmth test.
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_A_LAW_COMPRESSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_A_LAW_EXPANSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_MU_LAW_COMPRESSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_CONTINUOUS_MU_LAW_EXPANSION);
+    shaper.set_continuous_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_A_LAW_COMPRESSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_A_LAW_EXPANSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    // The expander will get to something ~0.98 in magnitude.
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max, 1e-1);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_MU_LAW_COMPRESSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.set_bias(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max);
+
+    shaper.set_function(dspu::sh_function_t::SH_FCN_QUANTIZED_MU_LAW_EXPANSION);
+    shaper.set_quantized_companding(0.5f);
+    shaper.set_bias(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    // The expander will get to something ~0.98 in magnitude.
+    basic_range_test(vOutput, n_samples, saturated_ramp_min, saturated_ramp_max, 1e-1);
+
+    // The expected values are computed by using a separate [python implementation](https://gitlab.com/-/snippets/5982181).
+    shaper.set_function(dspu::sh_function_t::SH_FCN_TAP_TUBEWARMTH);
+    shaper.set_drive(0.5f);
+    shaper.set_blend(0.5f);
+    shaper.process_overwrite(vOutput, vInput, n_samples);
+    basic_range_test(vOutput, n_samples, -1.50f, 0.48f, 1e-2);
 }
 
 UTEST_END;

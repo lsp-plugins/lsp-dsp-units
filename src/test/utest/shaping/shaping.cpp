@@ -196,6 +196,49 @@ UTEST_BEGIN("dspu.shaping", shaping)
         UTEST_ASSERT(float_equals_absolute(dspu::shaping::quatized_mu_law_expansion_shaper(params, 1.0f), expanded_peak));
     }
 
+    void test_tap_tubewarmth(dspu::shaping::shaping_t *params)
+    {
+        // This test checks against a few values calculated with a separate [python implementation](https://gitlab.com/-/snippets/5982181).
+        // All parameters depend on these 3.
+        size_t nSampleRate = 48000;
+        params->tap_tubewarmth.drive = 10.0f;
+        params->tap_tubewarmth.blend = 0.0f;
+
+        float rd = 12.0f / params->tap_tubewarmth.drive;
+        float rbdr = (780.0f * rd) / (33.0f * (10.5f - params->tap_tubewarmth.blend));
+
+        float rect = dspu::shaping::tap_rect_sqrt(2.0f * rd * rd - 1.0f);
+        params->tap_tubewarmth.kpa = rect + 1.0f;
+        params->tap_tubewarmth.kpb = 0.5f * (2.0f - params->tap_tubewarmth.kpa);
+        params->tap_tubewarmth.ap = 0.5f * (rd * rd - params->tap_tubewarmth.kpa + 1.0f);
+
+        float kc = params->tap_tubewarmth.kpa / dspu::shaping::tap_rect_sqrt(2.0f * rect - 2.0f * rd *rd);
+        float sq = kc * kc + 1.0f;
+
+        params->tap_tubewarmth.srct = (0.1f * nSampleRate) / (0.1f * nSampleRate + 1.0f);
+
+        float sq_rect = dspu::shaping::tap_rect_sqrt(sq);
+        params->tap_tubewarmth.knb = -rbdr / sq_rect;
+        params->tap_tubewarmth.kna = 2.0f * kc * rbdr / sq_rect;
+        params->tap_tubewarmth.an = rbdr * rbdr / sq;
+
+        float imr = 2.0f * params->tap_tubewarmth.knb + dspu::shaping::tap_rect_sqrt(
+                2.0f * params->tap_tubewarmth.kna + 4.0f * params->tap_tubewarmth.an - 1.0f
+                );
+
+        params->tap_tubewarmth.pwrq = 2.0f / (imr + 1.0f);
+
+        params->tap_tubewarmth.last_raw_output = 0.0f;
+        params->tap_tubewarmth.last_raw_intermediate = 0.0f;
+
+        // `tap_tubewarmth` is stateful, so the order of these calls is important.
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::tap_tubewarmth(params, -2.0f), -1.299156f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::tap_tubewarmth(params, -1.0f), -1.007672f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::tap_tubewarmth(params, 0.0f), 480.489e-6f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::tap_tubewarmth(params, 1.0f), 0.5911473f));
+        UTEST_ASSERT(float_equals_absolute(dspu::shaping::tap_tubewarmth(params, 2.0f), 0.4113069f));
+    }
+
     UTEST_MAIN
     {
         dspu::shaping::shaping_t params;
@@ -298,7 +341,7 @@ UTEST_BEGIN("dspu.shaping", shaping)
         test_a_law(&params);
         test_mu_law(&params);
 
-        // TODO: Add TAP Tubewarmth test.
+        test_tap_tubewarmth(&params);
     }
 
 UTEST_END;

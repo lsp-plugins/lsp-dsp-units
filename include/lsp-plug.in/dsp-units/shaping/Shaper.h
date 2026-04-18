@@ -352,7 +352,7 @@ namespace lsp
                  */
                 void set_bias(float bias);
 
-                /** Set the drive.
+                /** Set the drive parameter.
                  *
                  * @param drive drive
                  */
