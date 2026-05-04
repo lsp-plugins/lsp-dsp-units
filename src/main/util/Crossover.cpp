@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 03 авг. 2016 г.
@@ -240,7 +240,7 @@ namespace lsp
 
         ssize_t Crossover::get_mode(size_t sp) const
         {
-            return (sp < nSplits) ? vSplit[sp].nMode : -1.0f;
+            return (sp < nSplits) ? vSplit[sp].nMode : -1;
         }
 
         void Crossover::set_gain(size_t band, float gain)
