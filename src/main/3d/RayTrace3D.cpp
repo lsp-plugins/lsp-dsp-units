@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 10 авг. 2021 г.
@@ -497,11 +497,8 @@ namespace lsp
             for (size_t i=0; i<segs; ++i)
                 objs[i]             = 0;
 
-            size_t obj_id       = 0;
-
             // Add captures as opaque objects
-            obj_id = 0;
-            for (size_t i=0, n=trace->vCaptures.size(); i<n; ++i, ++obj_id)
+            for (size_t i=0, n=trace->vCaptures.size(); i<n; ++i)
             {
                 capture_t *cap      = trace->vCaptures.uget(i);
                 if (cap == NULL)
