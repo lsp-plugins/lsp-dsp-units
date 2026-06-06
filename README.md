@@ -62,6 +62,7 @@ Set of modules provided:
     * Impulse response taker
     * Latency detector
     * Meter history
+    * Multi-channel spectral processor
     * Meter history with scaling option
     * Oscillator
     * Oversampler
@@ -80,6 +81,8 @@ Set of modules provided:
 The build and correct unit test execution has been confirmed for following platforms:
 * FreeBSD
 * GNU/Linux
+* Haiku
+* MacOS (ARM-based)
 * Windows 32-bit
 * Windows 64-bit
 

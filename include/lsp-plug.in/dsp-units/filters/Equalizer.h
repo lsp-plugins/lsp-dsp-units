@@ -58,12 +58,13 @@ namespace lsp
             protected:
                 FilterBank          sBank;              // Filter bank
                 Filter             *vFilters;           // List of filters
-                size_t              nFilters;           // Number of filters
-                size_t              nSampleRate;        // Sample rate
-                size_t              nFirSize;           // FIR filter size
-                size_t              nFirRank;           // FFT rank
-                size_t              nLatency;           // Equalizer latency
-                size_t              nBufSize;           // Buffer size
+                uint32_t            nFilters;           // Number of filters
+                uint32_t            nSampleRate;        // Sample rate
+                uint32_t            nActualSampleRate;  // Actual Sample rate
+                uint32_t            nFirSize;           // FIR filter size
+                uint32_t            nFirRank;           // FFT rank
+                uint32_t            nLatency;           // Equalizer latency
+                uint32_t            nBufSize;           // Buffer size
                 equalizer_mode_t    nMode;              // Equalizer mode
 
                 float              *vInBuffer;          // Input buffer data
@@ -153,6 +154,12 @@ namespace lsp
                  * @param mode equalizer mode
                  */
                 void                set_mode(equalizer_mode_t mode);
+
+                /** Set actual sample rate which can affect FFT transforms
+                 *
+                 * @param sample_rate actual sample rate
+                 */
+                void                set_actual_sample_rate(size_t sample_rate);
 
                 /** Set sample rate
                  *
@@ -246,6 +253,12 @@ namespace lsp
                  * @return actual equalizer mode
                  */
                 inline equalizer_mode_t     mode() const    { return nMode;         }
+
+                /**
+                 * Get actual sample rate
+                 * @return actual sample rate
+                 */
+                inline size_t       actual_sample_rate() const  { return (nActualSampleRate != 0) ? nActualSampleRate : nSampleRate;    }
 
                 /**
                  * Get actual impulse response size depending on the currently set equalizer mode

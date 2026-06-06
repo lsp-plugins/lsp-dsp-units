@@ -136,7 +136,7 @@ namespace lsp
          */
         inline float db_to_gain(float db)
         {
-            return expf(db * M_LN10 * 0.05f);
+            return expf(db * float(M_LN10) * 0.05f);
         }
 
         /** Convert decibels to power value
@@ -146,7 +146,7 @@ namespace lsp
          */
         inline float db_to_power(float db)
         {
-            return expf(db * M_LN10 * 0.1f);
+            return expf(db * float(M_LN10) * 0.1f);
         }
 
         /** Convert decibels to nepers
@@ -166,7 +166,7 @@ namespace lsp
          */
         inline float db_to_lufs(float db)
         {
-            return db - 0.691;
+            return db - 0.691f;
         }
 
         /** Convert gain value to decibels
@@ -176,7 +176,7 @@ namespace lsp
          */
         inline float gain_to_db(float gain)
         {
-            return (20.0f / M_LN10) * logf(gain);
+            return (20.0f / float(M_LN10)) * logf(gain);
         }
 
         /** Convert powerr value to decibels
@@ -186,7 +186,7 @@ namespace lsp
          */
         inline float power_to_db(float pwr)
         {
-            return (10.0f / M_LN10) * logf(pwr);
+            return (10.0f / float(M_LN10)) * logf(pwr);
         }
 
         /**
@@ -196,7 +196,7 @@ namespace lsp
          */
         inline float gain_to_lufs(float gain)
         {
-            return (20.0f / M_LN10) * logf(gain) - 0.691f;
+            return (20.0f / float(M_LN10)) * logf(gain) - 0.691f;
         }
 
         /**
@@ -206,7 +206,7 @@ namespace lsp
          */
         inline float lufs_to_gain(float lufs)
         {
-            return expf((lufs + 0.691f) * M_LN10 * 0.05f);
+            return expf((lufs + 0.691f) * float(M_LN10) * 0.05f);
         }
 
         /** Convert LKFS/LUFS to power value
@@ -216,7 +216,7 @@ namespace lsp
          */
         inline float lufs_to_power(float lufs)
         {
-            return expf((lufs + 0.691f) * M_LN10 * 0.1f);
+            return expf((lufs + 0.691f) * float(M_LN10) * 0.1f);
         }
 
         /** Convert LKFS/LUFS to nepers
@@ -236,7 +236,7 @@ namespace lsp
          */
         inline float lufs_to_db(float lufs)
         {
-            return lufs + 0.691;
+            return lufs + 0.691f;
         }
 
         /**
@@ -246,7 +246,7 @@ namespace lsp
          */
         inline float gain_to_lu(float gain)
         {
-            return (20.0f / M_LN10) * logf(gain) + 22.309f;
+            return (20.0f / float(M_LN10)) * logf(gain) + 22.309f;
         }
 
         /**
@@ -256,7 +256,7 @@ namespace lsp
          */
         inline float lu_to_gain(float lu)
         {
-            return expf((lu - 22.309f) * M_LN10 * 0.05f);
+            return expf((lu - 22.309f) * float(M_LN10) * 0.05f);
         }
 
         /** Convert nepers to gain value
@@ -326,7 +326,7 @@ namespace lsp
          */
         inline float semitones_to_frequency_shift(float pitch)
         {
-            return expf(pitch * (M_LN2 / 12.0f));
+            return expf(pitch * (float(M_LN2) / 12.0f));
         }
 
         /**
@@ -336,7 +336,7 @@ namespace lsp
          */
         inline float frequency_shift_to_semitones(float pitch)
         {
-            return (12.0f / M_LN2) * logf(pitch);
+            return (12.0f / float(M_LN2)) * logf(pitch);
         }
 
         /**

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 26 июля 2016 г.
@@ -44,30 +44,44 @@ namespace lsp
         {
             sBank.construct();
 
-            vFilters        = NULL;
-            nFilters        = 0;
-            nSampleRate     = 0;
-            nFirSize        = 0;
-            nFirRank        = 0;
-            nLatency        = 0;
-            nBufSize        = 0;
-            nMode           = EQM_BYPASS;
-            vInBuffer       = NULL;
-            vOutBuffer      = NULL;
-            vConv           = NULL;
-            vNewConv        = NULL;
-            vFft            = NULL;
-            vTemp           = NULL;
-            pData           = NULL;
-            nFlags          = EF_REBUILD | EF_CLEAR;
+            vFilters            = NULL;
+            nFilters            = 0;
+            nSampleRate         = 0;
+            nActualSampleRate   = 0;
+            nFirSize            = 0;
+            nFirRank            = 0;
+            nLatency            = 0;
+            nBufSize            = 0;
+            nMode               = EQM_BYPASS;
+
+            vInBuffer           = NULL;
+            vOutBuffer          = NULL;
+            vConv               = NULL;
+            vNewConv            = NULL;
+            vFft                = NULL;
+            vTemp               = NULL;
+            pData               = NULL;
+            nFlags              = EF_REBUILD | EF_CLEAR;
         }
 
         bool Equalizer::init(size_t filters, size_t fir_rank)
         {
+            // Check if we do not need to do something
+            if ((nFilters == filters) && (nFirRank == fir_rank))
+            {
+                reset();
+                return true;
+            }
+
+            // Destroy previous data
             destroy();
 
             // Initialize filter bank
-            sBank.init(filters * FILTER_CHAINS_MAX);
+            if (!sBank.init(filters * FILTER_CHAINS_MAX))
+            {
+                destroy();
+                return false;
+            }
 
             // Initialize filters
             nSampleRate     = 0;
@@ -99,18 +113,12 @@ namespace lsp
                 dsp::fill_zero(ptr, allocate);
 
                 // Assign pointers
-                vInBuffer           = ptr;
-                ptr                += fft_size;             // nFirSize * 2
-                vOutBuffer          = ptr;
-                ptr                += fft_size;             // nFirSize * 2
-                vConv               = ptr;
-                ptr                += conv_size;            // nFirSize * 4
-                vNewConv            = ptr;
-                ptr                += conv_size;            // nFirSize * 4
-                vFft                = ptr;
-                ptr                += conv_size;            // nFirSize * 4
-                vTemp               = ptr;
-                ptr                += tmp_size;             // nFirSize * 4
+                vInBuffer           = advance_ptr<float>(ptr, fft_size);        // nFirSize * 2
+                vOutBuffer          = advance_ptr<float>(ptr, fft_size);        // nFirSize * 2
+                vConv               = advance_ptr<float>(ptr, conv_size);       // nFirSize * 4
+                vNewConv            = advance_ptr<float>(ptr, conv_size);       // nFirSize * 4
+                vFft                = advance_ptr<float>(ptr, conv_size);       // nFirSize * 4
+                vTemp               = advance_ptr<float>(ptr, tmp_size);        // nFirSize * 4
             }
             else
             {
@@ -190,6 +198,8 @@ namespace lsp
                 vFilters[i].get_params(&fp);
                 vFilters[i].update(nSampleRate, &fp);
             }
+
+            nFlags     |= EF_REBUILD | EF_CLEAR;
         }
 
         bool Equalizer::configuration_changed() const
@@ -281,7 +291,9 @@ namespace lsp
             {
                 size_t num_filters  = 0;
                 size_t freq_size    = half_size + 1;
-                dsp::lin_inter_set(vNewConv, 0, 0.0f, int32_t(half_size), 0.5f * nSampleRate, 0, uint32_t(freq_size)); // Compute frequencies
+                const uint32_t sr   = actual_sample_rate();
+
+                dsp::lin_inter_set(vNewConv, 0, 0.0f, int32_t(half_size), 0.5f * sr, 0, uint32_t(freq_size)); // Compute frequencies
 
                 // Build frequency chart for all filters
                 for (size_t i=0; i<nFilters; ++i)
@@ -351,6 +363,15 @@ namespace lsp
                 return;
             nMode       = mode;
             nFlags     |= EF_REBUILD | EF_CLEAR;
+        }
+
+        void Equalizer::set_actual_sample_rate(size_t sample_rate)
+        {
+            if (nActualSampleRate == sample_rate)
+                return;
+            nActualSampleRate   = sample_rate;
+            if ((nMode == EQM_IIR) || (nMode == EQM_SPM))
+                nFlags     |= EF_REBUILD;
         }
 
         bool Equalizer::freq_chart(size_t id, float *re, float *im, const float *f, size_t count)

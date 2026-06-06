@@ -107,12 +107,16 @@ namespace lsp
             if ((vn1 < 0) || (vn2 < 0) || (vn3 < 0))
             {
                 // Add normal
-                xvn         = pScene->vXNormals.alloc();
+                const ssize_t id        = pScene->vNormals.size() + pScene->vXNormals.size();
+                xvn                     = pScene->vXNormals.alloc();
                 if (xvn == NULL)
                     return -STATUS_NO_MEM;
 
                 // Get points
                 dsp::calc_normal3d_p3(xvn, t->v[0], t->v[1], t->v[2]);
+                xvn->id                 = id;
+                xvn->ptag               = NULL;
+                xvn->itag               = 0;
             }
 
             t->n[0]     = (vn1 >= 0) ? pScene->normal(vn1) : xvn;

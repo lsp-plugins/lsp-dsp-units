@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 июл. 2020 г.
@@ -53,7 +53,7 @@ namespace lsp
             nState          = TRG_OFF;
         }
 
-        void Toggle::submit(float value)
+        bool Toggle::submit(float value)
         {
             if (value >= 0.5f)
             {
@@ -66,6 +66,7 @@ namespace lsp
                     nState      = TRG_OFF;
             }
             fValue      = value;
+            return nState == TRG_ON;
         }
 
         bool Toggle::commit(bool off)
@@ -87,7 +88,7 @@ namespace lsp
             v->write("fValue", fValue);
             v->write("nState", nState);
         }
-    }
-}
+    } /* namespace dspu */
+} /* namespace lsp */
 
 

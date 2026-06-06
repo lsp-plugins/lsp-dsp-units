@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 14 сент. 2016 г.
@@ -23,13 +23,13 @@
 #include <lsp-plug.in/dsp-units/units.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define REFRESH_RATE        0x2000
-#define MIN_GAP_ITEMS       0x200U
-
 namespace lsp
 {
     namespace dspu
     {
+        static constexpr size_t BLOCK_SIZE          = 0x200;
+        static constexpr size_t REFRESH_RATE        = 0x2000;
+
         Sidechain::Sidechain()
         {
             construct();
@@ -87,11 +87,9 @@ namespace lsp
 
         void Sidechain::set_sample_rate(size_t sr)
         {
-            nSampleRate         = sr;
-            nFlags              = SCF_UPDATE | SCF_CLEAR;
-            size_t gap          = lsp_max(millis_to_samples(sr, fMaxReactivity), 1);
-            size_t buf_size     = lsp_max(gap, MIN_GAP_ITEMS);
-            sBuffer.init(buf_size * 4, gap);
+            nSampleRate             = sr;
+            nFlags                  = SCF_UPDATE | SCF_CLEAR;
+            sBuffer.init(lsp_max(millis_to_samples(sr, fMaxReactivity), 1) + BLOCK_SIZE);
         }
 
         void Sidechain::set_reactivity(float reactivity)
@@ -152,45 +150,38 @@ namespace lsp
                     break;
 
                 case SCM_UNIFORM:
-                    fRmsValue       = dsp::h_abs_sum(sBuffer.tail(nReactivity), nReactivity);
+                {
+                    const float * const tail = sBuffer.tail(nReactivity);
+                    const float * const head = sBuffer.head();
+
+                    if (tail < head)
+                        fRmsValue           = dsp::h_abs_sum(tail, nReactivity);
+                    else
+                        fRmsValue           = dsp::h_abs_sum(tail, sBuffer.end() - tail) +
+                                              dsp::h_abs_sum(sBuffer.begin(), head - sBuffer.begin());
                     break;
+                }
 
                 case SCM_RMS:
-                    fRmsValue       = dsp::h_sqr_sum(sBuffer.tail(nReactivity), nReactivity);
+                {
+                    const float * const tail = sBuffer.tail(nReactivity);
+                    const float * const head = sBuffer.head();
+
+                    if (tail < head)
+                        fRmsValue           = dsp::h_sqr_sum(tail, nReactivity);
+                    else
+                        fRmsValue           = dsp::h_sqr_sum(tail, sBuffer.end() - tail) +
+                                              dsp::h_sqr_sum(sBuffer.begin(), head - sBuffer.begin());
                     break;
+                }
 
                 default:
                     break;
             }
         }
 
-        void Sidechain::select_buffer(float **a, float **b, size_t *size)
-        {
-            size_t buf_size;
-            float *base;
-
-            // Allocate some space in the shift buffer which can be reused for sure
-            if (sBuffer.tail_gap_size() > sBuffer.head_gap_size())
-            {
-                buf_size    = sBuffer.tail_gap_size() >> 1;
-                base        = sBuffer.tail();
-            }
-            else
-            {
-                buf_size    = sBuffer.head_gap_size() >> 1;
-                base        = sBuffer.data();
-            }
-
-            *a          = &base[0];
-            *b          = &base[buf_size];
-            *size       = buf_size;
-        }
-
         bool Sidechain::preprocess(float *out, const float **in, size_t samples)
         {
-            float *a, *b;
-            size_t max_samples;
-
             // Special case, treat NULL as zero input
             if (in == NULL)
             {
@@ -235,54 +226,24 @@ namespace lsp
                                 dsp::abs2(out, in[1], samples);
                             break;
                         case SCS_AMIN:
-                            select_buffer(&a, &b, &max_samples);
                             if (pPreEq != NULL)
                             {
-                                for (size_t off=0; off<samples; )
-                                {
-                                    size_t count    = lsp_min(samples, max_samples);
-                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
-                                    dsp::psmin3(&out[off], a, b, count);
-                                    off            += count;
-                                }
+                                dsp::lr_psmin3(out, in[0], in[1], samples);
                                 pPreEq->process(out, out, samples);
                                 dsp::abs1(out, samples);
                             }
                             else
-                            {
-                                for (size_t off=0; off<samples; )
-                                {
-                                    size_t count    = lsp_min(samples, max_samples);
-                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
-                                    dsp::pamin3(&out[off], a, b, samples);
-                                    off            += count;
-                                }
-                            }
+                                dsp::ms_pamin3(out, in[0], in[1], samples);
                             break;
                         case SCS_AMAX:
-                            select_buffer(&a, &b, &max_samples);
                             if (pPreEq != NULL)
                             {
-                                for (size_t off=0; off<samples; )
-                                {
-                                    size_t count    = lsp_min(samples, max_samples);
-                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
-                                    dsp::psmax3(&out[off], a, b, count);
-                                    off            += count;
-                                }
+                                dsp::lr_psmax3(out, in[0], in[1], samples);
                                 pPreEq->process(out, out, samples);
                                 dsp::abs1(out, samples);
                             }
                             else
-                            {
-                                for (size_t off=0; off<samples; )
-                                {
-                                    size_t count    = lsp_min(samples, max_samples);
-                                    dsp::ms_to_lr(a, b, &in[0][off], &in[1][off], count);
-                                    dsp::pamax3(&out[off], a, b, samples);
-                                    off            += count;
-                                }
-                            }
+                                dsp::ms_pamax3(out, in[0], in[1], samples);
                             break;
                         default:
                             break;
@@ -498,38 +459,26 @@ namespace lsp
                 }
 
                 // Calculate sidechain function
-                const size_t to_do  = lsp_min(samples - offset, REFRESH_RATE - nRefresh);
+                const size_t to_do  = lsp_min(samples - offset, REFRESH_RATE - nRefresh, BLOCK_SIZE);
+                sBuffer.push(out, to_do);
 
                 switch (nMode)
                 {
                     // Peak processing
                     case SCM_PEAK:
-                    {
-                        for (size_t processed = 0; processed < to_do; )
-                        {
-                            size_t n    = sBuffer.append(out, to_do - processed);
-                            sBuffer.shift(n);
-                            processed  += n;
-                            out        += n;
-                        }
                         break;
-                    }
 
                     // Lo-pass filter processing
                     case SCM_LPF:
                     {
-                        for (size_t processed = 0; processed < to_do; )
+                        float rms           = fRmsValue;
+                        for (size_t i=0; i<to_do; ++i)
                         {
-                            size_t n    = sBuffer.append(out, to_do - processed);
-                            sBuffer.shift(n);
-                            processed  += n;
-
-                            while (n--)
-                            {
-                                fRmsValue      += fTau * ((*out) - fRmsValue);
-                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : fRmsValue;
-                            }
+                            rms                += fTau * (out[i] - rms);
+                            out[i]              = lsp_max(rms, 0.0f);
                         }
+
+                        fRmsValue           = rms;
                         break;
                     }
 
@@ -538,23 +487,25 @@ namespace lsp
                     {
                         if (nReactivity <= 0)
                             break;
-                        float interval  = 1.0f / nReactivity;
 
-                        for (size_t processed = 0; processed < to_do; )
+                        const float interval= (nReactivity > 0) ? 1.0f / nReactivity : 0;
+                        const float *p      = sBuffer.tail(nReactivity + to_do);
+                        const size_t split  = lsp_min(to_do, size_t(sBuffer.end() - p));
+
+                        float rms           = fRmsValue;
+                        size_t i            = 0;
+                        for (; i < split; ++i)
                         {
-                            size_t n    = sBuffer.append(out, to_do - processed);
-                            float *p    = sBuffer.tail(nReactivity + n);
-
-                            for (size_t i=0; i<n; ++i)
-                            {
-                                fRmsValue      += *(out) - *(p++);
-                                *(out++)        = (fRmsValue < 0.0f) ? 0.0f : fRmsValue * interval;
-                            }
-
-                            // Remove old samples
-                            sBuffer.shift(n);
-                            processed  += n;
+                            rms                += out[i] - p[i];
+                            out[i]              = (rms < 0.0f) ? 0.0f : rms * interval;
                         }
+                        p                  -= sBuffer.size();
+                        for (; i < to_do; ++i)
+                        {
+                            rms                += out[i] - p[i];
+                            out[i]              = (rms < 0.0f) ? 0.0f : rms * interval;
+                        }
+                        fRmsValue           = rms;
                         break;
                     }
 
@@ -563,29 +514,31 @@ namespace lsp
                     {
                         if (nReactivity <= 0)
                             break;
-                        float interval  = 1.0f / nReactivity;
 
-                        for (size_t processed = 0; processed < to_do; )
+                        const float interval= 1.0f / nReactivity;
+                        const float *p      = sBuffer.tail(nReactivity + to_do);
+                        const size_t split  = lsp_min(to_do, size_t(sBuffer.end() - p));
+
+                        float rms           = fRmsValue;
+                        size_t i            = 0;
+                        for (; i < split; ++i)
                         {
-                            size_t n        = sBuffer.append(out, to_do - processed);
-                            float *p        = sBuffer.tail(nReactivity + n);
-                            float rms       = fRmsValue;
-
-                            for (size_t i=0; i<n; ++i)
-                            {
-                                float sample    = out[i];
-                                float last      = p[i];
-                                rms            += sample*sample - last*last;
-                                out[i]          = rms * interval;
-                            }
-
-                            dsp::ssqrt1(out, n);
-                            sBuffer.shift(n);
-
-                            fRmsValue       = rms;
-                            out            += n;
-                            processed      += n;
+                            const float sample  = out[i];
+                            const float last    = p[i];
+                            rms                += sample*sample - last*last;
+                            out[i]              = rms * interval;
                         }
+                        p                  -= sBuffer.size();
+                        for (; i < to_do; ++i)
+                        {
+                            const float sample  = out[i];
+                            const float last    = p[i];
+                            rms                += sample*sample - last*last;
+                            out[i]              = rms * interval;
+                        }
+                        dsp::ssqrt1(out, to_do);
+
+                        fRmsValue           = rms;
                         break;
                     }
 
@@ -593,9 +546,10 @@ namespace lsp
                         break;
                 }
 
-                // Update offset
+                // Update offsets
                 offset         += to_do;
                 nRefresh       += to_do;
+                out            += to_do;
             }
         }
 
@@ -619,23 +573,20 @@ namespace lsp
             }
 
             // Calculate sidechain function
+            sBuffer.push(out);
+
             switch (nMode)
             {
                 // Peak processing
                 case SCM_PEAK:
-                {
-                    sBuffer.append(out);
-                    sBuffer.shift();
                     break;
-                }
 
                 // Lo-pass filter processing
                 case SCM_LPF:
                 {
-                    sBuffer.append(out);
-                    sBuffer.shift();
-                    fRmsValue      += fTau * (out - fRmsValue);
-                    out             = (fRmsValue < 0.0f) ? 0.0f : fRmsValue;
+                    const float rms     = fRmsValue + fTau * (out - fRmsValue);
+                    out                 = lsp_max(rms, 0.0f);
+                    fRmsValue           = rms;
                     break;
                 }
 
@@ -644,10 +595,11 @@ namespace lsp
                 {
                     if (nReactivity <= 0)
                         break;
-                    sBuffer.append(out);
-                    fRmsValue      += out - sBuffer.last(nReactivity + 1);
-                    out             = (fRmsValue < 0.0f) ? 0.0f : fRmsValue / float(nReactivity);
-                    sBuffer.shift();
+
+                    const float last    = sBuffer.read(nReactivity + 1);
+                    const float rms     = fRmsValue + out - last;
+                    out                 = (rms < 0.0f) ? 0.0f : rms / float(nReactivity);
+                    fRmsValue           = rms;
                     break;
                 }
 
@@ -656,11 +608,11 @@ namespace lsp
                 {
                     if (nReactivity <= 0)
                         break;
-                    sBuffer.append(out);
-                    float last      = sBuffer.last(nReactivity + 1);
-                    fRmsValue      += out*out - last*last;
-                    out             = (fRmsValue < 0.0f) ? 0.0f : sqrtf(fRmsValue / float(nReactivity));
-                    sBuffer.shift();
+
+                    const float last    = sBuffer.read(nReactivity + 1);
+                    const float rms     = fRmsValue + out*out - last*last;
+                    out                 = (rms < 0.0f) ? 0.0f : sqrtf(rms / float(nReactivity));
+                    fRmsValue           = rms;
                     break;
                 }
 

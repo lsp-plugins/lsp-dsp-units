@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 14 сент. 2016 г.
@@ -24,7 +24,7 @@
 
 #include <lsp-plug.in/dsp-units/version.h>
 #include <lsp-plug.in/dsp-units/iface/IStateDumper.h>
-#include <lsp-plug.in/dsp-units/util/ShiftBuffer.h>
+#include <lsp-plug.in/dsp-units/util/RawRingBuffer.h>
 #include <lsp-plug.in/dsp-units/filters/Equalizer.h>
 
 namespace lsp
@@ -67,7 +67,7 @@ namespace lsp
                 };
 
             protected:
-                ShiftBuffer     sBuffer;                // Shift buffer for history
+                RawRingBuffer   sBuffer;                // Ring buffer for history
                 size_t          nReactivity;            // Reactivity (in samples)
                 size_t          nSampleRate;            // Sample rate
                 Equalizer      *pPreEq;                 // Pre-equalizer
@@ -87,7 +87,6 @@ namespace lsp
                 void            refresh_processing();
                 bool            preprocess(float *out, const float **in, size_t samples);
                 bool            preprocess(float *out, const float *in);
-                void            select_buffer(float **a, float **b, size_t *size);
 
             public:
                 explicit Sidechain();

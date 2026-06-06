@@ -2,10 +2,43 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.36 ===
+* Updated build system: ASAN, CROSS_COMPILE, DEBUG, DEVEL, PROFILE, STRICT,
+  TEST, TRACE makefile flags replaced with 'asan', 'crosscompile', 'debug',
+  'devel', 'profile', 'strict', 'test' and 'trace' FEATURE flags.
+* Updated build scripts.
+
+=== 1.0.35 ===
+* Sidechain optimizations: Sidechain now uses ring buffer instead of shift buffer.
+  This allows to reduce the number of memory copies and memory consumption. 
+* Updated module versions in dependencies.
+
+=== 1.0.34 ===
+* Some small optimizations of equalizers (preventing extra calculations with doubles).
+* Added support of decramping by dspu::Equalizer module.
+* Fixed bug in dynamic delay which can yield to crackling sound when using feedback.
+* Updated module versions in dependencies.
+
+=== 1.0.33 ===
+* Added varying ALR knee support by the dspu::Limiter module. 
+* Fixed out-of sync ALR for the Limiter module when changing the sample rate.
+* Implemented MultiSpectralProcessor class for multi-channel spectral processing.
+* Spectral Processor now allows to analyze input signal without processing.
+* Fixed noise envelope generation.
+* Optimized noise envelope generation algorithm by using LSP DSP library.
+* Optimized spectrum analyzer: reduced memory usage and memory copying.
+* Updated module versions in dependencies.
+
+=== 1.0.32 ===
+* Fixes in 3D object loading.
+
 === 1.0.31 ===
 * Updated and extended interface of dspu::RingBuffer.
 * Optimizations: dspu::MeterGraph now uses dspu::RingBuffer instead of dsp::ShiftBuffer.
+* Added support of infiniter LUFS measurement period by dspu::ILUFSMeter.
+* Added dspu::PeakMeter class for managing peak values.
 * Fixed crash in dspu::SpectralProcessor::clear method.
+* Updated module versions in dependencies.
 
 === 1.0.30 ===
 * Added MM_PEAK algorithm to MeterGraph and ScaledMeterGraph.

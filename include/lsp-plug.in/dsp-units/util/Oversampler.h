@@ -99,6 +99,8 @@ namespace lsp
             OM_LANCZOS_8X24BIT,
         };
 
+        constexpr size_t OVERSAMPLER_MAX_LATENCY        = 62;
+
         /** Oversampler class
          *
          */
@@ -276,7 +278,7 @@ namespace lsp
                  * Get maximum possible latency
                  * @return maximum possible latency
                  */
-                inline size_t max_latency() const       { return 62; }
+                inline size_t max_latency() const       { return OVERSAMPLER_MAX_LATENCY; }
     
                 /**
                  * Dump the state
