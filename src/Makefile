@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
-#           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+# Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+#           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
 #
 # This file is part of lsp-tk-lib
 #
@@ -29,7 +29,7 @@ include $(MODDIR)/project.mk
 include $(MODDIR)/dependencies.mk
 include $(MODDIR)/make/functions.mk
 
-ifeq ($(TEST),1)
+ifeq ($(call fcheck,test,$(BUILD_FEATURES),ON),ON)
   UNIQ_DEPENDENCIES      := $(call uniq, $(DEPENDENCIES) $(TEST_DEPENDENCIES))
   DEPENDENCIES            = $(UNIQ_DEPENDENCIES)
 endif
