@@ -85,7 +85,7 @@ namespace lsp
             protected:
                 void            update_settings();
                 void            refresh_processing();
-                bool            preprocess(float *out, const float **in, size_t samples);
+                bool            preprocess(float *out, const float * const *in, size_t samples);
                 bool            preprocess(float *out, const float *in);
 
             public:
@@ -189,7 +189,7 @@ namespace lsp
                  * @param in array of input buffers
                  * @param samples number of samples to process
                  */
-                void process(float *out, const float **in, size_t samples);
+                void process(float *out, const float * const *in, size_t samples);
 
                 /** Process sidechain signal (single sample)
                  *
