@@ -182,6 +182,11 @@ namespace lsp
                  */
                 bool                freq_chart(size_t id, float *dst, const float *f, float gain, size_t count);
 
+                /**
+                 * Clear internal memory to start processing from scratch
+                 */
+                void                reset();
+
             public:
                 void                dump(dspu::IStateDumper *v) const;
         };
