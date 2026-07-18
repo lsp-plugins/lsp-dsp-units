@@ -585,6 +585,17 @@ namespace lsp
             return true;
         }
 
+        void Crossover::reset()
+        {
+            for (size_t i=0; i<nSplits; ++i)
+            {
+                split_t * const s   = &vSplit[i];
+
+                s->sLPF.reset();
+                s->sHPF.reset();
+            }
+        }
+
         void Crossover::dump(IStateDumper *v) const
         {
             v->write("nReconfigure", nReconfigure);

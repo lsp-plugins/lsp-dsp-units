@@ -1970,6 +1970,11 @@ namespace lsp
             return true;
         }
 
+        void DynamicFilters::reset()
+        {
+            bClearMem   = true;
+        }
+
         void DynamicFilters::dump(dspu::IStateDumper *v) const
         {
             v->begin_array("vFilters", vFilters, nFilters);

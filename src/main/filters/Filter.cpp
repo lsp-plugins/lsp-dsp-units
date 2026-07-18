@@ -205,6 +205,12 @@ namespace lsp
             return tanf(f1 * nf) / tanf(f2 * nf);
         }
 
+        void Filter::reset()
+        {
+            if (nFlags & FF_OWN_BANK)
+                pBank->reset();
+        }
+
         void Filter::rebuild()
         {
             // Clear bank if it is internal bank
