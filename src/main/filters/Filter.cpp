@@ -643,7 +643,7 @@ namespace lsp
 
                 case FM_MATCHED:
                 {
-                    float kf    = 1.0f / sParams.fFreq;
+                    const float kf  = 1.0f / sParams.fFreq;
 
                     while (count > 0)
                     {

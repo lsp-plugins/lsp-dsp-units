@@ -412,15 +412,16 @@ namespace lsp
             while (count > 0)
             {
                 // Estimate number of frequencies to process
-                size_t to_do    = lsp_min(count, size_t(BUFFER_SIZE/2));
+                const size_t to_do  = lsp_min(count, size_t(BUFFER_SIZE/2));
+                size_t ni           = 0;
 
                 for (size_t i=0; i<nFilters; ++i)
                 {
-                    Filter *xf      = &vFilters[i];
+                    Filter * const xf   = &vFilters[i];
                     if (!xf->active())
                         continue;
 
-                    if (i > 0)
+                    if ((ni++) > 0)
                     {
                         xf->freq_chart(xre, xim, f, to_do);
                         dsp::complex_mul2(re, im, xre, xim, to_do);
@@ -451,15 +452,16 @@ namespace lsp
             while (count > 0)
             {
                 // Estimate number of frequencies to process
-                size_t to_do    = lsp_min(count, size_t(BUFFER_SIZE/2));
+                const size_t to_do  = lsp_min(count, size_t(BUFFER_SIZE/2));
+                size_t ni           = 0;
 
                 for (size_t i=0; i<nFilters; ++i)
                 {
-                    Filter *xf      = &vFilters[i];
+                    Filter * const xf   = &vFilters[i];
                     if (!xf->active())
                         continue;
 
-                    if (i > 0)
+                    if ((ni++) > 0)
                     {
                         xf->freq_chart(vTemp, f, to_do);
                         dsp::pcomplex_mul2(c, vTemp, to_do);
