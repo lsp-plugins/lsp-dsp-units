@@ -40,6 +40,7 @@ namespace lsp
                     dsp::biquad_x2_t    x2;
                     dsp::biquad_x4_t    x4;
                     dsp::biquad_x8_t    x8;
+                    dsp::biquad_x16_t   x16;
                 } biquad_t;
 
             protected:

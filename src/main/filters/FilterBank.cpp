@@ -65,9 +65,9 @@ namespace lsp
             destroy();
 
             // Calculate data size
-            const size_t n_banks        = (filters/8) + 3;
+            const size_t n_banks        = (filters/16) + 4; // The number of full 16x banks + extra 8x, 4x, 2x and 1x banks.
             const size_t bank_alloc     = align_size(sizeof(biquad_t) * n_banks, LSP_DSP_BIQUAD_ALIGN);
-            const size_t mem_alloc      = align_size(16 * n_banks, LSP_DSP_BIQUAD_ALIGN);
+            const size_t mem_alloc      = align_size(32 * n_banks, LSP_DSP_BIQUAD_ALIGN);
             const size_t chain_alloc    = sizeof(dsp::biquad_x1_t) * filters;
 
             // Allocate data
@@ -111,8 +111,103 @@ namespace lsp
             dsp::biquad_x1_t *c = vChains;
             biquad_t *b         = vFilters;
 
-            // Add 8x filter bank
-            while (items >= 8)
+            // Add 16x filter banks
+            while (items >= 16)
+            {
+                dsp::biquad_x16_t *f = &b->x16;
+
+                f->b0[0]    = c[0].b0;
+                f->b0[1]    = c[1].b0;
+                f->b0[2]    = c[2].b0;
+                f->b0[3]    = c[3].b0;
+                f->b0[4]    = c[4].b0;
+                f->b0[5]    = c[5].b0;
+                f->b0[6]    = c[6].b0;
+                f->b0[7]    = c[7].b0;
+                f->b0[8]    = c[8].b0;
+                f->b0[9]    = c[9].b0;
+                f->b0[10]   = c[10].b0;
+                f->b0[11]   = c[11].b0;
+                f->b0[12]   = c[12].b0;
+                f->b0[13]   = c[13].b0;
+                f->b0[14]   = c[14].b0;
+                f->b0[15]   = c[15].b0;
+
+                f->b1[0]    = c[0].b1;
+                f->b1[1]    = c[1].b1;
+                f->b1[2]    = c[2].b1;
+                f->b1[3]    = c[3].b1;
+                f->b1[4]    = c[4].b1;
+                f->b1[5]    = c[5].b1;
+                f->b1[6]    = c[6].b1;
+                f->b1[7]    = c[7].b1;
+                f->b1[8]    = c[8].b1;
+                f->b1[9]    = c[9].b1;
+                f->b1[10]   = c[10].b1;
+                f->b1[11]   = c[11].b1;
+                f->b1[12]   = c[12].b1;
+                f->b1[13]   = c[13].b1;
+                f->b1[14]   = c[14].b1;
+                f->b1[15]   = c[15].b1;
+
+                f->b2[0]    = c[0].b2;
+                f->b2[1]    = c[1].b2;
+                f->b2[2]    = c[2].b2;
+                f->b2[3]    = c[3].b2;
+                f->b2[4]    = c[4].b2;
+                f->b2[5]    = c[5].b2;
+                f->b2[6]    = c[6].b2;
+                f->b2[7]    = c[7].b2;
+                f->b2[8]    = c[8].b2;
+                f->b2[9]    = c[9].b2;
+                f->b2[10]   = c[10].b2;
+                f->b2[11]   = c[11].b2;
+                f->b2[12]   = c[12].b2;
+                f->b2[13]   = c[13].b2;
+                f->b2[14]   = c[14].b2;
+                f->b2[15]   = c[15].b2;
+
+                f->a1[0]    = c[0].a1;
+                f->a1[1]    = c[1].a1;
+                f->a1[2]    = c[2].a1;
+                f->a1[3]    = c[3].a1;
+                f->a1[4]    = c[4].a1;
+                f->a1[5]    = c[5].a1;
+                f->a1[6]    = c[6].a1;
+                f->a1[7]    = c[7].a1;
+                f->a1[8]    = c[8].a1;
+                f->a1[9]    = c[9].a1;
+                f->a1[10]   = c[10].a1;
+                f->a1[11]   = c[11].a1;
+                f->a1[12]   = c[12].a1;
+                f->a1[13]   = c[13].a1;
+                f->a1[14]   = c[14].a1;
+                f->a1[15]   = c[15].a1;
+
+                f->a2[0]    = c[0].a2;
+                f->a2[1]    = c[1].a2;
+                f->a2[2]    = c[2].a2;
+                f->a2[3]    = c[3].a2;
+                f->a2[4]    = c[4].a2;
+                f->a2[5]    = c[5].a2;
+                f->a2[6]    = c[6].a2;
+                f->a2[7]    = c[7].a2;
+                f->a2[8]    = c[8].a2;
+                f->a2[9]    = c[9].a2;
+                f->a2[10]   = c[10].a2;
+                f->a2[11]   = c[11].a2;
+                f->a2[12]   = c[12].a2;
+                f->a2[13]   = c[13].a2;
+                f->a2[14]   = c[14].a2;
+                f->a2[15]   = c[15].a2;
+
+                c          += 16;
+                b          ++;
+                items      -= 16;
+            }
+
+            // Add extra 8x filter bank
+            if (items & 8)
             {
                 dsp::biquad_x8_t *f = &b->x8;
 
@@ -163,10 +258,9 @@ namespace lsp
 
                 c          += 8;
                 b          ++;
-                items      -= 8;
             }
 
-            // Add 4x filter bank
+            // Add extra 4x filter bank
             if (items & 4)
             {
                 dsp::biquad_x4_t *f = &b->x4;
@@ -200,7 +294,7 @@ namespace lsp
                 b          ++;
             }
 
-            // Add 2x filter bank
+            // Add extra 2x filter bank
             if (items & 2)
             {
                 dsp::biquad_x2_t *f = &b->x2;
@@ -224,7 +318,7 @@ namespace lsp
                 b          ++;
             }
 
-            // Add 1x filter
+            // Add extra 1x filter
             if (items & 1)
             {
                 b->x1       = *c;
@@ -239,13 +333,13 @@ namespace lsp
 
         void FilterBank::reset()
         {
-            dsp::fill_zero(vMemory, nItems * 2);
+            dsp::fill_zero(vMemory, nMemSize * 2);
         }
 
         void FilterBank::process(float *out, const float *in, size_t samples)
         {
             size_t items        = nItems;
-            biquad_t *f         = vFilters;
+            const biquad_t *f   = vFilters;
             float *d            = vMemory;
 
             if (items == 0)
@@ -254,13 +348,21 @@ namespace lsp
                 return;
             }
 
-            while (items >= 8)
+            while (items >= 16)
+            {
+                dsp::biquad_process_x16(out, in, d, samples, &f->x16);
+                in         = out;  // actual data for the next chain is in output buffer now
+                d         += 32;
+                f         ++;
+                items     -= 16;
+            }
+
+            if (items & 8)
             {
                 dsp::biquad_process_x8(out, in, d, samples, &f->x8);
                 in         = out;  // actual data for the next chain is in output buffer now
                 d         += 16;
                 f         ++;
-                items     -= 8;
             }
 
             if (items & 4)
@@ -287,7 +389,7 @@ namespace lsp
         {
             // Backup filter memory and cleanup state
             const size_t memsz  = nItems * 2;
-            dsp::copy(&vMemory[memsz], vMemory, memsz);
+            dsp::copy(&vMemory[nMemSize], vMemory, memsz);
             dsp::fill_zero(vMemory, memsz);
 
             // Generate impulse response
@@ -296,19 +398,33 @@ namespace lsp
             process(out, out, samples);
 
             // Restore filter memory
-            dsp::copy(vMemory, &vMemory[memsz], memsz);
+            dsp::copy(vMemory, &vMemory[nMemSize], memsz);
         }
 
         void FilterBank::dump(IStateDumper *v) const
         {
-            size_t ni       = nItems;
-            size_t nc       = (ni >> 3) + ((ni >> 2) & 1) + ((ni >> 1) & 1) + (ni & 1);
-            biquad_t *b     = vFilters;
+            size_t ni           = nItems;
+            size_t nc           = (ni >> 3) + ((ni >> 2) & 1) + ((ni >> 1) & 1) + (ni & 1);
+            const biquad_t *b   = vFilters;
 
             v->begin_array("vFilters", vFilters, nc);
-            while (ni >= 8)
+            while (ni >= 16)
             {
-                v->begin_object(b, sizeof(biquad_t));
+                v->begin_object(b, sizeof(dsp::biquad_x16_t));
+                {
+                    v->writev("b0", b->x16.b0, 16);
+                    v->writev("b1", b->x16.b1, 16);
+                    v->writev("b2", b->x16.b2, 16);
+                    v->writev("a1", b->x16.a1, 16);
+                    v->writev("a2", b->x16.a2, 16);
+                }
+                v->end_object();
+                b       ++;
+                ni      -= 16;
+            }
+            if (ni & 8)
+            {
+                v->begin_object(b, sizeof(dsp::biquad_x8_t));
                 {
                     v->writev("b0", b->x8.b0, 8);
                     v->writev("b1", b->x8.b1, 8);
@@ -318,11 +434,10 @@ namespace lsp
                 }
                 v->end_object();
                 b       ++;
-                ni      -= 8;
             }
             if (ni & 4)
             {
-                v->begin_object(b, sizeof(biquad_t));
+                v->begin_object(b, sizeof(dsp::biquad_x4_t));
                 {
                     v->writev("b0", b->x4.b0, 4);
                     v->writev("b1", b->x4.b1, 4);
@@ -332,11 +447,10 @@ namespace lsp
                 }
                 v->end_object();
                 b       ++;
-                ni      -= 8;
             }
             if (ni & 2)
             {
-                v->begin_object(b, sizeof(biquad_t));
+                v->begin_object(b, sizeof(dsp::biquad_x2_t));
                 {
                     v->writev("b0", b->x2.b0, 2);
                     v->writev("b1", b->x2.b1, 2);
@@ -347,11 +461,10 @@ namespace lsp
                 }
                 v->end_object();
                 b       ++;
-                ni      -= 8;
             }
             if (ni & 1)
             {
-                v->begin_object(b, sizeof(biquad_t));
+                v->begin_object(b, sizeof(dsp::biquad_x1_t));
                 {
                     v->write("b0", b->x1.b0);
                     v->write("b1", b->x1.b1);
@@ -364,7 +477,6 @@ namespace lsp
                 }
                 v->end_object();
                 b       ++;
-                ni      -= 8;
             }
             v->end_array();
 
