@@ -311,9 +311,6 @@ namespace lsp
                 f->a2[0]    = c[0].a2;
                 f->a2[1]    = c[1].a2;
 
-                f->p[0]     = 0.0f;
-                f->p[1]     = 0.0f;
-
                 c          += 2;
                 b          ++;
             }
@@ -457,7 +454,6 @@ namespace lsp
                     v->writev("b2", b->x2.b2, 2);
                     v->writev("a1", b->x2.a1, 2);
                     v->writev("a2", b->x2.a2, 2);
-                    v->writev("p", b->x2.p, 2);
                 }
                 v->end_object();
                 b       ++;
