@@ -201,7 +201,7 @@ namespace lsp
                 static constexpr float fBilinear_conv_intrc                 {fBilinear_min_shape};
 
                 // Asymmetric
-                static constexpr float fAsymmetric_soft_clip_max_level      {0.999f};  // Must be < 1
+                static constexpr float fAsymmetric_soft_clip_max_level      {0.95f};  // Must be < 1. Use 0.95 or lower to prevent diverging scaling factors.
 
                 // Quarter Circle
                 static constexpr float fQuarter_circle_max_radius           {2.0f};

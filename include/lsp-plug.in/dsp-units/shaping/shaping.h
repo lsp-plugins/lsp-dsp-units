@@ -114,8 +114,8 @@ namespace lsp
              */
             typedef struct asymmetric_softclip_t
             {
-                float high_limit; // 0 <= high_limit < 1
-                float low_limit; // 0 <= low_limit < 1
+                float high_limit; // 0 <= high_limit < 1 (should use 0.95 as higher limit to prevent numerical issues)
+                float low_limit; // 0 <= low_limit < 1 (should use 0.95 as higher limit to prevent numerical issues)
                 float pos_scale; // 1 / (1 - high_limit)
                 float neg_scale; // 1 / (1 - low_limit)
             } asymmetric_softclip_t;
