@@ -24,17 +24,17 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define BLD_BUF_SIZE    8
-#define BUF_SIZE        0x400       /* 1024 samples at one time */
-#define FBUF_SIZE       ((BLD_BUF_SIZE * (BUF_SIZE - BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t)) / sizeof(float))
-
 namespace lsp
 {
     namespace dspu
     {
-        constexpr float C_PI                = M_PI;
-        constexpr float C_PI_MUL_2          = M_PI * 2.0;
-        constexpr float C_PI_DIV_2          = M_PI_2;
+        static constexpr size_t BLD_BUF_SIZE    = 16;
+        static constexpr size_t BUF_SIZE        = 0x400;       /* 1024 samples at one time */
+        static constexpr size_t FBUF_SIZE       = ((BLD_BUF_SIZE * (BUF_SIZE - BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t)) / sizeof(float));
+
+        static constexpr float C_PI             = M_PI;
+        static constexpr float C_PI_MUL_2       = M_PI * 2.0;
+        static constexpr float C_PI_DIV_2       = M_PI_2;
 
         // Normal analog filter that does not affect any changes to the signal
         const dsp::f_cascade_t DynamicFilters::sNormal =
@@ -71,7 +71,7 @@ namespace lsp
             size_t b_per_filter_t       = align_size(sizeof(filter_t) * filters, 64);
             size_t b_per_memory         = FILTER_CHAINS_MAX * 2 * filters * sizeof(float);
             size_t b_per_cascades       = align_size(BLD_BUF_SIZE * (BUF_SIZE + BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t), 64);
-            size_t b_per_biquad         = sizeof(dsp::biquad_x8_t) * (BUF_SIZE + BLD_BUF_SIZE);
+            size_t b_per_biquad         = sizeof(dsp::biquad_x16_t) * (BUF_SIZE + BLD_BUF_SIZE);
 
             size_t to_alloc             = b_per_filter_t + b_per_memory + b_per_cascades + b_per_biquad;
 
@@ -81,12 +81,9 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Map memory
-            vFilters        = reinterpret_cast<filter_t *>(ptr);
-            ptr            += b_per_filter_t;
-            vMemory         = reinterpret_cast<float *>(ptr);
-            ptr            += b_per_memory;
-            vCascades       = reinterpret_cast<dsp::f_cascade_t *>(ptr);
-            ptr            += b_per_cascades;
+            vFilters        = advance_ptr_bytes<filter_t>(ptr, b_per_filter_t);
+            vMemory         = advance_ptr_bytes<float>(ptr, b_per_memory);
+            vCascades       = advance_ptr_bytes<dsp::f_cascade_t>(ptr, b_per_cascades);
             vBiquads.ptr    = ptr;
             nFilters        = filters;
 
@@ -191,14 +188,184 @@ namespace lsp
         size_t DynamicFilters::quantify(size_t c, size_t nc)
         {
             // Check if there are some cascades left undone
-            ssize_t n = nc - c;
+            const ssize_t n = nc - c;
             if (n <= 0)
                 return 0;
 
+            if (n >= 8)
+                return (n >= 16) ? 16 : 8;
             if (n >= 4)
-                return (n >= 8) ? 8 : 4;
-
+                return 4;
             return (n >= 2) ? 2 : 1;
+        }
+
+        inline void DynamicFilters::fill_filters_x2(dsp::f_cascade_t *h, dsp::f_cascade_t *t)
+        {
+            h[1]    = sNormal;
+            t[0]    = sNormal;
+        }
+
+        inline void DynamicFilters::fill_filters_x4(dsp::f_cascade_t *h, dsp::f_cascade_t *t)
+        {
+            h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; // row 0
+            h[6] = sNormal; h[7] = sNormal; // row 1
+            h[11] = sNormal; // row 2
+
+            t[0] = sNormal; // row -3
+            t[4] = sNormal; t[5] = sNormal; // row -2
+            t[8] = sNormal; t[9] = sNormal; t[10] = sNormal; // row -1
+        }
+
+        inline void DynamicFilters::fill_filters_x8(dsp::f_cascade_t *h, dsp::f_cascade_t *t)
+        {
+            // row 0
+            h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; h[4] = sNormal;
+            h[5] = sNormal; h[6] = sNormal; h[7] = sNormal;
+            // row 1
+            h[10] = sNormal; h[11] = sNormal; h[12] = sNormal;
+            h[13] = sNormal; h[14] = sNormal; h[15] = sNormal;
+            // row 2
+            h[19] = sNormal; h[20] = sNormal; h[21] = sNormal;
+            h[22] = sNormal; h[23] = sNormal;
+            // row 3
+            h[28] = sNormal; h[29] = sNormal;
+            h[30] = sNormal; h[31] = sNormal;
+            // row 4
+            h[37] = sNormal; h[38] = sNormal;
+            h[39] = sNormal;
+            // row 5
+            h[46] = sNormal; h[47] = sNormal;
+            // Row 6
+            h[55] = sNormal; // row 6
+
+            // row -7
+            t[0] = sNormal;
+            // row -6
+            t[8] = sNormal; t[9] = sNormal;
+            // row -5
+            t[16] = sNormal; t[17] = sNormal; t[18] = sNormal;
+            // row -4
+            t[24] = sNormal; t[25] = sNormal;
+            t[26] = sNormal; t[27] = sNormal;
+            // row -3
+            t[32] = sNormal; t[33] = sNormal; t[34] = sNormal;
+            t[35] = sNormal; t[36] = sNormal;
+            // row -2
+            t[40] = sNormal; t[41] = sNormal; t[42] = sNormal;
+            t[43] = sNormal; t[44] = sNormal; t[45] = sNormal;
+            // row -1
+            t[48] = sNormal; t[49] = sNormal; t[50] = sNormal; t[51] = sNormal;
+            t[52] = sNormal; t[53] = sNormal; t[54] = sNormal;
+        }
+
+        inline void DynamicFilters::fill_filters_x16(dsp::f_cascade_t *h, dsp::f_cascade_t *t)
+        {
+            // row 0
+            h[0x01] = sNormal; h[0x02] = sNormal; h[0x03] = sNormal; h[0x04] = sNormal;
+            h[0x05] = sNormal; h[0x06] = sNormal; h[0x07] = sNormal; h[0x08] = sNormal;
+            h[0x09] = sNormal; h[0x0a] = sNormal; h[0x0b] = sNormal; h[0x0c] = sNormal;
+            h[0x0d] = sNormal; h[0x0e] = sNormal; h[0x0f] = sNormal;
+            // row 1
+            h[0x12] = sNormal; h[0x13] = sNormal; h[0x14] = sNormal;
+            h[0x15] = sNormal; h[0x16] = sNormal; h[0x17] = sNormal; h[0x18] = sNormal;
+            h[0x19] = sNormal; h[0x1a] = sNormal; h[0x1b] = sNormal; h[0x1c] = sNormal;
+            h[0x1d] = sNormal; h[0x1e] = sNormal; h[0x1f] = sNormal;
+            // row 2
+            h[0x23] = sNormal; h[0x24] = sNormal;
+            h[0x25] = sNormal; h[0x26] = sNormal; h[0x27] = sNormal; h[0x28] = sNormal;
+            h[0x29] = sNormal; h[0x2a] = sNormal; h[0x2b] = sNormal; h[0x2c] = sNormal;
+            h[0x2d] = sNormal; h[0x2e] = sNormal; h[0x2f] = sNormal;
+            // row 3
+            h[0x34] = sNormal;
+            h[0x35] = sNormal; h[0x36] = sNormal; h[0x37] = sNormal; h[0x38] = sNormal;
+            h[0x39] = sNormal; h[0x3a] = sNormal; h[0x3b] = sNormal; h[0x3c] = sNormal;
+            h[0x3d] = sNormal; h[0x3e] = sNormal; h[0x3f] = sNormal;
+            // row 4
+            h[0x45] = sNormal; h[0x46] = sNormal; h[0x47] = sNormal; h[0x48] = sNormal;
+            h[0x49] = sNormal; h[0x4a] = sNormal; h[0x4b] = sNormal; h[0x4c] = sNormal;
+            h[0x4d] = sNormal; h[0x4e] = sNormal; h[0x4f] = sNormal;
+            // row 5
+            h[0x56] = sNormal; h[0x57] = sNormal; h[0x58] = sNormal;
+            h[0x59] = sNormal; h[0x5a] = sNormal; h[0x5b] = sNormal; h[0x5c] = sNormal;
+            h[0x5d] = sNormal; h[0x5e] = sNormal; h[0x5f] = sNormal;
+            // row 6
+            h[0x67] = sNormal; h[0x68] = sNormal;
+            h[0x69] = sNormal; h[0x6a] = sNormal; h[0x6b] = sNormal; h[0x6c] = sNormal;
+            h[0x6d] = sNormal; h[0x6e] = sNormal; h[0x6f] = sNormal;
+            // row 7
+            h[0x78] = sNormal;
+            h[0x79] = sNormal; h[0x7a] = sNormal; h[0x7b] = sNormal; h[0x7c] = sNormal;
+            h[0x7d] = sNormal; h[0x7e] = sNormal; h[0x7f] = sNormal;
+            // row 8
+            h[0x89] = sNormal; h[0x8a] = sNormal; h[0x8b] = sNormal; h[0x8c] = sNormal;
+            h[0x8d] = sNormal; h[0x8e] = sNormal; h[0x8f] = sNormal;
+            // row 9
+            h[0x9a] = sNormal; h[0x9b] = sNormal; h[0x9c] = sNormal;
+            h[0x9d] = sNormal; h[0x9e] = sNormal; h[0x9f] = sNormal;
+            // row 10
+            h[0xab] = sNormal; h[0xac] = sNormal;
+            h[0xad] = sNormal; h[0xae] = sNormal; h[0xaf] = sNormal;
+            // row 11
+            h[0xbc] = sNormal;
+            h[0xbd] = sNormal; h[0xbe] = sNormal; h[0xbf] = sNormal;
+            // row 12
+            h[0xcd] = sNormal; h[0xce] = sNormal; h[0xcf] = sNormal;
+            // row 13
+            h[0xde] = sNormal; h[0xdf] = sNormal;
+            // row 14
+            h[0xef] = sNormal;
+
+            // row -15
+            t[0x00] = sNormal;
+            // row -14
+            t[0x10] = sNormal; t[0x11] = sNormal;
+            // row -13
+            t[0x20] = sNormal; t[0x21] = sNormal; t[0x22] = sNormal;
+            // row -12
+            t[0x30] = sNormal; t[0x31] = sNormal; t[0x32] = sNormal; t[0x33] = sNormal;
+            // row -11
+            t[0x40] = sNormal; t[0x41] = sNormal; t[0x42] = sNormal; t[0x43] = sNormal;
+            t[0x44] = sNormal;
+            // row -10
+            t[0x50] = sNormal; t[0x51] = sNormal; t[0x52] = sNormal; t[0x53] = sNormal;
+            t[0x54] = sNormal; t[0x55] = sNormal;
+            // row -9
+            t[0x60] = sNormal; t[0x61] = sNormal; t[0x62] = sNormal; t[0x63] = sNormal;
+            t[0x64] = sNormal; t[0x65] = sNormal; t[0x66] = sNormal;
+            // row -8
+            t[0x70] = sNormal; t[0x71] = sNormal; t[0x72] = sNormal; t[0x73] = sNormal;
+            t[0x74] = sNormal; t[0x75] = sNormal; t[0x76] = sNormal; t[0x77] = sNormal;
+            // row -7
+            t[0x80] = sNormal; t[0x81] = sNormal; t[0x82] = sNormal; t[0x83] = sNormal;
+            t[0x84] = sNormal; t[0x85] = sNormal; t[0x86] = sNormal; t[0x87] = sNormal;
+            t[0x88] = sNormal;
+            // row -6
+            t[0x90] = sNormal; t[0x91] = sNormal; t[0x92] = sNormal; t[0x93] = sNormal;
+            t[0x94] = sNormal; t[0x95] = sNormal; t[0x96] = sNormal; t[0x97] = sNormal;
+            t[0x98] = sNormal; t[0x99] = sNormal;
+            // row -5
+            t[0xa0] = sNormal; t[0xa1] = sNormal; t[0xa2] = sNormal; t[0xa3] = sNormal;
+            t[0xa4] = sNormal; t[0xa5] = sNormal; t[0xa6] = sNormal; t[0xa7] = sNormal;
+            t[0xa8] = sNormal; t[0xa9] = sNormal; t[0xaa] = sNormal;
+            // row -4
+            t[0xb0] = sNormal; t[0xb1] = sNormal; t[0xb2] = sNormal; t[0xb3] = sNormal;
+            t[0xb4] = sNormal; t[0xb5] = sNormal; t[0xb6] = sNormal; t[0xb7] = sNormal;
+            t[0xb8] = sNormal; t[0xb9] = sNormal; t[0xba] = sNormal; t[0xbb] = sNormal;
+            // row -3
+            t[0xc0] = sNormal; t[0xc1] = sNormal; t[0xc2] = sNormal; t[0xc3] = sNormal;
+            t[0xc4] = sNormal; t[0xc5] = sNormal; t[0xc6] = sNormal; t[0xc7] = sNormal;
+            t[0xc8] = sNormal; t[0xc9] = sNormal; t[0xca] = sNormal; t[0xcb] = sNormal;
+            t[0xcc] = sNormal;
+            // row -2
+            t[0xd0] = sNormal; t[0xd1] = sNormal; t[0xd2] = sNormal; t[0xd3] = sNormal;
+            t[0xd4] = sNormal; t[0xd5] = sNormal; t[0xd6] = sNormal; t[0xd7] = sNormal;
+            t[0xd8] = sNormal; t[0xd9] = sNormal; t[0xda] = sNormal; t[0xdb] = sNormal;
+            t[0xdc] = sNormal; t[0xdd] = sNormal;
+            // row -1
+            t[0xe0] = sNormal; t[0xe1] = sNormal; t[0xe2] = sNormal; t[0xe3] = sNormal;
+            t[0xe4] = sNormal; t[0xe5] = sNormal; t[0xe6] = sNormal; t[0xe7] = sNormal;
+            t[0xe8] = sNormal; t[0xe9] = sNormal; t[0xea] = sNormal; t[0xeb] = sNormal;
+            t[0xec] = sNormal; t[0xed] = sNormal; t[0xee] = sNormal;
         }
 
         void DynamicFilters::process(size_t id, float *out, const float *in, const float *gain, size_t samples)
@@ -219,11 +386,13 @@ namespace lsp
             }
 
             // Frequency coefficient for bilinear transform
-            float kf =
-                    (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
-                    (f->sParams.nType & 1) ?
-                    1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
-                    C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
+            const float kf =
+                (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
+                (f->sParams.nType & 1) ?
+                1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
+                C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
+
+            dsp::f_cascade_t *h, *t;
 
             // Filter memory
             while (samples > 0)
@@ -242,65 +411,56 @@ namespace lsp
                     if (nj <= 0)
                         break;
 
-                    if (nj == 8)
+                    h                       = vCascades;
+                    switch (nj)
                     {
-                        dsp::f_cascade_t *h  = vCascades, *t = &vCascades[to_process << 3];
-                        h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; h[4] = sNormal; h[5] = sNormal; h[6] = sNormal; h[7] = sNormal; // row 0
-                        h[10] = sNormal; h[11] = sNormal; h[12] = sNormal; h[13] = sNormal; h[14] = sNormal; h[15] = sNormal; // row 1
-                        h[19] = sNormal; h[20] = sNormal; h[21] = sNormal; h[22] = sNormal; h[23] = sNormal; // row 2
-                        h[28] = sNormal; h[29] = sNormal; h[30] = sNormal; h[31] = sNormal; // row 3
-                        h[37] = sNormal; h[38] = sNormal; h[39] = sNormal; // row 4
-                        h[46] = sNormal; h[47] = sNormal; // row 5
-                        h[55] = sNormal; // row 6
+                        case 16:
+                            fill_filters_x16(vCascades, &vCascades[to_process << 4]);
 
-                        t[0] = sNormal; // row -7
-                        t[8] = sNormal; t[9] = sNormal; // row -6
-                        t[16] = sNormal; t[17] = sNormal; t[18] = sNormal; // row -5
-                        t[24] = sNormal; t[25] = sNormal; t[26] = sNormal; t[27] = sNormal; // row -4
-                        t[32] = sNormal; t[33] = sNormal; t[34] = sNormal; t[35] = sNormal; t[36] = sNormal; // row -3
-                        t[40] = sNormal; t[41] = sNormal; t[42] = sNormal; t[43] = sNormal; t[44] = sNormal; t[45] = sNormal; // row -2
-                        t[48] = sNormal; t[49] = sNormal; t[50] = sNormal; t[51] = sNormal; t[52] = sNormal; t[53] = sNormal; t[54] = sNormal; // row -1
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x16(vBiquads.x16, vCascades, kf, to_process + 15);
+                            else
+                                dsp::matched_transform_x16(vBiquads.x16, vCascades, f->sParams.fFreq, kf, to_process + 15);
+                            dsp::dyn_biquad_process_x16(out, src, fmem, to_process, vBiquads.x16);
+                            break;
 
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
-                        else
-                            dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
-                        dsp::dyn_biquad_process_x8(out, src, fmem, to_process, vBiquads.x8);
-                    }
-                    else if (nj == 4)
-                    {
-                        dsp::f_cascade_t *h  = vCascades, *t = &vCascades[to_process << 2];
-                        h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; // row 0
-                        h[6] = sNormal; h[7] = sNormal; // row 1
-                        h[11] = sNormal; // row 2
+                        case 8:
+                            fill_filters_x8(vCascades, &vCascades[to_process << 3]);
 
-                        t[0] = sNormal; // row -3
-                        t[4] = sNormal; t[5] = sNormal; // row -2
-                        t[8] = sNormal; t[9] = sNormal; t[10] = sNormal; // row -1
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
+                            else
+                                dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
+                            dsp::dyn_biquad_process_x8(out, src, fmem, to_process, vBiquads.x8);
+                            break;
 
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
-                        else
-                            dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
-                        dsp::dyn_biquad_process_x4(out, src, fmem, to_process, vBiquads.x4);
-                    }
-                    else if (nj == 2)
-                    {
-                        vCascades[1]                = sNormal;
-                        vCascades[to_process << 1]  = sNormal;
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
-                        else
-                            dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
-                        dsp::dyn_biquad_process_x2(out, src, fmem, to_process, vBiquads.x2);
-                    }
-                    else if (nj == 1)
-                    {
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
-                        else
-                            dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
-                        dsp::dyn_biquad_process_x1(out, src, fmem, to_process, vBiquads.x1);
+                        case 4:
+                            fill_filters_x4(vCascades, &vCascades[to_process << 2]);
+
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
+                            else
+                                dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
+                            dsp::dyn_biquad_process_x4(out, src, fmem, to_process, vBiquads.x4);
+                            break;
+
+                        case 2:
+                            fill_filters_x2(vCascades, &vCascades[to_process << 1]);
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
+                            else
+                                dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
+                            dsp::dyn_biquad_process_x2(out, src, fmem, to_process, vBiquads.x2);
+                            break;
+
+                        case 1:
+                        default:
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
+                            else
+                                dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
+                            dsp::dyn_biquad_process_x1(out, src, fmem, to_process, vBiquads.x1);
+                            break;
                     }
 
                     // Update counters and pointers
@@ -1801,28 +1961,25 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = C_PI / float(nSampleRate);
-                float kf    = 1.0f/tanf(fp->fFreq * nf);
-                float lf    = nSampleRate * 0.499f;
+                const float nf  = C_PI / float(nSampleRate);
+                const float kf  = 1.0f/tanf(fp->fFreq * nf);
+                const float lf  = nSampleRate * 0.499f;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
                     for (size_t i=0; i<fcount; ++i)
-                    {
-                        float w     = f[i];
-                        tf[i]       = tanf((w > lf ? lf : w) * nf) * kf;
-                    }
+                        tf[i]       = tanf(lsp_min(f[i], lf) * nf) * kf;
 
                     // Estimate transfer function
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1839,11 +1996,11 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0f / fp->fFreq;
+                const float kf  = 1.0f / fp->fFreq;
 
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
@@ -1853,7 +2010,7 @@ namespace lsp
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1900,28 +2057,25 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = C_PI / float(nSampleRate);
-                float kf    = 1.0/tanf(fp->fFreq * nf);
-                float lf    = nSampleRate * 0.499f;
+                const float nf  = C_PI / float(nSampleRate);
+                const float kf  = 1.0/tanf(fp->fFreq * nf);
+                const float lf  = nSampleRate * 0.499f;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
                     for (size_t i=0; i<fcount; ++i)
-                    {
-                        float w     = f[i];
-                        tf[i]       = tanf((w > lf ? lf : w) * nf) * kf;
-                    }
+                        tf[i]       = tanf(lsp_min(f[i], lf) * nf) * kf;
 
                     // Estimate transfer function
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1937,12 +2091,12 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0f / fp->fFreq;
+                const float kf      = 1.0f / fp->fFreq;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
@@ -1952,7 +2106,7 @@ namespace lsp
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -2001,5 +2155,5 @@ namespace lsp
             v->write("pData", pData);
             v->write("bClearMem", bClearMem);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
