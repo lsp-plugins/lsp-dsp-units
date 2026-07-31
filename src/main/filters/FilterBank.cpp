@@ -457,6 +457,7 @@ namespace lsp
                     v->writev("b2", b->x2.b2, 2);
                     v->writev("a1", b->x2.a1, 2);
                     v->writev("a2", b->x2.a2, 2);
+                    v->writev("p", b->x2.p, 2);
                 }
                 v->end_object();
                 b       ++;
