@@ -392,8 +392,6 @@ namespace lsp
                 1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
                 C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
 
-            dsp::f_cascade_t *h, *t;
-
             // Filter memory
             while (samples > 0)
             {
