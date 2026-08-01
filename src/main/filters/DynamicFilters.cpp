@@ -409,7 +409,6 @@ namespace lsp
                     if (nj <= 0)
                         break;
 
-                    h                       = vCascades;
                     switch (nj)
                     {
                         case 16:
