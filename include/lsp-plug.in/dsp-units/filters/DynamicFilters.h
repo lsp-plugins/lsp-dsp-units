@@ -69,10 +69,6 @@ namespace lsp
 
             protected:
                 static size_t       quantify(size_t c, size_t nc);
-                static inline void  fill_filters_x2(dsp::f_cascade_t *h, dsp::f_cascade_t *t);
-                static inline void  fill_filters_x4(dsp::f_cascade_t *h, dsp::f_cascade_t *t);
-                static inline void  fill_filters_x8(dsp::f_cascade_t *h, dsp::f_cascade_t *t);
-                static inline void  fill_filters_x16(dsp::f_cascade_t *h, dsp::f_cascade_t *t);
 
             protected:
                 size_t              build_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples);
