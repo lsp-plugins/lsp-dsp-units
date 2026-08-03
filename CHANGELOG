@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 1.0.37 ===
+* Using new implementation of biquad filters that allows to process 16 biquad
+  filters at the same time.
 * Fixed regression in filter transfer function calculation for the dspu::Equalizer
   module.
 * Updated build scripts.
