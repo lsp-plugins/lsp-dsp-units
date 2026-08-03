@@ -24,24 +24,17 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define BLD_BUF_SIZE    8
-#define BUF_SIZE        0x400       /* 1024 samples at one time */
-#define FBUF_SIZE       ((BLD_BUF_SIZE * (BUF_SIZE - BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t)) / sizeof(float))
-
 namespace lsp
 {
     namespace dspu
     {
-        constexpr float C_PI                = M_PI;
-        constexpr float C_PI_MUL_2          = M_PI * 2.0;
-        constexpr float C_PI_DIV_2          = M_PI_2;
+        static constexpr size_t BLD_BUF_SIZE    = 16;
+        static constexpr size_t BUF_SIZE        = 0x400;       /* 1024 samples at one time */
+        static constexpr size_t FBUF_SIZE       = ((BLD_BUF_SIZE * (BUF_SIZE - BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t)) / sizeof(float));
 
-        // Normal analog filter that does not affect any changes to the signal
-        const dsp::f_cascade_t DynamicFilters::sNormal =
-        {
-            { 1.0f, 0.0f, 0.0f, 0.0f },
-            { 1.0f, 0.0f, 0.0f, 0.0f }
-        };
+        static constexpr float C_PI             = M_PI;
+        static constexpr float C_PI_MUL_2       = M_PI * 2.0;
+        static constexpr float C_PI_DIV_2       = M_PI_2;
 
         DynamicFilters::DynamicFilters()
         {
@@ -71,7 +64,7 @@ namespace lsp
             size_t b_per_filter_t       = align_size(sizeof(filter_t) * filters, 64);
             size_t b_per_memory         = FILTER_CHAINS_MAX * 2 * filters * sizeof(float);
             size_t b_per_cascades       = align_size(BLD_BUF_SIZE * (BUF_SIZE + BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t), 64);
-            size_t b_per_biquad         = sizeof(dsp::biquad_x8_t) * (BUF_SIZE + BLD_BUF_SIZE);
+            size_t b_per_biquad         = sizeof(dsp::biquad_x16_t) * (BUF_SIZE + BLD_BUF_SIZE);
 
             size_t to_alloc             = b_per_filter_t + b_per_memory + b_per_cascades + b_per_biquad;
 
@@ -81,12 +74,9 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Map memory
-            vFilters        = reinterpret_cast<filter_t *>(ptr);
-            ptr            += b_per_filter_t;
-            vMemory         = reinterpret_cast<float *>(ptr);
-            ptr            += b_per_memory;
-            vCascades       = reinterpret_cast<dsp::f_cascade_t *>(ptr);
-            ptr            += b_per_cascades;
+            vFilters        = advance_ptr_bytes<filter_t>(ptr, b_per_filter_t);
+            vMemory         = advance_ptr_bytes<float>(ptr, b_per_memory);
+            vCascades       = advance_ptr_bytes<dsp::f_cascade_t>(ptr, b_per_cascades);
             vBiquads.ptr    = ptr;
             nFilters        = filters;
 
@@ -191,13 +181,14 @@ namespace lsp
         size_t DynamicFilters::quantify(size_t c, size_t nc)
         {
             // Check if there are some cascades left undone
-            ssize_t n = nc - c;
+            const ssize_t n = nc - c;
             if (n <= 0)
                 return 0;
 
+            if (n >= 8)
+                return (n >= 16) ? 16 : 8;
             if (n >= 4)
-                return (n >= 8) ? 8 : 4;
-
+                return 4;
             return (n >= 2) ? 2 : 1;
         }
 
@@ -219,11 +210,11 @@ namespace lsp
             }
 
             // Frequency coefficient for bilinear transform
-            float kf =
-                    (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
-                    (f->sParams.nType & 1) ?
-                    1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
-                    C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
+            const float kf =
+                (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
+                (f->sParams.nType & 1) ?
+                1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
+                C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
 
             // Filter memory
             while (samples > 0)
@@ -242,65 +233,55 @@ namespace lsp
                     if (nj <= 0)
                         break;
 
-                    if (nj == 8)
+                    switch (nj)
                     {
-                        dsp::f_cascade_t *h  = vCascades, *t = &vCascades[to_process << 3];
-                        h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; h[4] = sNormal; h[5] = sNormal; h[6] = sNormal; h[7] = sNormal; // row 0
-                        h[10] = sNormal; h[11] = sNormal; h[12] = sNormal; h[13] = sNormal; h[14] = sNormal; h[15] = sNormal; // row 1
-                        h[19] = sNormal; h[20] = sNormal; h[21] = sNormal; h[22] = sNormal; h[23] = sNormal; // row 2
-                        h[28] = sNormal; h[29] = sNormal; h[30] = sNormal; h[31] = sNormal; // row 3
-                        h[37] = sNormal; h[38] = sNormal; h[39] = sNormal; // row 4
-                        h[46] = sNormal; h[47] = sNormal; // row 5
-                        h[55] = sNormal; // row 6
+                        case 16:
+                            dsp::fcascade_fill_x16(vCascades, &vCascades[to_process << 4]);
 
-                        t[0] = sNormal; // row -7
-                        t[8] = sNormal; t[9] = sNormal; // row -6
-                        t[16] = sNormal; t[17] = sNormal; t[18] = sNormal; // row -5
-                        t[24] = sNormal; t[25] = sNormal; t[26] = sNormal; t[27] = sNormal; // row -4
-                        t[32] = sNormal; t[33] = sNormal; t[34] = sNormal; t[35] = sNormal; t[36] = sNormal; // row -3
-                        t[40] = sNormal; t[41] = sNormal; t[42] = sNormal; t[43] = sNormal; t[44] = sNormal; t[45] = sNormal; // row -2
-                        t[48] = sNormal; t[49] = sNormal; t[50] = sNormal; t[51] = sNormal; t[52] = sNormal; t[53] = sNormal; t[54] = sNormal; // row -1
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x16(vBiquads.x16, vCascades, kf, to_process + 15);
+                            else
+                                dsp::matched_transform_x16(vBiquads.x16, vCascades, f->sParams.fFreq, kf, to_process + 15);
+                            dsp::dyn_biquad_process_x16(out, src, fmem, to_process, vBiquads.x16);
+                            break;
 
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
-                        else
-                            dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
-                        dsp::dyn_biquad_process_x8(out, src, fmem, to_process, vBiquads.x8);
-                    }
-                    else if (nj == 4)
-                    {
-                        dsp::f_cascade_t *h  = vCascades, *t = &vCascades[to_process << 2];
-                        h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; // row 0
-                        h[6] = sNormal; h[7] = sNormal; // row 1
-                        h[11] = sNormal; // row 2
+                        case 8:
+                            dsp::fcascade_fill_x8(vCascades, &vCascades[to_process << 3]);
 
-                        t[0] = sNormal; // row -3
-                        t[4] = sNormal; t[5] = sNormal; // row -2
-                        t[8] = sNormal; t[9] = sNormal; t[10] = sNormal; // row -1
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
+                            else
+                                dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
+                            dsp::dyn_biquad_process_x8(out, src, fmem, to_process, vBiquads.x8);
+                            break;
 
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
-                        else
-                            dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
-                        dsp::dyn_biquad_process_x4(out, src, fmem, to_process, vBiquads.x4);
-                    }
-                    else if (nj == 2)
-                    {
-                        vCascades[1]                = sNormal;
-                        vCascades[to_process << 1]  = sNormal;
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
-                        else
-                            dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
-                        dsp::dyn_biquad_process_x2(out, src, fmem, to_process, vBiquads.x2);
-                    }
-                    else if (nj == 1)
-                    {
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
-                        else
-                            dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
-                        dsp::dyn_biquad_process_x1(out, src, fmem, to_process, vBiquads.x1);
+                        case 4:
+                            dsp::fcascade_fill_x4(vCascades, &vCascades[to_process << 2]);
+
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
+                            else
+                                dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
+                            dsp::dyn_biquad_process_x4(out, src, fmem, to_process, vBiquads.x4);
+                            break;
+
+                        case 2:
+                            dsp::fcascade_fill_x2(vCascades, &vCascades[to_process << 1]);
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
+                            else
+                                dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
+                            dsp::dyn_biquad_process_x2(out, src, fmem, to_process, vBiquads.x2);
+                            break;
+
+                        case 1:
+                        default:
+                            if (f->sParams.nType & 1)
+                                dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
+                            else
+                                dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
+                            dsp::dyn_biquad_process_x1(out, src, fmem, to_process, vBiquads.x1);
+                            break;
                     }
 
                     // Update counters and pointers
@@ -1801,28 +1782,25 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = C_PI / float(nSampleRate);
-                float kf    = 1.0f/tanf(fp->fFreq * nf);
-                float lf    = nSampleRate * 0.499f;
+                const float nf  = C_PI / float(nSampleRate);
+                const float kf  = 1.0f/tanf(fp->fFreq * nf);
+                const float lf  = nSampleRate * 0.499f;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
                     for (size_t i=0; i<fcount; ++i)
-                    {
-                        float w     = f[i];
-                        tf[i]       = tanf((w > lf ? lf : w) * nf) * kf;
-                    }
+                        tf[i]       = tanf(lsp_min(f[i], lf) * nf) * kf;
 
                     // Estimate transfer function
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1839,11 +1817,11 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0f / fp->fFreq;
+                const float kf  = 1.0f / fp->fFreq;
 
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
@@ -1853,7 +1831,7 @@ namespace lsp
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1900,28 +1878,25 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = C_PI / float(nSampleRate);
-                float kf    = 1.0/tanf(fp->fFreq * nf);
-                float lf    = nSampleRate * 0.499f;
+                const float nf  = C_PI / float(nSampleRate);
+                const float kf  = 1.0/tanf(fp->fFreq * nf);
+                const float lf  = nSampleRate * 0.499f;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
                     for (size_t i=0; i<fcount; ++i)
-                    {
-                        float w     = f[i];
-                        tf[i]       = tanf((w > lf ? lf : w) * nf) * kf;
-                    }
+                        tf[i]       = tanf(lsp_min(f[i], lf) * nf) * kf;
 
                     // Estimate transfer function
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1937,12 +1912,12 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0f / fp->fFreq;
+                const float kf      = 1.0f / fp->fFreq;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
@@ -1952,7 +1927,7 @@ namespace lsp
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -2001,5 +1976,5 @@ namespace lsp
             v->write("pData", pData);
             v->write("bClearMem", bClearMem);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */
