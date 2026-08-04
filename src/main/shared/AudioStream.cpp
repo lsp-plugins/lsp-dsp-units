@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 8 мая 2024 г.
@@ -24,6 +24,7 @@
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/common/new.h>
 #include <lsp-plug.in/dsp-units/shared/AudioStream.h>
+#include <lsp-plug.in/dsp-units/const.h>
 #include <lsp-plug.in/runtime/system.h>
 
 namespace lsp
@@ -505,9 +506,14 @@ namespace lsp
             return read_internal(channel, dst, samples, dsp::copy);
         }
 
+        void AudioStream::sanitize_input(float *dst, const float *src, size_t count)
+        {
+            dsp::limit2(dst, src, GAIN_AMP_MIN, GAIN_AMP_MAX, count);
+        }
+
         status_t AudioStream::read_sanitized(size_t channel, float *dst, size_t samples)
         {
-            return read_internal(channel, dst, samples, dsp::sanitize2);
+            return read_internal(channel, dst, samples, sanitize_input);
         }
 
         status_t AudioStream::write_internal(size_t channel, const float *src, size_t samples, copy_function_t copy_func)

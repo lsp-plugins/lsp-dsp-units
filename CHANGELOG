@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 1.0.37 ===
+* Set AudioStream sanitize range to 120 dBFS to avoid extra high values that may
+  break the DSP.
 * Using new implementation of biquad filters that allows to process 16 biquad
   filters at the same time.
 * Fixed regression in filter transfer function calculation for the dspu::Equalizer
