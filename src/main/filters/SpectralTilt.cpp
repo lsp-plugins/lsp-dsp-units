@@ -310,6 +310,7 @@ namespace lsp
 
             // Exponential spacing ratio for poles.
             const float r  = powf(u_angf / l_angf, 1.0f / (nOrder - 1));
+            const float r2 = r*r;
             const float c_fn = bilinear_coefficient(1.0f, nSampleRate);
             float negZero = l_angf * powf(r, -fSlopeNepNep);
             float negPole = l_angf;
@@ -338,19 +339,16 @@ namespace lsp
 
                 const float now_b0 = negZero;
                 const float now_a0 = negPole;
-                negZero *= r;
-                negPole *= r;
+                const float nxt_b0 = negZero*r;
+                const float nxt_a0 = negPole*r;
+                negZero *= r2;
+                negPole *= r2;
 
-                const float nxt_b0  = negZero;
-                const float nxt_a0  = negPole;
-                negZero *= r;
-                negPole *= r;
-
-                lsp_trace("this=%p, analog filter %2d: poles = {%f, %f}, zeros={%f, %f}, kf=%f",
-                    this, int(n),
-                    now_a0, nxt_a0,
-                    now_b0, nxt_b0,
-                    c_fn);
+//                lsp_trace("this=%p, analog filter %2d: poles = {%f, %f}, zeros={%f, %f}, kf=%f, r=%f",
+//                    this, int(n),
+//                    now_a0, nxt_a0,
+//                    now_b0, nxt_b0,
+//                    c_fn, r);
 
                 dsp::biquad_x1_t * const digitalbq = sFilter.add_chain();
                 if (digitalbq == NULL)
@@ -362,24 +360,24 @@ namespace lsp
                 analogbq.b[0] = now_a0 * nxt_a0;
                 analogbq.b[1] = now_a0 + nxt_a0;
                 analogbq.b[2] = 1.0f;
-                lsp_trace("this=%p, analog filter %2d: top={%f, %f, %f}, bottom={%f, %f, %f}",
-                    this, int(n),
-                    analogbq.t[0], analogbq.t[1], analogbq.t[2],
-                    analogbq.b[0], analogbq.b[1], analogbq.b[2]);
+//                lsp_trace("this=%p, analog filter %2d: top={%f, %f, %f}, bottom={%f, %f, %f}",
+//                    this, int(n),
+//                    analogbq.t[0], analogbq.t[1], analogbq.t[2],
+//                    analogbq.b[0], analogbq.b[1], analogbq.b[2]);
 
                 // The denominator coefficients in digitalbq will have opposite sign with respect the maths.
                 // This is correct, as this is the LSP convention.
                 dsp::bilinear_transform_x1(digitalbq, &analogbq, c_fn, 1);
-                lsp_trace("this=%p, biquad filter %2d: b={%f, %f, %f} a={%f, %f, %f}",
-                    this, int(n),
-                    digitalbq->b0, digitalbq->b1, digitalbq->b2,
-                    1.0f, -digitalbq->a1, -digitalbq->a2);
+//                lsp_trace("this=%p, biquad filter %2d: b={%f, %f, %f} a={%f, %f, %f}",
+//                    this, int(n),
+//                    digitalbq->b0, digitalbq->b1, digitalbq->b2,
+//                    1.0f, -digitalbq->a1, -digitalbq->a2);
 
                 normalise_digital_biquad(digitalbq);
-                lsp_trace("this=%p, normalized biquad %2d: b={%f, %f, %f} a={%f, %f, %f}",
-                    this, int(n),
-                    digitalbq->b0, digitalbq->b1, digitalbq->b2,
-                    1.0f, -digitalbq->a1, -digitalbq->a2);
+//                lsp_trace("this=%p, normalized biquad %2d: b={%f, %f, %f} a={%f, %f, %f}",
+//                    this, int(n),
+//                    digitalbq->b0, digitalbq->b1, digitalbq->b2,
+//                    1.0f, -digitalbq->a1, -digitalbq->a2);
             }
             sFilter.end(true);
 
