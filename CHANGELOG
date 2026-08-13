@@ -10,6 +10,7 @@
 * Fixed regression in filter transfer function calculation for the dspu::Equalizer
   module.
 * Updated build scripts.
+* Updated module versions in dependencies.
 
 === 1.0.36 ===
 * Updated build system: ASAN, CROSS_COMPILE, DEBUG, DEVEL, PROFILE, STRICT,
