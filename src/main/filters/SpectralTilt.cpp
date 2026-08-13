@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Stefano Tronci <stefano.tronci@protonmail.com>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 16 Sept 2021
@@ -38,6 +39,7 @@ namespace lsp
 {
     namespace dspu
     {
+        static constexpr float F_PI   = float(M_PI);
 
         SpectralTilt::SpectralTilt()
         {
@@ -153,34 +155,10 @@ namespace lsp
         }
 
 
-        SpectralTilt::bilinear_spec_t SpectralTilt::compute_bilinear_element(float negZero, float negPole)
-        {
-            /** Take a zero and a pole from an exponentially spaced series and construct an analog bilinear filter.
-             *
-             * Analog bilinear filter: the coefficients are the same as the pole and zero values. Form of the analog filter:
-             *
-             *         s + b0
-             * H(s) = -----------; b1 = a1 = 1
-             *         s + a0
-             *
-             */
-
-            // Just return it analog, prewarp not necessary.
-            bilinear_spec_t spec;
-
-            spec.b0 = negZero;
-            spec.b1 = 1.0f;
-
-            spec.a0 = negPole;
-            spec.a1 = 1.0f;
-
-            return spec;
-        }
-
         float SpectralTilt::digital_biquad_gain(dsp::biquad_x1_t *digitalbq, float frequency)
         {
             // Using double and wrapped angles for maximal accuracy.
-            double w = 2 * M_PI * frequency / nSampleRate;
+            double w = 2.0 * M_PI * frequency / nSampleRate;
             w = fmod(w + M_PI, 2.0 * M_PI);
             w = (w >= 0.0) ? w - M_PI : w + M_PI;
 
@@ -194,10 +172,10 @@ namespace lsp
 
             double den_re = 1.0 - digitalbq->a1 * cw - digitalbq->a2 * c2w;
             double den_im = digitalbq->a1 * sw + digitalbq->a2 * s2w;
-            double den_sq_mag = den_re * den_re + den_im * den_im;
+            double den_sq_mag = 1.0 / (den_re * den_re + den_im * den_im);
 
-            double gain_re = (num_re * den_re + num_im * den_im) / den_sq_mag;
-            double gain_im = (num_im * den_re - num_re * den_im) / den_sq_mag;
+            double gain_re = (num_re * den_re + num_im * den_im) * den_sq_mag;
+            double gain_im = (num_im * den_re - num_re * den_im) * den_sq_mag;
 
             return sqrt(gain_re * gain_re + gain_im * gain_im);
         }
@@ -257,8 +235,7 @@ namespace lsp
                 return;
 
             // We force even order (so all biquads have all coefficients, maximal efficiency).
-            nOrder = (nOrder % 2 == 0) ? nOrder : nOrder + 1;
-            nOrder = lsp_min(nOrder, MAX_ORDER);
+            nOrder = lsp_min((nOrder + 1) & (~size_t(1)), MAX_ORDER);
 
             // Convert provided slope value to Neper-per-Neper.
             switch (enSlopeUnit)
@@ -328,46 +305,79 @@ namespace lsp
             else
                 bBypass = false;
 
-            float l_angf = 2.0f * M_PI * fLowerFrequency;
-            float u_angf = 2.0f * M_PI * fUpperFrequency;
+            const float l_angf = 2.0f * F_PI * fLowerFrequency;
+            const float u_angf = 2.0f * F_PI * fUpperFrequency;
 
             // Exponential spacing ratio for poles.
-            float r = powf(u_angf / l_angf, 1.0f / (nOrder - 1));
-            float c_fn = bilinear_coefficient(1.0f, nSampleRate);
+            const float r  = powf(u_angf / l_angf, 1.0f / (nOrder - 1));
+            const float r2 = r*r;
+            const float c_fn = bilinear_coefficient(1.0f, nSampleRate);
             float negZero = l_angf * powf(r, -fSlopeNepNep);
             float negPole = l_angf;
 
             // We have nOrder bilinears. We combine them 2 by 2 to get nOrder / 2 biquads.
+            dsp::f_cascade_t analogbq;
+
             sFilter.begin();
-            for (size_t n = 0; n < nOrder; ++n)
+            for (size_t n = 0; n < nOrder; n += 2)
             {
-                if (n % 2 != 0)
-                    continue;
+                /** Take a zero and a pole from an exponentially spaced series and construct an analog bilinear filter.
+                 *
+                 * Analog bilinear filter: the coefficients are the same as the pole and zero values. Form of the analog filter:
+                 *
+                 *         b0[0] + b1[0]*s     b0[1] + b1[1]*s
+                 * H(s) = ----------------- x -----------------
+                 *         a0[0] + a1[0]*s     a0[1] + a1[1]*s
+                 *
+                 * Here b1[i] = a1[i] = 1, then:
+                 *
+                 *         b0[0]*b0[1] + (b0[0]+b0[1])*s + s^2
+                 * H(s) = -------------------------------------
+                 *         a0[0]*a0[1] + (a0[0]+a0[1])*s + s^2
+                 *
+                 */
 
-                bilinear_spec_t spec_now = compute_bilinear_element(negZero, negPole);
-                negZero *= r;
-                negPole *= r;
+                const float now_b0 = negZero;
+                const float now_a0 = negPole;
+                const float nxt_b0 = negZero*r;
+                const float nxt_a0 = negPole*r;
+                negZero *= r2;
+                negPole *= r2;
 
-                bilinear_spec_t spec_nxt = compute_bilinear_element(negZero, negPole);
-                negZero *= r;
-                negPole *= r;
+//                lsp_trace("this=%p, analog filter %2d: poles = {%f, %f}, zeros={%f, %f}, kf=%f, r=%f",
+//                    this, int(n),
+//                    now_a0, nxt_a0,
+//                    now_b0, nxt_b0,
+//                    c_fn, r);
 
-                dsp::biquad_x1_t *digitalbq = sFilter.add_chain();
+                dsp::biquad_x1_t * const digitalbq = sFilter.add_chain();
                 if (digitalbq == NULL)
                     return;
 
-                dsp::f_cascade_t analogbq;
-                analogbq.t[0] = spec_now.b0 * spec_nxt.b0;
-                analogbq.t[1] = spec_now.b0 * spec_nxt.b1 + spec_now.b1 * spec_nxt.b0;
-                analogbq.t[2] = spec_now.b1 * spec_nxt.b1;
-                analogbq.b[0] = spec_now.a0 * spec_nxt.a0;
-                analogbq.b[1] = spec_now.a0 * spec_nxt.a1 + spec_now.a1 * spec_nxt.a0;
-                analogbq.b[2] = spec_now.a1 * spec_nxt.a1;
+                analogbq.t[0] = now_b0 * nxt_b0;
+                analogbq.t[1] = now_b0 + nxt_b0;
+                analogbq.t[2] = 1.0f;
+                analogbq.b[0] = now_a0 * nxt_a0;
+                analogbq.b[1] = now_a0 + nxt_a0;
+                analogbq.b[2] = 1.0f;
+//                lsp_trace("this=%p, analog filter %2d: top={%f, %f, %f}, bottom={%f, %f, %f}",
+//                    this, int(n),
+//                    analogbq.t[0], analogbq.t[1], analogbq.t[2],
+//                    analogbq.b[0], analogbq.b[1], analogbq.b[2]);
 
-                dsp::bilinear_transform_x1(digitalbq, &analogbq, c_fn, 1);
                 // The denominator coefficients in digitalbq will have opposite sign with respect the maths.
                 // This is correct, as this is the LSP convention.
+                dsp::bilinear_transform_x1(digitalbq, &analogbq, c_fn, 1);
+//                lsp_trace("this=%p, biquad filter %2d: b={%f, %f, %f} a={%f, %f, %f}",
+//                    this, int(n),
+//                    digitalbq->b0, digitalbq->b1, digitalbq->b2,
+//                    1.0f, -digitalbq->a1, -digitalbq->a2);
+
                 normalise_digital_biquad(digitalbq);
+//                lsp_trace("this=%p, normalized biquad %2d: b={%f, %f, %f} a={%f, %f, %f}",
+//                    this, int(n),
+//                    digitalbq->b0, digitalbq->b1, digitalbq->b2,
+//                    1.0f, -digitalbq->a1, -digitalbq->a2);
             }
             sFilter.end(true);
 
@@ -392,11 +402,11 @@ namespace lsp
             }
 
             // 1X buffer for temporary processing.
-            float vTemp[BUF_LIM_SIZE];
+            float vTemp[BUF_LIM_SIZE] __lsp_aligned64;
 
             for (size_t offset=0; offset < count; )
             {
-                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
+                const size_t to_do  = lsp_min(count - offset, BUF_LIM_SIZE);
 
                 // dst[i] = dst[i] + filter(src[i])
                 sFilter.process(vTemp, &src[offset], to_do);
@@ -424,11 +434,11 @@ namespace lsp
             }
 
             // 1X buffer for temporary processing.
-            float vTemp[BUF_LIM_SIZE];
+            float vTemp[BUF_LIM_SIZE] __lsp_aligned64;
 
             for (size_t offset=0; offset < count; )
             {
-                size_t to_do = lsp_min(count - offset, BUF_LIM_SIZE);
+                const size_t to_do  = lsp_min(count - offset, BUF_LIM_SIZE);
 
                 // dst[i] = dst[i] * filter(src[i])
                 sFilter.process(vTemp, &src[offset], to_do);
@@ -454,9 +464,9 @@ namespace lsp
         {
             // Calculating normalized frequency, wrapped for maximal accuracy:
             float kf    = f / float(nSampleRate);
-            float w     = 2.0f * M_PI * kf;
-            w           = fmodf(w + M_PI, 2.0 * M_PI);
-            w           = w >= 0.0f ? (w - M_PI) : (w + M_PI);
+            float w     = 2.0f * F_PI * kf;
+            w           = fmodf(w + F_PI, 2.0f * F_PI);
+            w           = w >= 0.0f ? (w - F_PI) : (w + F_PI);
 
             // Auxiliary variables:
             float cw    = cosf(w);
@@ -464,7 +474,7 @@ namespace lsp
 
             // These equations are valid since sw has valid sign
             float c2w   = cw * cw - sw * sw;    // cos(2 * w)
-            float s2w   = 2.0 * sw * cw;        // sin(2 * w)
+            float s2w   = 2.0f * sw * cw;       // sin(2 * w)
 
             float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
             float b_re, b_im;                   // Temporary values for computing complex multiplication

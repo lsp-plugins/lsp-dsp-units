@@ -356,6 +356,11 @@ namespace lsp
                  */
                 void            reconfigure();
 
+                /**
+                 * Clear internal memory to start processing from scratch
+                 */
+                void            reset();
+
                 /** Process data and issue callbacks, automatically calls reconfigure()
                  * if the reconfiguration is required
                  *

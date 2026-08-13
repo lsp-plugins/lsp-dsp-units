@@ -171,6 +171,11 @@ namespace lsp
                  */
                 inline void         clear()             { nFlags     |= FF_CLEAR;       }
 
+                /**
+                 * Reset internal memory state to start processing from scratch
+                 */
+                void                reset();
+
                 /** Rebuild filter
                  * Forces the filter to rebuild into bank of filters
                  */

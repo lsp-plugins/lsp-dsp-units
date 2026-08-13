@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 сент. 2016 г.
@@ -34,12 +34,23 @@ namespace lsp
         class LSP_DSP_UNITS_PUBLIC FilterBank
         {
             protected:
-                dsp::biquad_t      *vFilters;   // Optimized list of filters
+                typedef union biquad_t
+                {
+                    dsp::biquad_x1_t    x1;
+                    dsp::biquad_x2_t    x2;
+                    dsp::biquad_x4_t    x4;
+                    dsp::biquad_x8_t    x8;
+                    dsp::biquad_x16_t   x16;
+                } biquad_t;
+
+            protected:
+                biquad_t           *vFilters;   // Optimized list of filters
+                float              *vMemory;    // Filter memory
                 dsp::biquad_x1_t   *vChains;    // List of biquad banks
-                size_t              nItems;     // Current number of biquad_x1 filters
-                size_t              nMaxItems;  // Maximum number of biquad_x1 filters
-                size_t              nLastItems; // Previous number of biquad_x1 filters
-                float              *vBackup;    // Delay backup to take online impulse response
+                uint32_t            nItems;     // Current number of biquad_x1 filters
+                uint32_t            nMemSize;   // Memory size
+                uint32_t            nMaxItems;  // Maximum number of biquad_x1 filters
+                uint32_t            nLastItems; // Previous number of biquad_x1 filters
                 uint8_t            *vData;      // Unaligned data
 
             protected:

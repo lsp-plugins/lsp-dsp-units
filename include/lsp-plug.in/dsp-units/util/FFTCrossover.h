@@ -417,6 +417,11 @@ namespace lsp
                 inline void     clear()                             { sSplitter.clear();            }
 
                 /**
+                 * Clear internal memory
+                 */
+                inline void     reset()                             { sSplitter.clear();            }
+
+                /**
                  * Dump the state
                  * @param v state dumper
                  */

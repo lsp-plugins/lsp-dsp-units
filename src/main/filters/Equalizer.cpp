@@ -402,22 +402,32 @@ namespace lsp
             float *xim      = &xre[BUFFER_SIZE/2];
 
             // Fill initial values
-            dsp::fill_one(re, count);
-            dsp::fill_zero(im, count);
+            if (nFilters <= 0)
+            {
+                dsp::fill_one(re, count);
+                dsp::fill_zero(im, count);
+                return;
+            }
 
             while (count > 0)
             {
                 // Estimate number of frequencies to process
-                size_t to_do    = lsp_min(count, size_t(BUFFER_SIZE/2));
+                const size_t to_do  = lsp_min(count, size_t(BUFFER_SIZE/2));
+                size_t ni           = 0;
 
                 for (size_t i=0; i<nFilters; ++i)
                 {
-                    Filter *xf      = &vFilters[i];
+                    Filter * const xf   = &vFilters[i];
                     if (!xf->active())
                         continue;
 
-                    xf->freq_chart(xre, xim, f, to_do);
-                    dsp::complex_mul2(re, im, xre, xim, to_do);
+                    if ((ni++) > 0)
+                    {
+                        xf->freq_chart(xre, xim, f, to_do);
+                        dsp::complex_mul2(re, im, xre, xim, to_do);
+                    }
+                    else
+                        xf->freq_chart(re, im, f, to_do);
                 }
 
                 // Update pointers
@@ -433,21 +443,31 @@ namespace lsp
             reconfigure();
 
             // Fill initial values
-            dsp::pcomplex_fill_ri(c, 1.0f, 0.0f, count);
+            if (nFilters <= 0)
+            {
+                dsp::pcomplex_fill_ri(c, 1.0f, 0.0f, count);
+                return;
+            }
 
             while (count > 0)
             {
                 // Estimate number of frequencies to process
-                size_t to_do    = lsp_min(count, size_t(BUFFER_SIZE/2));
+                const size_t to_do  = lsp_min(count, size_t(BUFFER_SIZE/2));
+                size_t ni           = 0;
 
                 for (size_t i=0; i<nFilters; ++i)
                 {
-                    Filter *xf      = &vFilters[i];
+                    Filter * const xf   = &vFilters[i];
                     if (!xf->active())
                         continue;
 
-                    xf->freq_chart(vTemp, f, to_do);
-                    dsp::pcomplex_mul2(c, vTemp, to_do);
+                    if ((ni++) > 0)
+                    {
+                        xf->freq_chart(vTemp, f, to_do);
+                        dsp::pcomplex_mul2(c, vTemp, to_do);
+                    }
+                    else
+                        xf->freq_chart(c, f, to_do);
                 }
 
                 // Update pointers

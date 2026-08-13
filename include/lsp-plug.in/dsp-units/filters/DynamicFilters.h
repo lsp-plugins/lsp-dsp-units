@@ -52,6 +52,7 @@ namespace lsp
                     dsp::biquad_x2_t   *x2;
                     dsp::biquad_x4_t   *x4;
                     dsp::biquad_x8_t   *x8;
+                    dsp::biquad_x16_t  *x16;
                 };
 
                 static const dsp::f_cascade_t    sNormal;
@@ -67,7 +68,9 @@ namespace lsp
                 bool                bClearMem;          // Clear memory
 
             protected:
-                size_t              quantify(size_t c, size_t nc);
+                static size_t       quantify(size_t c, size_t nc);
+
+            protected:
                 size_t              build_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples);
                 size_t              build_lrx_ladder_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples, size_t ftype);
                 size_t              build_lrx_shelf_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples, size_t ftype);
@@ -181,6 +184,11 @@ namespace lsp
                  * @param count number of dots for the chart
                  */
                 bool                freq_chart(size_t id, float *dst, const float *f, float gain, size_t count);
+
+                /**
+                 * Clear internal memory to start processing from scratch
+                 */
+                void                reset();
 
             public:
                 void                dump(dspu::IStateDumper *v) const;

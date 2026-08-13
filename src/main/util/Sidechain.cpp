@@ -180,7 +180,7 @@ namespace lsp
             }
         }
 
-        bool Sidechain::preprocess(float *out, const float **in, size_t samples)
+        bool Sidechain::preprocess(float *out, const float * const *in, size_t samples)
         {
             // Special case, treat NULL as zero input
             if (in == NULL)
@@ -436,7 +436,7 @@ namespace lsp
             return true;
         }
 
-        void Sidechain::process(float *out, const float **in, size_t samples)
+        void Sidechain::process(float *out, const float * const * in, size_t samples)
         {
             // Check if need update settings
             update_settings();
