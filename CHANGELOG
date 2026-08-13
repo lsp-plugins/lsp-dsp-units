@@ -2,6 +2,9 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.38 ===
+
+
 === 1.0.37 ===
 * Set AudioStream sanitize range to 120 dBFS to avoid extra high values that may
   break the DSP.
