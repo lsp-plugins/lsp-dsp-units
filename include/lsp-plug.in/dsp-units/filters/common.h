@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 1 февр. 2018 г.
@@ -70,6 +70,14 @@ namespace lsp
             FLT_MT_RLC_BANDPASS,
             FLT_BT_RLC_ENVELOPE,
             FLT_MT_RLC_ENVELOPE,
+
+            // Crossover-related filters
+            FLT_BT_CROSS_LOPASS,
+            FLT_MT_CROSS_LOPASS,
+            FLT_BT_CROSS_HIPASS,
+            FLT_MT_CROSS_HIPASS,
+            FLT_BT_CROSS_ALLPASS,
+            FLT_MT_CROSS_ALLPASS,
 
             // Butterworth-Chebyshev filters
             FLT_BT_BWC_LOPASS,

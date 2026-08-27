@@ -239,6 +239,9 @@ namespace lsp
                 case FLT_BT_RLC_LADDERREJ:
                 case FLT_BT_RLC_BANDPASS:
                 case FLT_BT_RLC_ENVELOPE:
+                case FLT_BT_CROSS_LOPASS:
+                case FLT_BT_CROSS_HIPASS:
+                case FLT_BT_CROSS_ALLPASS:
                 {
                     // Calculate filter parameters
                     fp.fFreq2           = bilinear_relative(fp.fFreq, fp.fFreq2);    // Normalize frequency
@@ -261,6 +264,9 @@ namespace lsp
                 case FLT_MT_RLC_LADDERREJ:
                 case FLT_MT_RLC_BANDPASS:
                 case FLT_MT_RLC_ENVELOPE:
+                case FLT_MT_CROSS_LOPASS:
+                case FLT_MT_CROSS_HIPASS:
+                case FLT_MT_CROSS_ALLPASS:
                 {
                     // Calculate filter parameters
                     fp.fFreq2           = fp.fFreq / fp.fFreq2;    // Normalize frequency
@@ -745,6 +751,62 @@ namespace lsp
 
                     break;
                 }
+
+                case FLT_BT_CROSS_LOPASS:
+                {
+//                    if (fp->nSlope == 1)
+//                    {
+                        c           = add_cascade();
+                        c->t[0]     = fp->fGain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
+//                    }
+//                    else
+//                    {
+//                    }
+                    break;
+                }
+                case FLT_BT_CROSS_HIPASS:
+                {
+//                    if (fp->nSlope == 1)
+//                    {
+                        c           = add_cascade();
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = fp->fGain;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
+//                    }
+//                    else
+//                    {
+//                    }
+                    break;
+                }
+                case FLT_BT_CROSS_ALLPASS:
+                {
+//                    if (fp->nSlope == 1)
+//                    {
+                        c           = add_cascade();
+                        c->t[0]     = fp->fGain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 0.0f;
+                        c->b[2]     = 0.0f;
+//                    }
+//                    else
+//                    {
+//                    }
+                    break;
+                }
+
 
                 case FLT_BT_RLC_LOPASS:
                 case FLT_BT_RLC_HIPASS:

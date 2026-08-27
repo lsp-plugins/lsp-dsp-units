@@ -164,35 +164,56 @@ namespace lsp
             return true;
         }
 
-        filter_type_t Crossover::select_filter(xover_type_t type, crossover_mode_t mode, size_t slope)
+        filter_type_t Crossover::select_filter(xover_type_t type, crossover_mode_t mode, uint32_t slope)
         {
-            if (slope == CROSS_SLOPE_LR2)
+            switch (slope)
             {
-                switch (type)
-                {
-                    case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS  : FLT_MT_RLC_LOPASS;
-                    case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS  : FLT_MT_RLC_HIPASS;
-                    case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_ALLPASS : FLT_MT_RLC_ALLPASS;
-                    default:
-                        return FLT_NONE;
-                }
-            }
-
-            switch (type)
-            {
-                case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_LOPASS  : FLT_MT_LRX_LOPASS;
-                case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_HIPASS  : FLT_MT_LRX_HIPASS;
-                case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_ALLPASS : FLT_MT_LRX_ALLPASS;
+                case CROSS_SLOPE_6DBO:
+                case CROSS_SLOPE_18DBO:
+                    switch (type)
+                    {
+                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_CROSS_LOPASS   : FLT_MT_CROSS_LOPASS;
+                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_CROSS_HIPASS   : FLT_MT_CROSS_HIPASS;
+                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_CROSS_ALLPASS  : FLT_MT_CROSS_ALLPASS;
+                        default: break;
+                    }
+                    break;
+                case CROSS_SLOPE_12DBO:
+                    switch (type)
+                    {
+                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS  : FLT_MT_RLC_LOPASS;
+                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS  : FLT_MT_RLC_HIPASS;
+                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_ALLPASS : FLT_MT_RLC_ALLPASS;
+                        default: break;
+                    }
+                    break;
                 default:
-                    return FLT_NONE;
+                    switch (type)
+                    {
+                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_LOPASS  : FLT_MT_LRX_LOPASS;
+                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_HIPASS  : FLT_MT_LRX_HIPASS;
+                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_ALLPASS : FLT_MT_LRX_ALLPASS;
+                        default: break;
+                    }
             }
+            return FLT_NONE;
         }
 
-        uint32_t Crossover::select_slope(xover_type_t type, size_t slope)
+        uint32_t Crossover::select_slope(xover_type_t type, uint32_t slope)
         {
-            if (slope == CROSS_SLOPE_LR2)
-                return (type == FILTER_APF) ? 1 : 2;
-            return uint32_t(slope - 1);
+            switch (slope)
+            {
+                case CROSS_SLOPE_6DBO:
+                    return 1;                               // For 6 dB/octave slope should be 1
+                case CROSS_SLOPE_12DBO:
+                    return (type == FILTER_APF) ? 1 : 2;
+                case CROSS_SLOPE_18DBO:
+                    return 3;                               // for 18 dB/octave slope should be 3
+                default:
+                    break;
+            }
+
+            return uint32_t(slope - CROSS_SLOPE_24DBO + 1); // For 24 dB/octave slope should be 1
         }
 
         void Crossover::set_slope(size_t sp, size_t slope)
@@ -495,6 +516,49 @@ namespace lsp
             }
         }
 
+        void Crossover::band_freq_chart(size_t band, float *re, float *im, const float *f, size_t count)
+        {
+            const uint32_t buf_size = nBufSize >> 1;
+            uint32_t prev_id        = 0;
+
+            // Process each band except last
+            for (size_t i=0; i<nPlanSize; ++i)
+            {
+                split_t * const sp      = vPlan[i];
+
+                // Need to apply low-pass filter and exit?
+                if (prev_id == band)
+                {
+                    sp->sLPF.freq_chart(vLpfBuf, &vLpfBuf[buf_size], f, count);
+                    dsp::complex_mul3(
+                        re, im,
+                        vLpfBuf, &vLpfBuf[buf_size],
+                        vHpfBuf, &vHpfBuf[buf_size],
+                        count);
+                    return;
+                }
+
+                // Apply high-pass filter
+                if (i > 0)
+                {
+                    sp->sHPF.freq_chart(vLpfBuf, &vLpfBuf[buf_size], f, count);
+                    dsp::complex_mul2(
+                        vHpfBuf, &vHpfBuf[buf_size],
+                        vLpfBuf, &vLpfBuf[buf_size],
+                        count);
+                }
+                else
+                    sp->sHPF.freq_chart(vHpfBuf, &vHpfBuf[buf_size], f, count);
+
+                // Store the identifier of last processed band
+                prev_id     = sp->nBandId;
+            }
+
+            // Return contents of vHpfBuf if last band was requested
+            dsp::copy(re, vHpfBuf, count);
+            dsp::copy(im, &vHpfBuf[buf_size], count);
+        }
+
         bool Crossover::freq_chart(size_t band, float *re, float *im, const float *f, size_t count)
         {
             // Valid index of the band?
@@ -516,21 +580,18 @@ namespace lsp
                 dsp::fill_one(re, count);
                 dsp::fill_zero(im, count);
             }
-            else if (b->pEnd == NULL)
-                b->pStart->sHPF.freq_chart(re, im, f, count);
             else if (b->pStart == NULL)
-                b->pEnd->sLPF.freq_chart(re, im, f, count);
+                vPlan[0]->sLPF.freq_chart(re, im, f, count);
             else
             {
                 // Compute frequency chart with chunks of maximum nBufSize size
+                const size_t buf_size = nBufSize >> 1;
+
                 while (count > 0)
                 {
-                    size_t to_do    = lsp_min(count, nBufSize);
-
-                    // Apply frequency chart
-                    b->pStart->sHPF.freq_chart(re, im, f, to_do);
-                    b->pEnd->sLPF.freq_chart(size_t(0), vLpfBuf, vHpfBuf, f, to_do);
-                    dsp::complex_mul2(re, im, vLpfBuf, vHpfBuf, to_do);
+                    // Obtain frequency chart for the band
+                    const size_t to_do  = lsp_min(count, buf_size);
+                    band_freq_chart(band, re, im, f, to_do);
 
                     // Update pointers
                     re             += to_do;
@@ -543,6 +604,40 @@ namespace lsp
             return true;
         }
 
+        void Crossover::band_freq_chart(size_t band, float *c, const float *f, size_t count)
+        {
+            uint32_t prev_id    = 0;
+
+            // Process each band except last
+            for (size_t i=0; i<nPlanSize; ++i)
+            {
+                split_t * const sp      = vPlan[i];
+
+                // Need to apply low-pass filter and exit?
+                if (prev_id == band)
+                {
+                    sp->sLPF.freq_chart(vLpfBuf, f, count);
+                    dsp::pcomplex_mul3(c, vLpfBuf, vHpfBuf, count);
+                    return;
+                }
+
+                // Apply high-pass filter
+                if (i > 0)
+                {
+                    sp->sHPF.freq_chart(vLpfBuf, f, count);
+                    dsp::pcomplex_mul2(vHpfBuf, vLpfBuf, count);
+                }
+                else
+                    sp->sHPF.freq_chart(vHpfBuf, f, count);
+
+                // Store the identifier of last processed band
+                prev_id     = sp->nBandId;
+            }
+
+            // Return contents of vHpfBuf if last band was requested
+            dsp::copy(c, vHpfBuf, count * 2);
+        }
+
         bool Crossover::freq_chart(size_t band, float *c, const float *f, size_t count)
         {
             // Valid index of the band?
@@ -553,27 +648,21 @@ namespace lsp
             reconfigure();
 
             // Band is enabled ?
-            band_t *b       = &vBands[band];
+            band_t * const b    = &vBands[band];
             if (!b->bEnabled)
                 dsp::pcomplex_fill_ri(c, 0.0f, 0.0f, count);
             else if (nPlanSize == 0)
                 dsp::pcomplex_fill_ri(c, 1.0f, 0.0f, count);
-            else if (b->pEnd == NULL)
-                b->pStart->sHPF.freq_chart(c, f, count);
             else if (b->pStart == NULL)
-                b->pEnd->sLPF.freq_chart(c, f, count);
+                vPlan[0]->sLPF.freq_chart(c, f, count);
             else
             {
-                // Compute frequency chart with chunks of maximum nBufSize size
+                const size_t buf_size = nBufSize >> 1;
                 while (count > 0)
                 {
-                    // We can go out of vLpfBuf because vHpfBuf is there after it
-                    size_t to_do    = lsp_min(count, nBufSize);
-
-                    // Apply frequency chart
-                    b->pStart->sHPF.freq_chart(c, f, to_do);
-                    b->pEnd->sLPF.freq_chart(size_t(0), vLpfBuf, f, to_do);
-                    dsp::pcomplex_mul2(c, vLpfBuf, to_do);
+                    // Obtain frequency chart for the band
+                    const size_t to_do  = lsp_min(count, buf_size);
+                    band_freq_chart(band, c, f, to_do);
 
                     // Update pointers
                     c              += to_do * 2;

@@ -3,7 +3,9 @@
 *******************************************************************************
 
 === 1.0.39 ===
-
+* The dspu::Crossover module now returns fair band frequency chart for the
+  freq_chart function call.
+* Implemented 6dB/octave low-pass, high-pass and all-pass filters.
 
 === 1.0.38 ===
 * Updated build scripts.
