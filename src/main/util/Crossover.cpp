@@ -245,7 +245,6 @@ namespace lsp
             switch (slope)
             {
                 case CROSS_SLOPE_12DBO:
-                case CROSS_SLOPE_18DBO:
                     return -gain;
                 default:
                     break;
@@ -435,14 +434,14 @@ namespace lsp
                 // Append APF filters
                 for (size_t j=i+1; j<nPlanSize; ++j)
                 {
-                    split_t *xsp        = vPlan[j];
+                    split_t * const xsp = vPlan[j];
 
                     fp.nType            = select_filter(FILTER_APF, xsp->nMode, xsp->nSlope);
                     fp.fFreq            = xsp->fFreq;
                     fp.fFreq2           = xsp->fFreq;
                     fp.fGain            = GAIN_AMP_0_DB;
                     fp.nSlope           = select_slope(FILTER_APF, xsp->nSlope);
-                    fp.fQuality         = select_quality(sp->nSlope);
+                    fp.fQuality         = select_quality(xsp->nSlope);
 
                     sp->sLPF.set_params(filter_id++, &fp);
                 }
@@ -465,8 +464,6 @@ namespace lsp
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
                 fp.fGain            = select_gain(FILTER_HPF, sp->nSlope, (i < (nPlanSize-1)) ? GAIN_AMP_0_DB : right->fGain);
-//                if (sp->nSlope == CROSS_SLOPE_LR2)
-//                    fp.fGain            = -fp.fGain;
                 fp.nSlope           = select_slope(FILTER_HPF, sp->nSlope);
                 fp.fQuality         = select_quality(sp->nSlope);
 
