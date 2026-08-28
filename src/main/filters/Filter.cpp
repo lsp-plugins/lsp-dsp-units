@@ -239,9 +239,6 @@ namespace lsp
                 case FLT_BT_RLC_LADDERREJ:
                 case FLT_BT_RLC_BANDPASS:
                 case FLT_BT_RLC_ENVELOPE:
-                case FLT_BT_CROSS_LOPASS:
-                case FLT_BT_CROSS_HIPASS:
-                case FLT_BT_CROSS_ALLPASS:
                 {
                     // Calculate filter parameters
                     fp.fFreq2           = bilinear_relative(fp.fFreq, fp.fFreq2);    // Normalize frequency
@@ -264,9 +261,6 @@ namespace lsp
                 case FLT_MT_RLC_LADDERREJ:
                 case FLT_MT_RLC_BANDPASS:
                 case FLT_MT_RLC_ENVELOPE:
-                case FLT_MT_CROSS_LOPASS:
-                case FLT_MT_CROSS_HIPASS:
-                case FLT_MT_CROSS_ALLPASS:
                 {
                     // Calculate filter parameters
                     fp.fFreq2           = fp.fFreq / fp.fFreq2;    // Normalize frequency
@@ -752,92 +746,77 @@ namespace lsp
                     break;
                 }
 
-                case FLT_BT_CROSS_LOPASS:
-                {
-//                    if (fp->nSlope == 1)
-//                    {
-                        c           = add_cascade();
-                        c->t[0]     = fp->fGain;
-                        c->t[1]     = 0.0f;
-                        c->t[2]     = 0.0f;
-
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = 1.0f;
-                        c->b[2]     = 0.0f;
-//                    }
-//                    else
-//                    {
-//                    }
-                    break;
-                }
-                case FLT_BT_CROSS_HIPASS:
-                {
-//                    if (fp->nSlope == 1)
-//                    {
-                        c           = add_cascade();
-                        c->t[0]     = 0.0f;
-                        c->t[1]     = fp->fGain;
-                        c->t[2]     = 0.0f;
-
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = 1.0f;
-                        c->b[2]     = 0.0f;
-//                    }
-//                    else
-//                    {
-//                    }
-                    break;
-                }
-                case FLT_BT_CROSS_ALLPASS:
-                {
-//                    if (fp->nSlope == 1)
-//                    {
-                        c           = add_cascade();
-                        c->t[0]     = fp->fGain;
-                        c->t[1]     = 0.0f;
-                        c->t[2]     = 0.0f;
-
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = 0.0f;
-                        c->b[2]     = 0.0f;
-//                    }
-//                    else
-//                    {
-//                    }
-                    break;
-                }
-
-
                 case FLT_BT_RLC_LOPASS:
-                case FLT_BT_RLC_HIPASS:
                 {
-                    // Add cascade with one pole
-                    float k         = 2.0f / (1.0f + fp->fQuality);
-                    size_t i        = fp->nSlope & 1;
-                    if (i)
+                    const float k   = 2.0f / (1.0f + fp->fQuality);
+                    float gain      = fp->fGain;
+                    size_t i        = fp->nSlope;
+
+                    // Add additional 2-pole cascades
+                    for ( ; i>= 2; i -= 2)
                     {
                         c           = add_cascade();
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = 1.0f;
 
-                        if (type == FLT_BT_RLC_LOPASS)
-                            c->t[0]     = fp->fGain;
-                        else
-                            c->t[1]     = fp->fGain;
-                    }
+                        c->t[0]     = gain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
 
-                    // Add additional cascades
-                    for (size_t j=i; j < fp->nSlope; j+=2)
-                    {
-                        c           = add_cascade();
                         c->b[0]     = 1.0f;
                         c->b[1]     = k;
                         c->b[2]     = 1.0f;
 
-                        if (type == FLT_BT_RLC_LOPASS)
-                            c->t[0]     = (j == 0) ? fp->fGain : 1.0f;
-                        else
-                            c->t[2]     = (j == 0) ? fp->fGain : 1.0f;
+                        gain        = 1.0f;
+                    }
+
+                    // Add cascade with one pole
+                    if (i)
+                    {
+                        c           = add_cascade();
+                        c->t[0]     = gain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
+                    }
+
+                    break;
+                }
+
+                case FLT_BT_RLC_HIPASS:
+                {
+                    const float k   = 2.0f / (1.0f + fp->fQuality);
+                    float gain      = fp->fGain;
+                    size_t i        = fp->nSlope;
+
+                    // Add additional 2-pole cascades
+                    for ( ; i>= 2; i -= 2)
+                    {
+                        c           = add_cascade();
+
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = gain;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
+
+                        gain        = 1.0f;
+                    }
+
+                    // Add cascade with one pole
+                    if (i)
+                    {
+                        c           = add_cascade();
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = gain;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
                     break;
@@ -849,6 +828,7 @@ namespace lsp
                     size_t slope            = fp->nSlope * 2;
                     float gain              = sqrtf(fp->fGain);
                     float fg                = expf(logf(gain)/slope);
+                    const float k           = 2.0f / (1.0f + fp->fQuality);
 
                     for (size_t j=0; j < fp->nSlope; j++)
                     {
@@ -858,11 +838,11 @@ namespace lsp
 
                         // Create transfer function
                         t[0]                    = fg;
-                        t[1]                    = 2.0f / (1.0f + fp->fQuality);
+                        t[1]                    = k;
                         t[2]                    = 1.0f / fg;
 
                         b[0]                    = 1.0f / fg;
-                        b[1]                    = 2.0f / (1.0f + fp->fQuality);
+                        b[1]                    = k;
                         b[2]                    = fg;
 
                         if (j == 0)

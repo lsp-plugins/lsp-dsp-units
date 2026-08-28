@@ -177,6 +177,8 @@ namespace lsp
             protected:
                 static inline filter_type_t     select_filter(xover_type_t type, crossover_mode_t mode, uint32_t slope);
                 static inline uint32_t          select_slope(xover_type_t type, uint32_t slope);
+                static inline float             select_quality(uint32_t slope);
+                static inline float             select_gain(xover_type_t type, uint32_t slope, float gain);
 
             protected:
                 void                            band_freq_chart(size_t band, float *re, float *im, const float *f, size_t count);

@@ -164,17 +164,25 @@ namespace lsp
             return true;
         }
 
-        filter_type_t Crossover::select_filter(xover_type_t type, crossover_mode_t mode, uint32_t slope)
+        inline filter_type_t Crossover::select_filter(xover_type_t type, crossover_mode_t mode, uint32_t slope)
         {
             switch (slope)
             {
                 case CROSS_SLOPE_6DBO:
+                    switch (type)
+                    {
+                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS     : FLT_MT_RLC_LOPASS;
+                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS     : FLT_MT_RLC_HIPASS;
+                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_AMPLIFIER      : FLT_MT_AMPLIFIER;
+                        default: break;
+                    }
+                    break;
                 case CROSS_SLOPE_18DBO:
                     switch (type)
                     {
-                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_CROSS_LOPASS   : FLT_MT_CROSS_LOPASS;
-                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_CROSS_HIPASS   : FLT_MT_CROSS_HIPASS;
-                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_CROSS_ALLPASS  : FLT_MT_CROSS_ALLPASS;
+                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS     : FLT_MT_RLC_LOPASS;
+                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS     : FLT_MT_RLC_HIPASS;
+                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_ALLPASS    : FLT_MT_RLC_ALLPASS;
                         default: break;
                     }
                     break;
@@ -199,7 +207,7 @@ namespace lsp
             return FLT_NONE;
         }
 
-        uint32_t Crossover::select_slope(xover_type_t type, uint32_t slope)
+        inline uint32_t Crossover::select_slope(xover_type_t type, uint32_t slope)
         {
             switch (slope)
             {
@@ -208,12 +216,41 @@ namespace lsp
                 case CROSS_SLOPE_12DBO:
                     return (type == FILTER_APF) ? 1 : 2;
                 case CROSS_SLOPE_18DBO:
-                    return 3;                               // for 18 dB/octave slope should be 3
+                    return (type == FILTER_APF) ? 1 : 3;    // for 18 dB/octave slope should be 3
                 default:
                     break;
             }
 
             return uint32_t(slope - CROSS_SLOPE_24DBO + 1); // For 24 dB/octave slope should be 1
+        }
+
+        inline float Crossover::select_quality(uint32_t slope)
+        {
+            switch (slope)
+            {
+                case CROSS_SLOPE_18DBO:
+                    return 1.0f;
+                default:
+                    break;
+            }
+
+            return 0.0f;
+        }
+
+        inline float Crossover::select_gain(xover_type_t type, uint32_t slope, float gain)
+        {
+            if (type != FILTER_HPF)
+                return gain;
+
+            switch (slope)
+            {
+                case CROSS_SLOPE_12DBO:
+                case CROSS_SLOPE_18DBO:
+                    return -gain;
+                default:
+                    break;
+            }
+            return gain;
         }
 
         void Crossover::set_slope(size_t sp, size_t slope)
@@ -389,9 +426,9 @@ namespace lsp
                 fp.nType            = select_filter(FILTER_LPF, sp->nMode, sp->nSlope);
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
-                fp.fGain            = left->fGain;
+                fp.fGain            = select_gain(FILTER_LPF, sp->nSlope, left->fGain);
                 fp.nSlope           = select_slope(FILTER_LPF, sp->nSlope);
-                fp.fQuality         = 0.0f;
+                fp.fQuality         = select_quality(sp->nSlope);
 
                 sp->sLPF.set_params(filter_id++, &fp);
 
@@ -405,7 +442,7 @@ namespace lsp
                     fp.fFreq2           = xsp->fFreq;
                     fp.fGain            = GAIN_AMP_0_DB;
                     fp.nSlope           = select_slope(FILTER_APF, xsp->nSlope);
-                    fp.fQuality         = 0.0f;
+                    fp.fQuality         = select_quality(sp->nSlope);
 
                     sp->sLPF.set_params(filter_id++, &fp);
                 }
@@ -427,11 +464,11 @@ namespace lsp
                 fp.nType            = select_filter(FILTER_HPF, sp->nMode, sp->nSlope);
                 fp.fFreq            = sp->fFreq;
                 fp.fFreq2           = sp->fFreq;
-                fp.fGain            = (i < (nPlanSize-1)) ? GAIN_AMP_0_DB : right->fGain;
-                if (sp->nSlope == CROSS_SLOPE_LR2)
-                    fp.fGain            = -fp.fGain;
+                fp.fGain            = select_gain(FILTER_HPF, sp->nSlope, (i < (nPlanSize-1)) ? GAIN_AMP_0_DB : right->fGain);
+//                if (sp->nSlope == CROSS_SLOPE_LR2)
+//                    fp.fGain            = -fp.fGain;
                 fp.nSlope           = select_slope(FILTER_HPF, sp->nSlope);
-                fp.fQuality         = 0.0f;
+                fp.fQuality         = select_quality(sp->nSlope);
 
                 sp->sHPF.update(nSampleRate, &fp);
                 sp->sHPF.rebuild();
