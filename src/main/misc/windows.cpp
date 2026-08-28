@@ -283,7 +283,7 @@ namespace lsp
                 }
                 middle          = n - 1;
                 for (; i<n; ++i)
-                    dst[i]          = 1.0f - dst[middle - i];
+                    dst[i]          = dst[middle - i];
             }
 
             LSP_DSP_UNITS_PUBLIC
