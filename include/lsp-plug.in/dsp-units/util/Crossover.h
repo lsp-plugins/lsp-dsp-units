@@ -338,7 +338,7 @@ namespace lsp
                  * Get sample rate of the crossover
                  * @return sample rate
                  */
-                inline size_t   get_sample_rate()                   { return nSampleRate;           }
+                inline size_t   get_sample_rate() const             { return nSampleRate;           }
 
                 /** Get frequency chart of the crossover band. This method returns frequency chart
                  * without applied all-pass filters

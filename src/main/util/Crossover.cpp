@@ -113,7 +113,7 @@ namespace lsp
 
             for (size_t i=0; i<nSplits; ++i)
             {
-                split_t *sp         = &vSplit[i];
+                split_t * const sp  = &vSplit[i];
 
                 // Initialize filters
                 sp->sLPF.construct();
@@ -146,7 +146,7 @@ namespace lsp
             // Construct all bands
             for (size_t i=0; i<=nSplits; ++i)
             {
-                band_t *sb          = &vBands[i];
+                band_t * const sb   = &vBands[i];
 
                 sb->fGain           = GAIN_AMP_0_DB;
                 sb->fStart          = (i == 0) ? LSP_DSP_UNITS_SPEC_FREQ_MIN : vSplit[i-1].fFreq;
@@ -686,7 +686,7 @@ namespace lsp
             if (!b->bEnabled)
                 dsp::pcomplex_fill_ri(c, 0.0f, 0.0f, count);
             else if (nPlanSize == 0)
-                dsp::pcomplex_fill_ri(c, 1.0f, 0.0f, count);
+                dsp::pcomplex_fill_ri(c, vBands[0].fGain, 0.0f, count);
             else if (b->pStart == NULL)
                 vPlan[0]->sLPF.freq_chart(c, f, count);
             else

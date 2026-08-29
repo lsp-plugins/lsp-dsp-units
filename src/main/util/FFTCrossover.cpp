@@ -90,12 +90,11 @@ namespace lsp
             }
 
             // Initialize data structures
-            vBands                      = reinterpret_cast<band_t *>(ptr);
-            ptr                        += szof_bands;
+            vBands                      = advance_ptr_bytes<band_t>(ptr, szof_bands);
 
             for (size_t i=0; i<bands; ++i)
             {
-                band_t *b                   = &vBands[i];
+                band_t * const b            = &vBands[i];
 
                 b->fHpfFreq                 = 100.0f;
                 b->fLpfFreq                 = 1000.0f;
@@ -112,8 +111,7 @@ namespace lsp
                 b->pSubject                 = NULL;
                 b->pFunc                    = NULL;
 
-                b->vFFT                     = reinterpret_cast<float *>(ptr);
-                ptr                        += szof_buffer;
+                b->vFFT                     = advance_ptr_bytes<float>(ptr, szof_buffer);
 
                 dsp::fill_zero(b->vFFT, bins);
             }
@@ -128,8 +126,8 @@ namespace lsp
             const float *in,
             size_t rank)
         {
-            band_t *b           = static_cast<band_t *>(subject);
-            FFTCrossover *self  = static_cast<FFTCrossover *>(object);
+            band_t * const b            = static_cast<band_t *>(subject);
+            FFTCrossover * const self   = static_cast<FFTCrossover *>(object);
 
             self->update_band(b);
 
@@ -146,11 +144,11 @@ namespace lsp
             size_t first,
             size_t count)
         {
-            band_t *b           = static_cast<band_t *>(subject);
+            band_t * const b            = static_cast<band_t *>(subject);
             if (!b->pFunc)
                 return;
 
-            FFTCrossover *self  = static_cast<FFTCrossover *>(object);
+            FFTCrossover * const self   = static_cast<FFTCrossover *>(object);
             b->pFunc(b->pObject, b->pSubject, b - self->vBands, samples, first, count);
         }
 
@@ -397,11 +395,11 @@ namespace lsp
             if (band >= sSplitter.handlers())
                 return false;
 
-            band_t *b       = &vBands[band];
+            band_t * const b    = &vBands[band];
 
-            b->pFunc        = func;
-            b->pObject      = object;
-            b->pSubject     = subject;
+            b->pFunc            = func;
+            b->pObject          = object;
+            b->pSubject         = subject;
 
             sync_binding(band, b);
 
