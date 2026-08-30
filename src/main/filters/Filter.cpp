@@ -747,35 +747,76 @@ namespace lsp
                 }
 
                 case FLT_BT_RLC_LOPASS:
-                case FLT_BT_RLC_HIPASS:
                 {
-                    // Add cascade with one pole
-                    float k         = 2.0f / (1.0f + fp->fQuality);
-                    size_t i        = fp->nSlope & 1;
-                    if (i)
+                    const float k   = 2.0f / (1.0f + fp->fQuality);
+                    float gain      = fp->fGain;
+                    size_t i        = fp->nSlope;
+
+                    // Add additional 2-pole cascades
+                    for ( ; i>= 2; i -= 2)
                     {
                         c           = add_cascade();
-                        c->b[0]     = 1.0f;
-                        c->b[1]     = 1.0f;
 
-                        if (type == FLT_BT_RLC_LOPASS)
-                            c->t[0]     = fp->fGain;
-                        else
-                            c->t[1]     = fp->fGain;
-                    }
+                        c->t[0]     = gain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
 
-                    // Add additional cascades
-                    for (size_t j=i; j < fp->nSlope; j+=2)
-                    {
-                        c           = add_cascade();
                         c->b[0]     = 1.0f;
                         c->b[1]     = k;
                         c->b[2]     = 1.0f;
 
-                        if (type == FLT_BT_RLC_LOPASS)
-                            c->t[0]     = (j == 0) ? fp->fGain : 1.0f;
-                        else
-                            c->t[2]     = (j == 0) ? fp->fGain : 1.0f;
+                        gain        = 1.0f;
+                    }
+
+                    // Add cascade with one pole
+                    if (i)
+                    {
+                        c           = add_cascade();
+                        c->t[0]     = gain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
+                    }
+
+                    break;
+                }
+
+                case FLT_BT_RLC_HIPASS:
+                {
+                    const float k   = 2.0f / (1.0f + fp->fQuality);
+                    float gain      = fp->fGain;
+                    size_t i        = fp->nSlope;
+
+                    // Add additional 2-pole cascades
+                    for ( ; i>= 2; i -= 2)
+                    {
+                        c           = add_cascade();
+
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = gain;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
+
+                        gain        = 1.0f;
+                    }
+
+                    // Add cascade with one pole
+                    if (i)
+                    {
+                        c           = add_cascade();
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = gain;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
                     break;
@@ -787,6 +828,7 @@ namespace lsp
                     size_t slope            = fp->nSlope * 2;
                     float gain              = sqrtf(fp->fGain);
                     float fg                = expf(logf(gain)/slope);
+                    const float k           = 2.0f / (1.0f + fp->fQuality);
 
                     for (size_t j=0; j < fp->nSlope; j++)
                     {
@@ -796,11 +838,11 @@ namespace lsp
 
                         // Create transfer function
                         t[0]                    = fg;
-                        t[1]                    = 2.0f / (1.0f + fp->fQuality);
+                        t[1]                    = k;
                         t[2]                    = 1.0f / fg;
 
                         b[0]                    = 1.0f / fg;
-                        b[1]                    = 2.0f / (1.0f + fp->fQuality);
+                        b[1]                    = k;
                         b[2]                    = fg;
 
                         if (j == 0)
@@ -1434,34 +1476,35 @@ namespace lsp
                     break;
                 case FLT_BT_LRX_ALLPASS:
                 {
-                    float k     = 1.0f / (1.0f + fp->fQuality);
-                    size_t i    = sParams.nSlope * 2;
+                    const float k       = 1.0f / (1.0f + fp->fQuality);
+                    size_t i            = sParams.nSlope * 2;
+                    const float pi_di   = C_PI / i;
 
                     // Emit 2x butterworth filters
                     for (size_t j=0; j < i; j += 2)
                     {
-                        float theta     = ((j + 1) * C_PI_DIV_2)/i;
-                        float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0f - tsin*tsin);
-                        float kf        = tsin*tsin + k*k * tcos*tcos;
+                        const float theta   = ((j + 1) * C_PI_DIV_2)/i;
+                        const float tsin    = sinf(theta);
+                        const float tcos    = k*sqrtf(1.0f - tsin*tsin);
+                        const float rkf     = 1.0f / (tsin*tsin + tcos*tcos);
 
                         c1              = add_cascade();
                         c2              = add_cascade();
 
                         // Top part
-                        float xeta      = ((j + 0.5f) * C_PI)/i;
+                        float xeta      = (j + 0.5f) * pi_di;
                         c1->t[0]        = 1.0f;
                         c1->t[1]        = -2.0f * cosf(xeta);
                         c1->t[2]        = 1.0f;
 
-                        xeta            = ((j + 1.5f) * C_PI)/i;
+                        xeta            = (j + 1.5f) * pi_di;
                         c2->t[0]        = 1.0f;
                         c2->t[1]        = -2.0f * cosf(xeta);
                         c2->t[2]        = 1.0f;
 
                         // Bottom part
-                        c1->b[0]        = 1.0f / kf;
-                        c1->b[1]        = 2.0f * k * tcos / kf;
+                        c1->b[0]        = rkf;
+                        c1->b[1]        = 2.0f * tcos * rkf;
                         c1->b[2]        = 1.0f;
 
                         c2->b[0]        = c1->b[0];

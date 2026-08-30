@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 20 февр. 2016 г.
@@ -28,6 +28,9 @@ namespace lsp
     {
         namespace windows
         {
+            static constexpr float X_PI     = float(M_PI);
+            static constexpr float X_2PI    = float(2.0 * M_PI);
+
             LSP_DSP_UNITS_PUBLIC
             void window(float *dst, size_t n, window_t type)
             {
@@ -84,7 +87,7 @@ namespace lsp
                 float c     = (n - 1) * 0.5;
 
                 for (size_t i=0; i<n; ++i)
-                    dst[i]      = 1.0f - fabs((i - c) * l);
+                    dst[i]      = 1.0f - fabsf((i - c) * l);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -110,7 +113,7 @@ namespace lsp
 
                 for (size_t i=0; i<n; ++i)
                 {
-                    float x     = fabs(i - n_2);
+                    float x     = fabsf(i - n_2);
                     float k     = x * n__2;
                     float p     = 1.0f - k;
 
@@ -143,7 +146,7 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f = 2.0f * M_PI / (n - 1);
+                const float f = X_2PI / (n - 1);
                 for (size_t i=0; i<n; ++i)
                     dst[i]  = a - b * cosf(i * f);
             }
@@ -168,11 +171,11 @@ namespace lsp
 
                 float a2        = a * 0.5f;
                 float a0        = 0.5f - a2;
-                float f1        = 2.0f * M_PI / (n - 1);
+                float f1        = X_2PI / (n - 1);
                 float f2        = f1 * 2.0f;
 
                 for (size_t i=0; i<n; ++i)
-                    dst[i]  = a0 - 0.5 * cosf(i * f1) + a2 * cosf(i * f2);
+                    dst[i]  = a0 - 0.5f * cosf(i * f1) + a2 * cosf(i * f2);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -187,7 +190,7 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f1        = 2.0f * M_PI / (n - 1);
+                float f1        = X_2PI / (n - 1);
                 float f2        = f1 * 2.0f;
                 float f3        = f1 * 3.0f;
 
@@ -218,11 +221,12 @@ namespace lsp
             {
                 if (n == 0)
                     return;
-                float f1        = 2.0f * M_PI / (n - 1);
+                float f1        = X_2PI / (n - 1);
                 float f2        = f1 * 2.0f;
                 float f3        = f1 * 3.0f;
                 float f4        = f1 * 4.0f;
-                float norm      = 1.0f / (a0 - a1 * cosf(n * 0.5 * f1) + a2 * cosf(n * 0.5 * f2) - a3 * cosf(n * 0.5 * f3) + a4 * cosf(n * 0.5 * f4));
+                float n2        = n * 0.5f;
+                float norm      = 1.0f / (a0 - a1 * cosf(n2 * f1) + a2 * cosf(n2 * f2) - a3 * cosf(n2 * f3) + a4 * cosf(n2 * f4));
 
                 for (size_t i=0; i<n; ++i)
                     dst[i]  = norm * (a0 - a1 * cosf(i * f1) + a2 * cosf(i * f2) - a3 * cosf(i * f3) + a4 * cosf(i * f4));
@@ -240,7 +244,7 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f         = M_PI / n;
+                const float f   = X_PI / n;
                 for (size_t i=0; i<n; ++i)
                     dst[i]      = sinf(f * i);
             }
@@ -251,7 +255,7 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f         = M_PI / n;
+                const float f   = X_PI / n;
                 for (size_t i=0; i<n; ++i)
                 {
                     float a     = sinf(f * i);
@@ -279,13 +283,13 @@ namespace lsp
                 }
                 middle          = n - 1;
                 for (; i<n; ++i)
-                    dst[i]          = 1.0f - dst[middle - i];
+                    dst[i]          = dst[middle - i];
             }
 
             LSP_DSP_UNITS_PUBLIC
             void gaussian_general(float *dst, size_t n, float s)
             {
-                if ((n == 0) || (s > 0.5))
+                if ((n == 0) || (s > 0.5f))
                     return;
                 float c     = (n - 1) * 0.5f;
                 float sc    = 1.0f / (c * s);
@@ -299,7 +303,7 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void gaussian(float *dst, size_t n)
             {
-                return gaussian_general(dst, n, 0.4);
+                return gaussian_general(dst, n, 0.4f);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -308,7 +312,7 @@ namespace lsp
                 float c = (n - 1) * 0.5f;
                 t       = - 1.0f / t;
                 for (size_t i=0; i<n; ++i)
-                    dst[i] = expf(t * fabs(i - c));
+                    dst[i] = expf(t * fabsf(i - c));
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -323,9 +327,9 @@ namespace lsp
                 if (n == 0)
                     return;
                 float k1    = 1.0f / (n - 1);
-                float k2    = 2.0f * M_PI * k1;
+                float k2    = X_2PI * k1;
                 for (size_t i=0; i<n; ++i)
-                    dst[i] = a0 - a1 * fabs(i * k1 - 0.5f) - a2 * cosf(i * k2);
+                    dst[i] = a0 - a1 * fabsf(i * k1 - 0.5f) - a2 * cosf(i * k2);
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -340,11 +344,11 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float f     = 2.0f * M_PI / (n - 1);
-                float k1    = (n - 1) * 0.5;
+                float f     = X_2PI / (n - 1);
+                float k1    = (n - 1) * 0.5f;
                 float k2    = - a / k1;
                 for (size_t i=0; i<n; ++i)
-                    dst[i]  = (0.5 - 0.5 * cosf(i * f)) * expf(k2 * fabs(k1 - i));
+                    dst[i]  = (0.5f - 0.5f * cosf(i * f)) * expf(k2 * fabsf(k1 - i));
             }
 
             LSP_DSP_UNITS_PUBLIC
@@ -359,10 +363,10 @@ namespace lsp
                 if (n == 0)
                     return;
 
-                float k = 2.0f * M_PI / (n - 1);
+                float k = X_2PI / (n - 1);
                 for (size_t i=0; i<n; ++i)
                 {
-                    float x = k * i - M_PI;
+                    const float x = k * i - X_PI;
                     dst[i]  = (x == 0.0f) ? 1.0f : sinf(x) / x;
                 }
             }
@@ -379,14 +383,14 @@ namespace lsp
                 }
 
                 size_t last     = n - 1;
-                size_t b1       = 0.5 * a * last;
+                size_t b1       = 0.5f * a * last;
                 size_t b2       = last - b1;
-                float k         = M_PI * 2.0f / (a * last);
-                float x         = M_PI - 2.0f * M_PI / a;
+                float k         = X_2PI / (a * last);
+                float x         = X_PI - X_2PI / a;
                 for (size_t i=0; i<n; ++i)
                 {
                     if (i <= b1)
-                        dst[i]      = 0.5f + 0.5f * cosf(k * i - M_PI);
+                        dst[i]      = 0.5f + 0.5f * cosf(k * i - X_PI);
                     else if (i > b2)
                         dst[i]      = 0.5f + 0.5f * cosf(k * i + x);
                     else
@@ -400,6 +404,6 @@ namespace lsp
                 return tukey_general(dst, n, 0.5f);
             }
 
-        }
-    }
-}
+        } /* namespace windows */
+    } /* namespace dspu */
+} /* namespace lsp */
