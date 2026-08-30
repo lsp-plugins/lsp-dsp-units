@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 9 авг. 2023 г.
@@ -527,7 +527,7 @@ namespace lsp
             {
                 for (size_t i=0, n=sSplitter.handlers(); i<n; ++i)
                 {
-                    const band_t *b = &vBands[i];
+                    const band_t * const b = &vBands[i];
 
                     v->begin_object(b, sizeof(band_t));
                     {

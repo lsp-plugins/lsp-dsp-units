@@ -157,6 +157,9 @@ namespace lsp
                 dsp::fill_zero(b->vFFT, bins);
             }
 
+            for (size_t i=0; i<splits; ++i)
+                vPlan[i]                = NULL;
+
             return STATUS_OK;
         }
 
@@ -521,6 +524,60 @@ namespace lsp
 
         void LPCrossover::dump(IStateDumper *v) const
         {
+            const size_t bands  = num_bands();
+            const size_t splits = num_splits();
+
+            v->write_object("sSplitter", &sSplitter);
+
+            v->write("nSampleRate", nSampleRate);
+            v->write("nPlanSize", nPlanSize);
+            v->write("nReconfigure", nReconfigure);
+
+            v->begin_array("vSplits", vSplits, splits);
+            {
+                for (size_t i=0; i<splits; ++i)
+                {
+                    const split_t * const s = &vSplits[i];
+
+                    v->begin_object(s, sizeof(split_t));
+                    {
+                        v->write("nBandId", s->nBandId);
+                        v->write("fSlope", s->fSlope);
+                        v->write("fConfigFreq", s->fConfigFreq);
+                        v->write("fFreq", s->fFreq);
+                    }
+                    v->end_object();
+                }
+            }
+            v->end_array();
+
+            v->begin_array("vBands", vBands, bands);
+            {
+                for (size_t i=0; i<bands; ++i)
+                {
+                    const band_t * const b = &vBands[i];
+
+                    v->begin_object(b, sizeof(band_t));
+                    {
+                        v->write("nId", b->nId);
+                        v->write("fGain", b->fGain);
+                        v->write("fStart", b->fStart);
+                        v->write("fEnd", b->fEnd);
+                        v->write("bEnabled", b->bEnabled);
+                        v->write("pStart", b->pStart);
+                        v->write("pEnd", b->pEnd);
+
+                        v->write("pObject", b->pObject);
+                        v->write("pSubject", b->pSubject);
+                        v->write("pFunc", b->pFunc);
+                        v->write("vFFT", b->vFFT);
+                    }
+                    v->end_object();
+                }
+            }
+            v->end_array();
+
+            v->write("pData", pData);
         }
 
     } /* namespace dspu */
