@@ -7,7 +7,9 @@
   freq_chart function call.
 * Added 6dB/octave and 18 dB/octave filter support by the dspu::Crossover.
 * Implemented dspu::LRCrossover as a precise implementation of dspu::FFTCrossover
-  and an alternative to dspu::Crossover with linear phase processing feature. 
+  and an alternative to dspu::Crossover with linear phase processing feature.
+* Updated logic of the spectrum analyzer: added instant spectrum measurement
+  on channel activation.
 
 === 1.0.38 ===
 * Updated build scripts.

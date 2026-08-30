@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 14 авг. 2016 г.
@@ -73,6 +73,7 @@ namespace lsp
                     uint32_t    nUserDelay;         // User-defined delay
                     bool        bFreeze;            // Freeze analysis
                     bool        bActive;            // Enable analysis
+                    bool        bInstant;           // First shot: do not mix characteristics
                 } channel_t;
 
             protected:
@@ -96,7 +97,6 @@ namespace lsp
                 float       fRate;              // FFT refresh rate
                 float       fMinRate;           // Minimum possible FFT refresh rate
                 float       fShift;             // Gain shift
-
                 bool        bActive;            // Activity flag
 
                 channel_t  *vChannels;          // List of channels
