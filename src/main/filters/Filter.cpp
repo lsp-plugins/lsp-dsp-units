@@ -1025,26 +1025,34 @@ namespace lsp
                 case FLT_BT_RLC_ALLPASS:
                 {
                     const float k           = 2.0f / (1.0f + fp->fQuality);
+                    float gain              = fp->fGain;
+                    size_t i                = fp->nSlope;
 
                     // Add additional 2x cascades
-                    for (size_t j=0; j < fp->nSlope; ++j)
+                    for (; i >= 2; i -= 2)
                     {
                         c           = add_cascade();
-                        c->t[0]     = 1.0f;
-                        c->t[1]     = -k;
-                        c->t[2]     = 1.0f;
+                        c->t[0]     = gain;
+                        c->t[1]     = - gain * k;
+                        c->t[2]     = gain;
 
                         c->b[0]     = 1.0f;
                         c->b[1]     = k;
                         c->b[2]     = 1.0f;
+
+                        gain        = 1.0f;
                     }
 
-                    // Adjust gain for the last cascade
-                    if (c != NULL)
+                    if (i)
                     {
-                        c->t[0]    *= fp->fGain;
-                        c->t[1]    *= fp->fGain;
-                        c->t[2]    *= fp->fGain;
+                        c           = add_cascade();
+                        c->t[0]     = gain;
+                        c->t[1]     = -gain;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
                     break;
