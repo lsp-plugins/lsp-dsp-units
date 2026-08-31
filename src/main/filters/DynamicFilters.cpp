@@ -211,7 +211,7 @@ namespace lsp
 
             // Frequency coefficient for bilinear transform
             const float kf =
-                (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
+                (f->sParams.nType <= FLT_AMPLIFIER) ? 0.95f :
                 (f->sParams.nType & 1) ?
                 1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
                 C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
@@ -611,7 +611,7 @@ namespace lsp
             switch (ftype)
             {
                 //----------------------------------- MISC SPECIAL FILTERS ------------------------------------
-                case FLT_BT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                 {
                     if (cj >= 1)
                         return 0;
@@ -1775,8 +1775,7 @@ namespace lsp
                     dsp::fill_zero(im, count);
                     return true;
 
-                case FLT_BT_AMPLIFIER:
-                case FLT_MT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                     dsp::fill(re, gain, count);
                     dsp::fill_zero(im, count);
                     return true;
@@ -1872,8 +1871,7 @@ namespace lsp
                     dsp::pcomplex_fill_ri(dst, 1.0f, 0.0f, count);
                     return true;
 
-                case FLT_BT_AMPLIFIER:
-                case FLT_MT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                     dsp::pcomplex_fill_ri(dst, gain, 0.0f, count);
                     return true;
 

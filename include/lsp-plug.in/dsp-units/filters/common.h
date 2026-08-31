@@ -40,8 +40,7 @@ namespace lsp
             // Disabled filter
             FLT_NONE,
 
-            FLT_BT_AMPLIFIER,
-            FLT_MT_AMPLIFIER,
+            FLT_AMPLIFIER,
 
             // RLC filters
             FLT_BT_RLC_LOPASS,

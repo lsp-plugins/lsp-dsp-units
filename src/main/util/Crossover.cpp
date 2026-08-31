@@ -173,10 +173,11 @@ namespace lsp
                     {
                         case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS     : FLT_MT_RLC_LOPASS;
                         case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS     : FLT_MT_RLC_HIPASS;
-                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_AMPLIFIER      : FLT_MT_AMPLIFIER;
+                        case FILTER_APF: return FLT_AMPLIFIER;
                         default: break;
                     }
                     break;
+                case CROSS_SLOPE_12DBO:
                 case CROSS_SLOPE_18DBO:
                     switch (type)
                     {
@@ -186,21 +187,12 @@ namespace lsp
                         default: break;
                     }
                     break;
-                case CROSS_SLOPE_12DBO:
-                    switch (type)
-                    {
-                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_LOPASS  : FLT_MT_RLC_LOPASS;
-                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_HIPASS  : FLT_MT_RLC_HIPASS;
-                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_RLC_ALLPASS : FLT_MT_RLC_ALLPASS;
-                        default: break;
-                    }
-                    break;
                 default:
                     switch (type)
                     {
-                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_LOPASS  : FLT_MT_LRX_LOPASS;
-                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_HIPASS  : FLT_MT_LRX_HIPASS;
-                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_ALLPASS : FLT_MT_LRX_ALLPASS;
+                        case FILTER_LPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_LOPASS     : FLT_MT_LRX_LOPASS;
+                        case FILTER_HPF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_HIPASS     : FLT_MT_LRX_HIPASS;
+                        case FILTER_APF: return (mode == CROSS_MODE_BT) ? FLT_BT_LRX_ALLPASS    : FLT_MT_LRX_ALLPASS;
                         default: break;
                     }
             }
