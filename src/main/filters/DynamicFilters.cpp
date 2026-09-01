@@ -606,7 +606,9 @@ namespace lsp
         size_t DynamicFilters::build_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples)
         {
             size_t nc;
-            size_t ftype = (fp->nType & 1) ? fp->nType : fp->nType-1 ; // xxx_MT -> xxx_BT
+            size_t ftype = fp->nType;
+            if ((ftype >= FLT_BT_RLC_LOPASS) && (ftype <= FLT_MT_LRX_ALLPASS) && (ftype & 1)) // xxx_MT -> xxx_BT
+                --ftype;
 
             switch (ftype)
             {
