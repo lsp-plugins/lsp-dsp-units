@@ -178,6 +178,7 @@ namespace lsp
                     }
                     break;
                 case CROSS_SLOPE_12DBO:
+                case CROSS_SLOPE_PD_12DBO:
                 case CROSS_SLOPE_18DBO:
                     switch (type)
                     {
@@ -207,6 +208,8 @@ namespace lsp
                     return 1;                               // For 6 dB/octave slope should be 1
                 case CROSS_SLOPE_12DBO:
                     return (type == FILTER_APF) ? 1 : 2;
+                case CROSS_SLOPE_PD_12DBO:
+                    return 2;
                 case CROSS_SLOPE_18DBO:
                     return (type == FILTER_APF) ? 2 : 3;    // for 18 dB/octave slope should be 3
                 default:
@@ -237,6 +240,7 @@ namespace lsp
             switch (slope)
             {
                 case CROSS_SLOPE_12DBO:
+                case CROSS_SLOPE_PD_12DBO:
                     return -gain;
                 default:
                     break;

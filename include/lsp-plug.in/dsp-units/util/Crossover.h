@@ -87,18 +87,20 @@ namespace lsp
 
         enum crossover_slope_t
         {
-            CROSS_SLOPE_OFF     = 0,
-            CROSS_SLOPE_6DBO    = 1,                        //! 6 dB/octave slope
-            CROSS_SLOPE_12DBO   = 2,                        //! 12 dB/octave slope
-            CROSS_SLOPE_18DBO   = 3,                        //! 18 dB/octave slope
-            CROSS_SLOPE_24DBO   = 4,                        //! 24 dB/octave slope
-            CROSS_SLOPE_48DBO   = 5,                        //! 48 dB/octave slope
-            CROSS_SLOPE_72DBO   = 6,                        //! 72 dB/octave slope
-            CROSS_SLOPE_96DBO   = 7,                        //! 96 dB/octave slope
-            CROSS_SLOPE_120DBO  = 8,                        //! 120 dB/octave slope
-            CROSS_SLOPE_144DBO  = 9,                        //! 144 dB/octave slope
-            CROSS_SLOPE_168DBO  = 10,                       //! 168 dB/octave slope
-            CROSS_SLOPE_192DBO  = 11,                       //! 192 dB/octave slope
+            CROSS_SLOPE_OFF         = 0,
+            CROSS_SLOPE_6DBO        = 1,                    //! 6 dB/octave slope
+            CROSS_SLOPE_12DBO       = 2,                    //! 12 dB/octave slope
+            CROSS_SLOPE_18DBO       = 3,                    //! 18 dB/octave slope
+            CROSS_SLOPE_24DBO       = 4,                    //! 24 dB/octave slope
+            CROSS_SLOPE_48DBO       = 5,                    //! 48 dB/octave slope
+            CROSS_SLOPE_72DBO       = 6,                    //! 72 dB/octave slope
+            CROSS_SLOPE_96DBO       = 7,                    //! 96 dB/octave slope
+            CROSS_SLOPE_120DBO      = 8,                    //! 120 dB/octave slope
+            CROSS_SLOPE_144DBO      = 9,                    //! 144 dB/octave slope
+            CROSS_SLOPE_168DBO      = 10,                   //! 168 dB/octave slope
+            CROSS_SLOPE_192DBO      = 11,                   //! 192 dB/octave slope
+
+            CROSS_SLOPE_PD_12DBO    = 12,                   //! Special 12 dB/octave phase-distored mode to keep legacy implementation
 
             CROSS_SLOPE_LR2     = CROSS_SLOPE_12DBO,        //! 12 db/octave slope
             CROSS_SLOPE_LR4     = CROSS_SLOPE_24DBO,        //! 24 dB/octave slope
