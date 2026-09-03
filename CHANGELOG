@@ -10,6 +10,7 @@
   and an alternative to dspu::Crossover with linear phase processing feature.
 * Updated logic of the spectrum analyzer: added instant spectrum measurement
   on channel activation.
+* Implemented support of minimum phase filters by the dspu::Equalizer module.
 
 === 1.0.38 ===
 * Updated build scripts.

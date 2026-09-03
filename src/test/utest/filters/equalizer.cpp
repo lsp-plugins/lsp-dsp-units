@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 26 дек. 2020 г.
@@ -87,8 +87,10 @@ UTEST_BEGIN("dspu.filters", equalizer)
     UTEST_MAIN
     {
         test_latency("FIR", dspu::EQM_FIR);
-        test_latency("FFT", dspu::EQM_FFT);
-        test_latency("SPM", dspu::EQM_SPM);
+        test_latency("FFT_LP", dspu::EQM_FFT_LP);
+        test_latency("FFT_MP", dspu::EQM_FFT_MP);
+        test_latency("SPM_LP", dspu::EQM_SPM_LP);
+        test_latency("SPM_MP", dspu::EQM_SPM_MP);
     }
 
 UTEST_END

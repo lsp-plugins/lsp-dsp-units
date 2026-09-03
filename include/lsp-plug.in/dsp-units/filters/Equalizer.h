@@ -34,11 +34,13 @@ namespace lsp
     {
         enum equalizer_mode_t
         {
-            EQM_BYPASS, // Bypass signal
-            EQM_IIR,    // All filters are recursive filters with infinite impulse response filters
-            EQM_FIR,    // All filters are non-recursive filters with finite impulse response filters
-            EQM_FFT,    // Approximation of the frequency chart in the frequency range
-            EQM_SPM     // Equalizer acts as a Spectral Processing Module
+            EQM_BYPASS,     // Bypass signal
+            EQM_IIR,        // All filters are recursive filters with infinite impulse response filters
+            EQM_FIR,        // All filters are non-recursive filters with finite impulse response filters
+            EQM_FFT_LP,     // Approximation of the frequency chart in the frequency range, linear phase
+            EQM_FFT_MP,     // Approximation of the frequency chart in the frequency range, minimum phase
+            EQM_SPM_LP,     // Equalizer acts as a Spectral Processing Module, linear phase
+            EQM_SPM_MP,     // Equalizer acts as a Spectral Processing Module, minimum phase
         };
 
         /**

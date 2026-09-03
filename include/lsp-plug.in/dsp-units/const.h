@@ -87,9 +87,9 @@
 #define GAIN_AMP_M_108_DB                   3.98107e-6          /* -108 dB      */
 #define GAIN_AMP_M_120_DB                   1.0e-6              /* -120 dB      */
 #define GAIN_AMP_M_132_DB                   2.5119e-7           /* -132 dB      */
-#define GAIN_AMP_M_140_DB                   0.0000001           /* -140 dB      */
+#define GAIN_AMP_M_140_DB                   1.0e-7              /* -140 dB      */
 #define GAIN_AMP_M_144_DB                   6.309575e-8         /* -144 dB      */
-#define GAIN_AMP_M_160_DB                   0.00000001          /* -160 dB      */
+#define GAIN_AMP_M_160_DB                   1.0e-8              /* -160 dB      */
 #define GAIN_AMP_M_INF_DB                   0.0                 /* -inf dB      */
 
 #define GAIN_AMP_MIN                        (-(GAIN_AMP_P_120_DB))
