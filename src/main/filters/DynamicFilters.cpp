@@ -210,9 +210,10 @@ namespace lsp
             }
 
             // Frequency coefficient for bilinear transform
+            const bool bilinear     = !(f->sParams.nType & 1);
             const float kf =
                 (f->sParams.nType <= FLT_AMPLIFIER) ? 0.95f :
-                (f->sParams.nType & 1) ?
+                (bilinear) ?
                 1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
                 C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
 
@@ -238,7 +239,7 @@ namespace lsp
                         case 16:
                             dsp::fcascade_fill_x16(vCascades, &vCascades[to_process << 4]);
 
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x16(vBiquads.x16, vCascades, kf, to_process + 15);
                             else
                                 dsp::matched_transform_x16(vBiquads.x16, vCascades, f->sParams.fFreq, kf, to_process + 15);
@@ -248,7 +249,7 @@ namespace lsp
                         case 8:
                             dsp::fcascade_fill_x8(vCascades, &vCascades[to_process << 3]);
 
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
                             else
                                 dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
@@ -258,7 +259,7 @@ namespace lsp
                         case 4:
                             dsp::fcascade_fill_x4(vCascades, &vCascades[to_process << 2]);
 
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
                             else
                                 dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
@@ -267,7 +268,7 @@ namespace lsp
 
                         case 2:
                             dsp::fcascade_fill_x2(vCascades, &vCascades[to_process << 1]);
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
                             else
                                 dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
@@ -276,7 +277,7 @@ namespace lsp
 
                         case 1:
                         default:
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
                             else
                                 dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
