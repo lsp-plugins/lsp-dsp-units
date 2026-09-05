@@ -168,6 +168,8 @@ namespace lsp
         {
             switch (slope)
             {
+                case CROSS_SLOPE_OFF:
+                    break;
                 case CROSS_SLOPE_6DBO:
                     switch (type)
                     {
@@ -204,6 +206,8 @@ namespace lsp
         {
             switch (slope)
             {
+                case CROSS_SLOPE_OFF:
+                    return 0;
                 case CROSS_SLOPE_6DBO:
                     return 1;                               // For 6 dB/octave slope should be 1
                 case CROSS_SLOPE_12DBO:
