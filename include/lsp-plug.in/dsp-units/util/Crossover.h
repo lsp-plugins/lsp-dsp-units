@@ -279,6 +279,14 @@ namespace lsp
                 ssize_t         get_mode(size_t sp) const;
 
                 /**
+                 * Get all-pass filter configuration for the split point
+                 * @param sp split point number
+                 * @param fp pointer to store filter params
+                 * @return true on success, false if invalid index or pointer has been passed
+                 */
+                bool            get_allpass(size_t sp, filter_params_t *fp);
+
+                /**
                  * Set gain of the specific output band
                  * @param band band number
                  * @param gain gain of the band

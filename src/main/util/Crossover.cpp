@@ -296,6 +296,25 @@ namespace lsp
             return (sp < nSplits) ? vSplit[sp].nMode : -1;
         }
 
+        bool Crossover::get_allpass(size_t sp, filter_params_t *fp)
+        {
+            if ((sp >= nSplits) || (fp == NULL))
+                return false;
+
+            reconfigure();
+
+            const split_t * const s = &vSplit[sp];
+
+            fp->nType           = select_filter(FILTER_APF, s->nMode, s->nSlope);
+            fp->fFreq           = s->fFreq;
+            fp->fFreq2          = s->fFreq;
+            fp->fGain           = GAIN_AMP_0_DB;
+            fp->nSlope          = select_slope(FILTER_LPF, s->nSlope);
+            fp->fQuality        = select_quality(s->nSlope);
+
+            return true;
+        }
+
         void Crossover::set_gain(size_t band, float gain)
         {
             if (band > nSplits)
@@ -405,8 +424,8 @@ namespace lsp
             // Configure LPF and HPF bands
             for (size_t i=0; i<nPlanSize; ++i)
             {
-                split_t *sp         = vPlan[i];
-                band_t *right       = &vBands[sp->nBandId];
+                split_t * const sp  = vPlan[i];
+                band_t * const right= &vBands[sp->nBandId];
 
                 left->fEnd          = sp->fFreq;
                 left->pEnd          = sp;
