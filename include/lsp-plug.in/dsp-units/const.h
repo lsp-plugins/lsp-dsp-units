@@ -94,6 +94,8 @@
 
 #define GAIN_AMP_MIN                        (-(GAIN_AMP_P_120_DB))
 #define GAIN_AMP_MAX                        (GAIN_AMP_P_120_DB)
+#define GAIN_AMP_ZERO                       GAIN_AMP_M_120DB
+#define GAIN_AMP_NEG_ZERO                   (-(GAIN_AMP_M_120DB))
 
 // Gain steps
 #define GAIN_AMP_S_0_1_DB                   0.01157945426

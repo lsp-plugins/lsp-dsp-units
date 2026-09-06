@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 19 окт. 2016 г.
@@ -22,9 +22,9 @@
 #include <lsp-plug.in/dsp-units/dynamics/DynamicProcessor.h>
 #include <lsp-plug.in/dsp-units/const.h>
 #include <lsp-plug.in/dsp-units/misc/interpolation.h>
-#include <lsp-plug.in/stdlib/math.h>
 #include <lsp-plug.in/dsp/dsp.h>
 #include <lsp-plug.in/dsp-units/units.h>
+#include <lsp-plug.in/stdlib/math.h>
 
 namespace lsp
 {
@@ -477,14 +477,7 @@ namespace lsp
 
             for (size_t i=0; i<dots; ++i)
             {
-                float x     = *(in++);
-                if (x < 0.0f)
-                    x       = -x;
-                if (x < FLOAT_SAT_M_INF)
-                    x       = FLOAT_SAT_M_INF;
-                else if (x > FLOAT_SAT_P_INF)
-                    x       = FLOAT_SAT_P_INF;
-
+                float x     = lsp_limit(fabsf(*(in++)), FLOAT_SAT_M_INF, FLOAT_SAT_P_INF);
                 float lx    = logf(x);
                 float gain  = 0.0f;
 
@@ -498,14 +491,7 @@ namespace lsp
         float DynamicProcessor::curve(float in)
         {
             size_t splines  = fCount[CT_SPLINES];
-
-            if (in < 0.0f)
-                in      = -in;
-            if (in < FLOAT_SAT_M_INF)
-                in      = FLOAT_SAT_M_INF;
-            else if (in > FLOAT_SAT_P_INF)
-                in      = FLOAT_SAT_P_INF;
-
+            in          = lsp_limit(fabsf(in), FLOAT_SAT_M_INF, FLOAT_SAT_P_INF);
             float lx    = logf(in);
             float gain  = 0.0f;
 
@@ -521,14 +507,7 @@ namespace lsp
 
             for (size_t i=0; i<dots; ++i)
             {
-                float x     = *(in++);
-                if (x < 0.0f)
-                    x       = -x;
-                if (x < FLOAT_SAT_M_INF)
-                    x       = FLOAT_SAT_M_INF;
-                else if (x > FLOAT_SAT_P_INF)
-                    x       = FLOAT_SAT_P_INF;
-
+                float x     = lsp_limit(fabsf(*(in++)), FLOAT_SAT_M_INF, FLOAT_SAT_P_INF);
                 float lx    = logf(x);
                 float gain  = 0.0f;
 
@@ -543,13 +522,7 @@ namespace lsp
         {
             size_t splines  = fCount[CT_SPLINES];
 
-            if (in < 0.0f)
-                in      = -in;
-            if (in < FLOAT_SAT_M_INF)
-                in      = FLOAT_SAT_M_INF;
-            else if (in > FLOAT_SAT_P_INF)
-                in      = FLOAT_SAT_P_INF;
-
+            in          = lsp_limit(fabsf(in), FLOAT_SAT_M_INF, FLOAT_SAT_P_INF);
             float lx    = logf(in);
             float gain  = 0.0f;
 
@@ -565,14 +538,7 @@ namespace lsp
 
             for (size_t i=0; i<dots; ++i)
             {
-                float x     = *(in++);
-                if (x < 0.0f)
-                    x       = -x;
-                if (x < GAIN_AMP_MIN)
-                    x       = GAIN_AMP_MIN;
-                else if (x > FLOAT_SAT_P_INF)
-                    x       = FLOAT_SAT_P_INF;
-
+                float x     = lsp_limit(fabsf(*(in++)), FLOAT_SAT_M_INF, FLOAT_SAT_P_INF);
                 float lx    = logf(x);
                 float gain  = 0.0f;
 
@@ -587,13 +553,7 @@ namespace lsp
         {
             size_t splines  = fCount[CT_SPLINES];
 
-            if (in < 0.0f)
-                in      = -in;
-            if (in < FLOAT_SAT_M_INF)
-                in      = FLOAT_SAT_M_INF;
-            else if (in > FLOAT_SAT_P_INF)
-                in      = FLOAT_SAT_P_INF;
-
+            in          = lsp_limit(fabsf(in), FLOAT_SAT_M_INF, FLOAT_SAT_P_INF);
             float lx    = logf(in);
             float gain  = 0.0f;
 
