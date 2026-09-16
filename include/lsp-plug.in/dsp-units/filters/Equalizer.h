@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 26 июля 2016 г.
@@ -27,6 +27,7 @@
 #include <lsp-plug.in/dsp-units/filters/common.h>
 #include <lsp-plug.in/dsp-units/filters/FilterBank.h>
 #include <lsp-plug.in/dsp-units/filters/Filter.h>
+#include <lsp-plug.in/dsp-units/util/Convolver.h>
 
 namespace lsp
 {
@@ -36,7 +37,8 @@ namespace lsp
         {
             EQM_BYPASS,     // Bypass signal
             EQM_IIR,        // All filters are recursive filters with infinite impulse response filters
-            EQM_FIR,        // All filters are non-recursive filters with finite impulse response filters
+            EQM_FIR_LP,     // Use finite impulse response, linear phase
+            EQM_FIR_MP,     // Use finite impulse response, minimum phase
             EQM_FFT_LP,     // Approximation of the frequency chart in the frequency range, linear phase
             EQM_FFT_MP,     // Approximation of the frequency chart in the frequency range, minimum phase
             EQM_SPM_LP,     // Equalizer acts as a Spectral Processing Module, linear phase
@@ -60,6 +62,7 @@ namespace lsp
             protected:
                 FilterBank          sBank;              // Filter bank
                 Filter             *vFilters;           // List of filters
+                Convolver          *pConvolver;         // Convolver (optional)
                 uint32_t            nFilters;           // Number of filters
                 uint32_t            nSampleRate;        // Sample rate
                 uint32_t            nActualSampleRate;  // Actual Sample rate
@@ -81,6 +84,14 @@ namespace lsp
 
             protected:
                 void                reconfigure();
+                void                compute_discrete_magnitude();
+                void                minimum_phase_transform();
+                void                compute_mp_impulse_response();
+                void                compute_lp_impulse_response();
+                void                prepare_fast_convolution();
+                bool                init_convolver(Convolver *convolver, size_t fir_rank);
+                void                process_fast_convolution(float *out, const float *in, size_t samples);
+                void                process_spectral(float *out, const float *in, size_t samples);
 
             public:
                 explicit Equalizer();
@@ -100,9 +111,11 @@ namespace lsp
                  *
                  * @param filters number of filters
                  * @param fir_rank FIR filter rank (impulse response size)
+                 * @param convolver optional pointer to zero-latency convolver for IIR modes,
+                 *        convolver object is managed by the caller code.
                  * @return true on success
                  */
-                bool                init(size_t filters, size_t fir_rank);
+                bool                init(size_t filters, size_t fir_rank, Convolver *convolver = NULL);
 
                 /** Destroy equalizer
                  *

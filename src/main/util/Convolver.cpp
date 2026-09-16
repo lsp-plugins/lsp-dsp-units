@@ -343,7 +343,7 @@ namespace lsp
 
         void Convolver::dump(IStateDumper *v) const
         {
-            v->write("pDataBuffer", vDataBuffer);
+            v->write("vDataBuffer", vDataBuffer);
             v->write("vFrameStart", vFrameStart);
             v->write("vFrame", vFrame);
             v->write("vConvBuffer", vConvBuffer);

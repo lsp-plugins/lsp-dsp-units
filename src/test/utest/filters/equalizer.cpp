@@ -86,7 +86,7 @@ UTEST_BEGIN("dspu.filters", equalizer)
 
     UTEST_MAIN
     {
-        test_latency("FIR", dspu::EQM_FIR);
+        test_latency("FIR_LP", dspu::EQM_FIR_LP);
         test_latency("FFT_LP", dspu::EQM_FFT_LP);
         test_latency("FFT_MP", dspu::EQM_FFT_MP);
         test_latency("SPM_LP", dspu::EQM_SPM_LP);
