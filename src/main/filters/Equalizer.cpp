@@ -280,22 +280,23 @@ namespace lsp
         {
             // Transform magnitude of the filter's spectrum into minimum-phase filter spectrum
             const size_t fir_size   = nFirSize;
+            float * const magnitude = &vTemp[fir_size * 2];
 
             // Compute the cepstrum
-            dsp::limit1(vTemp, GAIN_AMP_M_120_DB, GAIN_AMP_P_120_DB, fir_size); // Prepare to compute logarithmic values
-            dsp::loge2(&vFft[fir_size], vTemp, fir_size);
+            dsp::limit2(magnitude, vTemp, GAIN_AMP_M_120_DB, GAIN_AMP_P_120_DB, fir_size); // Prepare to compute logarithmic values
+            dsp::loge2(&vFft[fir_size], magnitude, fir_size);
             dsp::pcomplex_r2c(vFft, &vFft[fir_size], fir_size);
             dsp::packed_reverse_fft(vFft, vFft, nFirRank);
             // Apply casual window
             dsp::mul_k2(&vFft[2], 2.0f, fir_size - 2);
             dsp::fill_zero(&vFft[nFirSize+2], fir_size - 2);
             // Return to frequency domain
-            dsp::packed_direct_fft(vTemp, vFft, nFirRank);
+            dsp::packed_direct_fft(vFft, vFft, nFirRank);
             for (size_t i=0; i<fir_size; ++i)
             {
-                float * const v     = &vFft[i << 1];
-                const float a       = vTemp[i];         // Magnitude is preserved and can be taken from vTemp
-                const float p       = v[1];             // Phase is stored in imaginary part of the cepstrum
+                float * const v     = &vTemp[i << 1];
+                const float p       = vFft[(i << 1) + 1];   // Phase is stored in imaginary part of the cepstrum
+                const float a       = magnitude[i];         // Magnitude is preserved in vTemp
                 v[0]                = a * cosf(p);
                 v[1]                = a * sinf(p);
             }
