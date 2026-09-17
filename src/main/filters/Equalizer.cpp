@@ -428,7 +428,7 @@ namespace lsp
                     const size_t fade_size      = fir_size >> 3;
                     sBank.impulse_response(vTemp, fir_size);                            // Generate impulse response of the filter
                     windows::blackman_nuttall(vFft, fade_size * 2);                     // Generate the fade window
-                    dsp::mul2(&vTemp[fir_size - fade_size], &vFft[fir_size], fir_size); // Apply window function to the impulse response
+                    dsp::mul2(&vTemp[fir_size - fade_size], &vFft[fade_size], fade_size);// Apply window function to the impulse response
                     dsp::pcomplex_r2c(vFft, vTemp, fir_size);                           // Prepare for FFT transform
                     dsp::packed_direct_fft(vFft, vFft, nFirRank);                       // Perform FFT
                     dsp::pcomplex_mod(vTemp, vFft, fir_size);                           // Compute magnitude

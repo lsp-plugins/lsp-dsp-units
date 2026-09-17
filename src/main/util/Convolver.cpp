@@ -170,13 +170,14 @@ namespace lsp
             nLevels                 = 0;
             for (; (count > 0) && (brank < rank); ++brank)
             {
-                const size_t n          = lsp_min(count, size_t(1) << (brank - 1));
+                const size_t maxn       = size_t(1) << (brank - 1);
+                const size_t n          = lsp_min(count, maxn);
 
                 // Prepare raising convolution
                 if (data != NULL)
                 {
                     dsp::copy(vConvBuffer, data, n);
-                    dsp::fill_zero(&vConvBuffer[n], fft_buf_size - n);
+                    dsp::fill_zero(&vConvBuffer[n], data_buf_size - n);
                     data                   += n;
                 }
                 else
@@ -197,8 +198,8 @@ namespace lsp
                 // Prepare raising convolution
                 if (data != NULL)
                 {
-                    dsp::fill_zero(vConvBuffer, fft_buf_size);
-                    dsp::copy(&vConvBuffer[n], data, fft_buf_size - n);
+                    dsp::copy(vConvBuffer, data, n);
+                    dsp::fill_zero(&vConvBuffer[n], data_buf_size - n);
                     data                   += n;
                 }
                 else
