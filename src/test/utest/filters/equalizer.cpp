@@ -22,6 +22,7 @@
 #include <lsp-plug.in/test-fw/utest.h>
 #include <lsp-plug.in/test-fw/helpers.h>
 #include <lsp-plug.in/test-fw/FloatBuffer.h>
+#include <lsp-plug.in/dsp-units/util/Convolver.h>
 #include <lsp-plug.in/dsp-units/filters/Equalizer.h>
 #include <lsp-plug.in/io/File.h>
 
@@ -32,15 +33,17 @@ using namespace lsp;
 
 UTEST_BEGIN("dspu.filters", equalizer)
 
-    void test_latency(const char *label, dspu::equalizer_mode_t mode)
+    void test_latency(const char *label, dspu::equalizer_mode_t mode, bool convolver)
     {
+        dspu::Convolver cv;
         dspu::Equalizer eq;
         dspu::filter_params_t fp;
 
-        printf("Testing equalizer latency report for %s mode\n", label);
+        printf("Testing equalizer latency report for %s mode, convolver=%s\n",
+            label, (convolver) ? "on" : "off");
 
         // Configure the equalizer
-        eq.init(1, FFT_RANK);
+        eq.init(1, FFT_RANK, (convolver) ? &cv : NULL);
         eq.set_mode(mode);
         eq.set_sample_rate(48000);
 
@@ -86,11 +89,14 @@ UTEST_BEGIN("dspu.filters", equalizer)
 
     UTEST_MAIN
     {
-        test_latency("FIR", dspu::EQM_FIR);
-        test_latency("FFT_LP", dspu::EQM_FFT_LP);
-        test_latency("FFT_MP", dspu::EQM_FFT_MP);
-        test_latency("SPM_LP", dspu::EQM_SPM_LP);
-        test_latency("SPM_MP", dspu::EQM_SPM_MP);
+        test_latency("FIR_LP", dspu::EQM_FIR_LP, false);
+        test_latency("FIR_MP", dspu::EQM_FIR_MP, false);
+        test_latency("FIR_LP:CV", dspu::EQM_FIR_LP, true);
+        test_latency("FIR_MP:CV", dspu::EQM_FIR_MP, true);
+        test_latency("FFT_LP", dspu::EQM_FFT_LP, false);
+        test_latency("FFT_MP", dspu::EQM_FFT_MP, false);
+        test_latency("SPM_LP", dspu::EQM_SPM_LP, false);
+        test_latency("SPM_MP", dspu::EQM_SPM_MP, false);
     }
 
 UTEST_END
