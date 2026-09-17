@@ -358,7 +358,7 @@ namespace lsp
         void Equalizer::compute_lp_impulse_response()
         {
             const size_t fir_size       = nFirSize;
-            const size_t half_size      = nFirSize >> 1;
+            const size_t half_size      = fir_size >> 1;
 
             // Transform the magnitude into linear-phase filter
             dsp::pcomplex_r2c(vFft, vTemp, fir_size);                           // Set phase to 0 for all frequencies
@@ -429,7 +429,10 @@ namespace lsp
                     sBank.impulse_response(vTemp, fir_size);                            // Generate impulse response of the filter
                     windows::blackman_nuttall(vFft, fade_size * 2);                     // Generate the fade window
                     dsp::mul2(&vTemp[fir_size - fade_size], &vFft[fir_size], fir_size); // Apply window function to the impulse response
-                    // vTemp contains impulse response
+                    dsp::pcomplex_r2c(vFft, vTemp, fir_size);                           // Prepare for FFT transform
+                    dsp::packed_direct_fft(vFft, vFft, nFirRank);                       // Perform FFT
+                    dsp::pcomplex_mod(vTemp, vFft, fir_size);                           // Compute magnitude
+                    // vTemp contains real FFT magnitude
                     break;
                 }
 
@@ -489,7 +492,9 @@ namespace lsp
                     break;
 
                 case EQM_FIR_LP:
-                    // vTemp contains impulse response
+                    // vTemp contains real FFT magnitude
+                    compute_lp_impulse_response();                                      // Obtain the impulse response
+
                     if (pConvolver == NULL)
                     {
                         prepare_fast_convolution();                                     // Parse fast convolution data
