@@ -3,6 +3,8 @@
 *******************************************************************************
 
 === 1.0.39 ===
+* Now dspu::Equalizer can use dspu::Convolver for zero-latency convolution of
+  FIR filters.
 * The dspu::Crossover module now returns fair band frequency chart for the
   freq_chart function call.
 * Added 6dB/octave and 18 dB/octave filter support by the dspu::Crossover.
