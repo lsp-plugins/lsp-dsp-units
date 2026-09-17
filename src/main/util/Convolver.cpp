@@ -129,11 +129,11 @@ namespace lsp
                 // Update data buffer size and rank
                 nDataBufferSize         = all_data_size;
                 nRank                   = rank;
+                nFrameSize              = data_buf_size;
+                nFrameOff               = size_t(phase * nFrameSize) % nFrameSize;
             }
 
             // Initialize simple values
-            nFrameSize              = data_buf_size;
-            nFrameOff               = size_t(phase * nFrameSize) % nFrameSize;
             nDirectSize             = lsp_min(count, size_t(CONVOLVER_MIN_DATA_BUF_SIZE));
             nConvSize               = count;
 
