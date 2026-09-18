@@ -118,7 +118,7 @@ namespace lsp
                 vFrame                  = advance_ptr<float>(fptr, data_buf_size);      // Input data frame middle
                 vConvBuffer             = advance_ptr<float>(fptr, fft_buf_size);       // Convolution buffer
                 vTaskData               = advance_ptr<float>(fptr, fft_buf_size);       // Task data for tail convolution
-                vConvData               = advance_ptr<float>(fptr, fft_buf_size);       // FFT convolution data
+                vConvData               = advance_ptr<float>(fptr, bins * fft_buf_size);// FFT convolution data
                 vDirectData             = advance_ptr<float>(fptr, direct_buf_size);    // Direct convolution data
 
                 // Cleanup

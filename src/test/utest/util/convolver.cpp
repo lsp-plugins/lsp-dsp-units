@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 8 сент. 2018 г.
@@ -24,10 +24,13 @@
 #include <lsp-plug.in/dsp-units/util/Convolver.h>
 #include <lsp-plug.in/dsp/dsp.h>
 
+#define CCONV_SIZE      0x2000
 #define LCONV_SIZE      0x10000
 #define CONV_SIZE       0x2000
 #define SRC_SIZE        0x2000
 #define SRC2_SIZE       0x20
+#define PRECISION_A     1e-4f
+#define PRECISION_B     1e-5f
 
 static void convolve(float *dst, const float *src, const float *conv, size_t length, size_t count)
 {
@@ -44,9 +47,7 @@ UTEST_BEGIN("dspu.util", convolver)
     {
         for (size_t i=0; i<count;)
         {
-            size_t todo = count - i;
-            if (todo > step)
-                todo = step;
+            const size_t todo = lsp_min(count - i, step);
             conv.process(&dst[i], &src[i], todo);
             i += todo;
         }
@@ -56,9 +57,7 @@ UTEST_BEGIN("dspu.util", convolver)
     {
         for (size_t i=0; i<count;)
         {
-            size_t todo = count - i;
-            if (todo > step)
-                todo = step;
+            const size_t todo = lsp_min(count - i, step);
             conv.process(dst, src, todo);
 
             dst += todo;
@@ -90,8 +89,10 @@ UTEST_BEGIN("dspu.util", convolver)
         dspu::Convolver c;
 
         FloatBuffer conv(0x1f);
-        FloatBuffer src(SRC_SIZE + conv.size());
-        FloatBuffer dst1(src.size());
+        FloatBuffer src1(SRC_SIZE + conv.size());
+        FloatBuffer src2(src1.size());
+        FloatBuffer src3(src2.size());
+        FloatBuffer dst1(src1.size());
         FloatBuffer dst2(dst1);
         FloatBuffer dst3(dst1);
 
@@ -100,36 +101,76 @@ UTEST_BEGIN("dspu.util", convolver)
         // Initialize data
         for (size_t i=0; i<conv.size(); ++i)
             conv[i] = i + 1;
-        src.fill_zero();
+        src1.fill_zero();
         for (size_t i=0, j=0; i<SRC_SIZE; i+=5, ++j)
-            src[i] = ((j % 3) == 0) ? 1.0f :
+            src1[i] = ((j % 3) == 0) ? 1.0f :
                      ((j % 3) == 1) ? 0.1f : 0.01f;
+        src2.copy(src1);
+        src3.copy(src1);
 
         dst1.fill_zero();
         dst2.fill_zero();
         dst3.fill_zero();
 
         UTEST_ASSERT(c.init(conv, conv.size(), 9, 0));
-        ::convolve(dst1, src, conv, conv.size(), SRC_SIZE);
-        dsp::convolve(dst2, src, conv, conv.size(), SRC_SIZE);
-        convolve(c, dst3, src, src.size(), 31);
+        ::convolve(dst1, src1, conv, conv.size(), SRC_SIZE);
+        dsp::convolve(dst2, src2, conv, conv.size(), SRC_SIZE);
+        convolve(c, dst3, src3, src3.size(), 31);
 
-        UTEST_ASSERT_MSG(src.valid(), "Source buffer corrupted");
+        UTEST_ASSERT_MSG(src1.valid(), "Source buffer 1 corrupted");
+        UTEST_ASSERT_MSG(src2.valid(), "Source buffer 2 corrupted");
+        UTEST_ASSERT_MSG(src3.valid(), "Source buffer 3 corrupted");
         UTEST_ASSERT_MSG(conv.valid(), "Convolution 1 buffer corrupted");
         UTEST_ASSERT_MSG(dst1.valid(), "Destination buffer 1 corrupted");
         UTEST_ASSERT_MSG(dst2.valid(), "Destination buffer 2 corrupted");
         UTEST_ASSERT_MSG(dst3.valid(), "Destination buffer 3 corrupted");
 
-        if ((!dst2.equals_relative(dst1, 1e-4)) || (!dst3.equals_relative(dst2, 1e-4)))
+        if (!src2.equals_relative(src1, PRECISION_A))
         {
-            src.dump("src ");
+            src1.dump("src1");
+            src2.dump("src2");
+
+            const size_t index = src2.last_diff();
+            UTEST_FAIL_MSG(
+                "Malformed input data src2, started at sample=%d: %.5f, expected %.5f",
+                int(index), src2[index], src1[index]);
+        }
+        if (!src3.equals_relative(src1, PRECISION_A))
+        {
+            src1.dump("src1");
+            src3.dump("src3");
+
+            const size_t index = src3.last_diff();
+            UTEST_FAIL_MSG(
+                "Malformed input data src3, started at sample=%d: %.5f, expected %.5f",
+                int(index), src3[index], src1[index]);
+        }
+
+        if (!dst2.equals_relative(dst1, PRECISION_A))
+        {
+            src1.dump("src1");
+            src2.dump("src2");
+            src3.dump("src3");
             conv.dump("conv");
             dst1.dump("dst1");
             dst2.dump("dst2");
             dst3.dump("dst3");
             size_t index = dst2.last_diff();
-            UTEST_FAIL_MSG("Output of convolver is invalid, started at sample=%d: %.5f vs %.5f",
-                    int(index), dst2[index], dst3[index]);
+            UTEST_FAIL_MSG("Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f",
+                int(index), dst2[index], dst1[index]);
+        }
+        if (!dst3.equals_relative(dst1, PRECISION_A))
+        {
+            src1.dump("src1");
+            src2.dump("src2");
+            src3.dump("src3");
+            conv.dump("conv");
+            dst1.dump("dst1");
+            dst2.dump("dst2");
+            dst3.dump("dst3");
+            size_t index = dst3.last_diff();
+            UTEST_FAIL_MSG("Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f",
+                int(index), dst3[index], dst1[index]);
         }
 
         c.destroy();
@@ -138,42 +179,57 @@ UTEST_BEGIN("dspu.util", convolver)
     void test_collisions()
     {
         dspu::Convolver c;
-        FloatBuffer conv(LCONV_SIZE);
-        FloatBuffer src(LCONV_SIZE);
-        FloatBuffer dst1(LCONV_SIZE * 2);
-        FloatBuffer dst2(LCONV_SIZE * 2);
+        FloatBuffer conv(CCONV_SIZE);
+        FloatBuffer src1(CCONV_SIZE);
+        FloatBuffer src2(src1.size());
+        FloatBuffer dst1(CCONV_SIZE * 2);
+        FloatBuffer dst2(CCONV_SIZE * 2);
 
         conv.randomize(-1.0f, 1.0f);
 
-        for (size_t i=1; i<LCONV_SIZE;++i)
+        for (size_t i=1; i<CCONV_SIZE; i += 1023)
         {
             printf("Testing simple convolution i=%d...\n", i);
 
             UTEST_ASSERT(c.init(conv, conv.size(), 10, 0));
 
-            src.fill_zero();
+            src1.fill_zero();
             dst1.fill_zero();
             dst2.fill_zero();
-            src[0] = 1.0f;
-            src[i] = 1.0f;
+            src1[0] = 1.0f;
+            src1[i] = 1.0f;
+            src2.copy(src1);
 
-            ::convolve(dst1, src, conv, conv.size(), src.size());
-            convolve_full(c, dst2, src, src.size(), 127);
+            ::convolve(dst1, src1, conv, conv.size(), src1.size());
+            convolve_full(c, dst2, src2, src2.size(), 127);
 
-            UTEST_ASSERT_MSG(src.valid(), "Source buffer corrupted");
+            UTEST_ASSERT_MSG(src1.valid(), "Source buffer 1 corrupted");
+            UTEST_ASSERT_MSG(src2.valid(), "Source buffer 2 corrupted");
             UTEST_ASSERT_MSG(conv.valid(), "Convolution 1 buffer corrupted");
             UTEST_ASSERT_MSG(dst1.valid(), "Destination buffer 1 corrupted");
             UTEST_ASSERT_MSG(dst2.valid(), "Destination buffer 2 corrupted");
 
             c.destroy();
 
-            if (!dst2.equals_absolute(dst1, 1e-5))
+            if (!src2.equals_relative(src1, PRECISION_A))
             {
-                src.dump("src ");
+                src1.dump("src1");
+                src2.dump("src2");
+
+                const size_t index = src2.last_diff();
+                UTEST_FAIL_MSG(
+                    "Malformed input data src2, started at sample=%d: %.5f, expected %.5f",
+                    int(index), src2[index], src1[index]);
+            }
+
+            if (!dst2.equals_absolute(dst1, PRECISION_B))
+            {
+                src1.dump("src1");
+                src2.dump("src2");
                 conv.dump("conv");
                 dst1.dump("dst1");
                 dst2.dump("dst2");
-                size_t index = dst2.last_diff();
+                const size_t index = dst2.last_diff();
                 UTEST_FAIL_MSG("Output of convolver is invalid, started at sample=%d: dst1[i]=%.8f vs dst2[i]=%.8f",
                         int(index), dst1[index], dst2[index]);
             }
@@ -186,37 +242,81 @@ UTEST_BEGIN("dspu.util", convolver)
         dspu::Convolver c;
 
         FloatBuffer conv(CONV_SIZE);
-        FloatBuffer src(SRC2_SIZE + conv.size());
-        FloatBuffer dst1(src.size());
+        FloatBuffer src1(SRC2_SIZE + conv.size());
+        FloatBuffer src2(src1.size());
+        FloatBuffer src3(src1.size());
+        FloatBuffer dst1(src1.size());
         FloatBuffer dst2(dst1);
         FloatBuffer dst3(dst1);
-        dsp::fill_zero(src.data(SRC2_SIZE), src.size() - SRC2_SIZE);
+        dsp::fill_zero(src1.data(SRC2_SIZE), src1.size() - SRC2_SIZE);
+        src2.copy(src1);
+        src3.copy(src1);
+
+        printf("Testing large convolution...\n");
 
         dst1.fill_zero();
         dst2.fill_zero();
         dst3.fill_zero();
 
         UTEST_ASSERT(c.init(conv, conv.size(), 10, 0));
-        ::convolve(dst1, src, conv, conv.size(), SRC2_SIZE);
-        dsp::convolve(dst2, src, conv, conv.size(), SRC2_SIZE);
-        convolve(c, dst3, src, src.size(), 31);
+        ::convolve(dst1, src1, conv, conv.size(), SRC2_SIZE);
+        dsp::convolve(dst2, src2, conv, conv.size(), SRC2_SIZE);
+        convolve(c, dst3, src3, src3.size(), 31);
 
-        UTEST_ASSERT_MSG(src.valid(), "Source buffer corrupted");
+        UTEST_ASSERT_MSG(src1.valid(), "Source buffer 1 corrupted");
+        UTEST_ASSERT_MSG(src2.valid(), "Source buffer 2 corrupted");
+        UTEST_ASSERT_MSG(src3.valid(), "Source buffer 3 corrupted");
         UTEST_ASSERT_MSG(conv.valid(), "Convolution 1 buffer corrupted");
         UTEST_ASSERT_MSG(dst1.valid(), "Destination buffer 1 corrupted");
         UTEST_ASSERT_MSG(dst2.valid(), "Destination buffer 2 corrupted");
         UTEST_ASSERT_MSG(dst3.valid(), "Destination buffer 3 corrupted");
 
-        if ((!dst2.equals_absolute(dst1, 1e-4)) || (!dst3.equals_absolute(dst2, 1e-4)))
+        if (!src2.equals_relative(src1, PRECISION_A))
         {
-            src.dump("src ");
+            src1.dump("src1");
+            src2.dump("src2");
+
+            const size_t index = src2.last_diff();
+            UTEST_FAIL_MSG(
+                "Malformed input data src2, started at sample=%d: %.5f, expected %.5f",
+                int(index), src2[index], src1[index]);
+        }
+        if (!src3.equals_relative(src1, PRECISION_A))
+        {
+            src1.dump("src1");
+            src3.dump("src3");
+
+            const size_t index = src3.last_diff();
+            UTEST_FAIL_MSG(
+                "Malformed input data src3, started at sample=%d: %.5f, expected %.5f",
+                int(index), src3[index], src1[index]);
+        }
+
+        if (!dst2.equals_relative(dst1, PRECISION_A))
+        {
+            src1.dump("src1");
+            src2.dump("src2");
+            src3.dump("src3");
             conv.dump("conv");
             dst1.dump("dst1");
             dst2.dump("dst2");
             dst3.dump("dst3");
             size_t index = dst2.last_diff();
-            UTEST_FAIL_MSG("Output of convolver is invalid, started at sample=%d: %.5f vs %.5f",
-                    int(index), dst2[index], dst3[index]);
+            UTEST_FAIL_MSG("Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f",
+                int(index), dst2[index], dst1[index]);
+        }
+        if (!dst3.equals_relative(dst1, PRECISION_A))
+        {
+            src1.dump("src1");
+            src2.dump("src2");
+            src3.dump("src3");
+            conv.dump("conv");
+            dst1.dump("dst1");
+            dst2.dump("dst2");
+            dst3.dump("dst3");
+            size_t index = dst3.last_diff();
+            UTEST_FAIL_MSG("Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f",
+                int(index), dst3[index], dst1[index]);
         }
 
         c.destroy();
@@ -224,9 +324,9 @@ UTEST_BEGIN("dspu.util", convolver)
 
     UTEST_MAIN
     {
-//        test_collisions();
         test_small();
         test_large();
+        test_collisions();
     }
 UTEST_END;
 
