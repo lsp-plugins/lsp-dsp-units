@@ -148,6 +148,11 @@ UTEST_BEGIN("dspu.util", convolver)
 
         if (!dst2.equals_relative(dst1, PRECISION_A))
         {
+            const size_t index = dst2.last_diff();
+            printf(
+                "Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f\n",
+                int(index), dst2[index], dst1[index]);
+
             src1.dump("src1");
             src2.dump("src2");
             src3.dump("src3");
@@ -155,12 +160,17 @@ UTEST_BEGIN("dspu.util", convolver)
             dst1.dump("dst1");
             dst2.dump("dst2");
             dst3.dump("dst3");
-            size_t index = dst2.last_diff();
-            UTEST_FAIL_MSG("Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f",
+            UTEST_FAIL_MSG(
+                "Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f",
                 int(index), dst2[index], dst1[index]);
         }
         if (!dst3.equals_relative(dst1, PRECISION_A))
         {
+            const size_t index = dst3.last_diff();
+            printf(
+                "Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f\n",
+                int(index), dst3[index], dst1[index]);
+
             src1.dump("src1");
             src2.dump("src2");
             src3.dump("src3");
@@ -168,8 +178,8 @@ UTEST_BEGIN("dspu.util", convolver)
             dst1.dump("dst1");
             dst2.dump("dst2");
             dst3.dump("dst3");
-            size_t index = dst3.last_diff();
-            UTEST_FAIL_MSG("Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f",
+            UTEST_FAIL_MSG(
+                "Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f",
                 int(index), dst3[index], dst1[index]);
         }
 
@@ -224,14 +234,19 @@ UTEST_BEGIN("dspu.util", convolver)
 
             if (!dst2.equals_absolute(dst1, PRECISION_B))
             {
+                const size_t index = dst2.last_diff();
+                printf(
+                    "Output of convolver is invalid, started at sample=%d: dst1[i]=%.8f vs dst2[i]=%.8f\n",
+                    int(index), dst1[index], dst2[index]);
+
                 src1.dump("src1");
                 src2.dump("src2");
                 conv.dump("conv");
                 dst1.dump("dst1");
                 dst2.dump("dst2");
-                const size_t index = dst2.last_diff();
-                UTEST_FAIL_MSG("Output of convolver is invalid, started at sample=%d: dst1[i]=%.8f vs dst2[i]=%.8f",
-                        int(index), dst1[index], dst2[index]);
+                UTEST_FAIL_MSG(
+                    "Output of convolver is invalid, started at sample=%d: dst1[i]=%.8f vs dst2[i]=%.8f",
+                    int(index), dst1[index], dst2[index]);
             }
 
         }
@@ -294,6 +309,11 @@ UTEST_BEGIN("dspu.util", convolver)
 
         if (!dst2.equals_relative(dst1, PRECISION_A))
         {
+            const size_t index = dst2.last_diff();
+            printf(
+                "Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f\n",
+                int(index), dst2[index], dst1[index]);
+
             src1.dump("src1");
             src2.dump("src2");
             src3.dump("src3");
@@ -301,12 +321,18 @@ UTEST_BEGIN("dspu.util", convolver)
             dst1.dump("dst1");
             dst2.dump("dst2");
             dst3.dump("dst3");
-            size_t index = dst2.last_diff();
-            UTEST_FAIL_MSG("Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f",
+
+            UTEST_FAIL_MSG(
+                "Output of convolver dst2 is invalid, started at sample=%d: %.5f, expected %.5f",
                 int(index), dst2[index], dst1[index]);
         }
         if (!dst3.equals_relative(dst1, PRECISION_A))
         {
+            const size_t index = dst3.last_diff();
+            printf(
+                "Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f\n",
+                int(index), dst3[index], dst1[index]);
+
             src1.dump("src1");
             src2.dump("src2");
             src3.dump("src3");
@@ -314,8 +340,9 @@ UTEST_BEGIN("dspu.util", convolver)
             dst1.dump("dst1");
             dst2.dump("dst2");
             dst3.dump("dst3");
-            size_t index = dst3.last_diff();
-            UTEST_FAIL_MSG("Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f",
+
+            UTEST_FAIL_MSG(
+                "Output of convolver dst3 is invalid, started at sample=%d: %.5f, expected %.5f",
                 int(index), dst3[index], dst1[index]);
         }
 
