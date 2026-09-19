@@ -266,18 +266,17 @@ namespace lsp
 
                 const float f       = X_PI / n;
                 const size_t half   = n / 2;
+                const size_t count  = half + (n & 1);
+
+                for (size_t i = 0; i < count; ++i)
+                    dst[i]      = sinf(f * i);
+
                 if (n & 1)
-                {
-                    for (size_t i = 0; i <= half; ++i)
-                        dst[i] = sinf(f * i);
-                    dsp::reverse2(&dst[half + 1], &dst[1], half);
-                }
+                    dsp::reverse2(&dst[count], &dst[1], half);
                 else
                 {
-                    for (size_t i=0; i<half; ++i)
-                        dst[i]      = sinf(f * i);
-                    dsp::reverse2(&dst[half], dst, half);
-                    dst[half]   = 1.0f;
+                    dst[half]       = 1.0f;
+                    dsp::reverse2(&dst[half+1], &dst[1], half-1);
                 }
             }
 
@@ -289,24 +288,20 @@ namespace lsp
 
                 const float f       = X_PI / n;
                 const size_t half   = n / 2;
-                if (n & 1)
+                const size_t count  = half + (n & 1);
+
+                for (size_t i = 0; i < count; ++i)
                 {
-                    for (size_t i = 0; i <= half; ++i)
-                    {
-                        const float a   = sinf(f * i);
-                        dst[i]          = a * a;
-                    }
-                    dsp::reverse2(&dst[half + 1], &dst[1], half);
+                    const float a   = sinf(f * i);
+                    dst[i]          = a * a;
                 }
+
+                if (n & 1)
+                    dsp::reverse2(&dst[count], &dst[1], half);
                 else
                 {
-                    for (size_t i=0; i<half; ++i)
-                    {
-                        const float a   = sinf(f * i);
-                        dst[i]          = a * a;
-                    }
-                    dsp::reverse2(&dst[half], dst, half);
-                    dst[half]   = 1.0f;
+                    dst[half]       = 1.0f;
+                    dsp::reverse2(&dst[half+1], &dst[1], half-1);
                 }
             }
 

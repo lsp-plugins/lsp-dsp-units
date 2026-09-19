@@ -159,6 +159,9 @@ namespace lsp
             void tukey(float *dst, size_t n);
 
             LSP_DSP_UNITS_PUBLIC
+            void kaiser_general(float *dst, float beta, size_t n);
+
+            LSP_DSP_UNITS_PUBLIC
             void kaiser(float *dst, size_t n);
 
         } /* namespace windows */
