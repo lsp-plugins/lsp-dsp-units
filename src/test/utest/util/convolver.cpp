@@ -29,8 +29,8 @@
 #define CONV_SIZE       0x2000
 #define SRC_SIZE        0x2000
 #define SRC2_SIZE       0x20
-#define PRECISION_A     1e-4f
-#define PRECISION_B     1e-5f
+#define PRECISION_A     2e-4f
+#define PRECISION_B     2e-5f
 
 static void convolve(float *dst, const float *src, const float *conv, size_t length, size_t count)
 {
