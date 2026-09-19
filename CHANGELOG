@@ -15,6 +15,7 @@
 * Implemented support of minimum phase filters by the dspu::Equalizer module.
 * Fixed regression in the dspu::DynamicsProcessor module which could produce
   NaN (not-a-number) values.
+* Implemented Kaiser window function.
 
 === 1.0.38 ===
 * Updated build scripts.
