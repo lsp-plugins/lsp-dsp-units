@@ -56,6 +56,7 @@ namespace
         { dspu::windows::SQR_COSINE, "Squared Cosine" },
         { dspu::windows::CUBIC, "Cubic" },
         { dspu::windows::KAISER, "Kaiser" },
+        { dspu::windows::KAISER_BESSEL_DERIVED, "Kaiser-Bessel Derived" },
         { dspu::windows::TOTAL, NULL },
     };
 } /* namespace */
@@ -67,7 +68,7 @@ MTEST_BEGIN("dspu.misc", windows)
         float *buf      = NULL;
         float *windows[dspu::windows::TOTAL];
 
-        size_t points   = 1024;
+        size_t points   = 128;
         if (argc > 0)
             points          = atoi(argv[0]);
         if (points < 10)

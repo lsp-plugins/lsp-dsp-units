@@ -78,6 +78,7 @@ namespace lsp
                     case SQR_COSINE: sqr_cosine(dst, n); break;
                     case CUBIC: cubic(dst, n); break;
                     case KAISER: kaiser(dst, n); break;
+                    case KAISER_BESSEL_DERIVED: kaiser_bessel_derived(dst, n); break;
                     default:
                         break;
                 }
@@ -475,6 +476,44 @@ namespace lsp
             void kaiser(float *dst, size_t n)
             {
                 return kaiser_general(dst, 7.0f, n);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_bessel_derived_general(float *dst, float beta, size_t n)
+            {
+                if (n < 2)
+                {
+                    if (n == 1)
+                        dst[0] = 1.0f;
+                    return;
+                }
+
+                const size_t half       = n / 2;
+                const size_t count      = half + (n & 1);
+
+                // Generate the kaiser window
+                kaiser_general(dst, beta, count + 1);
+
+                // Integrate the kaiser window
+                float accum             = 0.0f;
+                for (size_t i = 0; i <= count; ++i)
+                {
+                    const float vi      = dst[i];
+                    accum              += vi;
+                    dst[i]              = sqrtf(accum);
+                }
+
+                // Normalize the window
+                dsp::mul_k2(dst, 1.0f / sqrtf(accum), count + 1);
+
+                // Make window symmetric
+                dsp::reverse2(&dst[n - half], dst, half);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_bessel_derived(float *dst, size_t n)
+            {
+                return kaiser_bessel_derived_general(dst, 7.0f, n);
             }
 
         } /* namespace windows */

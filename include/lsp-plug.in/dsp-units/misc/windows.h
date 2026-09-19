@@ -55,6 +55,7 @@ namespace lsp
                 SQR_COSINE,
                 CUBIC,
                 KAISER,
+                KAISER_BESSEL_DERIVED,
 
                 // Special variables
                 TOTAL,
@@ -163,6 +164,12 @@ namespace lsp
 
             LSP_DSP_UNITS_PUBLIC
             void kaiser(float *dst, size_t n);
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_bessel_derived_general(float *dst, float beta, size_t n);
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_bessel_derived(float *dst, size_t n);
 
         } /* namespace windows */
     } /* namespace dspu */

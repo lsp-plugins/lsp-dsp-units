@@ -466,14 +466,14 @@ namespace lsp
                 case EQM_SPM_LP:
                     // vTemp contains real FFT magnitude
                     dsp::pcomplex_r2c(vConv, vTemp, fir_size);                          // Convert magnitude to complex value
-                    windows::sqr_cosine(vFft, fir_size);                                // Also provide window
+                    windows::kaiser_bessel_derived(vFft, fir_size);                     // Also provide window
                     nLatency    = fir_size;
                     break;
 
                 case EQM_SPM_MP:
                     // vTemp contains complex FFT spectrum
                     dsp::copy(vConv, vTemp, fft_size);
-                    windows::sqr_cosine(vFft, fir_size);                                // Also provide window
+                    windows::kaiser_bessel_derived(vFft, fir_size);                     // Also provide window
                     nLatency    = fir_size;
                     break;
 
@@ -713,7 +713,8 @@ namespace lsp
                     dsp::move(vOutBuffer, &vOutBuffer[half_len], half_len);     // Shift output buffer
                     dsp::fill_zero(&vOutBuffer[half_len], half_len);            // Empty tail of destination buffer
 
-                    dsp::pcomplex_r2c(vTemp, vInBuffer, nFirSize);              // Convert source buffer to complex numbers
+                    dsp::mul3(&vTemp[nFirSize], vInBuffer, vFft, nFirSize);     // Apply window
+                    dsp::pcomplex_r2c(vTemp, &vTemp[nFirSize], nFirSize);       // Convert source buffer to complex numbers
                     dsp::packed_direct_fft(vTemp, vTemp, nFirRank);             // Perform FFT
                     dsp::pcomplex_mul2(vTemp, vConv, nFirSize);                 // Apply magnitude
                     dsp::packed_reverse_fft(vTemp, vTemp, nFirRank);            // Transform back

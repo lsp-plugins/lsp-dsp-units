@@ -15,7 +15,9 @@
 * Implemented support of minimum phase filters by the dspu::Equalizer module.
 * Fixed regression in the dspu::DynamicsProcessor module which could produce
   NaN (not-a-number) values.
-* Implemented Kaiser window function.
+* Implemented Kaiser and Kaiser-Bessel Derived window function.
+* Reduced spectrum leakage artifacts by using Kaiser-Bessel Derived window for
+  spectral processing modules.
 
 === 1.0.38 ===
 * Updated build scripts.
