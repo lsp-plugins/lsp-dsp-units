@@ -117,6 +117,36 @@ namespace lsp
             LSP_DSP_UNITS_PUBLIC
             void reverse_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
 
+            /**
+             * Generate compensating (reverse) noise envelope using frequency list
+             * @param dst pointer to write envelope coefficients
+             * @param freq list of frequencies, each frequency should be positive
+             * @param center frequency that will have amplification coefficient 1.0, non-negative
+             * @param n number of element to generate
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void reverse_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+            /**
+             * Generate noise envelope for real-part of FFT
+             * @param dst pointer to write envelope coefficients of (2^(rank-1)) + 1 elements
+             * @param rank FFT rank
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void noise_real_fft(float *dst, size_t rank, envelope_t type);
+
+            /**
+             * Generate noise envelope for real-part of FFT
+             * @param dst pointer to write envelope coefficients of (2^(rank-1)) + 1 elements
+             * @param rank FFT rank
+             * @param type envelope type
+             */
+            LSP_DSP_UNITS_PUBLIC
+            void reverse_noise_real_fft(float *dst, size_t rank, envelope_t type);
+
+
 
             LSP_DSP_UNITS_PUBLIC
             void white_noise_lin(float *dst, float first, float last, float center, size_t n, envelope_t type);
@@ -164,6 +194,22 @@ namespace lsp
 
             LSP_DSP_UNITS_PUBLIC
             void violet_noise_list(float *dst, const float *freqs, float center, size_t n, envelope_t type);
+
+
+            LSP_DSP_UNITS_PUBLIC
+            void white_noise_real_fft(float *dst, size_t rank, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void pink_noise_real_fft(float *dst, size_t rank, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void brown_noise_real_fft(float *dst, size_t rank, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void blue_noise_real_fft(float *dst, size_t rank, envelope_t type);
+
+            LSP_DSP_UNITS_PUBLIC
+            void violet_noise_real_fft(float *dst, size_t rank, envelope_t type);
 
         } /* namespace envelope */
     } /* namespace dspu */
