@@ -718,8 +718,10 @@ namespace lsp
         void Filter::process(float *out, const float *in, size_t samples)
         {
             // Check whether we need to rebuild filter
-            if (nFlags & (~FF_OWN_BANK))
+            if ((nFlags & (FF_OWN_BANK | FF_REBUILD)) == (FF_OWN_BANK | FF_REBUILD))
                 rebuild();
+            else if (nFlags & FF_CLEAR)
+                pBank->reset();
 
             switch (nMode)
             {
@@ -2200,7 +2202,7 @@ namespace lsp
                         c->t[0]         = f->b0;
                         c->t[1]         = f->b1;
                         c->t[2]         = f->b2;
-                        c->b[0]         = 1.0;
+                        c->b[0]         = 1.0f;
                         c->b[1]         = -f->a1;
                         c->b[2]         = -f->a2;
                     }
@@ -2233,7 +2235,7 @@ namespace lsp
                         c->t[0]         = f->b0;
                         c->t[1]         = f->b1;
                         c->t[2]         = f->b2;
-                        c->b[0]         = 1.0;
+                        c->b[0]         = 1.0f;
                         c->b[1]         = -f->a1;
                         c->b[2]         = -f->a2;
                     }

@@ -19,6 +19,7 @@
 * Implemented Kaiser and Kaiser-Bessel Derived window function.
 * Reduced spectrum leakage artifacts by using Kaiser-Bessel Derived window for
   spectral processing modules.
+* Fixed filter doubling issue with external filter bank.
 
 === 1.0.38 ===
 * Updated build scripts.

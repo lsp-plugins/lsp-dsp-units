@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 сент. 2023 г.
@@ -112,7 +112,7 @@ namespace lsp
             dsp::fill_zero(vBuffer, BUFFER_SIZE);
             for (size_t i=0; i<channels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
                 c->sBank.construct();
                 c->sFilter.construct();
 
@@ -138,14 +138,14 @@ namespace lsp
             // Set-up default designations
             if (channels == 1)
             {
-                channel_t *c            = &vChannels[0];
+                channel_t * const c     = &vChannels[0];
                 c->enDesignation        = bs::CHANNEL_CENTER;
                 c->fWeight              = bs::channel_weighting(c->enDesignation);
             }
             else if (channels == 2)
             {
-                channel_t *l            = &vChannels[0];
-                channel_t *r            = &vChannels[1];
+                channel_t * const l     = &vChannels[0];
+                channel_t * const r     = &vChannels[1];
 
                 l->enDesignation        = bs::CHANNEL_LEFT;
                 l->fWeight              = bs::channel_weighting(l->enDesignation);
@@ -156,7 +156,7 @@ namespace lsp
             // Initialize channels
             for (size_t i=0; i<channels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
 
                 if (!c->sFilter.init(&c->sBank))
                     return STATUS_NO_MEM;
@@ -186,10 +186,10 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c    = &vChannels[id];
-            c->vIn          = in;
-            c->vOut         = out;
-            c->nOffset      = pos;
+            channel_t * const c = &vChannels[id];
+            c->vIn              = in;
+            c->vOut             = out;
+            c->nOffset          = pos;
 
             return STATUS_OK;
         }
@@ -208,7 +208,7 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c        = &vChannels[id];
+            channel_t * const c = &vChannels[id];
             c->enDesignation    = designation;
             c->fWeight          = bs::channel_weighting(designation);
 
@@ -225,8 +225,8 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c    = &vChannels[id];
-            c->fLink        = lsp_limit(link, 0.0f, 1.0f);
+            channel_t * const c = &vChannels[id];
+            c->fLink            = lsp_limit(link, 0.0f, 1.0f);
 
             return STATUS_OK;
         }
@@ -241,7 +241,7 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c        = &vChannels[id];
+            channel_t * const c = &vChannels[id];
             if (bool(c->nFlags & C_ENABLED) == active)
                 return STATUS_OK;
 
@@ -273,11 +273,14 @@ namespace lsp
 
         void LoudnessMeter::clear()
         {
-            fLoudness               = 0;
+            if (vChannels == NULL)
+                return;
+
+            fLoudness               = 0.0f;
 
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
 
                 c->sFilter.clear();
                 if (c->nFlags & C_ENABLED)
@@ -307,7 +310,7 @@ namespace lsp
             // Store new pointers to buffers
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
                 c->vData                = advance_ptr_bytes<float>(buf, szof_period);
             }
 
@@ -353,7 +356,7 @@ namespace lsp
 
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c            = &vChannels[i];
+                    channel_t * const c     = &vChannels[i];
 
                     c->sBank.begin();
                     switch (enWeight)
@@ -417,7 +420,7 @@ namespace lsp
             // Pre-process each channel individually
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c    = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
                 if (!(c->nFlags & C_ENABLED))
                     continue;
                 if (c->vIn == NULL)
@@ -488,7 +491,7 @@ namespace lsp
                 // RMS and perform the linking
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c = &vChannels[i];
                     if (!(c->nFlags & C_ENABLED))
                         continue;
 
