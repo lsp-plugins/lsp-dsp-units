@@ -393,6 +393,16 @@ namespace lsp
                  */
                 void process_overwrite(float *dst, const float *src, size_t count);
 
+                /** Process a buffer of samples without changing the internal state.
+                 * Useful when needing a number of samples as processed by the shaping function
+                 * without altering audio output.
+                 *
+                 * @param dst output wave destination
+                 * @param src input source, allowed to be NULL
+                 * @param count number of samples to process
+                 */
+                void get_map(float *dst, const float *src, size_t count);
+
                 /**
                  * Dump the state
                  * @param v state dumper

@@ -318,6 +318,10 @@ namespace lsp
 
                     sShaping.tap_tubewarmth.pwrq = 2.0f / (imr + 1.0f);
 
+                    // Initialize state at 0
+                    sShaping.tap_tubewarmth.last_raw_output         = 0.0f;
+                    sShaping.tap_tubewarmth.last_raw_intermediate   = 0.0f;
+
                     cbShaper = dspu::shaping::tap_tubewarmth;
                 }
             }
@@ -505,6 +509,37 @@ namespace lsp
             for (size_t n = 0; n < count; ++n)
             {
                 dst[n] = cbShaper(&sShaping, src[n]);
+            }
+        }
+
+        void Shaper::get_map(float *dst, const float *src, size_t count)
+        {
+            switch (enFunction)
+            {
+                case SH_FCN_TAP_TUBEWARMTH:
+                {
+                    // Backup state, reset state, do the operation, and restore state.
+                    float last_raw_output_back                      = sShaping.tap_tubewarmth.last_raw_output;
+                    float last_raw_intermediate_back                = sShaping.tap_tubewarmth.last_raw_intermediate;
+                    sShaping.tap_tubewarmth.last_raw_output         = 0.0f;
+                    sShaping.tap_tubewarmth.last_raw_intermediate   = 0.0f;
+
+                    // We can simply use process overwrite now with the new reset state.
+                    process_overwrite(dst, src, count);
+
+                    // Restore state.
+                    sShaping.tap_tubewarmth.last_raw_output         = last_raw_output_back;
+                    sShaping.tap_tubewarmth.last_raw_intermediate   = last_raw_intermediate_back;
+                }
+                break;
+
+                // In all other cases the shaping function is stateless. So we can use the process_overwrite method.
+                // No staste backup/restore needed.
+                default:
+                {
+                    process_overwrite(dst, src, count);
+                }
+                break;
             }
         }
 
