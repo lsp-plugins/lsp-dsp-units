@@ -81,6 +81,12 @@ namespace lsp
                 if (value <= -1.0f)
                     return -1.0f;
 
+                // tahnh(s * x) / x is equal to x when s = 0.
+                // But if we compute it numerically we have nan, as we do a by 0 division.
+                // Handling the special case here.
+                if (params->hyperbolic.shape == 0.0f)
+                    return value;
+
                 return quick_tanh(params->hyperbolic.shape * value) / params->hyperbolic.hyperbolic_shape;
             }
 
