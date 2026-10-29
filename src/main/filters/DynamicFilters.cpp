@@ -210,9 +210,10 @@ namespace lsp
             }
 
             // Frequency coefficient for bilinear transform
+            const bool bilinear     = !(f->sParams.nType & 1);
             const float kf =
-                (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
-                (f->sParams.nType & 1) ?
+                (f->sParams.nType <= FLT_AMPLIFIER) ? 0.95f :
+                (bilinear) ?
                 1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
                 C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
 
@@ -238,7 +239,7 @@ namespace lsp
                         case 16:
                             dsp::fcascade_fill_x16(vCascades, &vCascades[to_process << 4]);
 
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x16(vBiquads.x16, vCascades, kf, to_process + 15);
                             else
                                 dsp::matched_transform_x16(vBiquads.x16, vCascades, f->sParams.fFreq, kf, to_process + 15);
@@ -248,7 +249,7 @@ namespace lsp
                         case 8:
                             dsp::fcascade_fill_x8(vCascades, &vCascades[to_process << 3]);
 
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
                             else
                                 dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
@@ -258,7 +259,7 @@ namespace lsp
                         case 4:
                             dsp::fcascade_fill_x4(vCascades, &vCascades[to_process << 2]);
 
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
                             else
                                 dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
@@ -267,7 +268,7 @@ namespace lsp
 
                         case 2:
                             dsp::fcascade_fill_x2(vCascades, &vCascades[to_process << 1]);
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
                             else
                                 dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
@@ -276,7 +277,7 @@ namespace lsp
 
                         case 1:
                         default:
-                            if (f->sParams.nType & 1)
+                            if (bilinear)
                                 dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
                             else
                                 dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
@@ -606,12 +607,14 @@ namespace lsp
         size_t DynamicFilters::build_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples)
         {
             size_t nc;
-            size_t ftype = (fp->nType & 1) ? fp->nType : fp->nType-1 ; // xxx_MT -> xxx_BT
+            size_t ftype = fp->nType;
+            if ((ftype >= FLT_BT_RLC_LOPASS) && (ftype <= FLT_MT_LRX_ALLPASS) && (ftype & 1)) // xxx_MT -> xxx_BT
+                --ftype;
 
             switch (ftype)
             {
                 //----------------------------------- MISC SPECIAL FILTERS ------------------------------------
-                case FLT_BT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                 {
                     if (cj >= 1)
                         return 0;
@@ -715,10 +718,13 @@ namespace lsp
                 case FLT_BT_RLC_LOSHELF:
                 case FLT_BT_RLC_HISHELF:
                 {
-                    size_t slope            = fp->nSlope * 2;
+                    const size_t slope      = fp->nSlope * 2;
                     nc                      = quantify(cj, fp->nSlope); // Number of cascades to generate
                     if (nc <= 0)
                         return nc;
+
+                    const float rslope      = 1.0f / float(slope);
+                    const float rquality    = 2.0f / (1.0f + fp->fQuality);
 
                     for (size_t j=0; j<nc; j++)
                     {
@@ -729,18 +735,18 @@ namespace lsp
                         for (size_t i=0; i<samples; ++i)
                         {
                             float gain          = sqrtf(sfg[i]);
-                            float fg            = expf(logf(gain)/slope);
+                            float fg            = expf(logf(gain) * rslope);
 
                             float *t            = (ftype == FLT_BT_RLC_LOSHELF) ? c->t : c->b;
                             float *b            = (ftype == FLT_BT_RLC_LOSHELF) ? c->b : c->t;
 
                             // Transfer function
                             t[0]                = fg;
-                            t[1]                = 2.0f / (1.0f + fp->fQuality);
+                            t[1]                = rquality;
                             t[2]                = 1.0f / fg;
 
                             b[0]                = t[2]; // 1.0 / fg
-                            b[1]                = t[1]; // 2.0 / (1.0 + fp->fQuality)
+                            b[1]                = t[1]; // rquality
                             b[2]                = t[0]; // fg
 
                             // Move to next cascade
@@ -776,7 +782,10 @@ namespace lsp
                     if (nc <= 0)
                         return nc;
 
-                    float kf                = fp->fFreq2;
+                    const float kf          = fp->fFreq2;
+                    const float kf2         = kf*kf;
+                    const float rquality    = 2.0f / (1.0f + fp->fQuality);
+                    const float rslope      = 1.0f / slope;
 
                     for (size_t j=0; j < nc; j++)
                     {
@@ -789,7 +798,7 @@ namespace lsp
                             for (size_t i=0; i<samples; ++i)
                             {
                                 float gain          = (ftype == FLT_BT_RLC_LADDERREJ) ? sqrtf(sfg[i]) : sqrtf(1.0/sfg[i]);
-                                float fg            = expf(logf(gain)/slope);
+                                float fg            = expf(logf(gain) * rslope);
 
                                 // Second shelf cascade, hi-shelf always
                                 float *t            = c->b;
@@ -797,12 +806,12 @@ namespace lsp
 
                                 // Create transfer function
                                 t[0]                = fg;
-                                t[1]                = 2.0f * kf / (1.0f + fp->fQuality);
-                                t[2]                = kf*kf / fg;
+                                t[1]                = kf * rquality;
+                                t[2]                = kf2 / fg;
 
                                 b[0]                = 1.0f / fg;
-                                b[1]                = 2.0f * kf / (1.0f + fp->fQuality);
-                                b[2]                = fg * kf * kf;
+                                b[1]                = kf * rquality;
+                                b[2]                = fg * kf2;
 
                                 if ((cj>>1) == 0)
                                 {
@@ -822,7 +831,7 @@ namespace lsp
                             {
                                 float gain1         = (ftype == FLT_BT_RLC_LADDERREJ) ? sqrtf(1.0/sfg[i]) : sqrtf(sfg[i]);
                                 float gain2         = (ftype == FLT_BT_RLC_LADDERREJ) ? sqrtf(sfg[i]) : sqrtf(1.0/sfg[i]);
-                                float fg            = (ftype == FLT_BT_RLC_LADDERREJ) ? expf(logf(gain2)/slope) : expf(logf(gain1)/slope);
+                                float fg            = (ftype == FLT_BT_RLC_LADDERREJ) ? expf(logf(gain2) * rslope) : expf(logf(gain1) * rslope);
                                 float gain          = (ftype == FLT_BT_RLC_LADDERREJ) ? gain2 : gain1;
 
                                 float *t            = (ftype == FLT_BT_RLC_LADDERREJ) ? c->t : c->b;
@@ -830,11 +839,11 @@ namespace lsp
 
                                 // Create transfer function
                                 t[0]                = fg;
-                                t[1]                = 2.0f / (1.0f + fp->fQuality);
+                                t[1]                = rquality;
                                 t[2]                = 1.0f / fg;
 
                                 b[0]                = t[2]; // 1.0 / fg
-                                b[1]                = t[1]; // 2.0 / (1.0 + fp->fQuality)
+                                b[1]                = t[1]; // rquality
                                 b[2]                = t[0]; // fg
 
                                 if ((cj>>1) == 0)
@@ -1109,10 +1118,11 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta     = ((2*(cj - (fp->nSlope & 1)) + 1)*C_PI_DIV_2)/fp->nSlope;
-                        float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0f - tsin*tsin);
-                        float kf1       = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        float theta         = ((2*(cj - (fp->nSlope & 1)) + 1)*C_PI_DIV_2)/fp->nSlope;
+                        float tsin          = sinf(theta);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float kf1           = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        const float alpha   = 2.0f * k * tcos * kf1;
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
@@ -1125,7 +1135,7 @@ namespace lsp
                                 c->t[2]         = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]         = kf1;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = 1.0f;
                             }
                             else
@@ -1135,7 +1145,7 @@ namespace lsp
                                 c->t[2]         = 0.0f;
 
                                 c->b[0]         = 1.0f;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = kf1;
                             }
 
@@ -1502,10 +1512,11 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta     = (((cj & (~1)) + 1)*C_PI_DIV_2)/(fp->nSlope*2); // The number of cascades is just doubled
-                        float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0f - tsin*tsin);
-                        float kf1       = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        float theta         = (((cj & (~1)) + 1)*C_PI_DIV_2)/(fp->nSlope*2); // The number of cascades is just doubled
+                        float tsin          = sinf(theta);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float kf1           = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        const float alpha   = 2.0f * k * tcos * kf1;
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
@@ -1518,7 +1529,7 @@ namespace lsp
                                 c->t[2]         = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]         = kf1;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = 1.0f;
                             }
                             else
@@ -1528,7 +1539,7 @@ namespace lsp
                                 c->t[2]         = 0.0f;
 
                                 c->b[0]         = 1.0f;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = kf1;
                             }
 
@@ -1767,8 +1778,7 @@ namespace lsp
                     dsp::fill_zero(im, count);
                     return true;
 
-                case FLT_BT_AMPLIFIER:
-                case FLT_MT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                     dsp::fill(re, gain, count);
                     dsp::fill_zero(im, count);
                     return true;
@@ -1864,8 +1874,7 @@ namespace lsp
                     dsp::pcomplex_fill_ri(dst, 1.0f, 0.0f, count);
                     return true;
 
-                case FLT_BT_AMPLIFIER:
-                case FLT_MT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                     dsp::pcomplex_fill_ri(dst, gain, 0.0f, count);
                     return true;
 

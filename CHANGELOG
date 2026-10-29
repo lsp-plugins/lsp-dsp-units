@@ -2,6 +2,27 @@
 * RECENT CHANGES
 *******************************************************************************
 
+=== 1.0.39 ===
+* Added support of envelope generation for frequencies related to FFT transform.
+* Now dspu::Equalizer can use dspu::Convolver for zero-latency convolution of
+  FIR filters.
+* The dspu::Crossover module now returns fair band frequency chart for the
+  freq_chart function call.
+* Added 6dB/octave and 18 dB/octave filter support by the dspu::Crossover.
+* Implemented dspu::LRCrossover as a precise implementation of dspu::FFTCrossover
+  and an alternative to dspu::Crossover with linear phase processing feature.
+* Updated logic of the spectrum analyzer: added instant spectrum measurement
+  on channel activation.
+* Implemented support of minimum phase filters by the dspu::Equalizer module.
+* Fixed regression in the dspu::DynamicsProcessor module which could produce
+  NaN (not-a-number) values.
+* Implemented Kaiser and Kaiser-Bessel Derived window function.
+* Reduced spectrum leakage artifacts by using Kaiser-Bessel Derived window for
+  spectral processing modules.
+* Fixed filter doubling issue with external filter bank.
+* Updated build scripts.
+* Updated module versions in dependencies.
+
 === 1.0.38 ===
 * Updated build scripts.
 * Updated module versions in dependencies.

@@ -121,7 +121,7 @@ namespace lsp
             pFftBuf         = &pInBuf[buf_size];
 
             // Clear buffers and reset pointers
-            windows::cosine(pWnd, buf_size);
+            windows::kaiser_bessel_derived(pWnd, buf_size);
             dsp::fill_zero(pOutBuf, buf_size*4);     // OutBuf + InBuf + Fft(x2)
             nOffset         = buf_size * (fPhase * 0.5f);
 

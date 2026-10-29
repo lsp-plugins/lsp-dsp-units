@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 мая 2024 г.
@@ -21,6 +21,7 @@
 
 #include <lsp-plug.in/dsp-units/shared/Catalog.h>
 #include <lsp-plug.in/common/alloc.h>
+#include <lsp-plug.in/common/atomic.h>
 #include <lsp-plug.in/common/endian.h>
 #include <lsp-plug.in/runtime/system.h>
 #include <lsp-plug.in/stdlib/string.h>
@@ -140,7 +141,7 @@ namespace lsp
             pHeader->nVersion       = 1;
             pHeader->nSize          = uint32_t(entries);
             pHeader->nAllocated     = 0;
-            pHeader->nChanges       = nChanges;
+            atomic_store(&pHeader->nChanges, nChanges);
 
             // Initialize records
             bzero(vRecords, recs_size);
@@ -181,7 +182,7 @@ namespace lsp
             // Initialize catalog
             pHeader                 = advance_ptr_bytes<sh_header_t>(ptr, hdr_size);
             vRecords                = advance_ptr_bytes<sh_record_t>(ptr, recs_size);
-            nChanges                = pHeader->nChanges;
+            nChanges                = atomic_load(&pHeader->nChanges);
 
             return STATUS_OK;
         }
@@ -203,7 +204,7 @@ namespace lsp
             if (pHeader == NULL)
                 return false;
 
-            uint32_t changes = pHeader->nChanges;
+            const uint32_t changes  = atomic_load(&pHeader->nChanges);
             if (nChanges == changes)
                 return false;
 
@@ -216,7 +217,7 @@ namespace lsp
             if (pHeader == NULL)
                 return false;
 
-            uint32_t changes = pHeader->nChanges;
+            const uint32_t changes  = atomic_load(&pHeader->nChanges);
             return nChanges != changes;
         }
 
@@ -295,8 +296,7 @@ namespace lsp
 
         void Catalog::mark_changed()
         {
-            uint32_t changes    = pHeader->nChanges;
-            pHeader->nChanges   = changes + 1;
+            atomic_add(&pHeader->nChanges, uint32_t(1));
         }
 
         ssize_t Catalog::publish(Record *record, uint32_t magic, const char *name, const char *id)

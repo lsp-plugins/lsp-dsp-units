@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 03 авг. 2016 г.
@@ -87,16 +87,30 @@ namespace lsp
 
         enum crossover_slope_t
         {
-            CROSS_SLOPE_OFF     = 0,
-            CROSS_SLOPE_LR2     = 1,        //! 12 dB/ocave
-            CROSS_SLOPE_LR4     = 2,        //! 24 dB/ocave
-            CROSS_SLOPE_LR8     = 3,        //! 48 dB/ocave
-            CROSS_SLOPE_LR12    = 4,        //! 72 dB/ocave
-            CROSS_SLOPE_LR16    = 5,        //! 96 dB/ocave
-            CROSS_SLOPE_LR20    = 6,        //! 120 dB/ocave
-            CROSS_SLOPE_LR24    = 7,        //! 144 dB/ocave
-            CROSS_SLOPE_LR28    = 8,        //! 168 dB/ocave
-            CROSS_SLOPE_LR32    = 9,        //! 192 dB/ocave
+            CROSS_SLOPE_OFF         = 0,
+            CROSS_SLOPE_6DBO        = 1,                    //! 6 dB/octave slope
+            CROSS_SLOPE_12DBO       = 2,                    //! 12 dB/octave slope
+            CROSS_SLOPE_18DBO       = 3,                    //! 18 dB/octave slope
+            CROSS_SLOPE_24DBO       = 4,                    //! 24 dB/octave slope
+            CROSS_SLOPE_48DBO       = 5,                    //! 48 dB/octave slope
+            CROSS_SLOPE_72DBO       = 6,                    //! 72 dB/octave slope
+            CROSS_SLOPE_96DBO       = 7,                    //! 96 dB/octave slope
+            CROSS_SLOPE_120DBO      = 8,                    //! 120 dB/octave slope
+            CROSS_SLOPE_144DBO      = 9,                    //! 144 dB/octave slope
+            CROSS_SLOPE_168DBO      = 10,                   //! 168 dB/octave slope
+            CROSS_SLOPE_192DBO      = 11,                   //! 192 dB/octave slope
+
+            CROSS_SLOPE_PD_12DBO    = 12,                   //! Special 12 dB/octave phase-distored mode to keep legacy implementation
+
+            CROSS_SLOPE_LR2     = CROSS_SLOPE_12DBO,        //! 12 db/octave slope
+            CROSS_SLOPE_LR4     = CROSS_SLOPE_24DBO,        //! 24 dB/octave slope
+            CROSS_SLOPE_LR8     = CROSS_SLOPE_48DBO,        //! 48 dB/octave slope
+            CROSS_SLOPE_LR12    = CROSS_SLOPE_72DBO,        //! 72 dB/octave slope
+            CROSS_SLOPE_LR16    = CROSS_SLOPE_96DBO,        //! 96 dB/octave slope
+            CROSS_SLOPE_LR20    = CROSS_SLOPE_120DBO,       //! 120 dB/octave slope
+            CROSS_SLOPE_LR24    = CROSS_SLOPE_144DBO,       //! 144 dB/octave slope
+            CROSS_SLOPE_LR28    = CROSS_SLOPE_168DBO,       //! 168 dB/octave slope
+            CROSS_SLOPE_LR32    = CROSS_SLOPE_192DBO,       //! 192 dB/octave slope
         };
 
         /** Crossover, splits signal into bands, calls processing handler (if present)
@@ -126,8 +140,8 @@ namespace lsp
                     Equalizer           sLPF;           // Lo-pass filter
                     Filter              sHPF;           // Hi-pass filter with all-pass filters
 
-                    size_t              nBandId;        // Number of split point
-                    size_t              nSlope;         // Filter slope (0 = off)
+                    uint32_t            nBandId;        // Number of split point
+                    uint32_t            nSlope;         // Filter slope (0 = off)
                     float               fFreq;          // Frequency
                     crossover_mode_t    nMode;          // Filter type
                 } split_t;
@@ -144,7 +158,7 @@ namespace lsp
                     crossover_func_t    pFunc;          // Function
                     void               *pObject;        // Bound object
                     void               *pSubject;       // Bound subject
-                    size_t              nId;            // Number of the band
+                    uint32_t            nId;            // Number of the band
                 } band_t;
 
             protected:
@@ -163,8 +177,14 @@ namespace lsp
                 uint8_t        *pData;          // Unaligned data
 
             protected:
-                static inline filter_type_t    select_filter(xover_type_t type, crossover_mode_t mode, size_t slope);
-                static inline uint32_t         select_slope(xover_type_t type, size_t slope);
+                static inline filter_type_t     select_filter(xover_type_t type, crossover_mode_t mode, uint32_t slope);
+                static inline uint32_t          select_slope(xover_type_t type, uint32_t slope);
+                static inline float             select_quality(uint32_t slope);
+                static inline float             select_gain(xover_type_t type, uint32_t slope, float gain);
+
+            protected:
+                void                            band_freq_chart(size_t band, float *re, float *im, const float *f, size_t count);
+                void                            band_freq_chart(size_t band, float *c, const float *f, size_t count);
 
             public:
                 explicit Crossover();
@@ -259,6 +279,14 @@ namespace lsp
                 ssize_t         get_mode(size_t sp) const;
 
                 /**
+                 * Get all-pass filter configuration for the split point
+                 * @param sp split point number
+                 * @param fp pointer to store filter params
+                 * @return true on success, false if invalid index or pointer has been passed
+                 */
+                bool            get_allpass(size_t sp, filter_params_t *fp);
+
+                /**
                  * Set gain of the specific output band
                  * @param band band number
                  * @param gain gain of the band
@@ -320,7 +348,7 @@ namespace lsp
                  * Get sample rate of the crossover
                  * @return sample rate
                  */
-                inline size_t   get_sample_rate()                   { return nSampleRate;           }
+                inline size_t   get_sample_rate() const             { return nSampleRate;           }
 
                 /** Get frequency chart of the crossover band. This method returns frequency chart
                  * without applied all-pass filters

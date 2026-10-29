@@ -235,7 +235,7 @@ namespace lsp
             size_t frame_size   = 1 << (nChunkRank - 1);
 
             // Clear buffers and reset pointers
-            windows::sqr_cosine(vWnd, frame_size * 2);
+            windows::kaiser_bessel_derived(vWnd, frame_size * 2);
             clear();
 
             nFrameSize          = frame_size * (fPhase * 0.5f);
@@ -315,8 +315,9 @@ namespace lsp
                     const size_t new_in_offset  = nInOffset + frame_size;
 
                     // Perform FFT and processing
-                    dsp::pcomplex_r2c(vFftBuf, &vInBuf[nInOffset], buf_size);       // Convert from real to packed complex
-                    dsp::packed_direct_fft(vFftBuf, vFftBuf, nRank);                // Perform direct FFT
+                    dsp::mul3(&vFftBuf[buf_size], &vInBuf[nInOffset], vWnd, buf_size);  // Apply window at input
+                    dsp::pcomplex_r2c(vFftBuf, &vFftBuf[buf_size], buf_size);           // Convert from real to packed complex
+                    dsp::packed_direct_fft(vFftBuf, vFftBuf, nRank);                    // Perform direct FFT
 
                     for (size_t i=0; i<nHandlers; ++i)
                     {

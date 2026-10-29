@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2020 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2020 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 20 февр. 2016 г.
@@ -54,6 +54,8 @@ namespace lsp
                 COSINE,
                 SQR_COSINE,
                 CUBIC,
+                KAISER,
+                KAISER_BESSEL_DERIVED,
 
                 // Special variables
                 TOTAL,
@@ -156,8 +158,22 @@ namespace lsp
 
             LSP_DSP_UNITS_PUBLIC
             void tukey(float *dst, size_t n);
-        }
-    }
-}
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_general(float *dst, float beta, size_t n);
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser(float *dst, size_t n);
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_bessel_derived_general(float *dst, float beta, size_t n);
+
+            LSP_DSP_UNITS_PUBLIC
+            void kaiser_bessel_derived(float *dst, size_t n);
+
+        } /* namespace windows */
+    } /* namespace dspu */
+} /* namespace lsp */
 
 #endif /* LSP_PLUG_IN_DSP_UNITS_MISC_WINDOWS_H_ */
+
