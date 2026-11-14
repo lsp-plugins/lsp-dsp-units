@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 2 нояб. 2016 г.
@@ -248,6 +248,10 @@ namespace lsp
         {
             update_settings();
 
+            // Use output buffer to write the env value if env is not specified
+            if (env == NULL)
+                env         = out;
+
             // Calculate envelope of expander
             float e         = fEnvelope;
             float peak      = fPeak;
@@ -277,18 +281,14 @@ namespace lsp
                     }
                 }
 
-                out[i]          = e;
+                env[i]          = e;
             }
             fEnvelope       = e;
             fPeak           = peak;
             nHoldCounter    = hold;
 
-            // Copy envelope to array if specified
-            if (env != NULL)
-                dsp::copy(env, out, samples);
-    
             // Now calculate expander curve
-            amplification(out, out, samples);
+            amplification(out, env, samples);
         }
     
         float Expander::process(float *env, float s)

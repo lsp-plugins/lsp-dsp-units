@@ -268,6 +268,10 @@ namespace lsp
         {
             size_t curr_i = 0, prev_i = 0;
 
+            // Use output buffer to write the env value if env is not specified
+            if (env == NULL)
+                env         = out;
+
             while (prev_i < samples)
             {
                 // Process envelope, split the input stream into bulk parts of usage of the same curve.
@@ -304,7 +308,7 @@ namespace lsp
                                 hold            = nHold;
                             }
                         }
-                        out[curr_i]     = e;
+                        env[curr_i]     = e;
 
                         // Change current curve and leave cycle if the value of envelope is above threshold
                         if (e > c->sKnee.end)
@@ -342,7 +346,7 @@ namespace lsp
                                 hold            = nHold;
                             }
                         }
-                        out[curr_i]     = e;
+                        env[curr_i]     = e;
 
                         // Change current curve and leave cycle if the value of envelope is below threshold
                         if (e < c->sKnee.start)
@@ -357,9 +361,7 @@ namespace lsp
                 nHoldCounter    = hold;
 
                 // Update result
-                if (env != NULL)
-                    dsp::copy(&env[prev_i], &out[prev_i], curr_i - prev_i);
-                dsp::gate_x1_gain(&out[prev_i], &out[prev_i], &c->sKnee, curr_i - prev_i);
+                dsp::gate_x1_gain(&out[prev_i], &env[prev_i], &c->sKnee, curr_i - prev_i);
 
                 // Update position
                 prev_i  = curr_i;

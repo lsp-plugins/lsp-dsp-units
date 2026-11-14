@@ -396,6 +396,10 @@ namespace lsp
 
         void DynamicProcessor::process(float *out, float *env, const float *in, size_t samples)
         {
+            // Use output buffer to write the env value if env is not specified
+            if (env == NULL)
+                env         = out;
+
             // Calculate envelope of compressor
             float e         = fEnvelope;
             float peak      = fPeak;
@@ -426,19 +430,15 @@ namespace lsp
                     }
                 }
 
-                out[i]          = e;
+                env[i]          = e;
             }
 
             fEnvelope       = e;
             fPeak           = peak;
             nHoldCounter    = hold;
 
-            // Copy envelope to array if specified
-            if (env != NULL)
-                dsp::copy(env, out, samples);
-
             // Now calculate compressor's curve
-            reduction(out, out, samples);
+            reduction(out, env, samples);
         }
 
         float DynamicProcessor::process(float *env, float s)
