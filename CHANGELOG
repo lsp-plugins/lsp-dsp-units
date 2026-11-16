@@ -5,6 +5,7 @@
 === 1.0.40 ===
 * Updated build scripts.
 * Small optimization of dynamic processing units to avoid extra memory copies.
+* Slight optimizations of the LoudnessMeter tool.
 
 === 1.0.39 ===
 * Added support of envelope generation for frequencies related to FFT transform.

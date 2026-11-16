@@ -412,9 +412,10 @@ namespace lsp
             nMSRefresh          = lsp_max(BUFFER_SIZE << 2, nPeriod >> 2);
         }
 
-        size_t LoudnessMeter::process_channels(size_t offset, size_t samples)
+        size_t LoudnessMeter::process_channels(float * out, size_t offset, size_t samples)
         {
-            const size_t mask   = nDataSize - 1;
+            const size_t dsize  = nDataSize;
+            const size_t mask   = dsize - 1;
             size_t mixed        = 0;        // Number of loudness channels mixed together
 
             // Pre-process each channel individually
@@ -426,38 +427,51 @@ namespace lsp
                 if (c->vIn == NULL)
                     continue;
 
+                float * const vms   = c->vMS;
+                float * const data  = c->vData;
+
                 // Apply the weighting filter
-                c->sFilter.process(c->vMS, &c->vIn[offset], samples);
+                c->sFilter.process(vms, &c->vIn[offset], samples);
 
                 // Put the squared input data to the buffer
                 size_t head         = nDataHead;
-                size_t head_adv     = (nDataHead + samples) & mask;
+                size_t head_adv     = (head + samples) & mask;
                 if (head_adv <= head)
                 {
-                    dsp::sqr2(&c->vData[head], c->vMS, nDataSize - head);
-                    dsp::sqr2(&c->vData[0], &c->vMS[nDataSize - head], head_adv);
+                    dsp::sqr2(&data[head], vms, dsize - head);
+                    dsp::sqr2(&data[0], &vms[dsize - head], head_adv);
                 }
                 else
-                    dsp::sqr2(&c->vData[head], c->vMS, samples);
+                    dsp::sqr2(&data[head], vms, samples);
 
                 // Compute the Mean Square value for each sample and store into mean square buffer
-                size_t tail         = (nDataHead + nDataSize - nPeriod) & mask;
+                size_t tail         = (head + dsize - nPeriod) & mask;
                 float ms            = c->fMS;
+                const float avg     = fAvgCoeff;
 
-                for (size_t j=0; j<samples; ++j)
+                for (size_t j=0; j<samples; )
                 {
-                    ms                 += c->vData[head] - c->vData[tail];
-                    c->vMS[j]           = fAvgCoeff * ms;
-                    head                = (head + 1) & mask;
-                    tail                = (tail + 1) & mask;
+                    const size_t to_do  = lsp_min(dsize - head, dsize - tail, samples-j);
+                    float * const hptr  = &data[head];
+                    float * const tptr  = &data[tail];
+                    float * const vptr  = &vms[j];
+
+                    for (size_t k=0; k<to_do; ++k)
+                    {
+                        ms                 += hptr[k] - tptr[k];
+                        vptr[k]             = avg * ms;
+                    }
+                    head                = (head + to_do) & mask;
+                    tail                = (tail + to_do) & mask;
+                    j                  += to_do;
                 }
-                c->fMS             = ms;
+                c->fMS              = ms;
 
                 // Add mean square values to the loudness estimation buffer
                 if (mixed++ > 0)
-                    dsp::fmadd_k3(vBuffer, c->vMS, c->fWeight, samples);
+                    dsp::fmadd_k3(out, vms, c->fWeight, samples);
                 else
-                    dsp::mul_k3(vBuffer, c->vMS, c->fWeight, samples);
+                    dsp::mul_k3(out, vms, c->fWeight, samples);
             }
 
             return mixed;
@@ -472,20 +486,19 @@ namespace lsp
                 refresh_rms();
 
                 // Apply data
+                float * const dst   = (out != NULL) ? &out[offset] : vBuffer;
                 const size_t to_do  = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
-                const size_t mixed  = process_channels(offset, to_do);
-
-                if (mixed == 0)
-                    dsp::fill_zero(vBuffer, to_do);
+                const size_t mixed  = process_channels(dst, offset, to_do);
 
                 // Now we have the mean squares computed for each channel, weighted,
                 // summed and stored into vBuffer. Convert them into gain values
-                dsp::ssqrt1(vBuffer, to_do);
-                if (out != NULL)
-                    dsp::copy(&out[offset], vBuffer, to_do);
+                if (mixed == 0)
+                    dsp::fill_zero(dst, to_do);
+                else
+                    dsp::ssqrt1(dst, to_do);
 
                 // Remember last measured loudness
-                fLoudness           = vBuffer[to_do - 1];
+                fLoudness           = dst[to_do - 1];
 
                 // Post-process each channel individually: convert mean squares into
                 // RMS and perform the linking
@@ -501,9 +514,9 @@ namespace lsp
                         if (c->fLink <= 0.0f)
                             dsp::copy(&c->vOut[c->nOffset], c->vMS, to_do);
                         else if (c->fLink >= 1.0f)
-                            dsp::copy(&c->vOut[c->nOffset], vBuffer, to_do);
+                            dsp::copy(&c->vOut[c->nOffset], dst, to_do);
                         else
-                            dsp::mix_copy2(&c->vOut[c->nOffset], vBuffer, c->vMS, c->fLink, 1.0f - c->fLink, to_do);
+                            dsp::mix_copy2(&c->vOut[c->nOffset], dst, c->vMS, c->fLink, 1.0f - c->fLink, to_do);
                     }
 
                     c->nOffset         += to_do;
@@ -525,17 +538,16 @@ namespace lsp
                 refresh_rms();
 
                 // Apply data
+                float * const dst   = (out != NULL) ? &out[offset] : vBuffer;
                 size_t to_do        = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
-                size_t mixed        = process_channels(offset, to_do);
-
-                if (mixed == 0)
-                    dsp::fill_zero(vBuffer, to_do);
+                size_t mixed        = process_channels(dst, offset, to_do);
 
                 // Now we have the mean squares computed for each channel, weighted,
                 // summed and stored into vBuffer. Convert them into gain values
-                dsp::ssqrt1(vBuffer, to_do);
-                if (out != NULL)
-                    dsp::mul_k3(&out[offset], vBuffer, gain, to_do);
+                if (mixed == 0)
+                    dsp::fill_zero(dst, to_do);
+                else
+                    dsp::ssqrt1(dst, to_do);
 
                 // Post-process each channel individually: convert mean squares into
                 // RMS and perform the linking
@@ -551,9 +563,9 @@ namespace lsp
                         if (c->fLink <= 0.0f)
                             dsp::mul_k3(&c->vOut[c->nOffset], c->vMS, gain, to_do);
                         else if (c->fLink >= 1.0f)
-                            dsp::mul_k3(&c->vOut[c->nOffset], vBuffer, gain, to_do);
+                            dsp::mul_k3(&c->vOut[c->nOffset], dst, gain, to_do);
                         else
-                            dsp::mix_copy2(&c->vOut[c->nOffset], vBuffer, c->vMS, c->fLink * gain, (1.0f - c->fLink) * gain, to_do);
+                            dsp::mix_copy2(&c->vOut[c->nOffset], dst, c->vMS, c->fLink * gain, (1.0f - c->fLink) * gain, to_do);
                     }
 
                     c->nOffset         += to_do;
@@ -564,6 +576,10 @@ namespace lsp
                 nMSRefresh         -= to_do;
                 offset             += to_do;
             }
+            
+            // Apply post-gain
+            if ((out != NULL) && (gain != 1.0f))
+            	dsp::mul_k2(out, gain, count);
         }
 
         void LoudnessMeter::dump(IStateDumper *v) const
