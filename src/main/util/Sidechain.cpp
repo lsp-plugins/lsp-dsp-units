@@ -472,9 +472,10 @@ namespace lsp
                     case SCM_LPF:
                     {
                         float rms           = fRmsValue;
+                        const float tau     = fTau;
                         for (size_t i=0; i<to_do; ++i)
                         {
-                            rms                += fTau * (out[i] - rms);
+                            rms                += tau * (out[i] - rms);
                             out[i]              = lsp_max(rms, 0.0f);
                         }
 
@@ -492,20 +493,13 @@ namespace lsp
                         const float *p      = sBuffer.tail(nReactivity + to_do);
                         const size_t split  = lsp_min(to_do, size_t(sBuffer.end() - p));
 
-                        float rms           = fRmsValue;
-                        size_t i            = 0;
-                        for (; i < split; ++i)
-                        {
-                            rms                += out[i] - p[i];
-                            out[i]              = (rms < 0.0f) ? 0.0f : rms * interval;
-                        }
-                        p                  -= sBuffer.size();
-                        for (; i < to_do; ++i)
-                        {
-                            rms                += out[i] - p[i];
-                            out[i]              = (rms < 0.0f) ? 0.0f : rms * interval;
-                        }
-                        fRmsValue           = rms;
+                        fRmsValue           = dsp::moving_pavg(
+                            out, p, out,
+                            fRmsValue, interval, split);
+                        if (split < to_do)
+                            fRmsValue           = dsp::moving_pavg(
+                                &out[split], sBuffer.begin(), &out[split],
+                                fRmsValue, interval, to_do - split);
                         break;
                     }
 
@@ -519,26 +513,14 @@ namespace lsp
                         const float *p      = sBuffer.tail(nReactivity + to_do);
                         const size_t split  = lsp_min(to_do, size_t(sBuffer.end() - p));
 
-                        float rms           = fRmsValue;
-                        size_t i            = 0;
-                        for (; i < split; ++i)
-                        {
-                            const float sample  = out[i];
-                            const float last    = p[i];
-                            rms                += sample*sample - last*last;
-                            out[i]              = rms * interval;
-                        }
-                        p                  -= sBuffer.size();
-                        for (; i < to_do; ++i)
-                        {
-                            const float sample  = out[i];
-                            const float last    = p[i];
-                            rms                += sample*sample - last*last;
-                            out[i]              = rms * interval;
-                        }
-                        dsp::ssqrt1(out, to_do);
+                        fRmsValue           = dsp::moving_rms(
+                            out, p, out,
+                            fRmsValue, interval, split);
+                        if (split < to_do)
+                            fRmsValue           = dsp::moving_rms(
+                                &out[split], sBuffer.begin(), &out[split],
+                                fRmsValue, interval, to_do - split);
 
-                        fRmsValue           = rms;
                         break;
                     }
 
