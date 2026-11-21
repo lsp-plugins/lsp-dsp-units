@@ -409,7 +409,7 @@ namespace lsp
             }
 
             // Reset the counter
-            nMSRefresh          = lsp_max(BUFFER_SIZE << 2, nPeriod >> 2);
+            nMSRefresh          = lsp_max(BUFFER_SIZE << 4, nPeriod >> 2);
         }
 
         size_t LoudnessMeter::process_channels(float * out, size_t offset, size_t samples)
