@@ -72,7 +72,7 @@ namespace lsp
 
                     const float        *vIn;            // The input buffer
                     float              *vOut;           // Output gain buffer
-                    float              *vData;          // Ring Buffer for measuring mean square
+                    float              *vData;          // Ring Buffer, contains weighed samples for measuring mean square
                     float              *vMS;            // Temporary buffer for measured mean square
 
                     float               fMS;            // Current Mean square value

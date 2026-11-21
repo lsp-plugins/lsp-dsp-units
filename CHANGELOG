@@ -6,6 +6,7 @@
 * Updated build scripts.
 * Small optimization of dynamic processing units to avoid extra memory copies.
 * Slight optimizations of the LoudnessMeter tool.
+* Optimized LoudnessMeter by using dsp::moving_mean_sqr function.
 
 === 1.0.39 ===
 * Added support of envelope generation for frequencies related to FFT transform.

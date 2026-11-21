@@ -386,25 +386,25 @@ namespace lsp
             if (nMSRefresh > 0)
                 return;
 
-            size_t tail         = (nDataHead + nDataSize - nPeriod) & (nDataSize - 1);
+            const size_t tail       = (nDataHead + nDataSize - nPeriod) & (nDataSize - 1);
             if (tail < nDataHead)
             {
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c     = &vChannels[i];
                     if (c->nFlags & C_ENABLED)
-                        c->fMS         = dsp::h_sum(&c->vData[tail], nDataHead - tail);
+                        c->fMS         = dsp::h_sqr_sum(&c->vData[tail], nDataHead - tail);
                 }
             }
             else
             {
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c     = &vChannels[i];
                     if (c->nFlags & C_ENABLED)
                         c->fMS         =
-                            dsp::h_sum(c->vData, nDataHead) +
-                            dsp::h_sum(&c->vData[tail], nDataSize - tail);
+                            dsp::h_sqr_sum(c->vData, nDataHead) +
+                            dsp::h_sqr_sum(&c->vData[tail], nDataSize - tail);
                 }
             }
 
@@ -427,45 +427,29 @@ namespace lsp
                 if (c->vIn == NULL)
                     continue;
 
-                float * const vms   = c->vMS;
+                // Apply the weighting filter and compute the Mean Square value
                 float * const data  = c->vData;
-
-                // Apply the weighting filter
-                c->sFilter.process(vms, &c->vIn[offset], samples);
-
-                // Put the squared input data to the buffer
+                float * const vms   = c->vMS;
                 size_t head         = nDataHead;
-                size_t head_adv     = (head + samples) & mask;
-                if (head_adv <= head)
-                {
-                    dsp::sqr2(&data[head], vms, dsize - head);
-                    dsp::sqr2(&data[0], &vms[dsize - head], head_adv);
-                }
-                else
-                    dsp::sqr2(&data[head], vms, samples);
-
-                // Compute the Mean Square value for each sample and store into mean square buffer
                 size_t tail         = (head + dsize - nPeriod) & mask;
-                float ms            = c->fMS;
-                const float avg     = fAvgCoeff;
 
                 for (size_t j=0; j<samples; )
                 {
                     const size_t to_do  = lsp_min(dsize - head, dsize - tail, samples-j);
-                    float * const hptr  = &data[head];
-                    float * const tptr  = &data[tail];
-                    float * const vptr  = &vms[j];
 
-                    for (size_t k=0; k<to_do; ++k)
-                    {
-                        ms                 += hptr[k] - tptr[k];
-                        vptr[k]             = avg * ms;
-                    }
+                    // Apply weighting filter
+                    c->sFilter.process(&data[head], &c->vIn[offset + j], to_do);
+
+                    // Compute the mean square for processed samples and store to the buffer
+                    c->fMS = dsp::moving_mean_sqr(
+                        &vms[j], &data[tail], &data[head],
+                        c->fMS, fAvgCoeff, to_do);
+
+                    // Update pointers
                     head                = (head + to_do) & mask;
                     tail                = (tail + to_do) & mask;
                     j                  += to_do;
                 }
-                c->fMS              = ms;
 
                 // Add mean square values to the loudness estimation buffer
                 if (mixed++ > 0)
@@ -510,13 +494,16 @@ namespace lsp
 
                     if (c->vOut != NULL)
                     {
-                        dsp::ssqrt1(c->vMS, to_do);
+                        float * const cout = &c->vOut[c->nOffset];
                         if (c->fLink <= 0.0f)
-                            dsp::copy(&c->vOut[c->nOffset], c->vMS, to_do);
+                            dsp::ssqrt2(cout, c->vMS, to_do);
                         else if (c->fLink >= 1.0f)
-                            dsp::copy(&c->vOut[c->nOffset], dst, to_do);
+                            dsp::copy(cout, dst, to_do);
                         else
-                            dsp::mix_copy2(&c->vOut[c->nOffset], dst, c->vMS, c->fLink, 1.0f - c->fLink, to_do);
+                        {
+                            dsp::ssqrt2(cout, c->vMS, to_do);
+                            dsp::mix2(cout, dst, 1.0f - c->fLink, c->fLink, to_do);
+                        }
                     }
 
                     c->nOffset         += to_do;
@@ -539,7 +526,7 @@ namespace lsp
 
                 // Apply data
                 float * const dst   = (out != NULL) ? &out[offset] : vBuffer;
-                size_t to_do        = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
+                const size_t to_do  = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
                 size_t mixed        = process_channels(dst, offset, to_do);
 
                 // Now we have the mean squares computed for each channel, weighted,
@@ -559,13 +546,19 @@ namespace lsp
 
                     if (c->vOut != NULL)
                     {
-                        dsp::ssqrt1(c->vMS, to_do);
+                        float * const cout = &c->vOut[c->nOffset];
                         if (c->fLink <= 0.0f)
-                            dsp::mul_k3(&c->vOut[c->nOffset], c->vMS, gain, to_do);
+                        {
+                            dsp::ssqrt2(cout, c->vMS, to_do);
+                            dsp::mul_k2(cout, gain, to_do);
+                        }
                         else if (c->fLink >= 1.0f)
-                            dsp::mul_k3(&c->vOut[c->nOffset], dst, gain, to_do);
+                            dsp::mul_k3(cout, dst, gain, to_do);
                         else
-                            dsp::mix_copy2(&c->vOut[c->nOffset], dst, c->vMS, c->fLink * gain, (1.0f - c->fLink) * gain, to_do);
+                        {
+                            dsp::ssqrt2(cout, c->vMS, to_do);
+                            dsp::mix2(cout, dst, (1.0f - c->fLink) * gain, c->fLink * gain, to_do);
+                        }
                     }
 
                     c->nOffset         += to_do;
