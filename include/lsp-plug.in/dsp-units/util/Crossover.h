@@ -158,6 +158,7 @@ namespace lsp
                     crossover_func_t    pFunc;          // Function
                     void               *pObject;        // Bound object
                     void               *pSubject;       // Bound subject
+                    float              *pBoundBuffer;   // Bound buffer for filtered band result
                     uint32_t            nId;            // Number of the band
                 } band_t;
 
@@ -337,6 +338,24 @@ namespace lsp
                  * @return false if invalid band number has been specified
                  */
                 bool            unset_handler(size_t band);
+
+                /**
+                 * Bind buffer to store processed channel data at the process() call.
+                 * The size of buffer should be enough to store the whole amount of samples
+                 * passed to the process() call.
+                 * @param band band number
+                 * @param buffer pointer to buffer
+                 * @return previous pointer to the buffer
+                 */
+                float          *bind_buffer(size_t band, float *buffer);
+
+                /**
+                 * Unbind buffer
+                 * @param band band number
+                 * @param buffer pointer to buffer
+                 * @return previous pointer to the buffer
+                 */
+                float          *unbind_buffer(size_t band);
 
                 /** Set sample rate, needs reconfiguration
                  *

@@ -9,6 +9,8 @@
 * Optimized LoudnessMeter by using dsp::moving_mean_sqr function.
 * Small optimizations of Sidechain module by using dsp::moving_pavg and
   dsp::moving_rms functions.
+* Added bind_buffer method to the dspu::Crossover module to optimize memory
+  copies for that plugins that just need the raw frequency band output.
 
 === 1.0.39 ===
 * Added support of envelope generation for frequencies related to FFT transform.

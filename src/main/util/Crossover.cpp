@@ -158,6 +158,7 @@ namespace lsp
                 sb->pFunc           = NULL;
                 sb->pObject         = NULL;
                 sb->pSubject        = NULL;
+                sb->pBoundBuffer    = NULL;
                 sb->nId             = i;
             }
 
@@ -352,10 +353,10 @@ namespace lsp
             if (band > nSplits)
                 return false;
 
-            band_t *b       = &vBands[band];
-            b->pFunc        = func;
-            b->pObject      = object;
-            b->pSubject     = subject;
+            band_t * const b    = &vBands[band];
+            b->pFunc            = func;
+            b->pObject          = object;
+            b->pSubject         = subject;
 
             return true;
         }
@@ -365,11 +366,28 @@ namespace lsp
             if (band > nSplits)
                 return false;
 
-            band_t *b       = &vBands[band];
-            b->pFunc        = NULL;
-            b->pObject      = NULL;
-            b->pSubject     = NULL;
+            band_t * const b    = &vBands[band];
+            b->pFunc            = NULL;
+            b->pObject          = NULL;
+            b->pSubject         = NULL;
             return true;
+        }
+
+        float *Crossover::bind_buffer(size_t band, float *buffer)
+        {
+            if (band > nSplits)
+                return NULL;
+
+            band_t * const b    = &vBands[band];
+            float * const out   = b->pBoundBuffer;
+            b->pBoundBuffer     = buffer;
+
+            return out;
+        }
+
+        float *Crossover::unbind_buffer(size_t band)
+        {
+            return bind_buffer(band, NULL);
         }
 
         bool Crossover::band_active(size_t band)
@@ -526,46 +544,53 @@ namespace lsp
         {
             reconfigure();
 
-            for (size_t sample=0; sample < samples; )
+            for (size_t offset=0; offset < samples; )
             {
-                const size_t to_do  = lsp_min(samples - sample, nBufSize);
+                const size_t to_do  = lsp_min(samples - offset, nBufSize);
                 band_t *left        = &vBands[0];
                 const float *src    = in;
+                float *lpf, *hpf;
 
                 if (nPlanSize > 0)
                 {
                     // Process each band except last
                     for (size_t i=0; i<nPlanSize; ++i)
                     {
-                        split_t *sp         = vPlan[i];
-                        band_t *right       = &vBands[sp->nBandId];
+                        split_t * const sp      = vPlan[i];
+                        band_t * const right    = &vBands[sp->nBandId];
 
                         // Perform split first
-                        if (left->pFunc != NULL)
-                            sp->sLPF.process(vLpfBuf, src, to_do);
-                        sp->sHPF.process(vHpfBuf, src, to_do);
+                        if ((left->pFunc) || (left->pBoundBuffer))
+                        {
+                            lpf                 = (left->pBoundBuffer) ? &left->pBoundBuffer[offset] : vLpfBuf;
+                            sp->sLPF.process(lpf, src, to_do); // Process signal for current band
+                        }
+                        hpf                     = ((right->pBoundBuffer) && ((i+1) >= nPlanSize)) ? &right->pBoundBuffer[offset] : vHpfBuf;
+                        sp->sHPF.process(hpf, src, to_do); // Process signal for next bands
 
-                        // Now call handlers
+                        // Now issue signal processing callback for current band
                         if (left->pFunc != NULL)
-                            left->pFunc(left->pObject, left->pSubject, left->nId, vLpfBuf, sample, to_do);
+                            left->pFunc(left->pObject, left->pSubject, left->nId, lpf, offset, to_do);
 
-                        src                 = vHpfBuf;
+                        src                 = hpf;
                         left                = right;
                     }
 
                     // Process last band
                     if (left->pFunc != NULL)
-                        left->pFunc(left->pObject, left->pSubject, left->nId, vHpfBuf, sample, to_do);
+                        left->pFunc(left->pObject, left->pSubject, left->nId, hpf, offset, to_do);
                 }
-                else if (left->pFunc != NULL)
+                else if ((left->pFunc) || (left->pBoundBuffer))
                 {
-                    dsp::mul_k3(vLpfBuf, src, vBands[0].fGain, to_do);
-                    left->pFunc(left->pObject, left->pSubject, left->nId, vLpfBuf, sample, to_do);
+					lpf         = (left->pBoundBuffer) ? &left->pBoundBuffer[offset] : vLpfBuf;
+                    dsp::mul_k3(lpf, src, left->fGain, to_do);
+                    if (left->pFunc != NULL)
+                        left->pFunc(left->pObject, left->pSubject, left->nId, lpf, offset, to_do);
                 }
 
                 // Update pointers
                 in                 += to_do;
-                sample             += to_do;
+                offset             += to_do;
             }
         }
 
@@ -762,6 +787,7 @@ namespace lsp
                     v->write("pFunc", b->pFunc);
                     v->write("pOpbject", b->pObject);
                     v->write("pSubject", b->pSubject);
+                    v->write("pBoundBuffer", b->pBoundBuffer);
                     v->write("nId", b->nId);
                 }
                 v->end_object();
