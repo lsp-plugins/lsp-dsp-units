@@ -549,27 +549,31 @@ namespace lsp
                 const size_t to_do  = lsp_min(samples - offset, nBufSize);
                 band_t *left        = &vBands[0];
                 const float *src    = in;
-                float *lpf, *hpf;
 
                 if (nPlanSize > 0)
                 {
                     // Process each band except last
+                    float *hpf          = vHpfBuf;
+
                     for (size_t i=0; i<nPlanSize; ++i)
                     {
                         split_t * const sp      = vPlan[i];
                         band_t * const right    = &vBands[sp->nBandId];
 
                         // Perform split first
+                        float *lpf              = vLpfBuf;
                         if ((left->pFunc) || (left->pBoundBuffer))
                         {
-                            lpf                 = (left->pBoundBuffer) ? &left->pBoundBuffer[offset] : vLpfBuf;
+                            if (left->pBoundBuffer)
+                                lpf                 = &left->pBoundBuffer[offset];
                             sp->sLPF.process(lpf, src, to_do); // Process signal for current band
                         }
-                        hpf                     = ((right->pBoundBuffer) && ((i+1) >= nPlanSize)) ? &right->pBoundBuffer[offset] : vHpfBuf;
+                        if ((right->pBoundBuffer) && ((i+1) >= nPlanSize))
+                            hpf                 = &right->pBoundBuffer[offset];
                         sp->sHPF.process(hpf, src, to_do); // Process signal for next bands
 
                         // Now issue signal processing callback for current band
-                        if (left->pFunc != NULL)
+                        if (left->pFunc)
                             left->pFunc(left->pObject, left->pSubject, left->nId, lpf, offset, to_do);
 
                         src                 = hpf;
@@ -582,7 +586,7 @@ namespace lsp
                 }
                 else if ((left->pFunc) || (left->pBoundBuffer))
                 {
-					lpf         = (left->pBoundBuffer) ? &left->pBoundBuffer[offset] : vLpfBuf;
+					float * const lpf   = (left->pBoundBuffer) ? &left->pBoundBuffer[offset] : vLpfBuf;
                     dsp::mul_k3(lpf, src, left->fGain, to_do);
                     if (left->pFunc != NULL)
                         left->pFunc(left->pObject, left->pSubject, left->nId, lpf, offset, to_do);

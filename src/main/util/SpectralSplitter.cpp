@@ -101,28 +101,22 @@ namespace lsp
             if (ptr == NULL)
                 return false;
 
-            vHandlers       = reinterpret_cast<handler_t *>(ptr);
-            ptr            += hdl_sz;
-            vWnd            = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz;
-            vInBuf          = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * BUFFER_MULTIPLIER;
-            vFftBuf         = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * 2;
-            vFftTmp         = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * 2;
+            vHandlers       = advance_ptr_bytes<handler_t>(ptr, hdl_sz);
+            vWnd            = advance_ptr_bytes<float>(ptr, buf_sz);
+            vInBuf          = advance_ptr_bytes<float>(ptr, buf_sz * BUFFER_MULTIPLIER);
+            vFftBuf         = advance_ptr_bytes<float>(ptr, buf_sz * 2);
+            vFftTmp         = advance_ptr_bytes<float>(ptr, buf_sz * 2);
 
             // Initialize handlers
             for (size_t i=0; i<handlers; ++i)
             {
-                handler_t *h    = &vHandlers[i];
+                handler_t * const h = &vHandlers[i];
 
-                h->pObject      = NULL;
-                h->pSubject     = NULL;
-                h->pFunc        = NULL;
-                h->pSink        = NULL;
-                h->vOutBuf      = reinterpret_cast<float *>(ptr);
-                ptr            += buf_sz * BUFFER_MULTIPLIER;
+                h->pObject          = NULL;
+                h->pSubject         = NULL;
+                h->pFunc            = NULL;
+                h->pSink            = NULL;
+                h->vOutBuf          = advance_ptr_bytes<float>(ptr, buf_sz * BUFFER_MULTIPLIER);
             }
 
             nHandlers       = handlers;
@@ -321,15 +315,17 @@ namespace lsp
 
                     for (size_t i=0; i<nHandlers; ++i)
                     {
-                        handler_t *h    = &vHandlers[i];
+                        handler_t * const h     = &vHandlers[i];
+                        float *sink_in;
                         if (h->pFunc != NULL)
                         {
-                            h->pFunc(h->pObject, h->pSubject, vFftTmp, vFftBuf, nRank);
-                            dsp::packed_reverse_fft(vFftTmp, vFftTmp, nRank);                                   // Perform reverse FFT
-                            dsp::pcomplex_c2r(vFftTmp, &vFftTmp[buf_size*2 - frame_size*4], frame_size * 2);    // Unpack complex numbers
+                            sink_in     = vFftTmp;
+                            h->pFunc(h->pObject, h->pSubject, sink_in, vFftBuf, nRank);
+                            dsp::packed_reverse_fft(sink_in, sink_in, nRank);                                   // Perform reverse FFT
+                            dsp::pcomplex_c2r(sink_in, &sink_in[buf_size*2 - frame_size*4], frame_size * 2);    // Unpack complex numbers
                         }
                         else
-                            dsp::copy(vFftTmp, &vInBuf[nInOffset], frame_size * 2);  // Copy data to FFT buffer
+                            sink_in     = &vInBuf[nInOffset];
 
                         // Apply window and add to the output buffer
                         if (h->pSink != NULL)
@@ -338,10 +334,10 @@ namespace lsp
                             {
                                 dsp::move(h->vOutBuf, &h->vOutBuf[new_in_offset], frame_size);
                                 dsp::fill_zero(&h->vOutBuf[frame_size], max_in_offset);
-                                dsp::fmadd3(h->vOutBuf, vFftTmp, vWnd, frame_size * 2);  // Apply window function and add result to buffer
+                                dsp::fmadd3(h->vOutBuf, sink_in, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                             }
                             else
-                                dsp::fmadd3(&h->vOutBuf[new_in_offset], vFftTmp, vWnd, frame_size * 2);  // Apply window function and add result to buffer
+                                dsp::fmadd3(&h->vOutBuf[new_in_offset], sink_in, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                         }
                     }
 
