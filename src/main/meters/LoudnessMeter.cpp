@@ -536,11 +536,14 @@ namespace lsp
                 else
                     dsp::ssqrt1(dst, to_do);
 
+                // Remember last measured loudness
+                fLoudness           = dst[to_do - 1];
+
                 // Post-process each channel individually: convert mean squares into
                 // RMS and perform the linking
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c = &vChannels[i];
                     if (!(c->nFlags & C_ENABLED))
                         continue;
 
