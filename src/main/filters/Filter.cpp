@@ -225,7 +225,22 @@ namespace lsp
             // Calculate filter
             switch (sParams.nType)
             {
-                case FLT_BT_AMPLIFIER:
+                case FLT_AMPLIFIER:
+                {
+                    dsp::biquad_x1_t * const f  = pBank->add_chain();
+                    f->b0               = fp.fGain;
+                    f->b1               = 0.0f;
+                    f->b2               = 0.0f;
+                    f->a1               = 0.0f;
+                    f->a2               = 0.0f;
+                    f->p0               = 0.0f;
+                    f->p1               = 0.0f;
+                    f->p2               = 0.0f;
+
+                    nMode               = FM_APO;
+                    break;
+                }
+
                 case FLT_BT_RLC_LOPASS:
                 case FLT_BT_RLC_HIPASS:
                 case FLT_BT_RLC_LOSHELF:
@@ -247,7 +262,6 @@ namespace lsp
                     break;
                 }
 
-                case FLT_MT_AMPLIFIER:
                 case FLT_MT_RLC_LOPASS:
                 case FLT_MT_RLC_HIPASS:
                 case FLT_MT_RLC_LOSHELF:
@@ -418,7 +432,7 @@ namespace lsp
 
                 // These equations are valid since sw has valid sign
                 float c2w   = cw * cw - sw * sw;    // cos(2 * w)
-                float s2w   = 2.0 * sw * cw;        // sin(2 * w)
+                float s2w   = 2.0f * sw * cw;       // sin(2 * w)
 
                 // Apo will be just one biquad, but let's write this to be able to calculate any digital biquads cascade.
                 float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
@@ -433,7 +447,7 @@ namespace lsp
                     float gamma     = c->b[0] + c->b[1] * cw + c->b[2] * c2w;
                     float delta     = c->b[1] * sw + c->b[2] * s2w;
 
-                    float mag       = 1.0 / (gamma * gamma + delta * delta);
+                    float mag       = 1.0f / (gamma * gamma + delta * delta);
 
                     // Compute current biquad's tranfer function
                     float w_re      = mag * (alpha * gamma - beta * delta);
@@ -465,7 +479,7 @@ namespace lsp
 
                 // These equations are valid since sw has valid sign
                 float c2w   = cw * cw - sw * sw;    // cos(2 * w)
-                float s2w   = 2.0 * sw * cw;        // sin(2 * w)
+                float s2w   = 2.0f * sw * cw;       // sin(2 * w)
 
                 // Apo will be just one biquad, but let's write this to be able to calculate any digital biquads cascade.
                 float r_re  = 1.0f, r_im = 0.0f;    // The result complex number
@@ -480,7 +494,7 @@ namespace lsp
                     float gamma     = c->b[0] + c->b[1] * cw + c->b[2] * c2w;
                     float delta     = c->b[1] * sw + c->b[2] * s2w;
 
-                    float mag       = 1.0 / (gamma * gamma + delta * delta);
+                    float mag       = 1.0f / (gamma * gamma + delta * delta);
 
                     // Compute current biquad's tranfer function
                     float w_re      = mag * (alpha * gamma - beta * delta);
@@ -643,7 +657,7 @@ namespace lsp
 
                 case FM_MATCHED:
                 {
-                    float kf    = 1.0f / sParams.fFreq;
+                    const float kf  = 1.0f / sParams.fFreq;
 
                     while (count > 0)
                     {
@@ -704,8 +718,10 @@ namespace lsp
         void Filter::process(float *out, const float *in, size_t samples)
         {
             // Check whether we need to rebuild filter
-            if (nFlags & (~FF_OWN_BANK))
+            if ((nFlags & (FF_OWN_BANK | FF_REBUILD)) == (FF_OWN_BANK | FF_REBUILD))
                 rebuild();
+            else if (nFlags & FF_CLEAR)
+                pBank->reset();
 
             switch (nMode)
             {
@@ -732,50 +748,77 @@ namespace lsp
 
             switch (type)
             {
-                case FLT_BT_AMPLIFIER:
+                case FLT_BT_RLC_LOPASS:
                 {
-                    c           = add_cascade();
-                    c->t[0]     = fp->fGain;
-                    c->t[1]     = 0.0f;
-                    c->t[2]     = 0.0f;
+                    const float k   = 2.0f / (1.0f + fp->fQuality);
+                    float gain      = fp->fGain;
+                    size_t i        = fp->nSlope;
 
-                    c->b[0]     = 1.0f;
-                    c->b[1]     = 0.0f;
-                    c->b[2]     = 0.0f;
+                    // Add additional 2-pole cascades
+                    for ( ; i>= 2; i -= 2)
+                    {
+                        c           = add_cascade();
+
+                        c->t[0]     = gain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
+
+                        gain        = 1.0f;
+                    }
+
+                    // Add cascade with one pole
+                    if (i)
+                    {
+                        c           = add_cascade();
+                        c->t[0]     = gain;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
+                    }
 
                     break;
                 }
 
-                case FLT_BT_RLC_LOPASS:
                 case FLT_BT_RLC_HIPASS:
                 {
+                    const float k   = 2.0f / (1.0f + fp->fQuality);
+                    float gain      = fp->fGain;
+                    size_t i        = fp->nSlope;
+
+                    // Add additional 2-pole cascades
+                    for ( ; i>= 2; i -= 2)
+                    {
+                        c           = add_cascade();
+
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = 0.0f;
+                        c->t[2]     = gain;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = k;
+                        c->b[2]     = 1.0f;
+
+                        gain        = 1.0f;
+                    }
+
                     // Add cascade with one pole
-                    float k         = 2.0 / (1.0 + fp->fQuality);
-                    size_t i        = fp->nSlope & 1;
                     if (i)
                     {
                         c           = add_cascade();
-                        c->b[0]     = 1.0;
-                        c->b[1]     = 1.0;
+                        c->t[0]     = 0.0f;
+                        c->t[1]     = gain;
+                        c->t[2]     = 0.0f;
 
-                        if (type == FLT_BT_RLC_LOPASS)
-                            c->t[0]     = fp->fGain;
-                        else
-                            c->t[1]     = fp->fGain;
-                    }
-
-                    // Add additional cascades
-                    for (size_t j=i; j < fp->nSlope; j+=2)
-                    {
-                        c           = add_cascade();
-                        c->b[0]     = 1.0;
-                        c->b[1]     = k;
-                        c->b[2]     = 1.0;
-
-                        if (type == FLT_BT_RLC_LOPASS)
-                            c->t[0]     = (j == 0) ? fp->fGain : 1.0;
-                        else
-                            c->t[2]     = (j == 0) ? fp->fGain : 1.0;
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
                     break;
@@ -787,6 +830,7 @@ namespace lsp
                     size_t slope            = fp->nSlope * 2;
                     float gain              = sqrtf(fp->fGain);
                     float fg                = expf(logf(gain)/slope);
+                    const float k           = 2.0f / (1.0f + fp->fQuality);
 
                     for (size_t j=0; j < fp->nSlope; j++)
                     {
@@ -796,11 +840,11 @@ namespace lsp
 
                         // Create transfer function
                         t[0]                    = fg;
-                        t[1]                    = 2.0 / (1.0 + fp->fQuality);
-                        t[2]                    = 1.0 / fg;
+                        t[1]                    = k;
+                        t[2]                    = 1.0f / fg;
 
-                        b[0]                    = 1.0 / fg;
-                        b[1]                    = 2.0 / (1.0 + fp->fQuality);
+                        b[0]                    = 1.0f / fg;
+                        b[1]                    = k;
                         b[2]                    = fg;
 
                         if (j == 0)
@@ -836,11 +880,11 @@ namespace lsp
 
                         // Create transfer function
                         t[0]                    = fg;
-                        t[1]                    = 2.0 / (1.0 + fp->fQuality);
-                        t[2]                    = 1.0 / fg;
+                        t[1]                    = 2.0f / (1.0f + fp->fQuality);
+                        t[2]                    = 1.0f / fg;
 
-                        b[0]                    = 1.0 / fg;
-                        b[1]                    = 2.0 / (1.0 + fp->fQuality);
+                        b[0]                    = 1.0f / fg;
+                        b[1]                    = 2.0f / (1.0f + fp->fQuality);
                         b[2]                    = fg;
 
                         if (j == 0)
@@ -857,11 +901,11 @@ namespace lsp
 
                         // Create transfer function
                         t[0]                    = fg2;
-                        t[1]                    = 2.0 * kf / (1.0 + fp->fQuality);
+                        t[1]                    = 2.0f * kf / (1.0f + fp->fQuality);
                         t[2]                    = kf*kf / fg2;
 
-                        b[0]                    = 1.0 / fg2;
-                        b[1]                    = 2.0 * kf / (1.0 + fp->fQuality);
+                        b[0]                    = 1.0f / fg2;
+                        b[1]                    = 2.0f * kf / (1.0f + fp->fQuality);
                         b[2]                    = fg2 * kf * kf;
 
                         if (j == 0)
@@ -917,7 +961,7 @@ namespace lsp
                 {
                     float fg                = expf(logf(fp->fGain)/fp->nSlope);
                     float angle             = atanf(fg);
-                    float k                 = 2.0 * (1.0/fg + fg) / (1.0 + (2.0 * fp->fQuality) / fp->nSlope);
+                    float k                 = 2.0f * (1.0f/fg + fg) / (1.0f + (2.0f * fp->fQuality) / fp->nSlope);
                     float kt                = k * sinf(angle);
                     float kb                = k * cosf(angle);
 
@@ -926,13 +970,13 @@ namespace lsp
                         c                       = add_cascade();
 
                         // Create transfer function
-                        c->t[0]                 = 1.0;
+                        c->t[0]                 = 1.0f;
                         c->t[1]                 = kt;
-                        c->t[2]                 = 1.0;
+                        c->t[2]                 = 1.0f;
 
-                        c->b[0]                 = 1.0;
+                        c->b[0]                 = 1.0f;
                         c->b[1]                 = kb;
-                        c->b[2]                 = 1.0;
+                        c->b[2]                 = 1.0f;
                     }
 
                     break;
@@ -942,7 +986,7 @@ namespace lsp
                 case FLT_BT_RLC_RESONANCE:
                 {
                     float angle             = atanf(expf(logf(fp->fGain) / fp->nSlope));
-                    float k                 = 2.0 / (1.0 + fp->fQuality);
+                    float k                 = 2.0f / (1.0f + fp->fQuality);
                     float kt                = k * sinf(angle);
                     float kb                = k * cosf(angle);
 
@@ -951,13 +995,13 @@ namespace lsp
                         c                       = add_cascade();
 
                         // Create transfer function
-                        c->t[0]                 = 1.0;
+                        c->t[0]                 = 1.0f;
                         c->t[1]                 = kt;
-                        c->t[2]                 = 1.0;
+                        c->t[2]                 = 1.0f;
 
-                        c->b[0]                 = 1.0;
+                        c->b[0]                 = 1.0f;
                         c->b[1]                 = kb;
-                        c->b[2]                 = 1.0;
+                        c->b[2]                 = 1.0f;
                     }
 
                     break;
@@ -969,13 +1013,13 @@ namespace lsp
 
                     // Create transfer function
                     c->t[0]                 = fp->fGain;
-                    c->t[1]                 = 0;
+                    c->t[1]                 = 0.0f;
                     c->t[2]                 = fp->fGain;
 
                     // Bottom polynom
-                    c->b[0]                 = 1.0;
-                    c->b[1]                 = 2.0 / (1.0 + fp->fQuality);
-                    c->b[2]                 = 1.0;
+                    c->b[0]                 = 1.0f;
+                    c->b[1]                 = 2.0f / (1.0f + fp->fQuality);
+                    c->b[2]                 = 1.0f;
 
                     break;
                 }
@@ -983,26 +1027,34 @@ namespace lsp
                 case FLT_BT_RLC_ALLPASS:
                 {
                     const float k           = 2.0f / (1.0f + fp->fQuality);
+                    float gain              = fp->fGain;
+                    size_t i                = fp->nSlope;
 
                     // Add additional 2x cascades
-                    for (size_t j=0; j < fp->nSlope; ++j)
+                    for (; i >= 2; i -= 2)
                     {
                         c           = add_cascade();
-                        c->t[0]     = 1.0f;
-                        c->t[1]     = -k;
-                        c->t[2]     = 1.0f;
+                        c->t[0]     = gain;
+                        c->t[1]     = - gain * k;
+                        c->t[2]     = gain;
 
                         c->b[0]     = 1.0f;
                         c->b[1]     = k;
                         c->b[2]     = 1.0f;
+
+                        gain        = 1.0f;
                     }
 
-                    // Adjust gain for the last cascade
-                    if (c != NULL)
+                    if (i)
                     {
-                        c->t[0]    *= fp->fGain;
-                        c->t[1]    *= fp->fGain;
-                        c->t[2]    *= fp->fGain;
+                        c           = add_cascade();
+                        c->t[0]     = gain;
+                        c->t[1]     = -gain;
+                        c->t[2]     = 0.0f;
+
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
                     break;
@@ -1011,19 +1063,19 @@ namespace lsp
                 case FLT_BT_RLC_ALLPASS2:
                 {
                     float kf                = fp->fFreq2;
-                    float kfp1              = 1.0 + kf;
+                    float kfp1              = 1.0f + kf;
 
                     // 2x all-pass filters in one cascade
                     for (size_t j=0; j < fp->nSlope; j++)
                     {
                         c                       = add_cascade();
                         // Create transfer function
-                        c->t[0]                 = 1.0;
+                        c->t[0]                 = 1.0f;
                         c->t[1]                 = -kfp1;
                         c->t[2]                 = kf;
 
                         // Bottom polynom
-                        c->b[0]                 = 1.0;
+                        c->b[0]                 = 1.0f;
                         c->b[1]                 = kfp1;
                         c->b[2]                 = kf;
                     }
@@ -1101,8 +1153,8 @@ namespace lsp
                     if (i)
                     {
                         c           = add_cascade();
-                        c->b[0]     = 1.0;
-                        c->b[1]     = 1.0;
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
 
                         if (type == FLT_BT_BWC_LOPASS)
                             c->t[0]     = fp->fGain;
@@ -1114,7 +1166,7 @@ namespace lsp
                     {
                         float theta     = ((j - i + 1)*C_PI_DIV_2)/fp->nSlope;
                         float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0 - tsin*tsin);
+                        float tcos      = sqrtf(1.0f - tsin*tsin);
                         float kf        = tsin*tsin + k*k * tcos*tcos;
 
                         c               = add_cascade();
@@ -1124,17 +1176,17 @@ namespace lsp
                         {
                             c->t[2]         = (j == 0) ? fp->fGain : 1.0;
 
-                            c->b[0]         = 1.0 / kf;
-                            c->b[1]         = 2.0 * k * tcos / kf;
-                            c->b[2]         = 1.0;
+                            c->b[0]         = 1.0f / kf;
+                            c->b[1]         = 2.0f * k * tcos / kf;
+                            c->b[2]         = 1.0f;
                         }
                         else
                         {
-                            c->t[0]         = (j == 0) ? fp->fGain : 1.0;
+                            c->t[0]         = (j == 0) ? fp->fGain : 1.0f;
 
-                            c->b[0]         = 1.0;
-                            c->b[1]         = 2.0 * k * tcos / kf;
-                            c->b[2]         = 1.0 / kf;
+                            c->b[0]         = 1.0f;
+                            c->b[1]         = 2.0f * k * tcos / kf;
+                            c->b[2]         = 1.0f / kf;
                         }
                     }
 
@@ -1150,30 +1202,30 @@ namespace lsp
                         c           = add_cascade();
                         c->t[0]     = -fp->fGain;
                         c->t[1]     = fp->fGain;
-                        c->t[2]     = 0.0;
+                        c->t[2]     = 0.0f;
 
-                        c->b[0]     = 1.0;
-                        c->b[1]     = 1.0;
-                        c->b[2]     = 0.0;
+                        c->b[0]     = 1.0f;
+                        c->b[1]     = 1.0f;
+                        c->b[2]     = 0.0f;
                     }
 
                     for (size_t j=i; j < fp->nSlope; j += 2)
                     {
                         float theta     = ((j - i + 1)*C_PI_DIV_2)/fp->nSlope;
                         float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0 - tsin*tsin);
+                        float tcos      = sqrtf(1.0f - tsin*tsin);
                         float kf        = tsin*tsin + k*k * tcos*tcos;
 
                         c               = add_cascade();
 
                         // Tranfer function
-                        c->t[0]         = 1.0;
-                        c->t[1]         = -2.0 * tcos;
-                        c->t[2]         = 1.0;
+                        c->t[0]         = 1.0f;
+                        c->t[1]         = -2.0f * tcos;
+                        c->t[2]         = 1.0f;
 
-                        c->b[0]         = 1.0 / kf;
-                        c->b[1]         = 2.0 * k * tcos / kf;
-                        c->b[2]         = 1.0;
+                        c->b[0]         = 1.0f / kf;
+                        c->b[1]         = 2.0f * k * tcos / kf;
+                        c->b[2]         = 1.0f;
 
                         if (j == 0)
                         {
@@ -1190,14 +1242,14 @@ namespace lsp
                 case FLT_BT_BWC_LOSHELF:
                 {
                     float gain              = sqrtf(fp->fGain);
-                    float fg                = expf(logf(gain)/(2.0*fp->nSlope));
-                    float k                 = 1.0f / (1.0 + fp->fQuality * (1.0 - expf(2.0 - gain - 1.0/gain)));
+                    float fg                = expf(logf(gain)/(2.0f*fp->nSlope));
+                    float k                 = 1.0f / (1.0f + fp->fQuality * (1.0f - expf(2.0f - gain - 1.0f/gain)));
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
                         float theta         = ((2*j + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
 
                         c                   = add_cascade();
@@ -1206,11 +1258,11 @@ namespace lsp
 
                         // Transfer function
                         t[0]                = kf / fg;
-                        t[1]                = 2.0 * k * tcos;
+                        t[1]                = 2.0f * k * tcos;
                         t[2]                = fg;
 
                         b[0]                = fg;
-                        b[1]                = 2.0 * k * tcos;
+                        b[1]                = 2.0f * k * tcos;
                         b[2]                = kf / fg;
 
                         if (j == 0)
@@ -1228,7 +1280,7 @@ namespace lsp
                 case FLT_BT_BWC_LADDERREJ:
                 {
                     size_t slope            = fp->nSlope * 2;
-                    float gain1             = (type == FLT_BT_BWC_LADDERPASS) ? sqrtf(fp->fGain) : sqrtf(1.0/fp->fGain);
+                    float gain1             = (type == FLT_BT_BWC_LADDERPASS) ? sqrtf(fp->fGain) : sqrtf(1.0f/fp->fGain);
                     float gain2             = (type == FLT_BT_BWC_LADDERPASS) ? sqrtf(1.0/fp->fGain) : sqrtf(fp->fGain);
 
                     float fg1               = expf(logf(gain1)/(2.0*fp->nSlope));
@@ -1298,13 +1350,13 @@ namespace lsp
                 case FLT_BT_BWC_BELL:
                 {
                     float fg                = expf(logf(fp->fGain)/float(2*fp->nSlope));
-                    float k                 = 1.0f / (1.0 + fp->fQuality);
+                    float k                 = 1.0f / (1.0f + fp->fQuality);
 
                     for (size_t j=0; j < fp->nSlope; ++j)
                     {
                         float theta         = ((2*j + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
 
                         if (fp->fGain >= 1.0)
@@ -1369,7 +1421,7 @@ namespace lsp
                     {
                         float theta         = ((2*j + 1)*C_PI_DIV_2)/(2*fp->nSlope);
                         float tsin          = sinf(theta);
-                        float tcos          = sqrtf(1.0 - tsin*tsin);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
                         float kf            = tsin*tsin + k*k * tcos*tcos;
 
                         // Hi-pass cascade
@@ -1434,34 +1486,35 @@ namespace lsp
                     break;
                 case FLT_BT_LRX_ALLPASS:
                 {
-                    float k     = 1.0f / (1.0f + fp->fQuality);
-                    size_t i    = sParams.nSlope * 2;
+                    const float k       = 1.0f / (1.0f + fp->fQuality);
+                    size_t i            = sParams.nSlope * 2;
+                    const float pi_di   = C_PI / i;
 
                     // Emit 2x butterworth filters
                     for (size_t j=0; j < i; j += 2)
                     {
-                        float theta     = ((j + 1) * C_PI_DIV_2)/i;
-                        float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0f - tsin*tsin);
-                        float kf        = tsin*tsin + k*k * tcos*tcos;
+                        const float theta   = ((j + 1) * C_PI_DIV_2)/i;
+                        const float tsin    = sinf(theta);
+                        const float tcos    = k*sqrtf(1.0f - tsin*tsin);
+                        const float rkf     = 1.0f / (tsin*tsin + tcos*tcos);
 
                         c1              = add_cascade();
                         c2              = add_cascade();
 
                         // Top part
-                        float xeta      = ((j + 0.5f) * C_PI)/i;
+                        float xeta      = (j + 0.5f) * pi_di;
                         c1->t[0]        = 1.0f;
                         c1->t[1]        = -2.0f * cosf(xeta);
                         c1->t[2]        = 1.0f;
 
-                        xeta            = ((j + 1.5f) * C_PI)/i;
+                        xeta            = (j + 1.5f) * pi_di;
                         c2->t[0]        = 1.0f;
                         c2->t[1]        = -2.0f * cosf(xeta);
                         c2->t[2]        = 1.0f;
 
                         // Bottom part
-                        c1->b[0]        = 1.0f / kf;
-                        c1->b[1]        = 2.0f * k * tcos / kf;
+                        c1->b[0]        = rkf;
+                        c1->b[1]        = 2.0f * tcos * rkf;
                         c1->b[2]        = 1.0f;
 
                         c2->b[0]        = c1->b[0];
@@ -1660,8 +1713,8 @@ namespace lsp
             float sw        = sinf(xf);
 
             // These equations are valid since sw has valid sign
-            float c2w       = cw * cw - sw * sw;    // cos(2 * w)
-            float s2w       = 2.0f * sw * cw;        // sin(2 * w)
+            float c2w       = cw * cw - sw * sw;        // cos(2 * w)
+            float s2w       = 2.0f * sw * cw;           // sin(2 * w)
 
             float alpha     = f->b0 + f->b1 * cw + f->b2 * c2w;
             float beta      = f->b1 * sw + f->b2 * s2w;
@@ -2149,7 +2202,7 @@ namespace lsp
                         c->t[0]         = f->b0;
                         c->t[1]         = f->b1;
                         c->t[2]         = f->b2;
-                        c->b[0]         = 1.0;
+                        c->b[0]         = 1.0f;
                         c->b[1]         = -f->a1;
                         c->b[2]         = -f->a2;
                     }
@@ -2182,7 +2235,7 @@ namespace lsp
                         c->t[0]         = f->b0;
                         c->t[1]         = f->b1;
                         c->t[2]         = f->b2;
-                        c->b[0]         = 1.0;
+                        c->b[0]         = 1.0f;
                         c->b[1]         = -f->a1;
                         c->b[2]         = -f->a2;
                     }
@@ -2251,9 +2304,6 @@ namespace lsp
                 B[1]            = b[1]*kf;
                 B[2]            = b[2]*kf2;
 
-                // Calculate the convolution
-                N               = 1.0 / (B[0] + B[1] + B[2]);
-
                 // Initialize filter parameters
                 if ((++chains) > FILTER_CHAINS_MAX)
                     break;
@@ -2261,11 +2311,25 @@ namespace lsp
                 if (f == NULL)
                     break;
 
-                f->b0           = (T[0] + T[1] + T[2]) * N;
-                f->b1           = 2.0 * (T[0] - T[2]) * N;
-                f->b2           = (T[0] - T[1] + T[2]) * N;
-                f->a1           = 2.0 * (B[2] - B[0]) * N; // Sign negated
-                f->a2           = (B[1] - B[2] - B[0]) * N; // Sign negated
+                // Calculate the norming coefficient
+                N               = 1.0 / (B[0] + B[1] + B[2]);
+
+                if (B[2] != 0.0)
+                {
+                    f->b0           = (T[0] + T[1] + T[2]) * N;
+                    f->b1           = 2.0 * (T[0] - T[2]) * N;
+                    f->b2           = (T[0] - T[1] + T[2]) * N;
+                    f->a1           = 2.0 * (B[2] - B[0]) * N; // Sign negated
+                    f->a2           = (B[1] - B[2] - B[0]) * N; // Sign negated
+                }
+                else
+                {
+                    f->b0           = (T[0] + T[1]) * N;
+                    f->b1           = (T[0] - T[1]) * N;
+                    f->b2           = 0.0f;
+                    f->a1           = (B[1] - B[0]) * N;
+                    f->a2           = 0.0f;
+                }
                 f->p0           = 0.0f;
                 f->p1           = 0.0f;
                 f->p2           = 0.0f;

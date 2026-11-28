@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Stefano Tronci <stefano.tronci@protonmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Stefano Tronci <stefano.tronci@protonmail.com>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 Sept 2021
@@ -111,7 +112,6 @@ namespace lsp
 
             protected:
                 float               bilinear_coefficient(float angularFrequency, float samplerate);
-                bilinear_spec_t     compute_bilinear_element(float negZero, float negPole);
                 inline float        digital_biquad_gain(dsp::biquad_x1_t *digitalbq, float frequency);
                 void                normalise_digital_biquad(dsp::biquad_x1_t *digitalbq);
                 void                complex_transfer_calc(float *re, float *im, float f);

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 8 мая 2024 г.
@@ -101,6 +101,7 @@ namespace lsp
 
             protected:
                 static bool         calc_params(alloc_params_t *params, size_t channels, size_t length);
+                static void         sanitize_input(float *dst, const float *src, size_t count);
 
             public:
                 AudioStream();

@@ -24,24 +24,17 @@
 #include <lsp-plug.in/common/alloc.h>
 #include <lsp-plug.in/stdlib/math.h>
 
-#define BLD_BUF_SIZE    8
-#define BUF_SIZE        0x400       /* 1024 samples at one time */
-#define FBUF_SIZE       ((BLD_BUF_SIZE * (BUF_SIZE - BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t)) / sizeof(float))
-
 namespace lsp
 {
     namespace dspu
     {
-        constexpr float C_PI                = M_PI;
-        constexpr float C_PI_MUL_2          = M_PI * 2.0;
-        constexpr float C_PI_DIV_2          = M_PI_2;
+        static constexpr size_t BLD_BUF_SIZE    = 16;
+        static constexpr size_t BUF_SIZE        = 0x400;       /* 1024 samples at one time */
+        static constexpr size_t FBUF_SIZE       = ((BLD_BUF_SIZE * (BUF_SIZE - BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t)) / sizeof(float));
 
-        // Normal analog filter that does not affect any changes to the signal
-        const dsp::f_cascade_t DynamicFilters::sNormal =
-        {
-            { 1.0f, 0.0f, 0.0f, 0.0f },
-            { 1.0f, 0.0f, 0.0f, 0.0f }
-        };
+        static constexpr float C_PI             = M_PI;
+        static constexpr float C_PI_MUL_2       = M_PI * 2.0;
+        static constexpr float C_PI_DIV_2       = M_PI_2;
 
         DynamicFilters::DynamicFilters()
         {
@@ -71,7 +64,7 @@ namespace lsp
             size_t b_per_filter_t       = align_size(sizeof(filter_t) * filters, 64);
             size_t b_per_memory         = FILTER_CHAINS_MAX * 2 * filters * sizeof(float);
             size_t b_per_cascades       = align_size(BLD_BUF_SIZE * (BUF_SIZE + BLD_BUF_SIZE) * sizeof(dsp::f_cascade_t), 64);
-            size_t b_per_biquad         = sizeof(dsp::biquad_x8_t) * (BUF_SIZE + BLD_BUF_SIZE);
+            size_t b_per_biquad         = sizeof(dsp::biquad_x16_t) * (BUF_SIZE + BLD_BUF_SIZE);
 
             size_t to_alloc             = b_per_filter_t + b_per_memory + b_per_cascades + b_per_biquad;
 
@@ -81,12 +74,9 @@ namespace lsp
                 return STATUS_NO_MEM;
 
             // Map memory
-            vFilters        = reinterpret_cast<filter_t *>(ptr);
-            ptr            += b_per_filter_t;
-            vMemory         = reinterpret_cast<float *>(ptr);
-            ptr            += b_per_memory;
-            vCascades       = reinterpret_cast<dsp::f_cascade_t *>(ptr);
-            ptr            += b_per_cascades;
+            vFilters        = advance_ptr_bytes<filter_t>(ptr, b_per_filter_t);
+            vMemory         = advance_ptr_bytes<float>(ptr, b_per_memory);
+            vCascades       = advance_ptr_bytes<dsp::f_cascade_t>(ptr, b_per_cascades);
             vBiquads.ptr    = ptr;
             nFilters        = filters;
 
@@ -191,13 +181,14 @@ namespace lsp
         size_t DynamicFilters::quantify(size_t c, size_t nc)
         {
             // Check if there are some cascades left undone
-            ssize_t n = nc - c;
+            const ssize_t n = nc - c;
             if (n <= 0)
                 return 0;
 
+            if (n >= 8)
+                return (n >= 16) ? 16 : 8;
             if (n >= 4)
-                return (n >= 8) ? 8 : 4;
-
+                return 4;
             return (n >= 2) ? 2 : 1;
         }
 
@@ -219,11 +210,12 @@ namespace lsp
             }
 
             // Frequency coefficient for bilinear transform
-            float kf =
-                    (f->sParams.nType <= FLT_MT_AMPLIFIER) ? 0.95f :
-                    (f->sParams.nType & 1) ?
-                    1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
-                    C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
+            const bool bilinear     = !(f->sParams.nType & 1);
+            const float kf =
+                (f->sParams.nType <= FLT_AMPLIFIER) ? 0.95f :
+                (bilinear) ?
+                1.0f / tanf(f->sParams.fFreq * C_PI / float(nSampleRate)) : // bilinear transform coefficient
+                C_PI_MUL_2 / nSampleRate; // Matched transfomr coefficient
 
             // Filter memory
             while (samples > 0)
@@ -242,65 +234,55 @@ namespace lsp
                     if (nj <= 0)
                         break;
 
-                    if (nj == 8)
+                    switch (nj)
                     {
-                        dsp::f_cascade_t *h  = vCascades, *t = &vCascades[to_process << 3];
-                        h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; h[4] = sNormal; h[5] = sNormal; h[6] = sNormal; h[7] = sNormal; // row 0
-                        h[10] = sNormal; h[11] = sNormal; h[12] = sNormal; h[13] = sNormal; h[14] = sNormal; h[15] = sNormal; // row 1
-                        h[19] = sNormal; h[20] = sNormal; h[21] = sNormal; h[22] = sNormal; h[23] = sNormal; // row 2
-                        h[28] = sNormal; h[29] = sNormal; h[30] = sNormal; h[31] = sNormal; // row 3
-                        h[37] = sNormal; h[38] = sNormal; h[39] = sNormal; // row 4
-                        h[46] = sNormal; h[47] = sNormal; // row 5
-                        h[55] = sNormal; // row 6
+                        case 16:
+                            dsp::fcascade_fill_x16(vCascades, &vCascades[to_process << 4]);
 
-                        t[0] = sNormal; // row -7
-                        t[8] = sNormal; t[9] = sNormal; // row -6
-                        t[16] = sNormal; t[17] = sNormal; t[18] = sNormal; // row -5
-                        t[24] = sNormal; t[25] = sNormal; t[26] = sNormal; t[27] = sNormal; // row -4
-                        t[32] = sNormal; t[33] = sNormal; t[34] = sNormal; t[35] = sNormal; t[36] = sNormal; // row -3
-                        t[40] = sNormal; t[41] = sNormal; t[42] = sNormal; t[43] = sNormal; t[44] = sNormal; t[45] = sNormal; // row -2
-                        t[48] = sNormal; t[49] = sNormal; t[50] = sNormal; t[51] = sNormal; t[52] = sNormal; t[53] = sNormal; t[54] = sNormal; // row -1
+                            if (bilinear)
+                                dsp::bilinear_transform_x16(vBiquads.x16, vCascades, kf, to_process + 15);
+                            else
+                                dsp::matched_transform_x16(vBiquads.x16, vCascades, f->sParams.fFreq, kf, to_process + 15);
+                            dsp::dyn_biquad_process_x16(out, src, fmem, to_process, vBiquads.x16);
+                            break;
 
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
-                        else
-                            dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
-                        dsp::dyn_biquad_process_x8(out, src, fmem, to_process, vBiquads.x8);
-                    }
-                    else if (nj == 4)
-                    {
-                        dsp::f_cascade_t *h  = vCascades, *t = &vCascades[to_process << 2];
-                        h[1] = sNormal; h[2] = sNormal; h[3] = sNormal; // row 0
-                        h[6] = sNormal; h[7] = sNormal; // row 1
-                        h[11] = sNormal; // row 2
+                        case 8:
+                            dsp::fcascade_fill_x8(vCascades, &vCascades[to_process << 3]);
 
-                        t[0] = sNormal; // row -3
-                        t[4] = sNormal; t[5] = sNormal; // row -2
-                        t[8] = sNormal; t[9] = sNormal; t[10] = sNormal; // row -1
+                            if (bilinear)
+                                dsp::bilinear_transform_x8(vBiquads.x8, vCascades, kf, to_process + 7);
+                            else
+                                dsp::matched_transform_x8(vBiquads.x8, vCascades, f->sParams.fFreq, kf, to_process + 7);
+                            dsp::dyn_biquad_process_x8(out, src, fmem, to_process, vBiquads.x8);
+                            break;
 
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
-                        else
-                            dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
-                        dsp::dyn_biquad_process_x4(out, src, fmem, to_process, vBiquads.x4);
-                    }
-                    else if (nj == 2)
-                    {
-                        vCascades[1]                = sNormal;
-                        vCascades[to_process << 1]  = sNormal;
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
-                        else
-                            dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
-                        dsp::dyn_biquad_process_x2(out, src, fmem, to_process, vBiquads.x2);
-                    }
-                    else if (nj == 1)
-                    {
-                        if (f->sParams.nType & 1)
-                            dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
-                        else
-                            dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
-                        dsp::dyn_biquad_process_x1(out, src, fmem, to_process, vBiquads.x1);
+                        case 4:
+                            dsp::fcascade_fill_x4(vCascades, &vCascades[to_process << 2]);
+
+                            if (bilinear)
+                                dsp::bilinear_transform_x4(vBiquads.x4, vCascades, kf, to_process + 3);
+                            else
+                                dsp::matched_transform_x4(vBiquads.x4, vCascades, f->sParams.fFreq, kf, to_process + 3);
+                            dsp::dyn_biquad_process_x4(out, src, fmem, to_process, vBiquads.x4);
+                            break;
+
+                        case 2:
+                            dsp::fcascade_fill_x2(vCascades, &vCascades[to_process << 1]);
+                            if (bilinear)
+                                dsp::bilinear_transform_x2(vBiquads.x2, vCascades, kf, to_process + 1);
+                            else
+                                dsp::matched_transform_x2(vBiquads.x2, vCascades, f->sParams.fFreq, kf, to_process + 1);
+                            dsp::dyn_biquad_process_x2(out, src, fmem, to_process, vBiquads.x2);
+                            break;
+
+                        case 1:
+                        default:
+                            if (bilinear)
+                                dsp::bilinear_transform_x1(vBiquads.x1, vCascades, kf, to_process);
+                            else
+                                dsp::matched_transform_x1(vBiquads.x1, vCascades, f->sParams.fFreq, kf, to_process);
+                            dsp::dyn_biquad_process_x1(out, src, fmem, to_process, vBiquads.x1);
+                            break;
                     }
 
                     // Update counters and pointers
@@ -625,12 +607,14 @@ namespace lsp
         size_t DynamicFilters::build_filter_bank(dsp::f_cascade_t *dst, const filter_params_t *fp, size_t cj, const float *sfg, size_t samples)
         {
             size_t nc;
-            size_t ftype = (fp->nType & 1) ? fp->nType : fp->nType-1 ; // xxx_MT -> xxx_BT
+            size_t ftype = fp->nType;
+            if ((ftype >= FLT_BT_RLC_LOPASS) && (ftype <= FLT_MT_LRX_ALLPASS) && (ftype & 1)) // xxx_MT -> xxx_BT
+                --ftype;
 
             switch (ftype)
             {
                 //----------------------------------- MISC SPECIAL FILTERS ------------------------------------
-                case FLT_BT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                 {
                     if (cj >= 1)
                         return 0;
@@ -734,10 +718,13 @@ namespace lsp
                 case FLT_BT_RLC_LOSHELF:
                 case FLT_BT_RLC_HISHELF:
                 {
-                    size_t slope            = fp->nSlope * 2;
+                    const size_t slope      = fp->nSlope * 2;
                     nc                      = quantify(cj, fp->nSlope); // Number of cascades to generate
                     if (nc <= 0)
                         return nc;
+
+                    const float rslope      = 1.0f / float(slope);
+                    const float rquality    = 2.0f / (1.0f + fp->fQuality);
 
                     for (size_t j=0; j<nc; j++)
                     {
@@ -748,18 +735,18 @@ namespace lsp
                         for (size_t i=0; i<samples; ++i)
                         {
                             float gain          = sqrtf(sfg[i]);
-                            float fg            = expf(logf(gain)/slope);
+                            float fg            = expf(logf(gain) * rslope);
 
                             float *t            = (ftype == FLT_BT_RLC_LOSHELF) ? c->t : c->b;
                             float *b            = (ftype == FLT_BT_RLC_LOSHELF) ? c->b : c->t;
 
                             // Transfer function
                             t[0]                = fg;
-                            t[1]                = 2.0f / (1.0f + fp->fQuality);
+                            t[1]                = rquality;
                             t[2]                = 1.0f / fg;
 
                             b[0]                = t[2]; // 1.0 / fg
-                            b[1]                = t[1]; // 2.0 / (1.0 + fp->fQuality)
+                            b[1]                = t[1]; // rquality
                             b[2]                = t[0]; // fg
 
                             // Move to next cascade
@@ -795,7 +782,10 @@ namespace lsp
                     if (nc <= 0)
                         return nc;
 
-                    float kf                = fp->fFreq2;
+                    const float kf          = fp->fFreq2;
+                    const float kf2         = kf*kf;
+                    const float rquality    = 2.0f / (1.0f + fp->fQuality);
+                    const float rslope      = 1.0f / slope;
 
                     for (size_t j=0; j < nc; j++)
                     {
@@ -808,7 +798,7 @@ namespace lsp
                             for (size_t i=0; i<samples; ++i)
                             {
                                 float gain          = (ftype == FLT_BT_RLC_LADDERREJ) ? sqrtf(sfg[i]) : sqrtf(1.0/sfg[i]);
-                                float fg            = expf(logf(gain)/slope);
+                                float fg            = expf(logf(gain) * rslope);
 
                                 // Second shelf cascade, hi-shelf always
                                 float *t            = c->b;
@@ -816,12 +806,12 @@ namespace lsp
 
                                 // Create transfer function
                                 t[0]                = fg;
-                                t[1]                = 2.0f * kf / (1.0f + fp->fQuality);
-                                t[2]                = kf*kf / fg;
+                                t[1]                = kf * rquality;
+                                t[2]                = kf2 / fg;
 
                                 b[0]                = 1.0f / fg;
-                                b[1]                = 2.0f * kf / (1.0f + fp->fQuality);
-                                b[2]                = fg * kf * kf;
+                                b[1]                = kf * rquality;
+                                b[2]                = fg * kf2;
 
                                 if ((cj>>1) == 0)
                                 {
@@ -841,7 +831,7 @@ namespace lsp
                             {
                                 float gain1         = (ftype == FLT_BT_RLC_LADDERREJ) ? sqrtf(1.0/sfg[i]) : sqrtf(sfg[i]);
                                 float gain2         = (ftype == FLT_BT_RLC_LADDERREJ) ? sqrtf(sfg[i]) : sqrtf(1.0/sfg[i]);
-                                float fg            = (ftype == FLT_BT_RLC_LADDERREJ) ? expf(logf(gain2)/slope) : expf(logf(gain1)/slope);
+                                float fg            = (ftype == FLT_BT_RLC_LADDERREJ) ? expf(logf(gain2) * rslope) : expf(logf(gain1) * rslope);
                                 float gain          = (ftype == FLT_BT_RLC_LADDERREJ) ? gain2 : gain1;
 
                                 float *t            = (ftype == FLT_BT_RLC_LADDERREJ) ? c->t : c->b;
@@ -849,11 +839,11 @@ namespace lsp
 
                                 // Create transfer function
                                 t[0]                = fg;
-                                t[1]                = 2.0f / (1.0f + fp->fQuality);
+                                t[1]                = rquality;
                                 t[2]                = 1.0f / fg;
 
                                 b[0]                = t[2]; // 1.0 / fg
-                                b[1]                = t[1]; // 2.0 / (1.0 + fp->fQuality)
+                                b[1]                = t[1]; // rquality
                                 b[2]                = t[0]; // fg
 
                                 if ((cj>>1) == 0)
@@ -1128,10 +1118,11 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta     = ((2*(cj - (fp->nSlope & 1)) + 1)*C_PI_DIV_2)/fp->nSlope;
-                        float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0f - tsin*tsin);
-                        float kf1       = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        float theta         = ((2*(cj - (fp->nSlope & 1)) + 1)*C_PI_DIV_2)/fp->nSlope;
+                        float tsin          = sinf(theta);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float kf1           = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        const float alpha   = 2.0f * k * tcos * kf1;
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
@@ -1144,7 +1135,7 @@ namespace lsp
                                 c->t[2]         = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]         = kf1;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = 1.0f;
                             }
                             else
@@ -1154,7 +1145,7 @@ namespace lsp
                                 c->t[2]         = 0.0f;
 
                                 c->b[0]         = 1.0f;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = kf1;
                             }
 
@@ -1521,10 +1512,11 @@ namespace lsp
                         dsp::f_cascade_t *c = &dst[(nc+1)*j];       // target cascade pointer
 
                         // Pre-calculate filter parameters
-                        float theta     = (((cj & (~1)) + 1)*C_PI_DIV_2)/(fp->nSlope*2); // The number of cascades is just doubled
-                        float tsin      = sinf(theta);
-                        float tcos      = sqrtf(1.0f - tsin*tsin);
-                        float kf1       = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        float theta         = (((cj & (~1)) + 1)*C_PI_DIV_2)/(fp->nSlope*2); // The number of cascades is just doubled
+                        float tsin          = sinf(theta);
+                        float tcos          = sqrtf(1.0f - tsin*tsin);
+                        float kf1           = 1.0f / (tsin*tsin + k*k * tcos*tcos);
+                        const float alpha   = 2.0f * k * tcos * kf1;
 
                         // Generate cascades
                         for (size_t i=0; i<samples; ++i)
@@ -1537,7 +1529,7 @@ namespace lsp
                                 c->t[2]         = (cj == 0) ? sfg[i] : 1.0f;
 
                                 c->b[0]         = kf1;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = 1.0f;
                             }
                             else
@@ -1547,7 +1539,7 @@ namespace lsp
                                 c->t[2]         = 0.0f;
 
                                 c->b[0]         = 1.0f;
-                                c->b[1]         = 2.0f * k * tcos * kf1;
+                                c->b[1]         = alpha;
                                 c->b[2]         = kf1;
                             }
 
@@ -1786,8 +1778,7 @@ namespace lsp
                     dsp::fill_zero(im, count);
                     return true;
 
-                case FLT_BT_AMPLIFIER:
-                case FLT_MT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                     dsp::fill(re, gain, count);
                     dsp::fill_zero(im, count);
                     return true;
@@ -1801,28 +1792,25 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = C_PI / float(nSampleRate);
-                float kf    = 1.0f/tanf(fp->fFreq * nf);
-                float lf    = nSampleRate * 0.499f;
+                const float nf  = C_PI / float(nSampleRate);
+                const float kf  = 1.0f/tanf(fp->fFreq * nf);
+                const float lf  = nSampleRate * 0.499f;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
                     for (size_t i=0; i<fcount; ++i)
-                    {
-                        float w     = f[i];
-                        tf[i]       = tanf((w > lf ? lf : w) * nf) * kf;
-                    }
+                        tf[i]       = tanf(lsp_min(f[i], lf) * nf) * kf;
 
                     // Estimate transfer function
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1839,11 +1827,11 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0f / fp->fFreq;
+                const float kf  = 1.0f / fp->fFreq;
 
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
@@ -1853,7 +1841,7 @@ namespace lsp
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1886,8 +1874,7 @@ namespace lsp
                     dsp::pcomplex_fill_ri(dst, 1.0f, 0.0f, count);
                     return true;
 
-                case FLT_BT_AMPLIFIER:
-                case FLT_MT_AMPLIFIER:
+                case FLT_AMPLIFIER:
                     dsp::pcomplex_fill_ri(dst, gain, 0.0f, count);
                     return true;
 
@@ -1900,28 +1887,25 @@ namespace lsp
             // Process the filter
             if (fp->nType & 1) // Bilinear
             {
-                float nf    = C_PI / float(nSampleRate);
-                float kf    = 1.0/tanf(fp->fFreq * nf);
-                float lf    = nSampleRate * 0.499f;
+                const float nf  = C_PI / float(nSampleRate);
+                const float kf  = 1.0/tanf(fp->fFreq * nf);
+                const float lf  = nSampleRate * 0.499f;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
                     for (size_t i=0; i<fcount; ++i)
-                    {
-                        float w     = f[i];
-                        tf[i]       = tanf((w > lf ? lf : w) * nf) * kf;
-                    }
+                        tf[i]       = tanf(lsp_min(f[i], lf) * nf) * kf;
 
                     // Estimate transfer function
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -1937,12 +1921,12 @@ namespace lsp
             }
             else
             {
-                float kf        = 1.0f / fp->fFreq;
+                const float kf      = 1.0f / fp->fFreq;
 
                 // Process frequency chart
                 while (count > 0)
                 {
-                    size_t fcount   = (count > FBUF_SIZE) ? FBUF_SIZE : count;
+                    const size_t fcount = lsp_min(count, FBUF_SIZE);
                     size_t cj       = 0;
 
                     // Generate set of frequencies
@@ -1952,7 +1936,7 @@ namespace lsp
                     while (true)
                     {
                         // Generate cascades
-                        size_t nj               = build_filter_bank(vCascades, fp, cj, &gain, 1);
+                        const size_t nj         = build_filter_bank(vCascades, fp, cj, &gain, 1);
                         if (nj <= 0)
                             break;
 
@@ -2001,5 +1985,5 @@ namespace lsp
             v->write("pData", pData);
             v->write("bClearMem", bClearMem);
         }
-    }
+    } /* namespace dspu */
 } /* namespace lsp */

@@ -371,6 +371,110 @@ namespace lsp
                 basic_noise_list(dst, freqs, center, n, VIOLET_CONST);
             }
 
+
+            static inline void basic_noise_real_fft(float *dst, size_t rank, float k)
+            {
+                const size_t half_size  = 1 << (rank - 1);
+
+                dst[0]      = 1.0f;
+                dsp::lin_inter_set(&dst[1], 1, 1.0f, half_size, half_size, 1, half_size);
+                dsp::powvc1(&dst[1], k, half_size);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                switch (type)
+                {
+                    case WHITE_NOISE:
+                        dsp::fill_one(dst, (1 << (rank - 1)) + 1);
+                        break;
+                    case PINK_NOISE:
+                        basic_noise_real_fft(dst, rank, PINK_CONST);
+                        break;
+                    case BROWN_NOISE:
+                        basic_noise_real_fft(dst, rank, BROWN_CONST);
+                        break;
+                    case BLUE_NOISE:
+                        basic_noise_real_fft(dst, rank, BLUE_CONST);
+                        break;
+                    case VIOLET_NOISE:
+                        basic_noise_real_fft(dst, rank, VIOLET_CONST);
+                        break;
+                    case PLUS_4_5_DB:
+                        basic_noise_real_fft(dst, rank, PLUS_4_5_DB_CONST);
+                        break;
+                    case MINUS_4_5_DB:
+                        basic_noise_real_fft(dst, rank, MINUS_4_5_DB_CONST);
+                        break;
+                    default:
+                        return;
+                }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void reverse_noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                switch (type)
+                {
+                    case WHITE_NOISE:
+                        dsp::fill_one(dst, (1 << (rank - 1)) + 1);
+                        break;
+                    case PINK_NOISE:
+                        basic_noise_real_fft(dst, rank, BLUE_CONST);
+                        break;
+                    case BROWN_NOISE:
+                        basic_noise_real_fft(dst, rank, VIOLET_CONST);
+                        break;
+                    case BLUE_NOISE:
+                        basic_noise_real_fft(dst, rank, PINK_CONST);
+                        break;
+                    case VIOLET_NOISE:
+                        basic_noise_real_fft(dst, rank, BROWN_CONST);
+                        break;
+                    case PLUS_4_5_DB:
+                        basic_noise_real_fft(dst, rank, MINUS_4_5_DB_CONST);
+                        break;
+                    case MINUS_4_5_DB:
+                        basic_noise_real_fft(dst, rank, PLUS_4_5_DB_CONST);
+                        break;
+                    default:
+                        return;
+                }
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void white_noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                const size_t fft_csize  = (1 << (rank - 1)) + 1;
+                dsp::fill_one(dst, fft_csize);
+            }
+
+
+            LSP_DSP_UNITS_PUBLIC
+            void pink_noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                basic_noise_real_fft(dst, rank, PINK_CONST);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void brown_noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                basic_noise_real_fft(dst, rank, BROWN_CONST);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void blue_noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                basic_noise_real_fft(dst, rank, BLUE_CONST);
+            }
+
+            LSP_DSP_UNITS_PUBLIC
+            void violet_noise_real_fft(float *dst, size_t rank, envelope_t type)
+            {
+                basic_noise_real_fft(dst, rank, VIOLET_CONST);
+            }
+
         } /* namespace envelope */
     } /* namespace dspu */
 } /* namespace lsp */

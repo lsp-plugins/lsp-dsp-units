@@ -263,7 +263,7 @@ namespace lsp
 
             // Clear buffers and initialize cosine window
             clear_buffers();
-            windows::cosine(pWnd, szof_buf);
+            windows::kaiser_bessel_derived(pWnd, szof_buf);
 
             // Mark settings applied
             nOffset         = szof_buf * (fPhase * 0.5f);

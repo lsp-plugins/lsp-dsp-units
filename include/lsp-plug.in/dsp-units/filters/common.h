@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2024 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2024 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 1 февр. 2018 г.
@@ -40,8 +40,7 @@ namespace lsp
             // Disabled filter
             FLT_NONE,
 
-            FLT_BT_AMPLIFIER,
-            FLT_MT_AMPLIFIER,
+            FLT_AMPLIFIER,
 
             // RLC filters
             FLT_BT_RLC_LOPASS,

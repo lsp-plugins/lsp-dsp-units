@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2023 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 6 авг. 2023 г.
@@ -86,10 +86,10 @@ namespace lsp
             }
 
             // Allocate buffer
-            size_t bins     = 1 << max_rank;
-            size_t hdl_sz   = align_size(sizeof(handler_t) * handlers, DEFAULT_ALIGN);
-            size_t buf_sz   = sizeof(float) *bins;
-            size_t to_alloc =
+            const size_t bins       = 1 << max_rank;
+            const size_t hdl_sz     = align_size(sizeof(handler_t) * handlers, DEFAULT_ALIGN);
+            const size_t buf_sz     = sizeof(float) *bins;
+            const size_t to_alloc   =
                 hdl_sz + // vHandlers
                 buf_sz + // vWindow
                 buf_sz * BUFFER_MULTIPLIER + // vInBuf
@@ -101,28 +101,22 @@ namespace lsp
             if (ptr == NULL)
                 return false;
 
-            vHandlers       = reinterpret_cast<handler_t *>(ptr);
-            ptr            += hdl_sz;
-            vWnd            = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz;
-            vInBuf          = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * BUFFER_MULTIPLIER;
-            vFftBuf         = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * 2;
-            vFftTmp         = reinterpret_cast<float *>(ptr);
-            ptr            += buf_sz * 2;
+            vHandlers       = advance_ptr_bytes<handler_t>(ptr, hdl_sz);
+            vWnd            = advance_ptr_bytes<float>(ptr, buf_sz);
+            vInBuf          = advance_ptr_bytes<float>(ptr, buf_sz * BUFFER_MULTIPLIER);
+            vFftBuf         = advance_ptr_bytes<float>(ptr, buf_sz * 2);
+            vFftTmp         = advance_ptr_bytes<float>(ptr, buf_sz * 2);
 
             // Initialize handlers
             for (size_t i=0; i<handlers; ++i)
             {
-                handler_t *h    = &vHandlers[i];
+                handler_t * const h = &vHandlers[i];
 
-                h->pObject      = NULL;
-                h->pSubject     = NULL;
-                h->pFunc        = NULL;
-                h->pSink        = NULL;
-                h->vOutBuf      = reinterpret_cast<float *>(ptr);
-                ptr            += buf_sz * BUFFER_MULTIPLIER;
+                h->pObject          = NULL;
+                h->pSubject         = NULL;
+                h->pFunc            = NULL;
+                h->pSink            = NULL;
+                h->vOutBuf          = advance_ptr_bytes<float>(ptr, buf_sz * BUFFER_MULTIPLIER);
             }
 
             nHandlers       = handlers;
@@ -164,7 +158,7 @@ namespace lsp
             if ((func == NULL) && (sink == NULL))
                 return STATUS_INVALID_VALUE;
 
-            handler_t *h = &vHandlers[id];
+            handler_t * const h = &vHandlers[id];
             if ((h->pFunc == NULL) &&
                 (h->pSink == NULL))
                 ++nBindings;
@@ -174,7 +168,7 @@ namespace lsp
             h->pFunc        = func;
             h->pSink        = sink;
 
-            size_t buf_size = 1 << nRank;
+            const size_t buf_size   = 1 << nRank;
             dsp::fill_zero(h->vOutBuf, buf_size * BUFFER_MULTIPLIER);
 
             return STATUS_OK;
@@ -185,7 +179,7 @@ namespace lsp
             if (id >= nHandlers)
                 return STATUS_OVERFLOW;
 
-            handler_t *h = &vHandlers[id];
+            handler_t * const h = &vHandlers[id];
             if ((h->pFunc == NULL) &&
                 (h->pSink == NULL))
                 return STATUS_NOT_BOUND;
@@ -203,12 +197,12 @@ namespace lsp
         {
             for (size_t i=0; i<nHandlers; ++i)
             {
-                handler_t *h    = &vHandlers[i];
+                handler_t * const h = &vHandlers[i];
 
-                h->pObject      = NULL;
-                h->pSubject     = NULL;
-                h->pFunc        = NULL;
-                h->pSink        = NULL;
+                h->pObject          = NULL;
+                h->pSubject         = NULL;
+                h->pFunc            = NULL;
+                h->pSink            = NULL;
             }
 
             nBindings       = 0;
@@ -219,7 +213,7 @@ namespace lsp
             if (id >= nHandlers)
                 return false;
 
-            handler_t *h = &vHandlers[id];
+            handler_t * const h = &vHandlers[id];
             return ((h->pFunc != NULL) || (h->pSink != NULL));
         }
 
@@ -229,31 +223,31 @@ namespace lsp
                 return;
 
             // Distribute buffers
-            nRank               = lsp_min(nRank, nMaxRank);
-            nChunkRank          = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(nRank)) : nRank;
+            nRank                   = lsp_min(nRank, nMaxRank);
+            nChunkRank              = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(nRank)) : nRank;
 
-            size_t frame_size   = 1 << (nChunkRank - 1);
+            const size_t frame_size = 1 << (nChunkRank - 1);
 
             // Clear buffers and reset pointers
-            windows::sqr_cosine(vWnd, frame_size * 2);
+            windows::kaiser_bessel_derived(vWnd, frame_size * 2);
             clear();
 
-            nFrameSize          = frame_size * (fPhase * 0.5f);
-            nInOffset           = 0;
+            nFrameSize              = frame_size * (fPhase * 0.5f);
+            nInOffset               = 0;
 
             // Mark settings applied
-            bUpdate             = false;
+            bUpdate                 = false;
         }
 
         void SpectralSplitter::clear()
         {
-            size_t buf_size     = 1 << nRank;
+            const size_t buf_size   = 1 << nRank;
             dsp::fill_zero(vInBuf, buf_size * BUFFER_MULTIPLIER);
             dsp::fill_zero(vFftBuf, buf_size*2);
 
             for (size_t i=0; i<nHandlers; ++i)
             {
-                handler_t *h = &vHandlers[i];
+                handler_t * const h = &vHandlers[i];
                 if (h->pSink != NULL)
                     dsp::fill_zero(h->vOutBuf, buf_size * BUFFER_MULTIPLIER);
             }
@@ -288,8 +282,8 @@ namespace lsp
             if (!bUpdate)
                 return 1 << nChunkRank;
 
-            size_t rank         = lsp_min(nRank, nMaxRank);
-            size_t chunk_rank   = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(rank)) : nRank;
+            const size_t rank           = lsp_min(nRank, nMaxRank);
+            const size_t chunk_rank     = (nUserChunkRank > 0) ? lsp_limit(nUserChunkRank, 5, ssize_t(rank)) : nRank;
 
             return 1 << chunk_rank;
         }
@@ -315,20 +309,23 @@ namespace lsp
                     const size_t new_in_offset  = nInOffset + frame_size;
 
                     // Perform FFT and processing
-                    dsp::pcomplex_r2c(vFftBuf, &vInBuf[nInOffset], buf_size);       // Convert from real to packed complex
-                    dsp::packed_direct_fft(vFftBuf, vFftBuf, nRank);                // Perform direct FFT
+                    dsp::mul3(&vFftBuf[buf_size], &vInBuf[nInOffset], vWnd, buf_size);  // Apply window at input
+                    dsp::pcomplex_r2c(vFftBuf, &vFftBuf[buf_size], buf_size);           // Convert from real to packed complex
+                    dsp::packed_direct_fft(vFftBuf, vFftBuf, nRank);                    // Perform direct FFT
 
                     for (size_t i=0; i<nHandlers; ++i)
                     {
-                        handler_t *h    = &vHandlers[i];
+                        handler_t * const h     = &vHandlers[i];
+                        float *sink_in;
                         if (h->pFunc != NULL)
                         {
-                            h->pFunc(h->pObject, h->pSubject, vFftTmp, vFftBuf, nRank);
-                            dsp::packed_reverse_fft(vFftTmp, vFftTmp, nRank);                                   // Perform reverse FFT
-                            dsp::pcomplex_c2r(vFftTmp, &vFftTmp[buf_size*2 - frame_size*4], frame_size * 2);    // Unpack complex numbers
+                            sink_in     = vFftTmp;
+                            h->pFunc(h->pObject, h->pSubject, sink_in, vFftBuf, nRank);
+                            dsp::packed_reverse_fft(sink_in, sink_in, nRank);                                   // Perform reverse FFT
+                            dsp::pcomplex_c2r(sink_in, &sink_in[buf_size*2 - frame_size*4], frame_size * 2);    // Unpack complex numbers
                         }
                         else
-                            dsp::copy(vFftTmp, &vInBuf[nInOffset], frame_size * 2);  // Copy data to FFT buffer
+                            sink_in     = &vInBuf[nInOffset];
 
                         // Apply window and add to the output buffer
                         if (h->pSink != NULL)
@@ -337,10 +334,10 @@ namespace lsp
                             {
                                 dsp::move(h->vOutBuf, &h->vOutBuf[new_in_offset], frame_size);
                                 dsp::fill_zero(&h->vOutBuf[frame_size], max_in_offset);
-                                dsp::fmadd3(h->vOutBuf, vFftTmp, vWnd, frame_size * 2);  // Apply window function and add result to buffer
+                                dsp::fmadd3(h->vOutBuf, sink_in, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                             }
                             else
-                                dsp::fmadd3(&h->vOutBuf[new_in_offset], vFftTmp, vWnd, frame_size * 2);  // Apply window function and add result to buffer
+                                dsp::fmadd3(&h->vOutBuf[new_in_offset], sink_in, vWnd, frame_size * 2);  // Apply window function and add result to buffer
                         }
                     }
 
@@ -372,7 +369,7 @@ namespace lsp
                 // Emit data for handlers
                 for (size_t i=0; i<nHandlers; ++i)
                 {
-                    handler_t *h    = &vHandlers[i];
+                    handler_t * const h = &vHandlers[i];
 
                     // Call sink
                     if (h->pSink != NULL)
@@ -403,7 +400,7 @@ namespace lsp
             {
                 for (size_t i=0; i<nHandlers; ++i)
                 {
-                    handler_t *h        = &vHandlers[i];
+                    const handler_t * const h   = &vHandlers[i];
 
                     v->begin_object(h, sizeof(handler_t));
                     {

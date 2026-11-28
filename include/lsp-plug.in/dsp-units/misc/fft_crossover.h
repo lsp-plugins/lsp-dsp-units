@@ -37,7 +37,7 @@ namespace lsp
 
             /**
              * Compute the magintude of the hi-pass crossover filter
-             * @param f the array of frequencies
+             * @param f the frequency to get the magnitude
              * @param f0 the cut-off frequency of the filter, at which it gives -6 dB attenuation
              * @param slope the slope of the filter, attenuation in dB/octave. Negative value. If slope
              * is greater than -3 dB, it is considered to be no attenuation after -6 dB fall-off
@@ -48,7 +48,7 @@ namespace lsp
 
             /**
              * Compute the magintude of the lo-pass crossover filter
-             * @param f the array of frequencies
+             * @param f the frequency to get the magnitude
              * @param f0 the cut-off frequency of the filter, at which it gives -6 dB attenuation
              * @param slope the slope of the filter, attenuation in dB/octave. Negative value. If slope
              * is greater than -3 dB, it is considered to be no attenuation after -6 dB fall-off

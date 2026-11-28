@@ -22,6 +22,7 @@
 # Command-line flag to silence nested $(MAKE).
 ifneq ($(VERBOSE),1)
 .SILENT:
+MAKEFLAGS += --no-print-directory
 endif
 
 # Location
@@ -46,9 +47,9 @@ DISTSRC_PATH                = $(BUILDDIR)/distsrc
 DISTSRC                     = $(DISTSRC_PATH)/$(ARTIFACT_NAME)
 
 .DEFAULT_GOAL              := all
-.PHONY: all compile install uninstall clean
+.PHONY: all bundle clean compile install uninstall
 
-compile all install uninstall:
+all compile bundle install uninstall:
 	$(CHK_CONFIG)
 	$(MAKE) -C "$(BASEDIR)/src" $(@) VERBOSE="$(VERBOSE)" CONFIG="$(CONFIG)" DESTDIR="$(DESTDIR)"
 
@@ -78,9 +79,9 @@ prune: clean
 	echo "Prune OK"
 
 # Configuration-related targets
-.PHONY: config help chkconfig
+.PHONY: config info help
 
-config:
+config info:
 	$(MAKE) -f "$(BASEDIR)/make/configure.mk" $(@) VERBOSE="$(VERBOSE)" CONFIG="$(CONFIG)" -$(MAKEFLAGS)
 
 # Release-related targets
@@ -102,6 +103,7 @@ distsrc:
 help:
 	echo "Available targets:"
 	echo "  all                       Build all binaries"
+	echo "  bundle                    Install only necessary binaries for bundling"
 	echo "  clean                     Clean all build files and configuration file"
 	echo "  config                    Configure build"
 	echo "  distsrc                   Make tarball with source code for packagers"

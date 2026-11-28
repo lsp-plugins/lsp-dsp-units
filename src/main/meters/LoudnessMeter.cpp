@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 20 сент. 2023 г.
@@ -112,7 +112,7 @@ namespace lsp
             dsp::fill_zero(vBuffer, BUFFER_SIZE);
             for (size_t i=0; i<channels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
                 c->sBank.construct();
                 c->sFilter.construct();
 
@@ -138,14 +138,14 @@ namespace lsp
             // Set-up default designations
             if (channels == 1)
             {
-                channel_t *c            = &vChannels[0];
+                channel_t * const c     = &vChannels[0];
                 c->enDesignation        = bs::CHANNEL_CENTER;
                 c->fWeight              = bs::channel_weighting(c->enDesignation);
             }
             else if (channels == 2)
             {
-                channel_t *l            = &vChannels[0];
-                channel_t *r            = &vChannels[1];
+                channel_t * const l     = &vChannels[0];
+                channel_t * const r     = &vChannels[1];
 
                 l->enDesignation        = bs::CHANNEL_LEFT;
                 l->fWeight              = bs::channel_weighting(l->enDesignation);
@@ -156,7 +156,7 @@ namespace lsp
             // Initialize channels
             for (size_t i=0; i<channels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
 
                 if (!c->sFilter.init(&c->sBank))
                     return STATUS_NO_MEM;
@@ -186,10 +186,10 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c    = &vChannels[id];
-            c->vIn          = in;
-            c->vOut         = out;
-            c->nOffset      = pos;
+            channel_t * const c = &vChannels[id];
+            c->vIn              = in;
+            c->vOut             = out;
+            c->nOffset          = pos;
 
             return STATUS_OK;
         }
@@ -208,7 +208,7 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c        = &vChannels[id];
+            channel_t * const c = &vChannels[id];
             c->enDesignation    = designation;
             c->fWeight          = bs::channel_weighting(designation);
 
@@ -225,8 +225,8 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c    = &vChannels[id];
-            c->fLink        = lsp_limit(link, 0.0f, 1.0f);
+            channel_t * const c = &vChannels[id];
+            c->fLink            = lsp_limit(link, 0.0f, 1.0f);
 
             return STATUS_OK;
         }
@@ -241,7 +241,7 @@ namespace lsp
             if (id >= nChannels)
                 return STATUS_OVERFLOW;
 
-            channel_t *c        = &vChannels[id];
+            channel_t * const c = &vChannels[id];
             if (bool(c->nFlags & C_ENABLED) == active)
                 return STATUS_OK;
 
@@ -273,11 +273,14 @@ namespace lsp
 
         void LoudnessMeter::clear()
         {
-            fLoudness               = 0;
+            if (vChannels == NULL)
+                return;
+
+            fLoudness               = 0.0f;
 
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
 
                 c->sFilter.clear();
                 if (c->nFlags & C_ENABLED)
@@ -307,7 +310,7 @@ namespace lsp
             // Store new pointers to buffers
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c            = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
                 c->vData                = advance_ptr_bytes<float>(buf, szof_period);
             }
 
@@ -353,7 +356,7 @@ namespace lsp
 
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c            = &vChannels[i];
+                    channel_t * const c     = &vChannels[i];
 
                     c->sBank.begin();
                     switch (enWeight)
@@ -383,78 +386,76 @@ namespace lsp
             if (nMSRefresh > 0)
                 return;
 
-            size_t tail         = (nDataHead + nDataSize - nPeriod) & (nDataSize - 1);
+            const size_t tail       = (nDataHead + nDataSize - nPeriod) & (nDataSize - 1);
             if (tail < nDataHead)
             {
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c     = &vChannels[i];
                     if (c->nFlags & C_ENABLED)
-                        c->fMS         = dsp::h_sum(&c->vData[tail], nDataHead - tail);
+                        c->fMS         = dsp::h_sqr_sum(&c->vData[tail], nDataHead - tail);
                 }
             }
             else
             {
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c     = &vChannels[i];
                     if (c->nFlags & C_ENABLED)
                         c->fMS         =
-                            dsp::h_sum(c->vData, nDataHead) +
-                            dsp::h_sum(&c->vData[tail], nDataSize - tail);
+                            dsp::h_sqr_sum(c->vData, nDataHead) +
+                            dsp::h_sqr_sum(&c->vData[tail], nDataSize - tail);
                 }
             }
 
             // Reset the counter
-            nMSRefresh          = lsp_max(BUFFER_SIZE << 2, nPeriod >> 2);
+            nMSRefresh          = lsp_max(BUFFER_SIZE << 4, nPeriod >> 2);
         }
 
-        size_t LoudnessMeter::process_channels(size_t offset, size_t samples)
+        size_t LoudnessMeter::process_channels(float * out, size_t offset, size_t samples)
         {
-            const size_t mask   = nDataSize - 1;
+            const size_t dsize  = nDataSize;
+            const size_t mask   = dsize - 1;
             size_t mixed        = 0;        // Number of loudness channels mixed together
 
             // Pre-process each channel individually
             for (size_t i=0; i<nChannels; ++i)
             {
-                channel_t *c    = &vChannels[i];
+                channel_t * const c     = &vChannels[i];
                 if (!(c->nFlags & C_ENABLED))
                     continue;
                 if (c->vIn == NULL)
                     continue;
 
-                // Apply the weighting filter
-                c->sFilter.process(c->vMS, &c->vIn[offset], samples);
-
-                // Put the squared input data to the buffer
+                // Apply the weighting filter and compute the Mean Square value
+                float * const data  = c->vData;
+                float * const vms   = c->vMS;
                 size_t head         = nDataHead;
-                size_t head_adv     = (nDataHead + samples) & mask;
-                if (head_adv <= head)
-                {
-                    dsp::sqr2(&c->vData[head], c->vMS, nDataSize - head);
-                    dsp::sqr2(&c->vData[0], &c->vMS[nDataSize - head], head_adv);
-                }
-                else
-                    dsp::sqr2(&c->vData[head], c->vMS, samples);
+                size_t tail         = (head + dsize - nPeriod) & mask;
 
-                // Compute the Mean Square value for each sample and store into mean square buffer
-                size_t tail         = (nDataHead + nDataSize - nPeriod) & mask;
-                float ms            = c->fMS;
-
-                for (size_t j=0; j<samples; ++j)
+                for (size_t j=0; j<samples; )
                 {
-                    ms                 += c->vData[head] - c->vData[tail];
-                    c->vMS[j]           = fAvgCoeff * ms;
-                    head                = (head + 1) & mask;
-                    tail                = (tail + 1) & mask;
+                    const size_t to_do  = lsp_min(dsize - head, dsize - tail, samples-j);
+
+                    // Apply weighting filter
+                    c->sFilter.process(&data[head], &c->vIn[offset + j], to_do);
+
+                    // Compute the mean square for processed samples and store to the buffer
+                    c->fMS = dsp::moving_mean_sqr(
+                        &vms[j], &data[tail], &data[head],
+                        c->fMS, fAvgCoeff, to_do);
+
+                    // Update pointers
+                    head                = (head + to_do) & mask;
+                    tail                = (tail + to_do) & mask;
+                    j                  += to_do;
                 }
-                c->fMS             = ms;
 
                 // Add mean square values to the loudness estimation buffer
                 if (mixed++ > 0)
-                    dsp::fmadd_k3(vBuffer, c->vMS, c->fWeight, samples);
+                    dsp::fmadd_k3(out, vms, c->fWeight, samples);
                 else
-                    dsp::mul_k3(vBuffer, c->vMS, c->fWeight, samples);
+                    dsp::mul_k3(out, vms, c->fWeight, samples);
             }
 
             return mixed;
@@ -469,38 +470,40 @@ namespace lsp
                 refresh_rms();
 
                 // Apply data
+                float * const dst   = (out != NULL) ? &out[offset] : vBuffer;
                 const size_t to_do  = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
-                const size_t mixed  = process_channels(offset, to_do);
-
-                if (mixed == 0)
-                    dsp::fill_zero(vBuffer, to_do);
+                const size_t mixed  = process_channels(dst, offset, to_do);
 
                 // Now we have the mean squares computed for each channel, weighted,
                 // summed and stored into vBuffer. Convert them into gain values
-                dsp::ssqrt1(vBuffer, to_do);
-                if (out != NULL)
-                    dsp::copy(&out[offset], vBuffer, to_do);
+                if (mixed == 0)
+                    dsp::fill_zero(dst, to_do);
+                else
+                    dsp::ssqrt1(dst, to_do);
 
                 // Remember last measured loudness
-                fLoudness           = vBuffer[to_do - 1];
+                fLoudness           = dst[to_do - 1];
 
                 // Post-process each channel individually: convert mean squares into
                 // RMS and perform the linking
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c = &vChannels[i];
                     if (!(c->nFlags & C_ENABLED))
                         continue;
 
                     if (c->vOut != NULL)
                     {
-                        dsp::ssqrt1(c->vMS, to_do);
+                        float * const cout = &c->vOut[c->nOffset];
                         if (c->fLink <= 0.0f)
-                            dsp::copy(&c->vOut[c->nOffset], c->vMS, to_do);
+                            dsp::ssqrt2(cout, c->vMS, to_do);
                         else if (c->fLink >= 1.0f)
-                            dsp::copy(&c->vOut[c->nOffset], vBuffer, to_do);
+                            dsp::copy(cout, dst, to_do);
                         else
-                            dsp::mix_copy2(&c->vOut[c->nOffset], vBuffer, c->vMS, c->fLink, 1.0f - c->fLink, to_do);
+                        {
+                            dsp::ssqrt2(cout, c->vMS, to_do);
+                            dsp::mix2(cout, dst, 1.0f - c->fLink, c->fLink, to_do);
+                        }
                     }
 
                     c->nOffset         += to_do;
@@ -522,35 +525,43 @@ namespace lsp
                 refresh_rms();
 
                 // Apply data
-                size_t to_do        = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
-                size_t mixed        = process_channels(offset, to_do);
-
-                if (mixed == 0)
-                    dsp::fill_zero(vBuffer, to_do);
+                float * const dst   = (out != NULL) ? &out[offset] : vBuffer;
+                const size_t to_do  = lsp_min(count - offset, nMSRefresh, BUFFER_SIZE);
+                size_t mixed        = process_channels(dst, offset, to_do);
 
                 // Now we have the mean squares computed for each channel, weighted,
                 // summed and stored into vBuffer. Convert them into gain values
-                dsp::ssqrt1(vBuffer, to_do);
-                if (out != NULL)
-                    dsp::mul_k3(&out[offset], vBuffer, gain, to_do);
+                if (mixed == 0)
+                    dsp::fill_zero(dst, to_do);
+                else
+                    dsp::ssqrt1(dst, to_do);
+
+                // Remember last measured loudness
+                fLoudness           = dst[to_do - 1];
 
                 // Post-process each channel individually: convert mean squares into
                 // RMS and perform the linking
                 for (size_t i=0; i<nChannels; ++i)
                 {
-                    channel_t *c    = &vChannels[i];
+                    channel_t * const c = &vChannels[i];
                     if (!(c->nFlags & C_ENABLED))
                         continue;
 
                     if (c->vOut != NULL)
                     {
-                        dsp::ssqrt1(c->vMS, to_do);
+                        float * const cout = &c->vOut[c->nOffset];
                         if (c->fLink <= 0.0f)
-                            dsp::mul_k3(&c->vOut[c->nOffset], c->vMS, gain, to_do);
+                        {
+                            dsp::ssqrt2(cout, c->vMS, to_do);
+                            dsp::mul_k2(cout, gain, to_do);
+                        }
                         else if (c->fLink >= 1.0f)
-                            dsp::mul_k3(&c->vOut[c->nOffset], vBuffer, gain, to_do);
+                            dsp::mul_k3(cout, dst, gain, to_do);
                         else
-                            dsp::mix_copy2(&c->vOut[c->nOffset], vBuffer, c->vMS, c->fLink * gain, (1.0f - c->fLink) * gain, to_do);
+                        {
+                            dsp::ssqrt2(cout, c->vMS, to_do);
+                            dsp::mix2(cout, dst, (1.0f - c->fLink) * gain, c->fLink * gain, to_do);
+                        }
                     }
 
                     c->nOffset         += to_do;
@@ -561,6 +572,10 @@ namespace lsp
                 nMSRefresh         -= to_do;
                 offset             += to_do;
             }
+            
+            // Apply post-gain
+            if ((out != NULL) && (gain != 1.0f))
+            	dsp::mul_k2(out, gain, count);
         }
 
         void LoudnessMeter::dump(IStateDumper *v) const

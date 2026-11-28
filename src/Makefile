@@ -93,6 +93,7 @@ CXX_INSTHEADERS         = $(patsubst $(ARTIFACT_INC)/%,$(DESTDIR)$(INCDIR)/%,$(C
 DEP_FILE                = $(patsubst %.o,%.d, $(@))
 
 BUILD_ALL               = $(ARTIFACT_LIB) $(ARTIFACT_SLIB) $(ARTIFACT_PC)
+BUNDLE_DEPS             = $(call if_eq,$(ROOT_ARTIFACT_ID),$(ARTIFACT_ID),all,)
 
 ifeq ($($(ARTIFACT_ID)_TESTING),1)
   ARTIFACT_TARGETS       += $(ARTIFACT_TEST_BIN)
@@ -103,7 +104,7 @@ DEP_CXX_FILE            = $(patsubst $(ARTIFACT_BIN)/%.d,%.cpp,$(@))
 DEP_DEP_FILE            = $(patsubst $(ARTIFACT_BIN)/%.d,%.o,$(@))
 
 .DEFAULT_GOAL = all
-.PHONY: compile all install uninstall
+.PHONY: all bundle compile install uninstall
 .PHONY: $(ARTIFACT_DEPS)
 
 # Compile dependencies
@@ -122,11 +123,11 @@ $(CXX_OBJ_ALL):
 # Producing large object files
 $(ARTIFACT_OBJ): $(CXX_OBJ)
 	@echo "  $($(HOST)LD)   [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_OBJ))"
-	$($(HOST)LD) -o $(ARTIFACT_OBJ) $($(HOST)LDFLAGS) $(CXX_OBJ)
+	$($(HOST)LD) -o $(ARTIFACT_OBJ) $($(HOST)LDFLAGS) $(CXX_OBJ) $($(HOST)LDSCRIPT)
 
 $(ARTIFACT_OBJ_TEST): $(CXX_OBJ_TEST)
 	echo "  $($(HOST)LD)   [$(ARTIFACT_NAME)] $(notdir $(ARTIFACT_OBJ_TEST))"
-	$($(HOST)LD) -o $(ARTIFACT_OBJ_TEST) $($(HOST)LDFLAGS) $(CXX_OBJ_TEST)
+	$($(HOST)LD) -o $(ARTIFACT_OBJ_TEST) $($(HOST)LDFLAGS) $(CXX_OBJ_TEST) $($(HOST)LDSCRIPT)
 
 # Linking
 all: $(ARTIFACT_TARGETS)
@@ -168,6 +169,12 @@ install: all
 	ln -sf $(notdir $(ARTIFACT_LIB)) "$(DESTDIR)$(LIBDIR)/$(ARTIFACT_LIBLINK)"
 	ln -sf $(notdir $(ARTIFACT_SLIB)) "$(DESTDIR)$(LIBDIR)/$(ARTIFACT_SLIBLINK)"
 	echo "Install OK"
+
+bundle: $(BUNDLE_DEPS)
+	echo "Make bundle $($(ARTIFACT_ID)_NAME)"
+	$(if $(strip $(DESTDIR)),,echo "The destination directory DESTDIR should be defined" && exit 1)
+	$(INSTALL) $(ARTIFACT_LIB) "$(DESTDIR)/$(LIBRARY_PREFIX)$(ARTIFACT_NAME)$(LIBRARY_EXT)"
+	echo "Bundle OK"
 
 uninstall:
 	echo "Uninstalling $($(ARTIFACT_ID)_NAME)"

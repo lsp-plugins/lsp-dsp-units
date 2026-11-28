@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-dsp-units
  * Created on: 15 мая 2024 г.
@@ -59,7 +59,7 @@ namespace lsp
                     uint32_t            nVersion;           // Version of the catalog
                     uint32_t            nSize;              // Number of records
                     uint32_t            nAllocated;         // Number of allocated records
-                    volatile uint32_t   nChanges;           // Number of changes
+                    uint32_t            nChanges;           // Number of changes
                 } sh_header_t;
 
                 typedef struct sh_record_t

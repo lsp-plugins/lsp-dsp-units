@@ -72,7 +72,7 @@ namespace lsp
 
                     const float        *vIn;            // The input buffer
                     float              *vOut;           // Output gain buffer
-                    float              *vData;          // Ring Buffer for measuring mean square
+                    float              *vData;          // Ring Buffer, contains weighed samples for measuring mean square
                     float              *vMS;            // Temporary buffer for measured mean square
 
                     float               fMS;            // Current Mean square value
@@ -108,7 +108,7 @@ namespace lsp
 
             protected:
                 void                    refresh_rms();
-                size_t                  process_channels(size_t offset, size_t samples);
+                size_t                  process_channels(float *out, size_t offset, size_t samples);
 
             public:
                 explicit LoudnessMeter();
@@ -244,14 +244,16 @@ namespace lsp
 
                 /**
                  * Process signal from channels and form the gain control signal
-                 * @param out buffer to store the overall loudness (optional, may be BULL)
+                 * @param out buffer to store the overall loudness (optional, may be BULL),
+                 *            buffer is used for intermediate data processing if defined
                  * @param count number of samples to process
                  */
                 void            process(float *out, size_t count);
 
                 /**
                  * Process signal from channels and form the gain control signal
-                 * @param out buffer to store the overall loudness (optional)
+                 * @param out buffer to store the overall loudness (optional),
+                 *            buffer is used for intermediate data processing if defined
                  * @param count number of samples to process
                  * @param gain output gain correction
                  */

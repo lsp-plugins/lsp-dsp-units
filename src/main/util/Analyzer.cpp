@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2025 Linux Studio Plugins Project <https://lsp-plug.in/>
- *           (C) 2025 Vladimir Sadovnikov <sadko4u@gmail.com>
+ * Copyright (C) 2026 Linux Studio Plugins Project <https://lsp-plug.in/>
+ *           (C) 2026 Vladimir Sadovnikov <sadko4u@gmail.com>
  *
  * This file is part of lsp-plugins
  * Created on: 14 авг. 2016 г.
@@ -143,6 +143,7 @@ namespace lsp
                 c->nUserDelay       = 0;
                 c->bFreeze          = false;
                 c->bActive          = true;
+                c->bInstant         = true;
             }
 
             // Set reconfiguration flags
@@ -234,6 +235,8 @@ namespace lsp
                 return false;
 
             vChannels[channel].bActive      = enable;
+            vChannels[channel].bInstant     = true;
+
             nReconfigure   |= R_COUNTERS;
             return true;
         }
@@ -355,10 +358,18 @@ namespace lsp
                             // Do Real->complex conversion and FFT
                             dsp::pcomplex_r2c(vFftReIm, vSigRe, fft_size);
                             dsp::packed_direct_fft(vFftReIm, vFftReIm, nRank);
-                            // Get complex argument
-                            dsp::pcomplex_mod(vFftReIm, vFftReIm, fft_csize);
-                            // Mix with the previous value
-                            dsp::mix2(c->vAmp, vFftReIm, 1.0f - fTau, fTau, fft_csize);
+                            if ((c->bInstant) || (fTau == 1.0f))
+                            {
+                                dsp::pcomplex_mod(c->vAmp, vFftReIm, fft_csize);
+                                c->bInstant     = false;
+                            }
+                            else
+                            {
+                                // Get complex argument
+                                dsp::pcomplex_mod(vFftReIm, vFftReIm, fft_csize);
+                                // Mix with the previous value
+                                dsp::mix2(c->vAmp, vFftReIm, 1.0f - fTau, fTau, fft_csize);
+                            }
                         }
                         else
                             dsp::fill_zero(c->vAmp, fft_csize);
@@ -531,6 +542,7 @@ namespace lsp
                     v->write("nUserDelay", c->nUserDelay);
                     v->write("bFreeze", c->bFreeze);
                     v->write("bActive", c->bActive);
+                    v->write("bInstant", c->bInstant);
                 }
                 v->end_object();
             }
